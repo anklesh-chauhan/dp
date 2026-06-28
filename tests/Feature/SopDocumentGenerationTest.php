@@ -1,0 +1,143 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Actions\Sop\CreateDocumentFromTemplateAction;
+use App\Data\SopDocumentData;
+use App\Enums\TemplateStatus;
+use App\Enums\VariableDataType;
+use App\Models\Department;
+use App\Models\DocumentCategory;
+use App\Models\DocumentType;
+use App\Models\SopDocument;
+use App\Models\SopTemplate;
+use App\Models\SopTemplateVersion;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Permission;
+
+use function Pest\Laravel\actingAs;
+use function Pest\Laravel\get;
+
+uses(RefreshDatabase::class);
+
+it('creates an SOP document with template sections and resolved variables', function (): void {
+    $department = Department::factory()->create(['name' => 'Quality Assurance', 'code' => 'QA']);
+    $owner = User::factory()->create();
+    $creator = User::factory()->create();
+
+    $template = SopTemplate::factory()->create([
+        'department_id' => $department->id,
+        'category_id' => DocumentCategory::factory(),
+        'document_type_id' => DocumentType::factory(),
+        'status' => TemplateStatus::Published,
+        'current_version' => 1,
+    ]);
+
+    $version = SopTemplateVersion::factory()
+        ->published()
+        ->create([
+            'sop_template_id' => $template->id,
+            'version' => 1,
+        ]);
+
+    $version->sections()->create([
+        'title' => 'Purpose',
+        'section_order' => 1,
+        'section_type' => 'rich_text',
+        'content' => '<p>{{equipment}} for {{department}} on {{inspection_date}}. Shutdown: {{requires_shutdown}}.</p>',
+        'is_required' => true,
+    ]);
+
+    $version->variables()->createMany([
+        [
+            'name' => 'equipment',
+            'label' => 'Equipment',
+            'required' => true,
+        ],
+        [
+            'name' => 'department',
+            'label' => 'Department',
+            'required' => true,
+        ],
+        [
+            'name' => 'document_number',
+            'label' => 'Document Number',
+            'required' => true,
+        ],
+        [
+            'name' => 'inspection_date',
+            'label' => 'Inspection Date',
+            'datatype' => VariableDataType::Date,
+            'validation_rules' => ['date' => null],
+            'required' => true,
+        ],
+        [
+            'name' => 'requires_shutdown',
+            'label' => 'Requires Shutdown',
+            'datatype' => VariableDataType::Boolean,
+            'validation_rules' => ['boolean'],
+            'required' => true,
+        ],
+    ]);
+
+    $document = app(CreateDocumentFromTemplateAction::class)->execute(new SopDocumentData(
+        templateId: $template->id,
+        title: 'Cleaning SOP',
+        ownerId: $owner->id,
+        createdBy: $creator->id,
+        variables: [
+            'equipment' => 'Mixer',
+            'inspection_date' => '2026-06-28',
+            'requires_shutdown' => false,
+        ],
+        documentNumber: 'SOP-QA-00001',
+    ));
+
+    expect($document)
+        ->toBeInstanceOf(SopDocument::class)
+        ->and($document->sections)->toHaveCount(1)
+        ->and($document->sections->first()->content)->toContain('Mixer for Quality Assurance on 2026-06-28. Shutdown: No.')
+        ->and($document->variables->pluck('value', 'variable_name')->all())->toMatchArray([
+            'equipment' => 'Mixer',
+            'department' => 'Quality Assurance',
+            'document_number' => 'SOP-QA-00001',
+            'inspection_date' => '2026-06-28',
+            'requires_shutdown' => 'No',
+        ]);
+});
+
+it('renders the printable SOP document page for authorized users', function (): void {
+    $user = User::factory()->create();
+    Permission::findOrCreate('View:SopDocument', 'web');
+    $user->givePermissionTo('View:SopDocument');
+
+    $template = SopTemplate::factory()->create([
+        'document_type_id' => DocumentType::factory()->create(['code' => 'SOP-PRINT'])->id,
+    ]);
+    $version = SopTemplateVersion::factory()->published()->create([
+        'sop_template_id' => $template->id,
+    ]);
+
+    $document = SopDocument::factory()->create([
+        'template_id' => $template->id,
+        'template_version_id' => $version->id,
+        'department_id' => $template->department_id,
+        'document_number' => 'SOP-QA-00002',
+        'title' => 'Packaging SOP',
+    ]);
+
+    $document->sections()->create([
+        'title' => 'Procedure',
+        'section_order' => 1,
+        'content' => '<p>Follow approved packaging steps.</p>',
+    ]);
+
+    actingAs($user);
+
+    get(route('sop-documents.print', $document))
+        ->assertOk()
+        ->assertSee('Packaging SOP')
+        ->assertSee('SOP-QA-00002')
+        ->assertSee('Follow approved packaging steps.', false);
+});

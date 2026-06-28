@@ -1,0 +1,80 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Policies;
+
+use Illuminate\Foundation\Auth\User as AuthUser;
+use App\Models\SopWorkflow;
+use Illuminate\Auth\Access\HandlesAuthorization;
+
+class SopWorkflowPolicy
+{
+    use HandlesAuthorization;
+    
+    public function viewAny(AuthUser $authUser): bool
+    {
+        return $authUser->can('ViewAny:SopWorkflow');
+    }
+
+    public function view(AuthUser $authUser, SopWorkflow $sopWorkflow): bool
+    {
+        return $authUser->can('View:SopWorkflow');
+    }
+
+    public function create(AuthUser $authUser): bool
+    {
+        return $authUser->can('Create:SopWorkflow');
+    }
+
+    public function update(AuthUser $authUser, SopWorkflow $sopWorkflow): bool
+    {
+        return $authUser->can('Update:SopWorkflow');
+    }
+
+    public function delete(AuthUser $authUser, SopWorkflow $sopWorkflow): bool
+    {
+        return $authUser->can('Delete:SopWorkflow');
+    }
+
+    public function deleteAny(AuthUser $authUser): bool
+    {
+        return $authUser->can('DeleteAny:SopWorkflow');
+    }
+
+    public function restore(AuthUser $authUser, SopWorkflow $sopWorkflow): bool
+    {
+        return $authUser->can('Restore:SopWorkflow');
+    }
+
+    public function forceDelete(AuthUser $authUser, SopWorkflow $sopWorkflow): bool
+    {
+        return $authUser->can('ForceDelete:SopWorkflow');
+    }
+
+    public function forceDeleteAny(AuthUser $authUser): bool
+    {
+        return $authUser->can('ForceDeleteAny:SopWorkflow');
+    }
+
+    public function restoreAny(AuthUser $authUser): bool
+    {
+        return $authUser->can('RestoreAny:SopWorkflow');
+    }
+
+    public function replicate(AuthUser $authUser, SopWorkflow $sopWorkflow): bool
+    {
+        return $authUser->can('Replicate:SopWorkflow');
+    }
+
+    public function reorder(AuthUser $authUser): bool
+    {
+        return $authUser->can('Reorder:SopWorkflow');
+    }
+
+    public function approve(AuthUser $authUser, SopWorkflow $sopWorkflow): bool
+    {
+        return $authUser->can('Approve:SopWorkflow');
+    }
+
+}
