@@ -49,6 +49,12 @@ class SopModuleSeeder extends Seeder
         'Reorder:SopDocument',
         'Approve:SopDocument',
 
+        'Approve:SopTemplate',
+
+        'ViewAny:SopApproval',
+        'View:SopApproval',
+        'Approve:SopApproval',
+
         'ViewAny:SopWorkflow',
         'View:SopWorkflow',
         'Create:SopWorkflow',
@@ -89,13 +95,6 @@ class SopModuleSeeder extends Seeder
         'RestoreAny:User',
         'Replicate:User',
         'Reorder:User',
-
-        // Extra ones you had
-        'Publish:SopTemplate',
-        'Archive:SopTemplate',
-        'CreateSop:SopTemplate',   // or Create:SopDocument if it's for creating from template
-        'ViewAny:Approval',
-        'View:Approval',
     ];
 
     public function run(): void
@@ -114,7 +113,14 @@ class SopModuleSeeder extends Seeder
         $adminRole->syncPermissions($this->permissions);
 
         $reviewerRole = Role::findOrCreate('qa reviewer', 'web');
-        $reviewerRole->givePermissionTo(['sop.documents.view_any', 'sop.documents.view', 'sop.documents.approve']);
+        $reviewerRole->givePermissionTo([
+            'ViewAny:SopDocument',
+            'View:SopDocument',
+            'Approve:SopDocument',
+            'ViewAny:SopApproval',
+            'View:SopApproval',
+            'Approve:SopApproval',
+        ]);
 
         $template = SopTemplate::query()->firstOrCreate([
             'code' => 'TPL-SOP-GMP',

@@ -38,6 +38,11 @@ class TemplatePublisherService
             }
 
             $nextVersion = max($template->current_version + 1, $draftVersion->version);
+            $previousVersion = $template->current_version;
+            $previousPublishedVersionId = $template->versions()
+                ->where('status', TemplateStatus::Published)
+                ->orderByDesc('version')
+                ->value('id');
 
             if ($draftVersion->version !== $nextVersion) {
                 $draftVersion->update(['version' => $nextVersion]);
@@ -53,10 +58,21 @@ class TemplatePublisherService
                 'current_version' => $nextVersion,
             ]);
 
-            $this->auditLogService->log(null, SopAuditLog::ACTION_PUBLISHED, null, [
-                'template_id' => $template->id,
-                'version' => $nextVersion,
-            ], $userId);
+            $this->auditLogService->log(
+                action: SopAuditLog::ACTION_VERSION_PUBLISHED,
+                oldValues: [
+                    'current_version' => $previousVersion,
+                    'template_version_id' => $previousPublishedVersionId,
+                ],
+                newValues: [
+                    'template_id' => $template->id,
+                    'template_version_id' => $draftVersion->id,
+                    'version' => $nextVersion,
+                    'change_reason' => $draftVersion->change_reason,
+                ],
+                userId: $userId,
+                template: $template,
+            );
 
             return $draftVersion->refresh();
         });

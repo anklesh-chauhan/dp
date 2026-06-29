@@ -10,6 +10,7 @@ use App\Filament\Resources\SopTemplates\Pages\EditSopTemplate;
 use App\Filament\Resources\SopTemplates\Pages\ListSopTemplates;
 use App\Filament\Resources\SopTemplates\Pages\ViewSopTemplate;
 use App\Filament\Resources\SopTemplates\RelationManagers\SectionRelationManager;
+use App\Filament\Resources\SopTemplates\RelationManagers\TemplateAuditRelationManager;
 use App\Filament\Resources\SopTemplates\RelationManagers\VariableRelationManager;
 use App\Filament\Resources\SopTemplates\RelationManagers\VersionRelationManager;
 use App\Models\SopTemplate;
@@ -41,9 +42,9 @@ class SopTemplateResource extends Resource
 {
     protected static ?string $model = SopTemplate::class;
 
-    protected static string | UnitEnum | null $navigationGroup = 'SOP Management';
+    protected static string|UnitEnum|null $navigationGroup = 'SOP Management';
 
-    protected static string | \BackedEnum | null $navigationIcon = Heroicon::OutlinedDocumentText;
+    protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentText;
 
     protected static ?string $recordTitleAttribute = 'name';
 
@@ -133,6 +134,7 @@ class SopTemplateResource extends Resource
             VersionRelationManager::class,
             SectionRelationManager::class,
             VariableRelationManager::class,
+            TemplateAuditRelationManager::class,
         ];
     }
 

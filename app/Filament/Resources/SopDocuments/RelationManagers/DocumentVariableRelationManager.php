@@ -18,7 +18,7 @@ class DocumentVariableRelationManager extends RelationManager
 
     public function form(Schema $schema): Schema
     {
-        return $schema->components([
+        return $schema->columns(1)->components([
             Grid::make(2)->schema([
                 TextInput::make('variable_name')->required(),
                 TextInput::make('value'),

@@ -51,9 +51,9 @@ class SopDocumentResource extends Resource
 {
     protected static ?string $model = SopDocument::class;
 
-    protected static string | UnitEnum | null $navigationGroup = 'SOP Management';
+    protected static string|UnitEnum|null $navigationGroup = 'SOP Management';
 
-    protected static string | \BackedEnum | null $navigationIcon = Heroicon::OutlinedClipboardDocumentList;
+    protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentList;
 
     protected static ?string $recordTitleAttribute = 'document_number';
 
@@ -81,9 +81,12 @@ class SopDocumentResource extends Resource
                                 $set('variables', self::templateVariableDefaultValues($versionId));
                             }),
                         Select::make('template_version_id')
+                            ->label('Template Version')
                             ->options(fn (Get $get): array => self::publishedTemplateVersionOptions((int) $get('template_id')))
                             ->searchable()
                             ->preload()
+                            ->required(fn ($livewire): bool => $livewire instanceof CreateSopDocument)
+                            ->disabled(fn (Get $get): bool => blank($get('template_id')))
                             ->live()
                             ->afterStateUpdated(fn (Set $set, ?int $state): mixed => $set('variables', self::templateVariableDefaultValues($state))),
                         TextInput::make('document_number')
@@ -115,6 +118,7 @@ class SopDocumentResource extends Resource
                 ])
                 ->columnSpanFull(),
             Section::make('Template Variable Values')
+                ->key(fn (Get $get): string => 'template-variables-'.($get('template_version_id') ?? 'none'))
                 ->schema(fn (Get $get): array => self::templateVariableFields((int) $get('template_version_id')))
                 ->columns(2)
                 ->visible(fn ($livewire, Get $get): bool => $livewire instanceof CreateSopDocument && filled($get('template_version_id')))

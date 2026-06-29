@@ -62,7 +62,7 @@ class SopGeneratorService
                 'effective_date' => $data->effectiveDate?->toDateString(),
                 'review_date' => $data->reviewDate?->toDateString(),
             ]);
-            $resolvedVariables = $this->variableResolverService->resolveValues($version, $variables);
+            $resolvedVariables = $this->resolveVariables($version, $variables);
 
             $document = SopDocument::query()->create([
                 'template_id' => $template->id,
@@ -93,14 +93,38 @@ class SopGeneratorService
                 ]);
             }
 
-            $this->auditLogService->log($document, SopAuditLog::ACTION_GENERATED_SOP, null, [
-                'template_id' => $template->id,
-                'template_version_id' => $version->id,
-            ], $data->createdBy);
+            $this->auditLogService->log(
+                action: SopAuditLog::ACTION_GENERATED_SOP,
+                newValues: [
+                    'template_id' => $template->id,
+                    'template_version_id' => $version->id,
+                ],
+                userId: $data->createdBy,
+                document: $document,
+            );
 
             $this->workflowEngineService->start($document);
 
             return $document->refresh()->load(['sections', 'variables', 'approvals']);
         });
+    }
+
+    /**
+     * @param  array<string, mixed>  $variables
+     * @return array<string, string>
+     *
+     * @throws ValidationException
+     */
+    private function resolveVariables(SopTemplateVersion $version, array $variables): array
+    {
+        try {
+            return $this->variableResolverService->resolveValues($version, $variables);
+        } catch (ValidationException $exception) {
+            throw ValidationException::withMessages(
+                collect($exception->errors())
+                    ->mapWithKeys(fn (array $messages, string $key): array => ["variables.{$key}" => $messages])
+                    ->all()
+            );
+        }
     }
 }

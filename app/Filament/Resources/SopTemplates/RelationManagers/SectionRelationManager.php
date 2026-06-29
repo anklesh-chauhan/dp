@@ -24,7 +24,8 @@ class SectionRelationManager extends RelationManager
 
     public function form(Schema $schema): Schema
     {
-        return $schema->components([
+        return $schema->columns(1)->components([
+
             Grid::make(2)->schema([
                 Select::make('template_version_id')
                     ->relationship('templateVersion', 'version')

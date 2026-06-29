@@ -3,12 +3,14 @@
 declare(strict_types=1);
 
 use App\Actions\Sop\CreateDocumentFromTemplateAction;
+use App\Actions\Sop\PublishTemplateAction;
 use App\Data\SopDocumentData;
 use App\Enums\TemplateStatus;
 use App\Enums\VariableDataType;
 use App\Models\Department;
 use App\Models\DocumentCategory;
 use App\Models\DocumentType;
+use App\Models\SopAuditLog;
 use App\Models\SopDocument;
 use App\Models\SopTemplate;
 use App\Models\SopTemplateVersion;
@@ -104,6 +106,100 @@ it('creates an SOP document with template sections and resolved variables', func
             'document_number' => 'SOP-QA-00001',
             'inspection_date' => '2026-06-28',
             'requires_shutdown' => 'No',
+        ]);
+});
+
+it('creates an SOP document from a specific published template version', function (): void {
+    $department = Department::factory()->create(['name' => 'Quality Assurance', 'code' => 'QA']);
+    $owner = User::factory()->create();
+    $creator = User::factory()->create();
+
+    $template = SopTemplate::factory()->create([
+        'department_id' => $department->id,
+        'category_id' => DocumentCategory::factory(),
+        'document_type_id' => DocumentType::factory(),
+        'status' => TemplateStatus::Published,
+        'current_version' => 2,
+    ]);
+
+    $versionOne = SopTemplateVersion::factory()->published()->create([
+        'sop_template_id' => $template->id,
+        'version' => 1,
+    ]);
+
+    $versionTwo = SopTemplateVersion::factory()->published()->create([
+        'sop_template_id' => $template->id,
+        'version' => 2,
+    ]);
+
+    $versionOne->sections()->create([
+        'title' => 'Legacy Procedure',
+        'section_order' => 1,
+        'section_type' => 'rich_text',
+        'content' => '<p>Legacy content for {{department}}.</p>',
+        'is_required' => true,
+    ]);
+
+    $versionTwo->sections()->create([
+        'title' => 'Updated Procedure',
+        'section_order' => 1,
+        'section_type' => 'rich_text',
+        'content' => '<p>Updated content for {{department}}.</p>',
+        'is_required' => true,
+    ]);
+
+    foreach ([$versionOne, $versionTwo] as $version) {
+        $version->variables()->createMany([
+            ['name' => 'department', 'label' => 'Department', 'required' => true],
+            ['name' => 'document_number', 'label' => 'Document Number', 'required' => true],
+        ]);
+    }
+
+    $document = app(CreateDocumentFromTemplateAction::class)->execute(new SopDocumentData(
+        templateId: $template->id,
+        title: 'Versioned SOP',
+        ownerId: $owner->id,
+        createdBy: $creator->id,
+        variables: [],
+        templateVersionId: $versionOne->id,
+        documentNumber: 'SOP-QA-00010',
+    ));
+
+    expect($document->template_version_id)->toBe($versionOne->id)
+        ->and($document->sections->first()->content)->toContain('Legacy content');
+});
+
+it('logs template version publish changes in the audit log', function (): void {
+    $user = User::factory()->create();
+
+    $template = SopTemplate::factory()->create([
+        'category_id' => DocumentCategory::factory(),
+        'document_type_id' => DocumentType::factory(),
+        'status' => TemplateStatus::Published,
+        'current_version' => 1,
+    ]);
+
+    SopTemplateVersion::factory()->published()->create([
+        'sop_template_id' => $template->id,
+        'version' => 1,
+    ]);
+
+    $draftVersion = SopTemplateVersion::factory()->create([
+        'sop_template_id' => $template->id,
+        'version' => 2,
+        'status' => TemplateStatus::Draft,
+        'change_reason' => 'Updated safety steps',
+    ]);
+
+    app(PublishTemplateAction::class)->execute($template, $user->id, 'Updated safety steps');
+
+    expect(SopAuditLog::query()->where('sop_template_id', $template->id)->latest('id')->first())
+        ->action->toBe(SopAuditLog::ACTION_VERSION_PUBLISHED)
+        ->new_values->toMatchArray([
+            'template_id' => $template->id,
+            'template_version_id' => $draftVersion->id,
+            'version' => 2,
+            'change_reason' => 'Updated safety steps',
         ]);
 });
 

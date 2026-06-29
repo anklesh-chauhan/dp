@@ -12,6 +12,7 @@ use App\Models\SopDocument;
 use App\Models\SopWorkflow;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class WorkflowEngineService
 {
@@ -39,12 +40,22 @@ class WorkflowEngineService
             }
 
             $document->update(['status' => DocumentStatus::UnderReview]);
-            $this->auditLogService->log($document, SopAuditLog::ACTION_SUBMITTED, null, ['workflow_id' => $workflow->id]);
+            $this->auditLogService->log(
+                action: SopAuditLog::ACTION_SUBMITTED,
+                newValues: ['workflow_id' => $workflow->id],
+                document: $document,
+            );
         });
     }
 
     public function approve(SopApproval $approval, User $approver, ?string $comments = null): SopApproval
     {
+        if (! $approval->canBeApprovedBy($approver)) {
+            throw ValidationException::withMessages([
+                'approval' => 'This approval step is not available for you yet.',
+            ]);
+        }
+
         return DB::transaction(function () use ($approval, $approver, $comments): SopApproval {
             $approval->update([
                 'approved_by' => $approver->id,
@@ -63,10 +74,15 @@ class WorkflowEngineService
                 $document->update(['status' => DocumentStatus::Approved]);
             }
 
-            $this->auditLogService->log($document, SopAuditLog::ACTION_APPROVED, null, [
-                'approval_id' => $approval->id,
-                'approved_by' => $approver->id,
-            ], $approver->id);
+            $this->auditLogService->log(
+                action: SopAuditLog::ACTION_APPROVED,
+                newValues: [
+                    'approval_id' => $approval->id,
+                    'approved_by' => $approver->id,
+                ],
+                userId: $approver->id,
+                document: $document,
+            );
 
             return $approval;
         });
@@ -95,10 +111,15 @@ class WorkflowEngineService
             $document = $approval->document;
             $document->update(['status' => $documentStatus]);
 
-            $this->auditLogService->log($document, $auditAction, null, [
-                'approval_id' => $approval->id,
-                'decision' => $decision->value,
-            ], $approver->id);
+            $this->auditLogService->log(
+                action: $auditAction,
+                newValues: [
+                    'approval_id' => $approval->id,
+                    'decision' => $decision->value,
+                ],
+                userId: $approver->id,
+                document: $document,
+            );
 
             return $approval;
         });

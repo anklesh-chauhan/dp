@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Filament\Resources\SopTemplates\RelationManagers;
 
 use App\Enums\TemplateStatus;
+use App\Models\SopAuditLog;
+use App\Models\SopTemplateVersion;
+use App\Services\Sop\AuditLogService;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -25,7 +28,7 @@ class VersionRelationManager extends RelationManager
 
     public function form(Schema $schema): Schema
     {
-        return $schema->components([
+        return $schema->columns(1)->components([
             Grid::make(2)->schema([
                 TextInput::make('version')->numeric()->required()->minValue(1),
                 DatePicker::make('effective_date'),
@@ -49,7 +52,31 @@ class VersionRelationManager extends RelationManager
                 TextColumn::make('effective_date')->date(),
             ])
             ->recordActions([
-                EditAction::make(),
+                EditAction::make()
+                    ->using(function (SopTemplateVersion $record, array $data): SopTemplateVersion {
+                        $oldValues = [
+                            'version' => $record->version,
+                            'change_reason' => $record->change_reason,
+                            'effective_date' => $record->effective_date?->toDateString(),
+                        ];
+
+                        $record->update($data);
+
+                        app(AuditLogService::class)->log(
+                            action: SopAuditLog::ACTION_VERSION_UPDATED,
+                            oldValues: $oldValues,
+                            newValues: [
+                                'template_version_id' => $record->id,
+                                'version' => $record->version,
+                                'change_reason' => $record->change_reason,
+                                'effective_date' => $record->effective_date?->toDateString(),
+                            ],
+                            userId: Auth::id(),
+                            template: $this->getOwnerRecord(),
+                        );
+
+                        return $record;
+                    }),
                 DeleteAction::make(),
             ])
             ->headerActions([
@@ -59,6 +86,19 @@ class VersionRelationManager extends RelationManager
                         $data['created_by'] = Auth::id();
 
                         return $data;
+                    })
+                    ->after(function (SopTemplateVersion $record): void {
+                        app(AuditLogService::class)->log(
+                            action: SopAuditLog::ACTION_VERSION_CREATED,
+                            newValues: [
+                                'template_version_id' => $record->id,
+                                'version' => $record->version,
+                                'status' => $record->status->value,
+                                'change_reason' => $record->change_reason,
+                            ],
+                            userId: Auth::id(),
+                            template: $this->getOwnerRecord(),
+                        );
                     }),
             ]);
     }

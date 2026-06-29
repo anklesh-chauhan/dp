@@ -98,6 +98,14 @@ class SopTemplate extends Model
     }
 
     /**
+     * @return HasMany<SopAuditLog, $this>
+     */
+    public function auditLogs(): HasMany
+    {
+        return $this->hasMany(SopAuditLog::class, 'sop_template_id');
+    }
+
+    /**
      * @return HasManyThrough<SopTemplateSection, SopTemplateVersion, $this>
      */
     public function sections(): HasManyThrough
