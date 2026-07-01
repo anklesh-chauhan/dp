@@ -32,13 +32,29 @@ class TemplateAuditRelationManager extends RelationManager
                 TextColumn::make('user.name')->label('User')->searchable(),
                 TextColumn::make('old_values')
                     ->label('Previous')
-                    ->formatStateUsing(fn (?array $state): string => $state ? json_encode($state) : '—')
-                    ->limit(40)
+                    ->formatStateUsing(function (mixed $state): string {
+                        if (! is_array($state)) {
+                            return (string) $state;
+                        }
+
+                        return collect($state)
+                            ->map(fn ($value, $key) => "{$key}: {$value}")
+                            ->implode("\n");
+                    })
+                    ->wrap()
                     ->toggleable(),
                 TextColumn::make('new_values')
                     ->label('Changes')
-                    ->formatStateUsing(fn (?array $state): string => $state ? json_encode($state) : '—')
-                    ->limit(40)
+                    ->formatStateUsing(function (mixed $state): string {
+                        if (! is_array($state)) {
+                            return (string) $state;
+                        }
+
+                        return collect($state)
+                            ->map(fn ($value, $key) => "{$key}: {$value}")
+                            ->implode("\n");
+                    })
+                    ->wrap()
                     ->toggleable(),
                 TextColumn::make('ip_address')->toggleable(isToggledHiddenByDefault: true),
             ])
