@@ -33,6 +33,16 @@ class SopAuditLog extends Model
 
     public const ACTION_RETURNED = 'returned';
 
+    public const ACTION_LOCKED = 'locked';
+
+    public const ACTION_UNLOCKED = 'unlocked';
+
+    public const ACTION_ISSUED = 'issued';
+
+    public const ACTION_RECALLED = 'recalled';
+
+    public const ACTION_COPY_DESTROYED = 'copy_destroyed';
+
     public const ACTION_DOWNLOADED = 'downloaded';
 
     public const ACTION_PRINTED = 'printed';

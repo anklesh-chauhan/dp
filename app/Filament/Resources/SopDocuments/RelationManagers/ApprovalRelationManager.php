@@ -6,7 +6,9 @@ namespace App\Filament\Resources\SopDocuments\RelationManagers;
 
 use App\Actions\Sop\ApproveDocumentAction;
 use App\Actions\Sop\RejectDocumentAction;
+use App\Actions\Sop\ReturnDocumentAction;
 use App\Enums\ApprovalDecision;
+use App\Enums\ApprovalStepType;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -29,19 +31,30 @@ class ApprovalRelationManager extends RelationManager
         return $table
             ->columns([
                 TextColumn::make('workflowStep.step_no')->label('Step')->sortable(),
-                TextColumn::make('workflowStep.approval_type')->label('Type')->badge(),
+                TextColumn::make('workflowStep.approval_type')
+                    ->label('Type')
+                    ->badge()
+                    ->formatStateUsing(fn (ApprovalStepType $state): string => $state->label()),
                 TextColumn::make('workflowStep.role.name')->label('Role'),
                 TextColumn::make('decision')
                     ->badge()
                     ->formatStateUsing(fn (ApprovalDecision $state): string => $state->label()),
-                TextColumn::make('approver.name')->label('Approved By'),
+                TextColumn::make('approver.name')->label('Decided By'),
                 TextColumn::make('approved_at')->dateTime(),
+                TextColumn::make('comments')->limit(50)->toggleable(),
             ])
             ->recordActions([
                 Action::make('approve')
                     ->schema([Textarea::make('comments')])
                     ->visible(fn ($record): bool => Auth::user()?->can('approve', $record) ?? false)
                     ->action(fn ($record, array $data): mixed => app(ApproveDocumentAction::class)->execute($record, Auth::user(), $data['comments'] ?? null)),
+                Action::make('return')
+                    ->label('Return to Maker')
+                    ->color('warning')
+                    ->icon('heroicon-o-arrow-uturn-left')
+                    ->schema([Textarea::make('comments')->required()])
+                    ->visible(fn ($record): bool => Auth::user()?->can('approve', $record) ?? false)
+                    ->action(fn ($record, array $data): mixed => app(ReturnDocumentAction::class)->execute($record, Auth::user(), $data['comments'] ?? null)),
                 Action::make('reject')
                     ->color('danger')
                     ->schema([Textarea::make('comments')->required()])

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Concerns\Lockable;
 use App\Enums\TemplateStatus;
 use Database\Factories\SopTemplateFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -17,7 +18,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class SopTemplate extends Model
 {
     /** @use HasFactory<SopTemplateFactory> */
-    use HasFactory, SoftDeletes;
+    use HasFactory, Lockable, SoftDeletes;
 
     protected $fillable = [
         'name',
@@ -29,6 +30,8 @@ class SopTemplate extends Model
         'status',
         'current_version',
         'created_by',
+        'locked_by',
+        'locked_at',
     ];
 
     protected function casts(): array
@@ -36,6 +39,7 @@ class SopTemplate extends Model
         return [
             'status' => TemplateStatus::class,
             'current_version' => 'integer',
+            'locked_at' => 'datetime',
         ];
     }
 

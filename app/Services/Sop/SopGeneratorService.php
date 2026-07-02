@@ -19,8 +19,8 @@ class SopGeneratorService
     public function __construct(
         private readonly VariableResolverService $variableResolverService,
         private readonly DocumentNumberGeneratorService $documentNumberGeneratorService,
-        private readonly WorkflowEngineService $workflowEngineService,
         private readonly AuditLogService $auditLogService,
+        private readonly SopReferenceService $sopReferenceService,
     ) {}
 
     /**
@@ -31,7 +31,7 @@ class SopGeneratorService
         return DB::transaction(function () use ($data): SopDocument {
             if ($data->templateVersionId !== null) {
                 $version = SopTemplateVersion::query()
-                    ->with(['template.department', 'sections', 'variables'])
+                    ->with(['template.department', 'template.documentType', 'sections', 'variables'])
                     ->findOrFail($data->templateVersionId);
 
                 if ($version->template->id !== $data->templateId) {
@@ -39,29 +39,38 @@ class SopGeneratorService
                 }
 
                 if ($version->status !== TemplateStatus::Published) {
-                    throw ValidationException::withMessages(['template_version_id' => 'Only published template versions can generate SOP documents.']);
+                    throw ValidationException::withMessages(['template_version_id' => 'Only published template versions can generate controlled documents.']);
                 }
 
                 $template = $version->template;
             } else {
                 $template = SopTemplate::query()
-                    ->with(['department', 'publishedVersion.sections', 'publishedVersion.variables'])
+                    ->with(['department', 'documentType', 'publishedVersion.sections', 'publishedVersion.variables'])
                     ->findOrFail($data->templateId);
 
                 if ($template->status !== TemplateStatus::Published || $template->publishedVersion === null) {
-                    throw ValidationException::withMessages(['template_id' => 'Only published templates can generate SOP documents.']);
+                    throw ValidationException::withMessages(['template_id' => 'Only published templates can generate controlled documents.']);
                 }
 
                 $version = $template->publishedVersion;
             }
 
-            $documentNumber = $data->documentNumber ?? $this->documentNumberGeneratorService->generate($template->department);
-            $variables = array_merge($data->variables, [
-                'department' => $template->department->name,
-                'document_number' => $documentNumber,
-                'effective_date' => $data->effectiveDate?->toDateString(),
-                'review_date' => $data->reviewDate?->toDateString(),
-            ]);
+            $documentType = $template->documentType;
+            $sopReference = [];
+
+            if ($documentType->requiresSopReference()) {
+                if ($data->referencedSopDocumentId === null) {
+                    throw ValidationException::withMessages([
+                        'referenced_sop_document_id' => 'A referenced effective SOP is required for this document type.',
+                    ]);
+                }
+
+                $sopReference = $this->sopReferenceService->resolve($data->referencedSopDocumentId, $template->department);
+            }
+
+            $typeCode = $documentType->code;
+            $documentNumber = $data->documentNumber ?? $this->documentNumberGeneratorService->generate($template->department, $typeCode);
+            $variables = $this->prepareVariables($data->variables, $template, $documentNumber, $data, $sopReference);
             $resolvedVariables = $this->resolveVariables($version, $variables);
 
             $document = SopDocument::query()->create([
@@ -71,11 +80,16 @@ class SopGeneratorService
                 'title' => $data->title,
                 'version' => 1,
                 'department_id' => $template->department_id,
+                'document_type_id' => $documentType->id,
                 'status' => DocumentStatus::Draft,
                 'effective_date' => $data->effectiveDate,
                 'review_date' => $data->reviewDate,
                 'owner_id' => $data->ownerId,
                 'created_by' => $data->createdBy,
+                'batch_number' => $data->batchNumber,
+                'product_name' => $data->productName,
+                'purpose' => $data->purpose,
+                ...$sopReference,
             ]);
 
             foreach ($version->sections as $section) {
@@ -98,15 +112,60 @@ class SopGeneratorService
                 newValues: [
                     'template_id' => $template->id,
                     'template_version_id' => $version->id,
+                    'document_type_id' => $documentType->id,
+                    'referenced_sop_document_id' => $sopReference['referenced_sop_document_id'] ?? null,
                 ],
                 userId: $data->createdBy,
                 document: $document,
             );
 
-            $this->workflowEngineService->start($document);
-
-            return $document->refresh()->load(['sections', 'variables', 'approvals']);
+            return $document->refresh()->load(['sections', 'variables', 'documentType', 'referencedSop']);
         });
+    }
+
+    /**
+     * @param  array<string, mixed>  $variables
+     * @param  array<string, mixed>  $sopReference
+     * @return array<string, mixed>
+     */
+    private function prepareVariables(
+        array $variables,
+        SopTemplate $template,
+        string $documentNumber,
+        SopDocumentData $data,
+        array $sopReference,
+    ): array {
+        if (isset($variables['referenced_sop']) && is_numeric($variables['referenced_sop'])) {
+            $referencedSop = SopDocument::query()->find((int) $variables['referenced_sop']);
+
+            if ($referencedSop !== null) {
+                $variables['referenced_sop'] = $referencedSop->document_number;
+            }
+        }
+
+        $variables = array_merge($variables, [
+            'document_number' => $documentNumber,
+            'effective_date' => $data->effectiveDate?->toDateString(),
+            'review_date' => $data->reviewDate?->toDateString(),
+        ]);
+
+        if (blank($variables['department'] ?? null)) {
+            $variables['department'] = $template->department->name;
+        }
+
+        if (! empty($sopReference['referenced_sop_number'])) {
+            $variables['referenced_sop'] = $sopReference['referenced_sop_number'];
+        }
+
+        if (filled($data->batchNumber)) {
+            $variables['batch_number'] = $data->batchNumber;
+        }
+
+        if (filled($data->productName)) {
+            $variables['product_name'] = $data->productName;
+        }
+
+        return $variables;
     }
 
     /**

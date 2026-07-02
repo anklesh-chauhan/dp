@@ -1,0 +1,111 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Models;
+
+use App\Enums\IssuanceStatus;
+use Database\Factories\DocumentIssuanceFactory;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class DocumentIssuance extends Model
+{
+    /** @use HasFactory<DocumentIssuanceFactory> */
+    use HasFactory;
+
+    protected $fillable = [
+        'document_id',
+        'copy_number',
+        'issuance_number',
+        'issued_to_user_id',
+        'issued_to_department_id',
+        'issued_to_location',
+        'issued_by',
+        'issued_at',
+        'status',
+        'recalled_by',
+        'recalled_at',
+        'recall_reason',
+        'destroyed_by',
+        'destroyed_at',
+        'destroy_reason',
+        'watermark_code',
+        'notes',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'copy_number' => 'integer',
+            'issued_at' => 'datetime',
+            'recalled_at' => 'datetime',
+            'destroyed_at' => 'datetime',
+            'status' => IssuanceStatus::class,
+        ];
+    }
+
+    /**
+     * @return BelongsTo<SopDocument, $this>
+     */
+    public function document(): BelongsTo
+    {
+        return $this->belongsTo(SopDocument::class, 'document_id');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function issuedToUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'issued_to_user_id');
+    }
+
+    /**
+     * @return BelongsTo<Department, $this>
+     */
+    public function issuedToDepartment(): BelongsTo
+    {
+        return $this->belongsTo(Department::class, 'issued_to_department_id');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function issuer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'issued_by');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function recaller(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'recalled_by');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function destroyer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'destroyed_by');
+    }
+
+    public function isActive(): bool
+    {
+        return $this->status === IssuanceStatus::Active;
+    }
+
+    /**
+     * @param  Builder<DocumentIssuance>  $query
+     * @return Builder<DocumentIssuance>
+     */
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('status', IssuanceStatus::Active);
+    }
+}

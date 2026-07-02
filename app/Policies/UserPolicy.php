@@ -74,4 +74,34 @@ class UserPolicy
         return $authUser->can('Approve:User');
     }
 
+    public function submit(AuthUser $authUser): bool
+    {
+        return $authUser->can('Submit:User');
+    }
+
+    public function review(AuthUser $authUser): bool
+    {
+        return $authUser->can('Review:User');
+    }
+
+    public function publish(AuthUser $authUser): bool
+    {
+        return $authUser->can('Publish:User');
+    }
+
+    public function unpublish(AuthUser $authUser): bool
+    {
+        return $authUser->can('Unpublish:User');
+    }
+
+    public function archive(AuthUser $authUser): bool
+    {
+        return $authUser->can('Archive:User');
+    }
+
+    public function unarchive(AuthUser $authUser): bool
+    {
+        return $authUser->can('Unarchive:User');
+    }
+
 }

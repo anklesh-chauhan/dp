@@ -115,6 +115,24 @@
             color: #617182;
         }
 
+        .watermark {
+            border: 2px dashed #b45309;
+            color: #92400e;
+            font-weight: 700;
+            letter-spacing: .08em;
+            margin: 0 0 18px;
+            padding: 10px 14px;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .reference-box {
+            background: #f8fafc;
+            border: 1px solid #d5dbe3;
+            margin-bottom: 18px;
+            padding: 12px 14px;
+        }
+
         @page {
             margin: 18mm;
         }
@@ -145,10 +163,27 @@
     </div>
 
     <main class="page">
+        @if ($issuance)
+            <div class="watermark">
+                Controlled Copy {{ $issuance->copy_number }} | {{ $issuance->watermark_code }} | Issued {{ $issuance->issued_at->toDayDateTimeString() }}
+            </div>
+        @endif
+
         <header>
             <h1>{{ $document->title }}</h1>
             <div class="muted">{{ $document->document_number }} | Version {{ $document->version }} | {{ $document->status->label() }}</div>
         </header>
+
+        @if ($document->referenced_sop_number)
+            <section class="reference-box">
+                <strong>Referenced SOP:</strong>
+                {{ $document->referenced_sop_number }}
+                v{{ $document->referenced_sop_version }}
+                @if ($document->referenced_sop_effective_date)
+                    (Effective {{ $document->referenced_sop_effective_date->toFormattedDateString() }})
+                @endif
+            </section>
+        @endif
 
         <section class="meta">
             <table>
@@ -182,6 +217,18 @@
                         <th>Prepared By</th>
                         <td>{{ $document->creator?->name ?? '-' }}</td>
                     </tr>
+                    @if ($document->batch_number)
+                        <tr>
+                            <th>Batch Number</th>
+                            <td>{{ $document->batch_number }}</td>
+                        </tr>
+                    @endif
+                    @if ($document->product_name)
+                        <tr>
+                            <th>Product</th>
+                            <td>{{ $document->product_name }}</td>
+                        </tr>
+                    @endif
                 </tbody>
             </table>
         </section>

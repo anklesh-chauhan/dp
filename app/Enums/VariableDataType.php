@@ -14,6 +14,7 @@ enum VariableDataType: string
     case Boolean = 'boolean';
     case User = 'user';
     case Department = 'department';
+    case SopReference = 'sop_reference';
 
     public function label(): string
     {
@@ -26,6 +27,7 @@ enum VariableDataType: string
             self::Boolean => 'Boolean',
             self::User => 'User',
             self::Department => 'Department',
+            self::SopReference => 'SOP Reference',
         };
     }
 

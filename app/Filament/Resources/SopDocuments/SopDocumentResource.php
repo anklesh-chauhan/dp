@@ -6,7 +6,6 @@ namespace App\Filament\Resources\SopDocuments;
 
 use App\Enums\DocumentStatus;
 use App\Enums\TemplateStatus;
-use App\Enums\VariableDataType;
 use App\Filament\Resources\SopDocuments\Pages\CreateSopDocument;
 use App\Filament\Resources\SopDocuments\Pages\EditSopDocument;
 use App\Filament\Resources\SopDocuments\Pages\ListSopDocuments;
@@ -15,9 +14,9 @@ use App\Filament\Resources\SopDocuments\RelationManagers\ApprovalRelationManager
 use App\Filament\Resources\SopDocuments\RelationManagers\AuditRelationManager;
 use App\Filament\Resources\SopDocuments\RelationManagers\DocumentSectionRelationManager;
 use App\Filament\Resources\SopDocuments\RelationManagers\DocumentVariableRelationManager;
+use App\Filament\Support\TemplateVariableFieldBuilder;
 use App\Models\SopDocument;
 use App\Models\SopTemplateVersion;
-use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -28,10 +27,8 @@ use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
@@ -110,6 +107,8 @@ class SopDocumentResource extends Resource
                             ->options(DocumentStatus::options())
                             ->default(DocumentStatus::Draft->value)
                             ->visible(fn ($livewire): bool => ! ($livewire instanceof CreateSopDocument))
+                            ->disabled(fn ($livewire): bool => ! ($livewire instanceof CreateSopDocument))
+                            ->dehydrated(false)
                             ->required(fn ($livewire): bool => ! ($livewire instanceof CreateSopDocument)),
                         Select::make('owner_id')->relationship('owner', 'name')->searchable()->preload()->required(),
                         DatePicker::make('effective_date'),
@@ -119,7 +118,10 @@ class SopDocumentResource extends Resource
                 ->columnSpanFull(),
             Section::make('Template Variable Values')
                 ->key(fn (Get $get): string => 'template-variables-'.($get('template_version_id') ?? 'none'))
-                ->schema(fn (Get $get): array => self::templateVariableFields((int) $get('template_version_id')))
+                ->schema(fn (Get $get): array => TemplateVariableFieldBuilder::fields(
+                    (int) $get('template_version_id'),
+                    (int) $get('template_id'),
+                ))
                 ->columns(2)
                 ->visible(fn ($livewire, Get $get): bool => $livewire instanceof CreateSopDocument && filled($get('template_version_id')))
                 ->dehydrated(fn ($livewire): bool => $livewire instanceof CreateSopDocument)
@@ -145,6 +147,10 @@ class SopDocumentResource extends Resource
                         DocumentStatus::Effective => 'success',
                         DocumentStatus::Obsolete, DocumentStatus::Rejected => 'danger',
                     }),
+                TextColumn::make('lockedByUser.name')
+                    ->label('Locked By')
+                    ->placeholder('—')
+                    ->toggleable(),
                 TextColumn::make('effective_date')->date()->sortable(),
                 TextColumn::make('review_date')->date()->sortable(),
             ])
@@ -195,7 +201,7 @@ class SopDocumentResource extends Resource
     {
         return parent::getEloquentQuery()
             ->withoutGlobalScopes([SoftDeletingScope::class])
-            ->with(['department', 'template']);
+            ->with(['department', 'template', 'lockedByUser']);
     }
 
     private static function publishedTemplateVersionId(?int $templateId): ?int
@@ -230,114 +236,10 @@ class SopDocumentResource extends Resource
     }
 
     /**
-     * @return array<string, string>
-     */
-    /**
-     * @return array<int, mixed>
-     */
-    private static function templateVariableFields(?int $templateVersionId): array
-    {
-        if ($templateVersionId === null || $templateVersionId === 0) {
-            return [];
-        }
-
-        return SopTemplateVersion::query()
-            ->with('variables')
-            ->find($templateVersionId)
-            ?->variables
-            ->reject(fn ($variable): bool => $variable->datatype === VariableDataType::Department)
-            ->map(fn ($variable): mixed => self::templateVariableField($variable))
-            ->values()
-            ->all() ?? [];
-    }
-
-    private static function templateVariableField(mixed $variable): mixed
-    {
-        $field = match ($variable->datatype) {
-            VariableDataType::Textarea => RichEditor::make("variables.{$variable->name}")
-                ->columnSpanFull(),
-            VariableDataType::Date => DatePicker::make("variables.{$variable->name}")
-                ->date(),
-            VariableDataType::Number => TextInput::make("variables.{$variable->name}")
-                ->numeric(),
-            VariableDataType::Boolean => Toggle::make("variables.{$variable->name}"),
-            VariableDataType::Select => Select::make("variables.{$variable->name}")
-                ->options(self::selectVariableOptions($variable))
-                ->searchable(),
-            VariableDataType::User => Select::make("variables.{$variable->name}")
-                ->options(fn (): array => User::query()->orderBy('name')->pluck('name', 'id')->all())
-                ->searchable()
-                ->preload(),
-            default => TextInput::make("variables.{$variable->name}"),
-        };
-
-        $field
-            ->label($variable->label)
-            ->required($variable->required)
-            ->rules(self::validationRules($variable));
-
-        return $field;
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    private static function selectVariableOptions(mixed $variable): array
-    {
-        $rules = self::validationRules($variable);
-
-        foreach ($rules as $rule) {
-            if (! is_string($rule) || ! str_starts_with($rule, 'in:')) {
-                continue;
-            }
-
-            return collect(explode(',', str($rule)->after('in:')->toString()))
-                ->mapWithKeys(fn (string $option): array => [trim($option) => str(trim($option))->replace('_', ' ')->title()->toString()])
-                ->all();
-        }
-
-        return [];
-    }
-
-    /**
-     * @return array<int, mixed>
-     */
-    private static function validationRules(mixed $variable): array
-    {
-        if (! is_array($variable->validation_rules)) {
-            return [];
-        }
-
-        return collect($variable->validation_rules)
-            ->map(function (mixed $value, int|string $key): mixed {
-                if (is_int($key)) {
-                    return $value;
-                }
-
-                return filled($value) ? "{$key}:{$value}" : $key;
-            })
-            ->values()
-            ->all();
-    }
-
-    /**
      * @return array<string, mixed>
      */
     private static function templateVariableDefaultValues(?int $templateVersionId): array
     {
-        if ($templateVersionId === null) {
-            return [];
-        }
-
-        return SopTemplateVersion::query()
-            ->with('variables')
-            ->find($templateVersionId)
-            ?->variables
-            ->reject(fn ($variable): bool => in_array($variable->datatype, [VariableDataType::Department], true))
-            ->mapWithKeys(fn ($variable): array => [$variable->name => match ($variable->datatype) {
-                VariableDataType::Boolean => filter_var($variable->default_value, FILTER_VALIDATE_BOOLEAN),
-                default => $variable->default_value,
-            }])
-            ->all() ?? [];
+        return TemplateVariableFieldBuilder::defaultValues($templateVersionId);
     }
 }

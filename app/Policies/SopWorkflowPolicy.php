@@ -77,4 +77,34 @@ class SopWorkflowPolicy
         return $authUser->can('Approve:SopWorkflow');
     }
 
+    public function submit(AuthUser $authUser, SopWorkflow $sopWorkflow): bool
+    {
+        return $authUser->can('Submit:SopWorkflow');
+    }
+
+    public function review(AuthUser $authUser, SopWorkflow $sopWorkflow): bool
+    {
+        return $authUser->can('Review:SopWorkflow');
+    }
+
+    public function publish(AuthUser $authUser, SopWorkflow $sopWorkflow): bool
+    {
+        return $authUser->can('Publish:SopWorkflow');
+    }
+
+    public function unpublish(AuthUser $authUser, SopWorkflow $sopWorkflow): bool
+    {
+        return $authUser->can('Unpublish:SopWorkflow');
+    }
+
+    public function archive(AuthUser $authUser, SopWorkflow $sopWorkflow): bool
+    {
+        return $authUser->can('Archive:SopWorkflow');
+    }
+
+    public function unarchive(AuthUser $authUser, SopWorkflow $sopWorkflow): bool
+    {
+        return $authUser->can('Unarchive:SopWorkflow');
+    }
+
 }

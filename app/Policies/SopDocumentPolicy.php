@@ -77,4 +77,34 @@ class SopDocumentPolicy
         return $authUser->can('Approve:SopDocument');
     }
 
+    public function submit(AuthUser $authUser, SopDocument $sopDocument): bool
+    {
+        return $authUser->can('Submit:SopDocument');
+    }
+
+    public function review(AuthUser $authUser, SopDocument $sopDocument): bool
+    {
+        return $authUser->can('Review:SopDocument');
+    }
+
+    public function publish(AuthUser $authUser, SopDocument $sopDocument): bool
+    {
+        return $authUser->can('Publish:SopDocument');
+    }
+
+    public function unpublish(AuthUser $authUser, SopDocument $sopDocument): bool
+    {
+        return $authUser->can('Unpublish:SopDocument');
+    }
+
+    public function archive(AuthUser $authUser, SopDocument $sopDocument): bool
+    {
+        return $authUser->can('Archive:SopDocument');
+    }
+
+    public function unarchive(AuthUser $authUser, SopDocument $sopDocument): bool
+    {
+        return $authUser->can('Unarchive:SopDocument');
+    }
+
 }

@@ -129,6 +129,7 @@ return [
         'methods' => [
             'viewAny', 'view', 'create', 'update', 'delete', 'deleteAny', 'restore',
             'forceDelete', 'forceDeleteAny', 'restoreAny', 'replicate', 'reorder', 'approve',
+            'submit', 'review', 'publish', 'unpublish', 'archive', 'unarchive',
         ],
         'single_parameter_methods' => [
             'viewAny',
@@ -235,6 +236,12 @@ return [
 
     'custom_permissions' => [
         'approve',
+        'submit',
+        'review',
+        'publish',
+        'unpublish',
+        'archive',
+        'unarchive',
     ],
 
     /*

@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\SopTemplate;
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Illuminate\Foundation\Auth\User as AuthUser;
 
 class SopTemplatePolicy
 {
     use HandlesAuthorization;
-
+    
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:SopTemplate');
@@ -77,13 +77,34 @@ class SopTemplatePolicy
         return $authUser->can('Approve:SopTemplate');
     }
 
+    public function submit(AuthUser $authUser, SopTemplate $sopTemplate): bool
+    {
+        return $authUser->can('Submit:SopTemplate');
+    }
+
+    public function review(AuthUser $authUser, SopTemplate $sopTemplate): bool
+    {
+        return $authUser->can('Review:SopTemplate');
+    }
+
     public function publish(AuthUser $authUser, SopTemplate $sopTemplate): bool
     {
-        return $this->approve($authUser, $sopTemplate);
+        return $authUser->can('Publish:SopTemplate');
+    }
+
+    public function unpublish(AuthUser $authUser, SopTemplate $sopTemplate): bool
+    {
+        return $authUser->can('Unpublish:SopTemplate');
     }
 
     public function archive(AuthUser $authUser, SopTemplate $sopTemplate): bool
     {
-        return $authUser->can('Update:SopTemplate');
+        return $authUser->can('Archive:SopTemplate');
     }
+
+    public function unarchive(AuthUser $authUser, SopTemplate $sopTemplate): bool
+    {
+        return $authUser->can('Unarchive:SopTemplate');
+    }
+
 }

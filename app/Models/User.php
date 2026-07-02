@@ -9,18 +9,17 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
-use Spatie\Permission\Models\Role;
 
-#[Fillable(['name', 'email', 'password'])]
+#[Fillable(['name', 'email', 'password', 'department_id'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, HasRoles, HasPanelShield;
+    use HasFactory, HasPanelShield, HasRoles, Notifiable;
 
     /**
      * Get the attributes that should be cast.
@@ -37,7 +36,7 @@ class User extends Authenticatable
 
     public function getFilamentAvatarUrl(): string
     {
-        return 'https://ui-avatars.com/api/?name=' . urlencode($this->name);
+        return 'https://ui-avatars.com/api/?name='.urlencode($this->name);
     }
 
     public function getFilamentName(): string
@@ -45,5 +44,11 @@ class User extends Authenticatable
         return $this->name;
     }
 
-
+    /**
+     * @return BelongsTo<Department, $this>
+     */
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class);
+    }
 }

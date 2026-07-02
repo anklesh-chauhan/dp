@@ -13,6 +13,7 @@ use App\Models\SopWorkflow;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -29,9 +30,9 @@ class SopWorkflowResource extends Resource
 {
     protected static ?string $model = SopWorkflow::class;
 
-    protected static string | UnitEnum | null $navigationGroup = 'SOP Management';
+    protected static string|UnitEnum|null $navigationGroup = 'SOP Management';
 
-    protected static string | \BackedEnum | null $navigationIcon = Heroicon::OutlinedQueueList;
+    protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedQueueList;
 
     protected static ?string $recordTitleAttribute = 'name';
 
@@ -41,6 +42,12 @@ class SopWorkflowResource extends Resource
             Grid::make(2)->schema([
                 TextInput::make('name')->required()->maxLength(255)->unique(ignoreRecord: true),
                 Toggle::make('is_active')->default(true),
+                Select::make('department_id')
+                    ->label('Department')
+                    ->relationship('department', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->placeholder('Global (all departments)'),
                 Textarea::make('description')->columnSpanFull(),
             ]),
         ]);
@@ -51,6 +58,7 @@ class SopWorkflowResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('name')->searchable()->sortable(),
+                TextColumn::make('department.name')->label('Department')->placeholder('Global'),
                 IconColumn::make('is_active')->boolean(),
                 TextColumn::make('steps_count')->counts('steps')->label('Steps'),
                 TextColumn::make('updated_at')->dateTime()->sortable(),

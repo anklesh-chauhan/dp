@@ -77,4 +77,34 @@ class RolePolicy
         return $authUser->can('Approve:Role');
     }
 
+    public function submit(AuthUser $authUser, Role $role): bool
+    {
+        return $authUser->can('Submit:Role');
+    }
+
+    public function review(AuthUser $authUser, Role $role): bool
+    {
+        return $authUser->can('Review:Role');
+    }
+
+    public function publish(AuthUser $authUser, Role $role): bool
+    {
+        return $authUser->can('Publish:Role');
+    }
+
+    public function unpublish(AuthUser $authUser, Role $role): bool
+    {
+        return $authUser->can('Unpublish:Role');
+    }
+
+    public function archive(AuthUser $authUser, Role $role): bool
+    {
+        return $authUser->can('Archive:Role');
+    }
+
+    public function unarchive(AuthUser $authUser, Role $role): bool
+    {
+        return $authUser->can('Unarchive:Role');
+    }
+
 }

@@ -6,8 +6,11 @@ namespace App\Filament\Resources\SopApprovals;
 
 use App\Actions\Sop\ApproveDocumentAction;
 use App\Actions\Sop\RejectDocumentAction;
+use App\Actions\Sop\ReturnDocumentAction;
 use App\Enums\ApprovalDecision;
+use App\Enums\ApprovalStepType;
 use App\Enums\DocumentStatus;
+use App\Enums\SopRole;
 use App\Filament\Resources\SopApprovals\Pages\ListSopApprovals;
 use App\Filament\Resources\SopDocuments\SopDocumentResource;
 use App\Models\SopApproval;
@@ -68,7 +71,8 @@ class SopApprovalResource extends Resource
                     ->sortable(),
                 TextColumn::make('workflowStep.approval_type')
                     ->label('Type')
-                    ->badge(),
+                    ->badge()
+                    ->formatStateUsing(fn (ApprovalStepType $state): string => $state->label()),
                 TextColumn::make('workflowStep.role.name')
                     ->label('Required Role'),
                 TextColumn::make('decision')
@@ -111,6 +115,13 @@ class SopApprovalResource extends Resource
                     ->schema([Textarea::make('comments')])
                     ->visible(fn (SopApproval $record): bool => Auth::user()?->can('approve', $record) ?? false)
                     ->action(fn (SopApproval $record, array $data): mixed => app(ApproveDocumentAction::class)->execute($record, Auth::user(), $data['comments'] ?? null)),
+                Action::make('return')
+                    ->label('Return to Maker')
+                    ->icon(Heroicon::ArrowUturnLeft)
+                    ->color('warning')
+                    ->schema([Textarea::make('comments')->required()])
+                    ->visible(fn (SopApproval $record): bool => Auth::user()?->can('approve', $record) ?? false)
+                    ->action(fn (SopApproval $record, array $data): mixed => app(ReturnDocumentAction::class)->execute($record, Auth::user(), $data['comments'] ?? null)),
                 Action::make('reject')
                     ->icon(Heroicon::XCircle)
                     ->color('danger')
@@ -129,12 +140,20 @@ class SopApprovalResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()
+        $query = parent::getEloquentQuery()
             ->with([
                 'document.department',
                 'workflowStep.role',
                 'approver',
             ]);
+
+        $user = Auth::user();
+
+        if ($user !== null && $user->department_id !== null && ! $user->hasRole(SopRole::Administrator->value)) {
+            $query->whereHas('document', fn (Builder $documentQuery): Builder => $documentQuery->where('department_id', $user->department_id));
+        }
+
+        return $query;
     }
 
     public static function canCreate(): bool

@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Actions\Sop\CreateDocumentFromTemplateAction;
 use App\Actions\Sop\PublishTemplateAction;
 use App\Data\SopDocumentData;
+use App\Enums\DocumentStatus;
 use App\Enums\TemplateStatus;
 use App\Enums\VariableDataType;
 use App\Models\Department;
@@ -221,6 +222,7 @@ it('renders the printable SOP document page for authorized users', function (): 
         'department_id' => $template->department_id,
         'document_number' => 'SOP-QA-00002',
         'title' => 'Packaging SOP',
+        'status' => DocumentStatus::Effective,
     ]);
 
     $document->sections()->create([

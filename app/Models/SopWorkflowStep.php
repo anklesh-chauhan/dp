@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\ApprovalStepType;
 use Database\Factories\SopWorkflowStepFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -22,6 +23,7 @@ class SopWorkflowStep extends Model
     {
         return [
             'step_no' => 'integer',
+            'approval_type' => ApprovalStepType::class,
             'is_mandatory' => 'boolean',
         ];
     }

@@ -19,6 +19,11 @@ class UserForm
                     ->label('Email address')
                     ->email()
                     ->required(),
+                Select::make('department_id')
+                    ->label('Department')
+                    ->relationship('department', 'name')
+                    ->searchable()
+                    ->preload(),
                 Select::make('roles')
                     ->relationship('roles', 'name')
                     ->multiple()

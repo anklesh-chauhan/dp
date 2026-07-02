@@ -21,5 +21,9 @@ final readonly class SopDocumentData
         public ?CarbonInterface $reviewDate = null,
         public ?int $templateVersionId = null,
         public ?string $documentNumber = null,
+        public ?int $referencedSopDocumentId = null,
+        public ?string $batchNumber = null,
+        public ?string $productName = null,
+        public ?string $purpose = null,
     ) {}
 }
