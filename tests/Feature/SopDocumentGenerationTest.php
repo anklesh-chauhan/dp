@@ -5,17 +5,17 @@ declare(strict_types=1);
 use App\Actions\Sop\CreateDocumentFromTemplateAction;
 use App\Actions\Sop\PublishTemplateAction;
 use App\Data\SopDocumentData;
-use App\Enums\DocumentStatus;
-use App\Enums\TemplateStatus;
-use App\Enums\VariableDataType;
 use App\Models\Department;
 use App\Models\DocumentCategory;
+use App\Models\DocumentStatus;
 use App\Models\DocumentType;
 use App\Models\SopAuditLog;
 use App\Models\SopDocument;
 use App\Models\SopTemplate;
 use App\Models\SopTemplateVersion;
+use App\Models\TemplateStatus;
 use App\Models\User;
+use App\Models\VariableDataType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 
@@ -33,7 +33,7 @@ it('creates an SOP document with template sections and resolved variables', func
         'department_id' => $department->id,
         'category_id' => DocumentCategory::factory(),
         'document_type_id' => DocumentType::factory(),
-        'status' => TemplateStatus::Published,
+        'template_status_id' => TemplateStatus::idFor(TemplateStatus::PUBLISHED),
         'current_version' => 1,
     ]);
 
@@ -56,29 +56,32 @@ it('creates an SOP document with template sections and resolved variables', func
         [
             'name' => 'equipment',
             'label' => 'Equipment',
+            'variable_data_type_id' => VariableDataType::idFor(VariableDataType::TEXT),
             'required' => true,
         ],
         [
             'name' => 'department',
             'label' => 'Department',
+            'variable_data_type_id' => VariableDataType::idFor(VariableDataType::DEPARTMENT),
             'required' => true,
         ],
         [
             'name' => 'document_number',
             'label' => 'Document Number',
+            'variable_data_type_id' => VariableDataType::idFor(VariableDataType::TEXT),
             'required' => true,
         ],
         [
             'name' => 'inspection_date',
             'label' => 'Inspection Date',
-            'datatype' => VariableDataType::Date,
+            'variable_data_type_id' => VariableDataType::idFor(VariableDataType::DATE),
             'validation_rules' => ['date' => null],
             'required' => true,
         ],
         [
             'name' => 'requires_shutdown',
             'label' => 'Requires Shutdown',
-            'datatype' => VariableDataType::Boolean,
+            'variable_data_type_id' => VariableDataType::idFor(VariableDataType::BOOLEAN),
             'validation_rules' => ['boolean'],
             'required' => true,
         ],
@@ -119,7 +122,7 @@ it('creates an SOP document from a specific published template version', functio
         'department_id' => $department->id,
         'category_id' => DocumentCategory::factory(),
         'document_type_id' => DocumentType::factory(),
-        'status' => TemplateStatus::Published,
+        'template_status_id' => TemplateStatus::idFor(TemplateStatus::PUBLISHED),
         'current_version' => 2,
     ]);
 
@@ -151,8 +154,8 @@ it('creates an SOP document from a specific published template version', functio
 
     foreach ([$versionOne, $versionTwo] as $version) {
         $version->variables()->createMany([
-            ['name' => 'department', 'label' => 'Department', 'required' => true],
-            ['name' => 'document_number', 'label' => 'Document Number', 'required' => true],
+            ['name' => 'department', 'label' => 'Department', 'variable_data_type_id' => VariableDataType::idFor(VariableDataType::DEPARTMENT), 'required' => true],
+            ['name' => 'document_number', 'label' => 'Document Number', 'variable_data_type_id' => VariableDataType::idFor(VariableDataType::TEXT), 'required' => true],
         ]);
     }
 
@@ -176,7 +179,7 @@ it('logs template version publish changes in the audit log', function (): void {
     $template = SopTemplate::factory()->create([
         'category_id' => DocumentCategory::factory(),
         'document_type_id' => DocumentType::factory(),
-        'status' => TemplateStatus::Published,
+        'template_status_id' => TemplateStatus::idFor(TemplateStatus::PUBLISHED),
         'current_version' => 1,
     ]);
 
@@ -188,7 +191,7 @@ it('logs template version publish changes in the audit log', function (): void {
     $draftVersion = SopTemplateVersion::factory()->create([
         'sop_template_id' => $template->id,
         'version' => 2,
-        'status' => TemplateStatus::Draft,
+        'template_status_id' => TemplateStatus::idFor(TemplateStatus::DRAFT),
         'change_reason' => 'Updated safety steps',
     ]);
 
@@ -222,7 +225,7 @@ it('renders the printable SOP document page for authorized users', function (): 
         'department_id' => $template->department_id,
         'document_number' => 'SOP-QA-00002',
         'title' => 'Packaging SOP',
-        'status' => DocumentStatus::Effective,
+        'document_status_id' => DocumentStatus::idFor(DocumentStatus::EFFECTIVE),
     ]);
 
     $document->sections()->create([

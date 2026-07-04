@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Enums\VariableDataType;
 use Database\Factories\SopTemplateVariableFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -19,7 +18,7 @@ class SopTemplateVariable extends Model
         'template_version_id',
         'name',
         'label',
-        'datatype',
+        'variable_data_type_id',
         'default_value',
         'validation_rules',
         'required',
@@ -28,7 +27,6 @@ class SopTemplateVariable extends Model
     protected function casts(): array
     {
         return [
-            'datatype' => VariableDataType::class,
             'validation_rules' => 'array',
             'required' => 'boolean',
         ];
@@ -40,5 +38,13 @@ class SopTemplateVariable extends Model
     public function templateVersion(): BelongsTo
     {
         return $this->belongsTo(SopTemplateVersion::class, 'template_version_id');
+    }
+
+    /**
+     * @return BelongsTo<VariableDataType, $this>
+     */
+    public function variableDataType(): BelongsTo
+    {
+        return $this->belongsTo(VariableDataType::class);
     }
 }

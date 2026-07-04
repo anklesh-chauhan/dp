@@ -2,10 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Enums\ApprovalDecision;
-use App\Enums\DocumentStatus;
-use App\Enums\TemplateStatus;
-use App\Enums\VariableDataType;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -43,7 +39,7 @@ return new class extends Migration
             $table->foreignId('department_id')->constrained()->cascadeOnUpdate()->restrictOnDelete();
             $table->foreignId('category_id')->constrained('document_categories')->cascadeOnUpdate()->restrictOnDelete();
             $table->foreignId('document_type_id')->constrained()->cascadeOnUpdate()->restrictOnDelete();
-            $table->string('status')->default(TemplateStatus::Draft->value)->index();
+            $table->string('status')->default('draft')->index();
             $table->unsignedInteger('current_version')->default(0);
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
@@ -58,7 +54,7 @@ return new class extends Migration
             $table->json('content_json')->nullable();
             $table->date('effective_date')->nullable();
             $table->text('change_reason')->nullable();
-            $table->string('status')->default(TemplateStatus::Draft->value)->index();
+            $table->string('status')->default('draft')->index();
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
             $table->softDeletes();
@@ -82,7 +78,7 @@ return new class extends Migration
             $table->foreignId('template_version_id')->constrained('sop_template_versions')->cascadeOnUpdate()->cascadeOnDelete();
             $table->string('name');
             $table->string('label');
-            $table->string('datatype')->default(VariableDataType::Text->value);
+            $table->string('datatype')->default('text');
             $table->text('default_value')->nullable();
             $table->json('validation_rules')->nullable();
             $table->boolean('required')->default(false);
@@ -98,7 +94,7 @@ return new class extends Migration
             $table->string('title');
             $table->unsignedInteger('version')->default(1);
             $table->foreignId('department_id')->constrained()->cascadeOnUpdate()->restrictOnDelete();
-            $table->string('status')->default(DocumentStatus::Draft->value)->index();
+            $table->string('status')->default('draft')->index();
             $table->date('effective_date')->nullable();
             $table->date('review_date')->nullable();
             $table->foreignId('owner_id')->nullable()->constrained('users')->nullOnDelete();
@@ -151,7 +147,7 @@ return new class extends Migration
             $table->foreignId('document_id')->constrained('sop_documents')->cascadeOnUpdate()->cascadeOnDelete();
             $table->foreignId('workflow_step_id')->constrained('sop_workflow_steps')->cascadeOnUpdate()->restrictOnDelete();
             $table->foreignId('approved_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->string('decision')->default(ApprovalDecision::Pending->value)->index();
+            $table->string('decision')->default('pending')->index();
             $table->text('comments')->nullable();
             $table->timestamp('approved_at')->nullable();
             $table->string('signature_hash')->nullable();

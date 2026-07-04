@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Enums\ApprovalStepType;
 use Database\Factories\SopWorkflowStepFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -17,13 +16,18 @@ class SopWorkflowStep extends Model
     /** @use HasFactory<SopWorkflowStepFactory> */
     use HasFactory;
 
-    protected $fillable = ['workflow_id', 'step_no', 'role_id', 'approval_type', 'is_mandatory'];
+    protected $fillable = [
+        'workflow_id',
+        'step_no',
+        'role_id',
+        'approval_step_type_id',
+        'is_mandatory',
+    ];
 
     protected function casts(): array
     {
         return [
             'step_no' => 'integer',
-            'approval_type' => ApprovalStepType::class,
             'is_mandatory' => 'boolean',
         ];
     }
@@ -42,6 +46,14 @@ class SopWorkflowStep extends Model
     public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class);
+    }
+
+    /**
+     * @return BelongsTo<ApprovalStepType, $this>
+     */
+    public function approvalStepType(): BelongsTo
+    {
+        return $this->belongsTo(ApprovalStepType::class);
     }
 
     /**

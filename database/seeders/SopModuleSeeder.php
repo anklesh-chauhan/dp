@@ -4,16 +4,15 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Enums\ApprovalStepType;
-use App\Enums\ControlledDocumentTypeCode;
-use App\Enums\TemplateStatus;
-use App\Enums\VariableDataType;
+use App\Models\ApprovalStepType;
 use App\Models\Department;
 use App\Models\DocumentCategory;
 use App\Models\DocumentType;
 use App\Models\SopTemplate;
 use App\Models\SopTemplateVersion;
 use App\Models\SopWorkflow;
+use App\Models\TemplateStatus;
+use App\Models\VariableDataType;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -71,7 +70,6 @@ class SopModuleSeeder extends Seeder
         'Replicate:SopWorkflow',
         'Reorder:SopWorkflow',
 
-        // Role
         'ViewAny:Role',
         'View:Role',
         'Create:Role',
@@ -85,7 +83,6 @@ class SopModuleSeeder extends Seeder
         'Replicate:Role',
         'Reorder:Role',
 
-        // User
         'ViewAny:User',
         'View:User',
         'Create:User',
@@ -109,18 +106,68 @@ class SopModuleSeeder extends Seeder
         'Issue:DocumentIssuance',
         'Recall:DocumentIssuance',
         'Destroy:DocumentIssuance',
+
+        'ViewAny:DocumentStatus',
+        'View:DocumentStatus',
+        'Create:DocumentStatus',
+        'Update:DocumentStatus',
+        'Delete:DocumentStatus',
+
+        'ViewAny:TemplateStatus',
+        'View:TemplateStatus',
+        'Create:TemplateStatus',
+        'Update:TemplateStatus',
+        'Delete:TemplateStatus',
+
+        'ViewAny:VariableDataType',
+        'View:VariableDataType',
+        'Create:VariableDataType',
+        'Update:VariableDataType',
+        'Delete:VariableDataType',
+
+        'ViewAny:ApprovalDecision',
+        'View:ApprovalDecision',
+        'Create:ApprovalDecision',
+        'Update:ApprovalDecision',
+        'Delete:ApprovalDecision',
+
+        'ViewAny:IssuanceStatus',
+        'View:IssuanceStatus',
+        'Create:IssuanceStatus',
+        'Update:IssuanceStatus',
+        'Delete:IssuanceStatus',
+
+        'ViewAny:ApprovalStepType',
+        'View:ApprovalStepType',
+        'Create:ApprovalStepType',
+        'Update:ApprovalStepType',
+        'Delete:ApprovalStepType',
+
+        'ViewAny:SopRole',
+        'View:SopRole',
+        'Create:SopRole',
+        'Update:SopRole',
+        'Delete:SopRole',
+
+        'ViewAny:DocumentType',
+        'View:DocumentType',
+        'Create:DocumentType',
+        'Update:DocumentType',
+        'Delete:DocumentType',
     ];
 
     public function run(): void
     {
+        $this->call(LookupTableSeeder::class);
+
         $qa = Department::query()->firstOrCreate(['code' => 'QA'], ['name' => 'Quality Assurance']);
         $production = Department::query()->firstOrCreate(['code' => 'PROD'], ['name' => 'Production']);
 
         $category = DocumentCategory::query()->firstOrCreate(['code' => 'GMP'], ['name' => 'Good Manufacturing Practice']);
-        $documentType = DocumentType::query()->firstOrCreate(['code' => 'SOP'], ['name' => 'Standard Operating Procedure']);
-        $logType = DocumentType::query()->firstOrCreate(['code' => ControlledDocumentTypeCode::Log->value], ['name' => 'Log Document']);
-        $bmrType = DocumentType::query()->firstOrCreate(['code' => ControlledDocumentTypeCode::BatchRecord->value], ['name' => 'Batch Manufacturing Record']);
-        $formType = DocumentType::query()->firstOrCreate(['code' => ControlledDocumentTypeCode::Form->value], ['name' => 'Controlled Form']);
+        $documentType = DocumentType::query()->firstOrCreate(['code' => DocumentType::SOP], ['name' => 'Standard Operating Procedure', 'requires_sop_reference' => false, 'is_issuable' => false]);
+        $logType = DocumentType::query()->firstOrCreate(['code' => DocumentType::LOG], ['name' => 'Log Document', 'requires_sop_reference' => true, 'is_issuable' => true]);
+        $bmrType = DocumentType::query()->firstOrCreate(['code' => DocumentType::BATCH_RECORD], ['name' => 'Batch Manufacturing Record', 'requires_sop_reference' => true, 'is_issuable' => true]);
+        $formType = DocumentType::query()->firstOrCreate(['code' => DocumentType::FORM], ['name' => 'Controlled Form', 'requires_sop_reference' => true, 'is_issuable' => true]);
 
         foreach ($this->permissions as $permission) {
             Permission::findOrCreate($permission, 'web');
@@ -192,6 +239,8 @@ class SopModuleSeeder extends Seeder
             'Approve:SopApproval',
         ]);
 
+        $publishedStatusId = TemplateStatus::idFor(TemplateStatus::PUBLISHED);
+
         $template = SopTemplate::query()->firstOrCreate([
             'code' => 'TPL-SOP-GMP',
         ], [
@@ -200,7 +249,7 @@ class SopModuleSeeder extends Seeder
             'department_id' => $qa->id,
             'category_id' => $category->id,
             'document_type_id' => $documentType->id,
-            'status' => TemplateStatus::Published,
+            'template_status_id' => $publishedStatusId,
             'current_version' => 1,
         ]);
 
@@ -211,7 +260,7 @@ class SopModuleSeeder extends Seeder
             'content_json' => [],
             'effective_date' => now()->toDateString(),
             'change_reason' => 'Initial seeded version',
-            'status' => TemplateStatus::Published,
+            'template_status_id' => $publishedStatusId,
         ]);
 
         foreach (['Purpose', 'Scope', 'Responsibility', 'Procedure', 'Safety', 'References', 'Revision History'] as $order => $title) {
@@ -230,7 +279,7 @@ class SopModuleSeeder extends Seeder
                 'name' => $name,
             ], [
                 'label' => str($name)->replace('_', ' ')->title()->toString(),
-                'datatype' => VariableDataType::Text,
+                'variable_data_type_id' => VariableDataType::idFor(VariableDataType::TEXT),
                 'required' => in_array($name, ['department', 'document_number'], true),
             ]);
         }
@@ -244,15 +293,15 @@ class SopModuleSeeder extends Seeder
         ]);
 
         foreach ([
-            1 => [ApprovalStepType::Checker, $checkerRole],
-            2 => [ApprovalStepType::QAReview, $checkerRole],
-            3 => [ApprovalStepType::Approver, $approverRole],
+            1 => [ApprovalStepType::CHECKER, $checkerRole],
+            2 => [ApprovalStepType::QA_REVIEW, $checkerRole],
+            3 => [ApprovalStepType::APPROVER, $approverRole],
         ] as $stepNo => [$approvalType, $role]) {
             $globalWorkflow->steps()->firstOrCreate([
                 'step_no' => $stepNo,
             ], [
                 'role_id' => $role->id,
-                'approval_type' => $approvalType,
+                'approval_step_type_id' => ApprovalStepType::idFor($approvalType),
                 'is_mandatory' => true,
             ]);
         }
@@ -266,14 +315,14 @@ class SopModuleSeeder extends Seeder
         ]);
 
         foreach ([
-            1 => [ApprovalStepType::Checker, $checkerRole],
-            2 => [ApprovalStepType::Approver, $approverRole],
+            1 => [ApprovalStepType::CHECKER, $checkerRole],
+            2 => [ApprovalStepType::APPROVER, $approverRole],
         ] as $stepNo => [$approvalType, $role]) {
             $qaWorkflow->steps()->firstOrCreate([
                 'step_no' => $stepNo,
             ], [
                 'role_id' => $role->id,
-                'approval_type' => $approvalType,
+                'approval_step_type_id' => ApprovalStepType::idFor($approvalType),
                 'is_mandatory' => true,
             ]);
         }
@@ -287,15 +336,15 @@ class SopModuleSeeder extends Seeder
         ]);
 
         foreach ([
-            1 => [ApprovalStepType::Checker, $checkerRole],
-            2 => [ApprovalStepType::QAReview, $checkerRole],
-            3 => [ApprovalStepType::Approver, $approverRole],
+            1 => [ApprovalStepType::CHECKER, $checkerRole],
+            2 => [ApprovalStepType::QA_REVIEW, $checkerRole],
+            3 => [ApprovalStepType::APPROVER, $approverRole],
         ] as $stepNo => [$approvalType, $role]) {
             $prodWorkflow->steps()->firstOrCreate([
                 'step_no' => $stepNo,
             ], [
                 'role_id' => $role->id,
-                'approval_type' => $approvalType,
+                'approval_step_type_id' => ApprovalStepType::idFor($approvalType),
                 'is_mandatory' => true,
             ]);
         }
@@ -308,7 +357,7 @@ class SopModuleSeeder extends Seeder
             'department_id' => $qa->id,
             'category_id' => $category->id,
             'document_type_id' => $logType->id,
-            'status' => TemplateStatus::Published,
+            'template_status_id' => $publishedStatusId,
             'current_version' => 1,
         ]);
 
@@ -319,7 +368,7 @@ class SopModuleSeeder extends Seeder
             'content_json' => [],
             'effective_date' => now()->toDateString(),
             'change_reason' => 'Initial log document template',
-            'status' => TemplateStatus::Published,
+            'template_status_id' => $publishedStatusId,
         ]);
 
         foreach (['Purpose', 'Referenced SOP', 'Execution Log', 'Verification', 'Remarks'] as $order => $title) {
@@ -338,10 +387,10 @@ class SopModuleSeeder extends Seeder
                 'name' => $name,
             ], [
                 'label' => str($name)->replace('_', ' ')->title()->toString(),
-                'datatype' => match ($name) {
-                    'department' => VariableDataType::Department,
-                    'referenced_sop' => VariableDataType::SopReference,
-                    default => VariableDataType::Text,
+                'variable_data_type_id' => match ($name) {
+                    'department' => VariableDataType::idFor(VariableDataType::DEPARTMENT),
+                    'referenced_sop' => VariableDataType::idFor(VariableDataType::SOP_REFERENCE),
+                    default => VariableDataType::idFor(VariableDataType::TEXT),
                 },
                 'required' => in_array($name, ['department', 'document_number'], true),
             ]);

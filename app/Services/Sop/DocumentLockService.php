@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services\Sop;
 
-use App\Enums\TemplateStatus;
 use App\Models\SopAuditLog;
 use App\Models\SopDocument;
 use App\Models\SopTemplate;
+use App\Models\TemplateStatus;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -68,7 +68,7 @@ class DocumentLockService
 
     public function lockTemplate(SopTemplate $template, User $user): SopTemplate
     {
-        if ($template->status !== TemplateStatus::Draft) {
+        if (! $template->templateStatus?->hasCode(TemplateStatus::DRAFT)) {
             throw ValidationException::withMessages([
                 'lock' => 'Only draft templates can be locked for editing.',
             ]);

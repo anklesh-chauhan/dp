@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\LogDocuments;
 
-use App\Enums\ControlledDocumentTypeCode;
-use App\Enums\DocumentStatus;
-use App\Enums\TemplateStatus;
 use App\Filament\Resources\LogDocuments\Pages\CreateLogDocument;
 use App\Filament\Resources\LogDocuments\Pages\EditLogDocument;
 use App\Filament\Resources\LogDocuments\Pages\ListLogDocuments;
@@ -17,8 +14,10 @@ use App\Filament\Resources\SopDocuments\RelationManagers\AuditRelationManager;
 use App\Filament\Resources\SopDocuments\RelationManagers\DocumentSectionRelationManager;
 use App\Filament\Resources\SopDocuments\RelationManagers\DocumentVariableRelationManager;
 use App\Filament\Support\TemplateVariableFieldBuilder;
+use App\Models\DocumentType;
 use App\Models\SopDocument;
 use App\Models\SopTemplateVersion;
+use App\Models\TemplateStatus;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
@@ -79,14 +78,11 @@ class LogDocumentResource extends Resource
                                 'template',
                                 'name',
                                 modifyQueryUsing: fn (Builder $query): Builder => $query
-                                    ->where('status', TemplateStatus::Published)
+                                    ->whereHas('templateStatus', fn (Builder $statusQuery): Builder => $statusQuery->where('code', TemplateStatus::PUBLISHED))
                                     ->whereHas('publishedVersion')
                                     ->whereHas('documentType', fn (Builder $typeQuery): Builder => $typeQuery->whereIn(
                                         'code',
-                                        array_map(
-                                            fn (ControlledDocumentTypeCode $type): string => $type->value,
-                                            ControlledDocumentTypeCode::issuableTypes(),
-                                        ),
+                                        [DocumentType::LOG, DocumentType::BATCH_RECORD, DocumentType::FORM],
                                     ))
                             )
                             ->searchable()
@@ -155,13 +151,13 @@ class LogDocumentResource extends Resource
                 TextColumn::make('referenced_sop_number')->label('Referenced SOP')->searchable(),
                 TextColumn::make('department.name')->searchable(),
                 TextColumn::make('batch_number')->toggleable(),
-                TextColumn::make('status')
-                    ->badge()
-                    ->formatStateUsing(fn (DocumentStatus $state): string => $state->label()),
+                TextColumn::make('documentStatus.name')
+                    ->label('Status')
+                    ->badge(),
                 TextColumn::make('activeIssuances_count')->counts('activeIssuances')->label('Active Copies'),
             ])
             ->filters([
-                SelectFilter::make('status')->options(DocumentStatus::options()),
+                SelectFilter::make('document_status_id')->relationship('documentStatus', 'name')->label('Status'),
                 SelectFilter::make('document_type_id')->relationship('documentType', 'name')->label('Type'),
             ])
             ->recordActions([
@@ -195,7 +191,7 @@ class LogDocumentResource extends Resource
     {
         return parent::getEloquentQuery()
             ->logDocuments()
-            ->with(['department', 'documentType', 'referencedSop', 'lockedByUser']);
+            ->with(['department', 'documentType', 'documentStatus', 'referencedSop', 'lockedByUser']);
     }
 
     public static function canViewAny(): bool
@@ -237,7 +233,7 @@ class LogDocumentResource extends Resource
 
         return SopTemplateVersion::query()
             ->where('sop_template_id', $templateId)
-            ->where('status', TemplateStatus::Published)
+            ->whereHas('templateStatus', fn (Builder $statusQuery): Builder => $statusQuery->where('code', TemplateStatus::PUBLISHED))
             ->orderByDesc('version')
             ->pluck('version', 'id')
             ->map(fn (int $version): string => "Version {$version}")
@@ -252,7 +248,7 @@ class LogDocumentResource extends Resource
 
         return SopTemplateVersion::query()
             ->where('sop_template_id', $templateId)
-            ->where('status', TemplateStatus::Published)
+            ->whereHas('templateStatus', fn (Builder $statusQuery): Builder => $statusQuery->where('code', TemplateStatus::PUBLISHED))
             ->latest('version')
             ->value('id');
     }

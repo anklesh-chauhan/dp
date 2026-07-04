@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace App\Filament\Support;
 
-use App\Enums\ControlledDocumentTypeCode;
-use App\Enums\DocumentStatus;
-use App\Enums\VariableDataType;
 use App\Models\Department;
+use App\Models\DocumentStatus;
+use App\Models\DocumentType;
 use App\Models\SopDocument;
 use App\Models\SopTemplate;
 use App\Models\SopTemplateVariable;
 use App\Models\SopTemplateVersion;
 use App\Models\User;
+use App\Models\VariableDataType;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Field;
 use Filament\Forms\Components\RichEditor;
@@ -43,7 +43,7 @@ class TemplateVariableFieldBuilder
         }
 
         return SopTemplateVersion::query()
-            ->with('variables')
+            ->with(['variables.variableDataType'])
             ->find($templateVersionId)
             ?->variables
             ->reject(fn (SopTemplateVariable $variable): bool => self::shouldExcludeFromForm($variable, $additionalExcludedNames))
@@ -63,12 +63,12 @@ class TemplateVariableFieldBuilder
         }
 
         return SopTemplateVersion::query()
-            ->with('variables')
+            ->with(['variables.variableDataType'])
             ->find($templateVersionId)
             ?->variables
             ->reject(fn (SopTemplateVariable $variable): bool => self::shouldExcludeFromForm($variable, $additionalExcludedNames))
-            ->mapWithKeys(fn (SopTemplateVariable $variable): array => [$variable->name => match ($variable->datatype) {
-                VariableDataType::Boolean => filter_var($variable->default_value, FILTER_VALIDATE_BOOLEAN),
+            ->mapWithKeys(fn (SopTemplateVariable $variable): array => [$variable->name => match ($variable->variableDataType?->code) {
+                VariableDataType::BOOLEAN => filter_var($variable->default_value, FILTER_VALIDATE_BOOLEAN),
                 default => $variable->default_value,
             }])
             ->all() ?? [];
@@ -88,31 +88,31 @@ class TemplateVariableFieldBuilder
         }
 
         return match ($variable->name) {
-            'department' => $variable->datatype !== VariableDataType::Department,
-            'referenced_sop' => $variable->datatype !== VariableDataType::SopReference,
+            'department' => ! $variable->variableDataType?->hasCode(VariableDataType::DEPARTMENT),
+            'referenced_sop' => ! $variable->variableDataType?->hasCode(VariableDataType::SOP_REFERENCE),
             default => false,
         };
     }
 
     private static function field(SopTemplateVariable $variable, ?int $templateId): Field
     {
-        $field = match ($variable->datatype) {
-            VariableDataType::Textarea => RichEditor::make("variables.{$variable->name}")->columnSpanFull(),
-            VariableDataType::Date => DatePicker::make("variables.{$variable->name}")->date(),
-            VariableDataType::Number => TextInput::make("variables.{$variable->name}")->numeric(),
-            VariableDataType::Boolean => Toggle::make("variables.{$variable->name}"),
-            VariableDataType::Select => Select::make("variables.{$variable->name}")
+        $field = match ($variable->variableDataType?->code) {
+            VariableDataType::TEXTAREA => RichEditor::make("variables.{$variable->name}")->columnSpanFull(),
+            VariableDataType::DATE => DatePicker::make("variables.{$variable->name}")->date(),
+            VariableDataType::NUMBER => TextInput::make("variables.{$variable->name}")->numeric(),
+            VariableDataType::BOOLEAN => Toggle::make("variables.{$variable->name}"),
+            VariableDataType::SELECT => Select::make("variables.{$variable->name}")
                 ->options(self::selectVariableOptions($variable))
                 ->searchable(),
-            VariableDataType::User => Select::make("variables.{$variable->name}")
+            VariableDataType::USER => Select::make("variables.{$variable->name}")
                 ->options(fn (): array => User::query()->orderBy('name')->pluck('name', 'id')->all())
                 ->searchable()
                 ->preload(),
-            VariableDataType::Department => Select::make("variables.{$variable->name}")
+            VariableDataType::DEPARTMENT => Select::make("variables.{$variable->name}")
                 ->options(fn (): array => Department::query()->orderBy('name')->pluck('name', 'name')->all())
                 ->searchable()
                 ->preload(),
-            VariableDataType::SopReference => Select::make("variables.{$variable->name}")
+            VariableDataType::SOP_REFERENCE => Select::make("variables.{$variable->name}")
                 ->options(fn (): array => self::effectiveSopOptions($templateId))
                 ->searchable()
                 ->preload(),
@@ -142,8 +142,8 @@ class TemplateVariableFieldBuilder
 
         return SopDocument::query()
             ->where('department_id', $departmentId)
-            ->where('status', DocumentStatus::Effective)
-            ->whereHas('documentType', fn (Builder $query): Builder => $query->where('code', ControlledDocumentTypeCode::Sop->value))
+            ->whereHas('documentStatus', fn (Builder $query): Builder => $query->where('code', DocumentStatus::EFFECTIVE))
+            ->whereHas('documentType', fn (Builder $query): Builder => $query->where('code', DocumentType::SOP))
             ->orderBy('document_number')
             ->pluck('document_number', 'id')
             ->all();

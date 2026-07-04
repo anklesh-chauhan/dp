@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace App\Services\Sop;
 
-use App\Enums\ApprovalDecision;
-use App\Enums\DocumentStatus;
-use App\Enums\SopRole;
+use App\Exceptions\WorkflowException;
+use App\Models\ApprovalDecision;
+use App\Models\DocumentStatus;
 use App\Models\SopApproval;
 use App\Models\SopAuditLog;
 use App\Models\SopDocument;
+use App\Models\SopRole;
 use App\Models\SopWorkflow;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 
 class WorkflowEngineService
 {
@@ -24,33 +24,36 @@ class WorkflowEngineService
 
     public function start(SopDocument $document, User $submitter, ?SopWorkflow $workflow = null): void
     {
-        if ($document->status !== DocumentStatus::Draft) {
-            throw ValidationException::withMessages([
-                'status' => 'Only draft documents can be submitted for approval.',
-            ]);
+        if (! $document->documentStatus?->is(DocumentStatus::DRAFT)) {
+            throw new WorkflowException(
+                message: 'Only draft documents can be submitted for approval.'
+            );
         }
 
         if (! $this->canSubmit($document, $submitter)) {
-            throw ValidationException::withMessages([
-                'submit' => 'You are not authorized to submit this document for approval.',
-            ]);
+            throw new WorkflowException(
+                message: 'You are not authorized to submit this document for approval.'
+            );
         }
 
         $workflow ??= $this->resolveWorkflow($document);
 
         if ($workflow === null) {
-            throw ValidationException::withMessages([
-                'workflow' => 'No active approval workflow is configured for this department.',
-            ]);
+            throw new WorkflowException(
+                message: 'No active approval workflow is configured for this department.'
+            );
         }
 
-        DB::transaction(function () use ($document, $workflow, $submitter): void {
+        $pendingDecisionId = ApprovalDecision::idFor(ApprovalDecision::PENDING);
+        $underReviewStatusId = DocumentStatus::idFor(DocumentStatus::UNDER_REVIEW);
+
+        DB::transaction(function () use ($document, $workflow, $submitter, $pendingDecisionId, $underReviewStatusId): void {
             if ($document->isLocked()) {
                 $this->documentLockService->unlockDocument($document, $submitter, force: true);
             }
 
             $document->approvals()->update([
-                'decision' => ApprovalDecision::Pending,
+                'approval_decision_id' => $pendingDecisionId,
                 'approved_by' => null,
                 'comments' => null,
                 'approved_at' => null,
@@ -62,11 +65,11 @@ class WorkflowEngineService
                     'document_id' => $document->id,
                     'workflow_step_id' => $step->id,
                 ], [
-                    'decision' => ApprovalDecision::Pending,
+                    'approval_decision_id' => $pendingDecisionId,
                 ]);
             }
 
-            $document->update(['status' => DocumentStatus::UnderReview]);
+            $document->update(['document_status_id' => $underReviewStatusId]);
 
             $this->auditLogService->log(
                 action: SopAuditLog::ACTION_SUBMITTED,
@@ -83,27 +86,31 @@ class WorkflowEngineService
     public function approve(SopApproval $approval, User $approver, ?string $comments = null): SopApproval
     {
         if (! $approval->canBeApprovedBy($approver)) {
-            throw ValidationException::withMessages([
-                'approval' => 'This approval step is not available for you yet.',
-            ]);
+            throw new WorkflowException(
+                message: 'This approval step is not available for you yet.'
+            );
         }
 
-        return DB::transaction(function () use ($approval, $approver, $comments): SopApproval {
+        $approvedDecisionId = ApprovalDecision::idFor(ApprovalDecision::APPROVED);
+        $effectiveStatusId = DocumentStatus::idFor(DocumentStatus::EFFECTIVE);
+        $approvedStatusId = DocumentStatus::idFor(DocumentStatus::APPROVED);
+
+        return DB::transaction(function () use ($approval, $approver, $comments, $approvedDecisionId, $effectiveStatusId, $approvedStatusId): SopApproval {
             $approval->update([
                 'approved_by' => $approver->id,
-                'decision' => ApprovalDecision::Approved,
+                'approval_decision_id' => $approvedDecisionId,
                 'comments' => $comments,
                 'approved_at' => now(),
                 'signature_hash' => hash('sha256', $approval->id.'|'.$approver->id.'|'.now()->toISOString()),
             ]);
 
-            $document = $approval->document()->with('approvals.workflowStep')->firstOrFail();
+            $document = $approval->document()->with(['approvals.workflowStep', 'approvals.approvalDecision'])->firstOrFail();
             $mandatoryApprovals = $document->approvals->filter(fn (SopApproval $item): bool => $item->workflowStep->is_mandatory);
 
-            if ($mandatoryApprovals->every(fn (SopApproval $item): bool => $item->decision === ApprovalDecision::Approved)) {
-                $document->update(['status' => DocumentStatus::Effective]);
+            if ($mandatoryApprovals->every(fn (SopApproval $item): bool => $item->approvalDecision?->hasCode(ApprovalDecision::APPROVED))) {
+                $document->update(['document_status_id' => $effectiveStatusId]);
             } else {
-                $document->update(['status' => DocumentStatus::Approved]);
+                $document->update(['document_status_id' => $approvedStatusId]);
             }
 
             $this->auditLogService->log(
@@ -111,7 +118,7 @@ class WorkflowEngineService
                 newValues: [
                     'approval_id' => $approval->id,
                     'approved_by' => $approver->id,
-                    'step_type' => $approval->workflowStep->approval_type?->value,
+                    'step_type' => $approval->workflowStep->approvalStepType?->code,
                 ],
                 userId: $approver->id,
                 document: $document,
@@ -124,33 +131,40 @@ class WorkflowEngineService
     public function reject(SopApproval $approval, User $approver, ?string $comments = null): SopApproval
     {
         if (! $approval->canBeApprovedBy($approver)) {
-            throw ValidationException::withMessages([
-                'approval' => 'This approval step is not available for you yet.',
-            ]);
+            throw new WorkflowException(
+                message: 'This approval step is not available for you yet.'
+            );
         }
 
-        return $this->decide($approval, $approver, ApprovalDecision::Rejected, DocumentStatus::Rejected, SopAuditLog::ACTION_REJECTED, $comments);
+        return $this->decide(
+            $approval,
+            $approver,
+            ApprovalDecision::idFor(ApprovalDecision::REJECTED),
+            DocumentStatus::idFor(DocumentStatus::REJECTED),
+            SopAuditLog::ACTION_REJECTED,
+            $comments,
+        );
     }
 
     public function return(SopApproval $approval, User $approver, ?string $comments = null): SopApproval
     {
         if (! $approval->canBeApprovedBy($approver)) {
-            throw ValidationException::withMessages([
-                'approval' => 'This approval step is not available for you yet.',
-            ]);
+            throw new WorkflowException(
+                message: 'This approval step is not available for you yet.'
+            );
         }
 
         return DB::transaction(function () use ($approval, $approver, $comments): SopApproval {
             $approval->update([
                 'approved_by' => $approver->id,
-                'decision' => ApprovalDecision::Returned,
+                'approval_decision_id' => ApprovalDecision::idFor(ApprovalDecision::RETURNED),
                 'comments' => $comments,
                 'approved_at' => now(),
             ]);
 
             $document = $approval->document;
             $document->update([
-                'status' => DocumentStatus::Draft,
+                'document_status_id' => DocumentStatus::idFor(DocumentStatus::DRAFT),
                 'locked_by' => null,
                 'locked_at' => null,
             ]);
@@ -183,7 +197,7 @@ class WorkflowEngineService
 
         return SopWorkflow::query()
             ->where('is_active', true)
-            ->whereNull('department_id')
+            ->where('department_id', null)
             ->with('steps')
             ->first();
     }
@@ -194,11 +208,11 @@ class WorkflowEngineService
             return false;
         }
 
-        if ($user->hasRole(SopRole::Administrator->value)) {
+        if ($user->hasRole(SopRole::ADMINISTRATOR)) {
             return true;
         }
 
-        if ($user->hasRole(SopRole::Maker->value)) {
+        if ($user->hasRole(SopRole::MAKER)) {
             if ($user->department_id !== null && $user->department_id !== $document->department_id) {
                 return false;
             }
@@ -209,19 +223,19 @@ class WorkflowEngineService
         return $document->created_by === $user->id || $document->owner_id === $user->id;
     }
 
-    private function decide(SopApproval $approval, User $approver, ApprovalDecision $decision, DocumentStatus $documentStatus, string $auditAction, ?string $comments): SopApproval
+    private function decide(SopApproval $approval, User $approver, int $decisionId, int $documentStatusId, string $auditAction, ?string $comments): SopApproval
     {
-        return DB::transaction(function () use ($approval, $approver, $decision, $documentStatus, $auditAction, $comments): SopApproval {
+        return DB::transaction(function () use ($approval, $approver, $decisionId, $documentStatusId, $auditAction, $comments): SopApproval {
             $approval->update([
                 'approved_by' => $approver->id,
-                'decision' => $decision,
+                'approval_decision_id' => $decisionId,
                 'comments' => $comments,
                 'approved_at' => now(),
             ]);
 
             $document = $approval->document;
             $document->update([
-                'status' => $documentStatus,
+                'document_status_id' => $documentStatusId,
                 'locked_by' => null,
                 'locked_at' => null,
             ]);
@@ -230,7 +244,7 @@ class WorkflowEngineService
                 action: $auditAction,
                 newValues: [
                     'approval_id' => $approval->id,
-                    'decision' => $decision->value,
+                    'decision' => ApprovalDecision::query()->whereKey($decisionId)->value('code'),
                 ],
                 userId: $approver->id,
                 document: $document,

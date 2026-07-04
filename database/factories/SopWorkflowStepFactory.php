@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Models\ApprovalStepType;
 use App\Models\SopWorkflow;
 use App\Models\SopWorkflowStep;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -25,7 +26,7 @@ class SopWorkflowStepFactory extends Factory
             'workflow_id' => SopWorkflow::factory(),
             'step_no' => fake()->numberBetween(1, 4),
             'role_id' => Role::findOrCreate('qa reviewer', 'web')->id,
-            'approval_type' => 'approval',
+            'approval_step_type_id' => ApprovalStepType::idFor(ApprovalStepType::APPROVAL),
             'is_mandatory' => true,
         ];
     }

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\SopWorkflows\RelationManagers;
 
-use App\Enums\ApprovalStepType;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -28,8 +27,10 @@ class WorkflowRelationManager extends RelationManager
             Grid::make(2)->schema([
                 TextInput::make('step_no')->numeric()->required()->minValue(1),
                 Select::make('role_id')->relationship('role', 'name')->searchable()->preload()->required(),
-                Select::make('approval_type')
-                    ->options(ApprovalStepType::options())
+                Select::make('approval_step_type_id')
+                    ->relationship('approvalStepType', 'name')
+                    ->searchable()
+                    ->preload()
                     ->required(),
                 Toggle::make('is_mandatory')->default(true),
             ]),
@@ -42,9 +43,9 @@ class WorkflowRelationManager extends RelationManager
             ->columns([
                 TextColumn::make('step_no')->sortable(),
                 TextColumn::make('role.name')->searchable(),
-                TextColumn::make('approval_type')
-                    ->badge()
-                    ->formatStateUsing(fn (ApprovalStepType $state): string => $state->label()),
+                TextColumn::make('approvalStepType.name')
+                    ->label('Type')
+                    ->badge(),
                 IconColumn::make('is_mandatory')->boolean(),
             ])
             ->headerActions([CreateAction::make()])

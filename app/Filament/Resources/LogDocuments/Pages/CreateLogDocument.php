@@ -6,11 +6,12 @@ namespace App\Filament\Resources\LogDocuments\Pages;
 
 use App\Actions\Sop\CreateDocumentFromTemplateAction;
 use App\Data\SopDocumentData;
+use App\Exceptions\ServiceException;
 use App\Filament\Resources\LogDocuments\LogDocumentResource;
+use App\Filament\Support\ServiceExceptionHandler;
 use App\Models\SopTemplateVersion;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
-use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
@@ -26,21 +27,20 @@ class CreateLogDocument extends CreateRecord
         try {
             parent::create($another);
         } catch (ValidationException $exception) {
-            Notification::make()
-                ->title('Unable to create log document')
-                ->body(collect($exception->errors())->flatten()->first() ?? 'Please review the form and try again.')
-                ->danger()
-                ->send();
+            ServiceExceptionHandler::notifyValidation($exception, 'Unable to create log document');
+
+            throw $exception;
+        } catch (ServiceException $exception) {
+            ServiceExceptionHandler::notify($exception, 'Unable to create log document');
 
             throw $exception;
         } catch (Throwable $exception) {
             report($exception);
 
-            Notification::make()
-                ->title('Unable to create log document')
-                ->body($exception->getMessage())
-                ->danger()
-                ->send();
+            ServiceExceptionHandler::notifyFailure(
+                $exception->getMessage(),
+                'Unable to create log document',
+            );
 
             throw $exception;
         }

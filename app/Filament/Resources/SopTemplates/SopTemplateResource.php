@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\SopTemplates;
 
-use App\Enums\TemplateStatus;
 use App\Filament\Resources\SopTemplates\Pages\CreateSopTemplate;
 use App\Filament\Resources\SopTemplates\Pages\EditSopTemplate;
 use App\Filament\Resources\SopTemplates\Pages\ListSopTemplates;
@@ -14,6 +13,7 @@ use App\Filament\Resources\SopTemplates\RelationManagers\TemplateAuditRelationMa
 use App\Filament\Resources\SopTemplates\RelationManagers\VariableRelationManager;
 use App\Filament\Resources\SopTemplates\RelationManagers\VersionRelationManager;
 use App\Models\SopTemplate;
+use App\Models\TemplateStatus;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -76,9 +76,9 @@ class SopTemplateResource extends Resource
                             ->searchable()
                             ->preload()
                             ->required(),
-                        Select::make('status')
-                            ->options(TemplateStatus::options())
-                            ->default(TemplateStatus::Draft->value)
+                        Select::make('template_status_id')
+                            ->relationship('templateStatus', 'name')
+                            ->default(fn (): int => TemplateStatus::idFor(TemplateStatus::DRAFT))
                             ->required(),
                         TextInput::make('current_version')
                             ->numeric()
@@ -100,19 +100,20 @@ class SopTemplateResource extends Resource
                 TextColumn::make('code')->searchable()->sortable(),
                 TextColumn::make('name')->searchable()->sortable(),
                 TextColumn::make('department.name')->searchable()->sortable(),
-                TextColumn::make('status')
+                TextColumn::make('templateStatus.name')
+                    ->label('Status')
                     ->badge()
-                    ->formatStateUsing(fn (TemplateStatus $state): string => $state->label())
-                    ->color(fn (TemplateStatus $state): string => match ($state) {
-                        TemplateStatus::Draft => 'gray',
-                        TemplateStatus::Published => 'success',
-                        TemplateStatus::Archived => 'warning',
+                    ->color(fn (SopTemplate $record): string => match ($record->templateStatus?->code) {
+                        TemplateStatus::DRAFT => 'gray',
+                        TemplateStatus::PUBLISHED => 'success',
+                        TemplateStatus::ARCHIVED => 'warning',
+                        default => 'gray',
                     }),
                 TextColumn::make('current_version')->sortable(),
                 TextColumn::make('updated_at')->dateTime()->sortable(),
             ])
             ->filters([
-                SelectFilter::make('status')->options(TemplateStatus::options()),
+                SelectFilter::make('template_status_id')->relationship('templateStatus', 'name')->label('Status'),
                 TrashedFilter::make(),
             ])
             ->recordActions([
@@ -152,6 +153,6 @@ class SopTemplateResource extends Resource
     {
         return parent::getEloquentQuery()
             ->withoutGlobalScopes([SoftDeletingScope::class])
-            ->with(['department', 'category', 'documentType']);
+            ->with(['department', 'category', 'documentType', 'templateStatus']);
     }
 }

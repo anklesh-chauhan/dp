@@ -6,9 +6,10 @@ namespace App\Filament\Resources\DocumentIssuances;
 
 use App\Actions\Sop\DestroyIssuanceAction;
 use App\Actions\Sop\RecallIssuanceAction;
-use App\Enums\IssuanceStatus;
 use App\Filament\Resources\LogDocuments\LogDocumentResource;
+use App\Filament\Support\ServiceExceptionHandler;
 use App\Models\DocumentIssuance;
+use App\Models\IssuanceStatus;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
 use Filament\Resources\Resource;
@@ -55,18 +56,19 @@ class DocumentIssuanceResource extends Resource
                 TextColumn::make('issuedToUser.name')->label('Issued To')->placeholder('—'),
                 TextColumn::make('issuer.name')->label('Issued By'),
                 TextColumn::make('issued_at')->dateTime()->sortable(),
-                TextColumn::make('status')
+                TextColumn::make('issuanceStatus.name')
+                    ->label('Status')
                     ->badge()
-                    ->formatStateUsing(fn (IssuanceStatus $state): string => $state->label())
-                    ->color(fn (IssuanceStatus $state): string => match ($state) {
-                        IssuanceStatus::Active => 'success',
-                        IssuanceStatus::Recalled => 'warning',
-                        IssuanceStatus::Destroyed => 'danger',
+                    ->color(fn (DocumentIssuance $record): string => match ($record->issuanceStatus?->code) {
+                        IssuanceStatus::ACTIVE => 'success',
+                        IssuanceStatus::RECALLED => 'warning',
+                        IssuanceStatus::DESTROYED => 'danger',
+                        default => 'gray',
                     }),
             ])
             ->defaultSort('issued_at', 'desc')
             ->filters([
-                SelectFilter::make('status')->options(IssuanceStatus::options()),
+                SelectFilter::make('issuance_status_id')->relationship('issuanceStatus', 'name')->label('Status'),
             ])
             ->recordActions([
                 Action::make('viewDocument')
@@ -88,21 +90,29 @@ class DocumentIssuanceResource extends Resource
                     ->schema([Textarea::make('recall_reason')->required()])
                     ->visible(fn (DocumentIssuance $record): bool => $record->isActive()
                         && (Auth::user()?->can('recall', $record) ?? false))
-                    ->action(fn (DocumentIssuance $record, array $data): mixed => app(RecallIssuanceAction::class)->execute(
-                        $record,
-                        Auth::user(),
-                        $data['recall_reason'],
+                    ->action(fn (DocumentIssuance $record, array $data): mixed => ServiceExceptionHandler::run(
+                        fn () => app(RecallIssuanceAction::class)->execute(
+                            $record,
+                            Auth::user(),
+                            $data['recall_reason'],
+                        ),
+                        failureTitle: 'Recall Failed',
+                        successTitle: 'Controlled copy recalled.',
                     )),
                 Action::make('destroyCopy')
                     ->label('Destroy')
                     ->color('danger')
                     ->schema([Textarea::make('destroy_reason')->required()])
-                    ->visible(fn (DocumentIssuance $record): bool => $record->status !== IssuanceStatus::Destroyed
+                    ->visible(fn (DocumentIssuance $record): bool => ! $record->issuanceStatus?->hasCode(IssuanceStatus::DESTROYED)
                         && (Auth::user()?->can('destroyCopy', $record) ?? false))
-                    ->action(fn (DocumentIssuance $record, array $data): mixed => app(DestroyIssuanceAction::class)->execute(
-                        $record,
-                        Auth::user(),
-                        $data['destroy_reason'],
+                    ->action(fn (DocumentIssuance $record, array $data): mixed => ServiceExceptionHandler::run(
+                        fn () => app(DestroyIssuanceAction::class)->execute(
+                            $record,
+                            Auth::user(),
+                            $data['destroy_reason'],
+                        ),
+                        failureTitle: 'Destroy Failed',
+                        successTitle: 'Controlled copy destroyed.',
                     )),
             ]);
     }
@@ -117,7 +127,7 @@ class DocumentIssuanceResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->with(['document', 'issuedToUser', 'issuer']);
+            ->with(['document', 'issuanceStatus', 'issuedToUser', 'issuer']);
     }
 
     public static function canCreate(): bool

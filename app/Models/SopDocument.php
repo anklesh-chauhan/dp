@@ -5,9 +5,6 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Concerns\Lockable;
-use App\Enums\ControlledDocumentTypeCode;
-use App\Enums\DocumentStatus;
-use App\Enums\IssuanceStatus;
 use Database\Factories\SopDocumentFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -36,7 +33,7 @@ class SopDocument extends Model
         'batch_number',
         'product_name',
         'purpose',
-        'status',
+        'document_status_id',
         'effective_date',
         'review_date',
         'owner_id',
@@ -48,7 +45,6 @@ class SopDocument extends Model
     protected function casts(): array
     {
         return [
-            'status' => DocumentStatus::class,
             'effective_date' => 'date',
             'review_date' => 'date',
             'referenced_sop_effective_date' => 'date',
@@ -60,7 +56,7 @@ class SopDocument extends Model
 
     public function isEditable(): bool
     {
-        return $this->status === DocumentStatus::Draft;
+        return $this->documentStatus?->hasCode(DocumentStatus::DRAFT) ?? false;
     }
 
     public function isLockedForEditing(User $user): bool
@@ -89,7 +85,7 @@ class SopDocument extends Model
 
     public function canBeIssued(): bool
     {
-        if ($this->status !== DocumentStatus::Effective) {
+        if (! $this->documentStatus?->hasCode(DocumentStatus::EFFECTIVE)) {
             return false;
         }
 
@@ -107,14 +103,15 @@ class SopDocument extends Model
     public function canBePrinted(?DocumentIssuance $issuance = null): bool
     {
         if ($this->isIssuableType()) {
-            if ($this->status !== DocumentStatus::Effective) {
+            if (! $this->documentStatus?->hasCode(DocumentStatus::EFFECTIVE)) {
                 return false;
             }
 
             return $issuance !== null && $issuance->isActive() && $issuance->document_id === $this->id;
         }
 
-        return in_array($this->status, [DocumentStatus::Approved, DocumentStatus::Effective], true);
+        return $this->documentStatus?->hasCode(DocumentStatus::APPROVED)
+            || $this->documentStatus?->hasCode(DocumentStatus::EFFECTIVE);
     }
 
     /**
@@ -123,12 +120,7 @@ class SopDocument extends Model
      */
     public function scopeIssuableDocuments(Builder $query): Builder
     {
-        return $query->whereHas('documentType', function (Builder $typeQuery): void {
-            $typeQuery->whereIn('code', array_map(
-                fn (ControlledDocumentTypeCode $type): string => $type->value,
-                ControlledDocumentTypeCode::issuableTypes(),
-            ));
-        });
+        return $query->whereHas('documentType', fn (Builder $typeQuery): Builder => $typeQuery->where('is_issuable', true));
     }
 
     /**
@@ -170,6 +162,14 @@ class SopDocument extends Model
     public function documentType(): BelongsTo
     {
         return $this->belongsTo(DocumentType::class);
+    }
+
+    /**
+     * @return BelongsTo<DocumentStatus, $this>
+     */
+    public function documentStatus(): BelongsTo
+    {
+        return $this->belongsTo(DocumentStatus::class);
     }
 
     /**
@@ -249,6 +249,6 @@ class SopDocument extends Model
      */
     public function activeIssuances(): HasMany
     {
-        return $this->issuances()->where('status', IssuanceStatus::Active);
+        return $this->issuances()->whereHas('issuanceStatus', fn (Builder $query): Builder => $query->where('code', IssuanceStatus::ACTIVE));
     }
 }

@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Enums\ApprovalDecision;
-use App\Enums\SopRole;
+use App\Exceptions\WorkflowException;
 use Database\Factories\SopApprovalFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -21,7 +20,7 @@ class SopApproval extends Model
         'document_id',
         'workflow_step_id',
         'approved_by',
-        'decision',
+        'approval_decision_id',
         'comments',
         'approved_at',
         'signature_hash',
@@ -30,7 +29,6 @@ class SopApproval extends Model
     protected function casts(): array
     {
         return [
-            'decision' => ApprovalDecision::class,
             'approved_at' => 'datetime',
         ];
     }
@@ -60,12 +58,20 @@ class SopApproval extends Model
     }
 
     /**
+     * @return BelongsTo<ApprovalDecision, $this>
+     */
+    public function approvalDecision(): BelongsTo
+    {
+        return $this->belongsTo(ApprovalDecision::class);
+    }
+
+    /**
      * @param  Builder<SopApproval>  $query
      * @return Builder<SopApproval>
      */
     public function scopePending(Builder $query): Builder
     {
-        return $query->where('decision', ApprovalDecision::Pending);
+        return $query->whereHas('approvalDecision', fn (Builder $decisionQuery): Builder => $decisionQuery->where('code', ApprovalDecision::PENDING));
     }
 
     /**
@@ -76,7 +82,7 @@ class SopApproval extends Model
     {
         return $query->pending()
             ->whereHas('document', function (Builder $documentQuery) use ($user): void {
-                if ($user->department_id !== null && ! $user->hasRole(SopRole::Administrator->value)) {
+                if ($user->department_id !== null && ! $user->hasRole(SopRole::ADMINISTRATOR)) {
                     $documentQuery->where('department_id', $user->department_id);
                 }
             });
@@ -84,7 +90,7 @@ class SopApproval extends Model
 
     public function isActionable(): bool
     {
-        if ($this->decision !== ApprovalDecision::Pending) {
+        if (! $this->approvalDecision?->hasCode(ApprovalDecision::PENDING)) {
             return false;
         }
 
@@ -93,7 +99,7 @@ class SopApproval extends Model
         $previousMandatoryStepsPending = $this->document->approvals
             ->filter(fn (SopApproval $approval): bool => $approval->workflowStep->step_no < $this->workflowStep->step_no
                 && $approval->workflowStep->is_mandatory)
-            ->contains(fn (SopApproval $approval): bool => $approval->decision !== ApprovalDecision::Approved);
+            ->contains(fn (SopApproval $approval): bool => ! $approval->approvalDecision?->hasCode(ApprovalDecision::APPROVED));
 
         return ! $previousMandatoryStepsPending;
     }
@@ -101,25 +107,38 @@ class SopApproval extends Model
     public function canBeApprovedBy(User $user): bool
     {
         if (! $this->isActionable()) {
-            return false;
+            throw new WorkflowException(
+                message: 'This approval step is not currently available.'
+            );
         }
 
-        $this->loadMissing(['workflowStep.role', 'document']);
+        $this->loadMissing([
+            'workflowStep.role',
+            'document',
+        ]);
 
         if (! $user->can('Approve:SopDocument')) {
-            return false;
+            throw new WorkflowException(
+                message: 'You do not have permission to approve SOP documents.'
+            );
         }
 
         if (! $user->hasRole($this->workflowStep->role)) {
-            return false;
+            throw new WorkflowException(
+                message: "Only users with the '{$this->workflowStep->role->name}' role can approve this step."
+            );
         }
 
         if ($this->violatesSeparationOfDuties($user)) {
-            return false;
+            throw new WorkflowException(
+                message: 'You cannot approve this document because of the separation of duties policy.'
+            );
         }
 
         if ($this->violatesDepartmentScope($user)) {
-            return false;
+            throw new WorkflowException(
+                message: 'You can only approve documents for your own department.'
+            );
         }
 
         return true;
@@ -127,7 +146,7 @@ class SopApproval extends Model
 
     private function violatesSeparationOfDuties(User $user): bool
     {
-        if ($user->hasRole(SopRole::Administrator->value)) {
+        if ($user->hasRole(SopRole::ADMINISTRATOR)) {
             return false;
         }
 
@@ -136,7 +155,7 @@ class SopApproval extends Model
 
     private function violatesDepartmentScope(User $user): bool
     {
-        if ($user->hasRole(SopRole::Administrator->value)) {
+        if ($user->hasRole(SopRole::ADMINISTRATOR)) {
             return false;
         }
 

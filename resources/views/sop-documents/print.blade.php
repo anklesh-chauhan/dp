@@ -171,7 +171,7 @@
 
         <header>
             <h1>{{ $document->title }}</h1>
-            <div class="muted">{{ $document->document_number }} | Version {{ $document->version }} | {{ $document->status->label() }}</div>
+            <div class="muted">{{ $document->document_number }} | Version {{ $document->version }} | {{ $document->documentStatus->name }}</div>
         </header>
 
         @if ($document->referenced_sop_number)
@@ -273,8 +273,8 @@
                 <tbody>
                     @foreach ($document->approvals as $approval)
                         <tr>
-                            <td>{{ $approval->workflowStep?->approval_type ?? '-' }}</td>
-                            <td>{{ $approval->decision->label() }}</td>
+                            <td>{{ $approval->workflowStep?->approvalStepType->name  ?? '-' }}</td>
+                            <td>{{ $approval->approvalDecision?->name ?? '-' }}</td>
                             <td>{{ $approval->approver?->name ?? '-' }}</td>
                             <td>{{ $approval->approved_at?->toDayDateTimeString() ?? '-' }}</td>
                         </tr>

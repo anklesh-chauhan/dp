@@ -8,19 +8,19 @@ use App\Actions\Sop\LockDocumentAction;
 use App\Actions\Sop\ReturnDocumentAction;
 use App\Actions\Sop\SubmitDocumentAction;
 use App\Data\SopDocumentData;
-use App\Enums\ApprovalDecision;
-use App\Enums\ApprovalStepType;
-use App\Enums\DocumentStatus;
-use App\Enums\SopRole;
-use App\Enums\TemplateStatus;
+use App\Models\ApprovalDecision;
+use App\Models\ApprovalStepType;
 use App\Models\Department;
 use App\Models\DocumentCategory;
+use App\Models\DocumentStatus;
 use App\Models\DocumentType;
 use App\Models\SopAuditLog;
 use App\Models\SopDocument;
+use App\Models\SopRole;
 use App\Models\SopTemplate;
 use App\Models\SopTemplateVersion;
 use App\Models\SopWorkflow;
+use App\Models\TemplateStatus;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
@@ -39,14 +39,14 @@ function createApprovalWorkflow(Department $department, Role $checkerRole, Role 
     $workflow->steps()->create([
         'step_no' => 1,
         'role_id' => $checkerRole->id,
-        'approval_type' => ApprovalStepType::Checker,
+        'approval_step_type_id' => ApprovalStepType::idFor(ApprovalStepType::CHECKER),
         'is_mandatory' => true,
     ]);
 
     $workflow->steps()->create([
         'step_no' => 2,
         'role_id' => $approverRole->id,
-        'approval_type' => ApprovalStepType::Approver,
+        'approval_step_type_id' => ApprovalStepType::idFor(ApprovalStepType::APPROVER),
         'is_mandatory' => true,
     ]);
 
@@ -59,7 +59,7 @@ function createPublishedTemplate(Department $department): SopTemplate
         'department_id' => $department->id,
         'category_id' => DocumentCategory::factory(),
         'document_type_id' => DocumentType::factory(),
-        'status' => TemplateStatus::Published,
+        'template_status_id' => TemplateStatus::idFor(TemplateStatus::PUBLISHED),
         'current_version' => 1,
     ]);
 
@@ -78,7 +78,7 @@ function grantMakerPermissions(User $user): void
     Permission::findOrCreate('Submit:SopDocument', 'web');
 
     $user->givePermissionTo(['Create:SopDocument', 'Update:SopDocument', 'Submit:SopDocument']);
-    $user->assignRole(Role::findOrCreate(SopRole::Maker->value, 'web'));
+    $user->assignRole(Role::findOrCreate(SopRole::MAKER, 'web'));
 }
 
 function grantApproverPermissions(User $user): void
@@ -103,7 +103,7 @@ it('creates documents in draft without auto-starting approval workflow', functio
         documentNumber: 'SOP-QA-00001',
     ));
 
-    expect($document->status)->toBe(DocumentStatus::Draft)
+    expect($document->documentStatus?->is(DocumentStatus::DRAFT))->toBeTrue()
         ->and($document->approvals)->toHaveCount(0);
 });
 
@@ -115,8 +115,8 @@ it('submits a draft document through checker and approver steps', function (): v
 
     grantMakerPermissions($maker);
 
-    $checkerRole = Role::findOrCreate(SopRole::Checker->value, 'web');
-    $approverRole = Role::findOrCreate(SopRole::Approver->value, 'web');
+    $checkerRole = Role::findOrCreate(SopRole::CHECKER, 'web');
+    $approverRole = Role::findOrCreate(SopRole::APPROVER, 'web');
 
     grantApproverPermissions($checker);
     grantApproverPermissions($approver);
@@ -137,7 +137,7 @@ it('submits a draft document through checker and approver steps', function (): v
 
     app(SubmitDocumentAction::class)->execute($document, $maker);
 
-    expect($document->refresh()->status)->toBe(DocumentStatus::UnderReview)
+    expect($document->refresh()->documentStatus?->is(DocumentStatus::UNDER_REVIEW))->toBeTrue()
         ->and($document->approvals)->toHaveCount(2);
 
     $checkerApproval = $document->approvals()->whereHas('workflowStep', fn ($q) => $q->where('step_no', 1))->first();
@@ -149,12 +149,12 @@ it('submits a draft document through checker and approver steps', function (): v
 
     app(ApproveDocumentAction::class)->execute($checkerApproval, $checker, 'Checked');
 
-    expect($document->refresh()->status)->toBe(DocumentStatus::Approved)
+    expect($document->refresh()->documentStatus?->is(DocumentStatus::APPROVED))->toBeTrue()
         ->and($approverApproval->refresh()->canBeApprovedBy($approver))->toBeTrue();
 
     app(ApproveDocumentAction::class)->execute($approverApproval, $approver, 'Approved for use');
 
-    expect($document->refresh()->status)->toBe(DocumentStatus::Effective);
+    expect($document->refresh()->documentStatus?->is(DocumentStatus::EFFECTIVE))->toBeTrue();
 });
 
 it('returns a document to the maker for revision', function (): void {
@@ -164,8 +164,8 @@ it('returns a document to the maker for revision', function (): void {
 
     grantMakerPermissions($maker);
 
-    $checkerRole = Role::findOrCreate(SopRole::Checker->value, 'web');
-    $approverRole = Role::findOrCreate(SopRole::Approver->value, 'web');
+    $checkerRole = Role::findOrCreate(SopRole::CHECKER, 'web');
+    $approverRole = Role::findOrCreate(SopRole::APPROVER, 'web');
 
     grantApproverPermissions($checker);
     $checker->assignRole($checkerRole);
@@ -188,9 +188,9 @@ it('returns a document to the maker for revision', function (): void {
 
     app(ReturnDocumentAction::class)->execute($checkerApproval, $checker, 'Revise section 3');
 
-    expect($document->refresh()->status)->toBe(DocumentStatus::Draft)
+    expect($document->refresh()->documentStatus?->is(DocumentStatus::DRAFT))->toBeTrue()
         ->and($document->locked_by)->toBeNull()
-        ->and($checkerApproval->refresh()->decision)->toBe(ApprovalDecision::Returned);
+        ->and($checkerApproval->refresh()->approvalDecision?->is(ApprovalDecision::RETURNED))->toBeTrue();
 });
 
 it('locks and unlocks draft documents for concurrent edit protection', function (): void {
@@ -207,7 +207,7 @@ it('locks and unlocks draft documents for concurrent edit protection', function 
         'template_id' => $template->id,
         'template_version_id' => $template->publishedVersion->id,
         'department_id' => $department->id,
-        'status' => DocumentStatus::Draft,
+        'document_status_id' => DocumentStatus::idFor(DocumentStatus::DRAFT),
         'created_by' => $maker->id,
         'owner_id' => $maker->id,
     ]);
@@ -226,8 +226,8 @@ it('resolves department-specific workflows before global defaults', function ():
     $maker = User::factory()->create(['department_id' => $department->id]);
     grantMakerPermissions($maker);
 
-    $checkerRole = Role::findOrCreate(SopRole::Checker->value, 'web');
-    $approverRole = Role::findOrCreate(SopRole::Approver->value, 'web');
+    $checkerRole = Role::findOrCreate(SopRole::CHECKER, 'web');
+    $approverRole = Role::findOrCreate(SopRole::APPROVER, 'web');
 
     SopWorkflow::factory()->create([
         'name' => 'Global Workflow',
@@ -236,7 +236,7 @@ it('resolves department-specific workflows before global defaults', function ():
     ])->steps()->create([
         'step_no' => 1,
         'role_id' => $checkerRole->id,
-        'approval_type' => ApprovalStepType::Checker,
+        'approval_step_type_id' => ApprovalStepType::idFor(ApprovalStepType::CHECKER),
         'is_mandatory' => true,
     ]);
 
@@ -268,8 +268,8 @@ it('prevents checkers from approving documents outside their department', functi
 
     grantMakerPermissions($maker);
 
-    $checkerRole = Role::findOrCreate(SopRole::Checker->value, 'web');
-    $approverRole = Role::findOrCreate(SopRole::Approver->value, 'web');
+    $checkerRole = Role::findOrCreate(SopRole::CHECKER, 'web');
+    $approverRole = Role::findOrCreate(SopRole::APPROVER, 'web');
 
     grantApproverPermissions($prodChecker);
     $prodChecker->assignRole($checkerRole);

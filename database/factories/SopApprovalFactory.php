@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use App\Enums\ApprovalDecision;
+use App\Models\ApprovalDecision;
 use App\Models\SopApproval;
 use App\Models\SopDocument;
 use App\Models\SopWorkflowStep;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -25,10 +26,11 @@ class SopApprovalFactory extends Factory
         return [
             'document_id' => SopDocument::factory(),
             'workflow_step_id' => SopWorkflowStep::factory(),
-            'decision' => ApprovalDecision::Pending,
-            'comments' => null,
-            'approved_at' => null,
-            'signature_hash' => null,
+            'approved_by' => User::factory(),
+            'approval_decision_id' => ApprovalDecision::idFor(ApprovalDecision::PENDING),
+            'comments' => fake()->optional()->sentence(),
+            'approved_at' => now(),
+            'signature_hash' => hash('sha256', fake()->uuid()),
         ];
     }
 }

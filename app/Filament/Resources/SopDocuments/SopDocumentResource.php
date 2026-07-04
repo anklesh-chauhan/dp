@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\SopDocuments;
 
-use App\Enums\DocumentStatus;
-use App\Enums\TemplateStatus;
 use App\Filament\Resources\SopDocuments\Pages\CreateSopDocument;
 use App\Filament\Resources\SopDocuments\Pages\EditSopDocument;
 use App\Filament\Resources\SopDocuments\Pages\ListSopDocuments;
@@ -15,8 +13,10 @@ use App\Filament\Resources\SopDocuments\RelationManagers\AuditRelationManager;
 use App\Filament\Resources\SopDocuments\RelationManagers\DocumentSectionRelationManager;
 use App\Filament\Resources\SopDocuments\RelationManagers\DocumentVariableRelationManager;
 use App\Filament\Support\TemplateVariableFieldBuilder;
+use App\Models\DocumentStatus;
 use App\Models\SopDocument;
 use App\Models\SopTemplateVersion;
+use App\Models\TemplateStatus;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -64,7 +64,7 @@ class SopDocumentResource extends Resource
                             ->relationship(
                                 'template',
                                 'name',
-                                modifyQueryUsing: fn (Builder $query): Builder => $query->where('status', TemplateStatus::Published)
+                                modifyQueryUsing: fn (Builder $query): Builder => $query->whereHas('templateStatus', fn (Builder $statusQuery): Builder => $statusQuery->where('code', TemplateStatus::PUBLISHED))
                                     ->whereHas('publishedVersion')
                             )
                             ->searchable()
@@ -103,9 +103,9 @@ class SopDocumentResource extends Resource
                             ->preload()
                             ->visible(fn ($livewire): bool => ! ($livewire instanceof CreateSopDocument))
                             ->required(fn ($livewire): bool => ! ($livewire instanceof CreateSopDocument)),
-                        Select::make('status')
-                            ->options(DocumentStatus::options())
-                            ->default(DocumentStatus::Draft->value)
+                        Select::make('document_status_id')
+                            ->relationship('documentStatus', 'name')
+                            ->default(fn (): int => DocumentStatus::idFor(DocumentStatus::DRAFT))
                             ->visible(fn ($livewire): bool => ! ($livewire instanceof CreateSopDocument))
                             ->disabled(fn ($livewire): bool => ! ($livewire instanceof CreateSopDocument))
                             ->dehydrated(false)
@@ -137,15 +137,16 @@ class SopDocumentResource extends Resource
                 TextColumn::make('title')->searchable()->sortable(),
                 TextColumn::make('department.name')->searchable(),
                 TextColumn::make('template.code')->searchable(),
-                TextColumn::make('status')
+                TextColumn::make('documentStatus.name')
+                    ->label('Status')
                     ->badge()
-                    ->formatStateUsing(fn (DocumentStatus $state): string => $state->label())
-                    ->color(fn (DocumentStatus $state): string => match ($state) {
-                        DocumentStatus::Draft => 'gray',
-                        DocumentStatus::UnderReview => 'warning',
-                        DocumentStatus::Approved => 'info',
-                        DocumentStatus::Effective => 'success',
-                        DocumentStatus::Obsolete, DocumentStatus::Rejected => 'danger',
+                    ->color(fn (SopDocument $record): string => match ($record->documentStatus?->code) {
+                        DocumentStatus::DRAFT => 'gray',
+                        DocumentStatus::UNDER_REVIEW => 'warning',
+                        DocumentStatus::APPROVED => 'info',
+                        DocumentStatus::EFFECTIVE => 'success',
+                        DocumentStatus::OBSOLETE, DocumentStatus::REJECTED => 'danger',
+                        default => 'gray',
                     }),
                 TextColumn::make('lockedByUser.name')
                     ->label('Locked By')
@@ -155,7 +156,7 @@ class SopDocumentResource extends Resource
                 TextColumn::make('review_date')->date()->sortable(),
             ])
             ->filters([
-                SelectFilter::make('status')->options(DocumentStatus::options()),
+                SelectFilter::make('document_status_id')->relationship('documentStatus', 'name')->label('Status'),
                 TrashedFilter::make(),
             ])
             ->recordActions([
@@ -201,7 +202,7 @@ class SopDocumentResource extends Resource
     {
         return parent::getEloquentQuery()
             ->withoutGlobalScopes([SoftDeletingScope::class])
-            ->with(['department', 'template', 'lockedByUser']);
+            ->with(['department', 'template', 'documentStatus', 'lockedByUser']);
     }
 
     private static function publishedTemplateVersionId(?int $templateId): ?int
@@ -212,7 +213,7 @@ class SopDocumentResource extends Resource
 
         return SopTemplateVersion::query()
             ->where('sop_template_id', $templateId)
-            ->where('status', TemplateStatus::Published)
+            ->whereHas('templateStatus', fn (Builder $statusQuery): Builder => $statusQuery->where('code', TemplateStatus::PUBLISHED))
             ->latest('version')
             ->value('id');
     }
@@ -228,7 +229,7 @@ class SopDocumentResource extends Resource
 
         return SopTemplateVersion::query()
             ->where('sop_template_id', $templateId)
-            ->where('status', TemplateStatus::Published)
+            ->whereHas('templateStatus', fn (Builder $statusQuery): Builder => $statusQuery->where('code', TemplateStatus::PUBLISHED))
             ->orderByDesc('version')
             ->pluck('version', 'id')
             ->map(fn (int $version): string => "Version {$version}")

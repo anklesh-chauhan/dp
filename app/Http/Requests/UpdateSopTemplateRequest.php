@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
-use App\Enums\TemplateStatus;
 use App\Models\SopTemplate;
+use App\Models\TemplateStatus;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Enum;
 
 class UpdateSopTemplateRequest extends FormRequest
 {
@@ -17,7 +16,7 @@ class UpdateSopTemplateRequest extends FormRequest
         $template = $this->route('sop_template');
 
         return $template instanceof SopTemplate
-            && $template->status === TemplateStatus::Draft
+            && $template->templateStatus?->hasCode(TemplateStatus::DRAFT)
             && ($this->user()?->can('sop.templates.update') ?? false);
     }
 
@@ -36,7 +35,7 @@ class UpdateSopTemplateRequest extends FormRequest
             'department_id' => ['required', 'integer', 'exists:departments,id'],
             'category_id' => ['required', 'integer', 'exists:document_categories,id'],
             'document_type_id' => ['required', 'integer', 'exists:document_types,id'],
-            'status' => ['required', new Enum(TemplateStatus::class)],
+            'template_status_id' => ['required', 'integer', Rule::exists('template_statuses', 'id')],
             'current_version' => ['required', 'integer', 'min:0', 'gte:'.$template?->current_version],
         ];
     }

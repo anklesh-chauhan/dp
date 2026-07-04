@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Enums\TemplateStatus;
 use Database\Factories\SopTemplateVersionFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -23,7 +22,7 @@ class SopTemplateVersion extends Model
         'content_json',
         'effective_date',
         'change_reason',
-        'status',
+        'template_status_id',
         'created_by',
     ];
 
@@ -32,7 +31,6 @@ class SopTemplateVersion extends Model
         return [
             'content_json' => 'array',
             'effective_date' => 'date',
-            'status' => TemplateStatus::class,
             'version' => 'integer',
         ];
     }
@@ -43,6 +41,14 @@ class SopTemplateVersion extends Model
     public function template(): BelongsTo
     {
         return $this->belongsTo(SopTemplate::class, 'sop_template_id');
+    }
+
+    /**
+     * @return BelongsTo<TemplateStatus, $this>
+     */
+    public function templateStatus(): BelongsTo
+    {
+        return $this->belongsTo(TemplateStatus::class);
     }
 
     /**

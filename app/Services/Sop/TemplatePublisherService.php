@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services\Sop;
 
-use App\Enums\TemplateStatus;
 use App\Models\SopAuditLog;
 use App\Models\SopTemplate;
 use App\Models\SopTemplateVersion;
+use App\Models\TemplateStatus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -23,12 +23,12 @@ class TemplatePublisherService
         return DB::transaction(function () use ($template, $userId, $changeReason): SopTemplateVersion {
             $template = SopTemplate::query()->lockForUpdate()->findOrFail($template->id);
 
-            if ($template->status === TemplateStatus::Archived) {
+            if ($template->templateStatus?->hasCode(TemplateStatus::ARCHIVED)) {
                 throw ValidationException::withMessages(['template' => 'Archived templates cannot be published.']);
             }
 
             $draftVersion = $template->versions()
-                ->where('status', TemplateStatus::Draft)
+                ->whereHas('templateStatus', fn ($query) => $query->where('code', TemplateStatus::DRAFT))
                 ->with(['sections', 'variables'])
                 ->orderByDesc('version')
                 ->first();
@@ -40,7 +40,7 @@ class TemplatePublisherService
             $nextVersion = max($template->current_version + 1, $draftVersion->version);
             $previousVersion = $template->current_version;
             $previousPublishedVersionId = $template->versions()
-                ->where('status', TemplateStatus::Published)
+                ->whereHas('templateStatus', fn ($query) => $query->where('code', TemplateStatus::PUBLISHED))
                 ->orderByDesc('version')
                 ->value('id');
 
@@ -48,13 +48,15 @@ class TemplatePublisherService
                 $draftVersion->update(['version' => $nextVersion]);
             }
 
+            $publishedStatusId = TemplateStatus::idFor(TemplateStatus::PUBLISHED);
+
             $draftVersion->update([
-                'status' => TemplateStatus::Published,
+                'template_status_id' => $publishedStatusId,
                 'change_reason' => $changeReason ?? $draftVersion->change_reason,
             ]);
 
             $template->update([
-                'status' => TemplateStatus::Published,
+                'template_status_id' => $publishedStatusId,
                 'current_version' => $nextVersion,
             ]);
 

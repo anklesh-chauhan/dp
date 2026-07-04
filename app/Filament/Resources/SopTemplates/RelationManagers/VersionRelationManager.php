@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\SopTemplates\RelationManagers;
 
-use App\Enums\TemplateStatus;
 use App\Models\SopAuditLog;
 use App\Models\SopTemplateVersion;
+use App\Models\TemplateStatus;
 use App\Services\Sop\AuditLogService;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
@@ -44,9 +44,9 @@ class VersionRelationManager extends RelationManager
             ->recordTitleAttribute('version')
             ->columns([
                 TextColumn::make('version')->sortable(),
-                TextColumn::make('status')
-                    ->badge()
-                    ->formatStateUsing(fn (TemplateStatus $state): string => $state->label()),
+                TextColumn::make('templateStatus.name')
+                    ->label('Status')
+                    ->badge(),
                 TextColumn::make('sections_count')->counts('sections')->label('Sections'),
                 TextColumn::make('variables_count')->counts('variables')->label('Variables'),
                 TextColumn::make('effective_date')->date(),
@@ -82,7 +82,7 @@ class VersionRelationManager extends RelationManager
             ->headerActions([
                 CreateAction::make()
                     ->mutateDataUsing(function (array $data): array {
-                        $data['status'] = TemplateStatus::Draft->value;
+                        $data['template_status_id'] = TemplateStatus::idFor(TemplateStatus::DRAFT);
                         $data['created_by'] = Auth::id();
 
                         return $data;
@@ -93,7 +93,7 @@ class VersionRelationManager extends RelationManager
                             newValues: [
                                 'template_version_id' => $record->id,
                                 'version' => $record->version,
-                                'status' => $record->status->value,
+                                'status' => $record->templateStatus?->code,
                                 'change_reason' => $record->change_reason,
                             ],
                             userId: Auth::id(),

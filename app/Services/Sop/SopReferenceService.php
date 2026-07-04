@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Sop;
 
-use App\Enums\DocumentStatus;
 use App\Models\Department;
+use App\Models\DocumentStatus;
 use App\Models\SopDocument;
 use Illuminate\Validation\ValidationException;
 
@@ -24,7 +24,7 @@ class SopReferenceService
         $sop = SopDocument::query()
             ->whereKey($referencedSopDocumentId)
             ->where('department_id', $department->id)
-            ->where('status', DocumentStatus::Effective)
+            ->whereHas('documentStatus', fn ($query) => $query->where('code', DocumentStatus::EFFECTIVE))
             ->first();
 
         if ($sop === null) {

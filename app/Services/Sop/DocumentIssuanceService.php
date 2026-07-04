@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Sop;
 
-use App\Enums\IssuanceStatus;
 use App\Models\DocumentIssuance;
+use App\Models\IssuanceStatus;
 use App\Models\SopAuditLog;
 use App\Models\SopDocument;
 use App\Models\User;
@@ -49,7 +49,7 @@ class DocumentIssuanceService
                 'issued_to_location' => $data['issued_to_location'] ?? null,
                 'issued_by' => $issuer->id,
                 'issued_at' => now(),
-                'status' => IssuanceStatus::Active,
+                'issuance_status_id' => IssuanceStatus::idFor(IssuanceStatus::ACTIVE),
                 'watermark_code' => $watermarkCode,
                 'notes' => $data['notes'] ?? null,
             ]);
@@ -82,7 +82,7 @@ class DocumentIssuanceService
 
         return DB::transaction(function () use ($issuance, $user, $reason): DocumentIssuance {
             $issuance->update([
-                'status' => IssuanceStatus::Recalled,
+                'issuance_status_id' => IssuanceStatus::idFor(IssuanceStatus::RECALLED),
                 'recalled_by' => $user->id,
                 'recalled_at' => now(),
                 'recall_reason' => $reason,
@@ -105,7 +105,7 @@ class DocumentIssuanceService
 
     public function destroyCopy(DocumentIssuance $issuance, User $user, string $reason): DocumentIssuance
     {
-        if ($issuance->status === IssuanceStatus::Destroyed) {
+        if ($issuance->issuanceStatus?->hasCode(IssuanceStatus::DESTROYED)) {
             throw ValidationException::withMessages([
                 'issuance' => 'This controlled copy has already been destroyed.',
             ]);
@@ -113,7 +113,7 @@ class DocumentIssuanceService
 
         return DB::transaction(function () use ($issuance, $user, $reason): DocumentIssuance {
             $issuance->update([
-                'status' => IssuanceStatus::Destroyed,
+                'issuance_status_id' => IssuanceStatus::idFor(IssuanceStatus::DESTROYED),
                 'destroyed_by' => $user->id,
                 'destroyed_at' => now(),
                 'destroy_reason' => $reason,

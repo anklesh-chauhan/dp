@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\Services\Sop;
 
 use App\Data\SopDocumentData;
-use App\Enums\DocumentStatus;
-use App\Enums\TemplateStatus;
+use App\Models\DocumentStatus;
 use App\Models\SopAuditLog;
 use App\Models\SopDocument;
 use App\Models\SopTemplate;
 use App\Models\SopTemplateVersion;
+use App\Models\TemplateStatus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -31,24 +31,24 @@ class SopGeneratorService
         return DB::transaction(function () use ($data): SopDocument {
             if ($data->templateVersionId !== null) {
                 $version = SopTemplateVersion::query()
-                    ->with(['template.department', 'template.documentType', 'sections', 'variables'])
+                    ->with(['template.department', 'template.documentType', 'templateStatus', 'sections', 'variables'])
                     ->findOrFail($data->templateVersionId);
 
                 if ($version->template->id !== $data->templateId) {
                     throw ValidationException::withMessages(['template_version_id' => 'The selected template version does not belong to the chosen template.']);
                 }
 
-                if ($version->status !== TemplateStatus::Published) {
+                if (! $version->templateStatus?->hasCode(TemplateStatus::PUBLISHED)) {
                     throw ValidationException::withMessages(['template_version_id' => 'Only published template versions can generate controlled documents.']);
                 }
 
                 $template = $version->template;
             } else {
                 $template = SopTemplate::query()
-                    ->with(['department', 'documentType', 'publishedVersion.sections', 'publishedVersion.variables'])
+                    ->with(['department', 'documentType', 'templateStatus', 'publishedVersion.sections', 'publishedVersion.variables'])
                     ->findOrFail($data->templateId);
 
-                if ($template->status !== TemplateStatus::Published || $template->publishedVersion === null) {
+                if (! $template->templateStatus?->hasCode(TemplateStatus::PUBLISHED) || $template->publishedVersion === null) {
                     throw ValidationException::withMessages(['template_id' => 'Only published templates can generate controlled documents.']);
                 }
 
@@ -81,7 +81,7 @@ class SopGeneratorService
                 'version' => 1,
                 'department_id' => $template->department_id,
                 'document_type_id' => $documentType->id,
-                'status' => DocumentStatus::Draft,
+                'document_status_id' => DocumentStatus::idFor(DocumentStatus::DRAFT),
                 'effective_date' => $data->effectiveDate,
                 'review_date' => $data->reviewDate,
                 'owner_id' => $data->ownerId,

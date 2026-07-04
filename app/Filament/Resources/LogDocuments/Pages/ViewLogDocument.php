@@ -8,9 +8,10 @@ use App\Actions\Sop\IssueDocumentAction;
 use App\Actions\Sop\LockDocumentAction;
 use App\Actions\Sop\SubmitDocumentAction;
 use App\Actions\Sop\UnlockDocumentAction;
-use App\Enums\DocumentStatus;
+use App\Filament\Concerns\HandlesServiceExceptions;
 use App\Filament\Resources\LogDocuments\LogDocumentResource;
 use App\Models\Department;
+use App\Models\DocumentStatus;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
@@ -24,6 +25,8 @@ use Illuminate\Support\Facades\Auth;
 
 class ViewLogDocument extends ViewRecord
 {
+    use HandlesServiceExceptions;
+
     protected static string $resource = LogDocumentResource::class;
 
     protected function getActions(): array
@@ -34,13 +37,15 @@ class ViewLogDocument extends ViewRecord
                 ->icon(Heroicon::PaperAirplane)
                 ->color('success')
                 ->requiresConfirmation()
-                ->visible(fn (): bool => $this->record->status === DocumentStatus::Draft
+                ->visible(fn (): bool => $this->record->documentStatus?->hasCode(DocumentStatus::DRAFT)
                     && Auth::user()?->can('submit', $this->record))
                 ->action(function (): void {
-                    app(SubmitDocumentAction::class)->execute($this->record, Auth::user());
-
-                    Notification::make()->title('Log document submitted for approval')->success()->send();
-                    $this->refreshFormData(['status']);
+                    $this->runServiceAction(
+                        fn () => app(SubmitDocumentAction::class)->execute($this->record, Auth::user()),
+                        failureTitle: 'Submission Failed',
+                        successTitle: 'Log document submitted for approval',
+                        afterSuccess: fn () => $this->refreshFormData(['document_status_id']),
+                    );
                 }),
             Action::make('issueControlledCopy')
                 ->label('Issue Controlled Copy')
@@ -61,23 +66,30 @@ class ViewLogDocument extends ViewRecord
                 ->visible(fn (): bool => $this->record->canBeIssued()
                     && (Auth::user()?->can('Issue:DocumentIssuance') ?? false))
                 ->action(function (array $data): void {
-                    $issuance = app(IssueDocumentAction::class)->execute($this->record, Auth::user(), $data);
-
-                    Notification::make()
-                        ->title('Controlled copy issued')
-                        ->body("Copy {$issuance->issuance_number} has been issued.")
-                        ->success()
-                        ->send();
+                    $this->runServiceAction(
+                        fn () => app(IssueDocumentAction::class)->execute($this->record, Auth::user(), $data),
+                        failureTitle: 'Issuance Failed',
+                        afterSuccess: function ($issuance): void {
+                            Notification::make()
+                                ->title('Controlled copy issued')
+                                ->body("Copy {$issuance->issuance_number} has been issued.")
+                                ->success()
+                                ->send();
+                        },
+                    );
                 }),
             Action::make('lockDocument')
                 ->label('Lock for Editing')
                 ->icon(Heroicon::LockClosed)
-                ->visible(fn (): bool => $this->record->status === DocumentStatus::Draft
+                ->visible(fn (): bool => $this->record->documentStatus?->hasCode(DocumentStatus::DRAFT)
                     && ! $this->record->isLocked()
                     && Auth::user()?->can('lock', $this->record))
                 ->action(function (): void {
-                    app(LockDocumentAction::class)->execute($this->record, Auth::user());
-                    Notification::make()->title('Document locked')->success()->send();
+                    $this->runServiceAction(
+                        fn () => app(LockDocumentAction::class)->execute($this->record, Auth::user()),
+                        failureTitle: 'Lock Failed',
+                        successTitle: 'Document locked',
+                    );
                 }),
             Action::make('unlockDocument')
                 ->label('Unlock')
@@ -86,8 +98,11 @@ class ViewLogDocument extends ViewRecord
                 ->visible(fn (): bool => $this->record->isLocked()
                     && Auth::user()?->can('unlock', $this->record))
                 ->action(function (): void {
-                    app(UnlockDocumentAction::class)->execute($this->record, Auth::user());
-                    Notification::make()->title('Document unlocked')->success()->send();
+                    $this->runServiceAction(
+                        fn () => app(UnlockDocumentAction::class)->execute($this->record, Auth::user()),
+                        failureTitle: 'Unlock Failed',
+                        successTitle: 'Document unlocked',
+                    );
                 }),
             EditAction::make()
                 ->visible(fn (): bool => Auth::user()?->can('update', $this->record) ?? false),

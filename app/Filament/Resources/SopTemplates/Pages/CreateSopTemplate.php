@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\SopTemplates\Pages;
 
-use App\Enums\TemplateStatus;
 use App\Filament\Resources\SopTemplates\SopTemplateResource;
+use App\Models\TemplateStatus;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Auth;
 
@@ -16,7 +16,7 @@ class CreateSopTemplate extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $data['created_by'] = Auth::id();
-        $data['status'] ??= TemplateStatus::Draft->value;
+        $data['template_status_id'] ??= TemplateStatus::idFor(TemplateStatus::DRAFT);
 
         return $data;
     }

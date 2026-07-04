@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
-use App\Enums\TemplateStatus;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rules\Enum;
+use Illuminate\Validation\Rule;
 
 class StoreSopTemplateRequest extends FormRequest
 {
@@ -27,7 +26,7 @@ class StoreSopTemplateRequest extends FormRequest
             'department_id' => ['required', 'integer', 'exists:departments,id'],
             'category_id' => ['required', 'integer', 'exists:document_categories,id'],
             'document_type_id' => ['required', 'integer', 'exists:document_types,id'],
-            'status' => ['nullable', new Enum(TemplateStatus::class)],
+            'template_status_id' => ['nullable', 'integer', Rule::exists('template_statuses', 'id')],
         ];
     }
 }

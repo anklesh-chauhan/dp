@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use App\Enums\DocumentStatus;
 use App\Models\Department;
+use App\Models\DocumentStatus;
 use App\Models\SopDocument;
 use App\Models\SopTemplate;
 use App\Models\SopTemplateVersion;
@@ -31,7 +31,7 @@ class SopDocumentFactory extends Factory
             'title' => fake()->sentence(4),
             'version' => 1,
             'department_id' => Department::factory(),
-            'status' => DocumentStatus::Draft,
+            'document_status_id' => DocumentStatus::idFor(DocumentStatus::DRAFT),
             'effective_date' => now()->addDays(7)->toDateString(),
             'review_date' => now()->addYear()->toDateString(),
             'owner_id' => User::factory(),

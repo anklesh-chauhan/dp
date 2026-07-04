@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Concerns\Lockable;
-use App\Enums\TemplateStatus;
 use Database\Factories\SopTemplateFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -27,7 +26,7 @@ class SopTemplate extends Model
         'department_id',
         'category_id',
         'document_type_id',
-        'status',
+        'template_status_id',
         'current_version',
         'created_by',
         'locked_by',
@@ -37,7 +36,6 @@ class SopTemplate extends Model
     protected function casts(): array
     {
         return [
-            'status' => TemplateStatus::class,
             'current_version' => 'integer',
             'locked_at' => 'datetime',
         ];
@@ -68,6 +66,14 @@ class SopTemplate extends Model
     }
 
     /**
+     * @return BelongsTo<TemplateStatus, $this>
+     */
+    public function templateStatus(): BelongsTo
+    {
+        return $this->belongsTo(TemplateStatus::class);
+    }
+
+    /**
      * @return BelongsTo<User, $this>
      */
     public function creator(): BelongsTo
@@ -89,7 +95,7 @@ class SopTemplate extends Model
     public function publishedVersion(): HasOne
     {
         return $this->hasOne(SopTemplateVersion::class)
-            ->where('status', TemplateStatus::Published)
+            ->whereHas('templateStatus', fn ($query) => $query->where('code', TemplateStatus::PUBLISHED))
             ->ofMany('version', 'max');
     }
 

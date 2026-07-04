@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Actions\Sop;
 
-use App\Enums\TemplateStatus;
 use App\Models\SopAuditLog;
 use App\Models\SopTemplate;
+use App\Models\TemplateStatus;
 use App\Services\Sop\AuditLogService;
 use Illuminate\Support\Facades\DB;
 
@@ -17,17 +17,21 @@ class ArchiveTemplateAction
     public function execute(SopTemplate $template, int $userId): SopTemplate
     {
         return DB::transaction(function () use ($template, $userId): SopTemplate {
-            $oldValues = $template->only(['status']);
+            $oldValues = $template->only(['template_status_id']);
 
-            $template->update(['status' => TemplateStatus::Archived]);
-            $template->versions()->where('status', TemplateStatus::Draft)->update(['status' => TemplateStatus::Archived]);
+            $archivedStatusId = TemplateStatus::idFor(TemplateStatus::ARCHIVED);
+
+            $template->update(['template_status_id' => $archivedStatusId]);
+            $template->versions()
+                ->whereHas('templateStatus', fn ($query) => $query->where('code', TemplateStatus::DRAFT))
+                ->update(['template_status_id' => $archivedStatusId]);
 
             $this->auditLogService->log(
                 action: SopAuditLog::ACTION_ARCHIVED,
                 oldValues: $oldValues,
                 newValues: [
                     'template_id' => $template->id,
-                    'status' => TemplateStatus::Archived->value,
+                    'status' => TemplateStatus::ARCHIVED,
                 ],
                 userId: $userId,
                 template: $template,

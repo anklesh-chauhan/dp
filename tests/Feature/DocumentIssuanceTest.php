@@ -5,18 +5,18 @@ declare(strict_types=1);
 use App\Actions\Sop\CreateDocumentFromTemplateAction;
 use App\Actions\Sop\IssueDocumentAction;
 use App\Data\SopDocumentData;
-use App\Enums\ControlledDocumentTypeCode;
-use App\Enums\DocumentStatus;
-use App\Enums\IssuanceStatus;
-use App\Enums\TemplateStatus;
 use App\Models\Department;
 use App\Models\DocumentCategory;
+use App\Models\DocumentStatus;
 use App\Models\DocumentType;
+use App\Models\IssuanceStatus;
 use App\Models\SopAuditLog;
 use App\Models\SopDocument;
 use App\Models\SopTemplate;
 use App\Models\SopTemplateVersion;
+use App\Models\TemplateStatus;
 use App\Models\User;
+use App\Models\VariableDataType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Models\Permission;
@@ -30,14 +30,14 @@ function createEffectiveSop(Department $department): SopDocument
 {
     $sopType = DocumentType::factory()->create([
         'name' => 'Standard Operating Procedure',
-        'code' => ControlledDocumentTypeCode::Sop->value,
+        'code' => DocumentType::SOP,
     ]);
 
     $template = SopTemplate::factory()->create([
         'department_id' => $department->id,
         'category_id' => DocumentCategory::factory(),
         'document_type_id' => $sopType->id,
-        'status' => TemplateStatus::Published,
+        'template_status_id' => TemplateStatus::idFor(TemplateStatus::PUBLISHED),
         'current_version' => 1,
     ]);
 
@@ -51,7 +51,7 @@ function createEffectiveSop(Department $department): SopDocument
         'template_version_id' => $version->id,
         'department_id' => $department->id,
         'document_type_id' => $sopType->id,
-        'status' => DocumentStatus::Effective,
+        'document_status_id' => DocumentStatus::idFor(DocumentStatus::EFFECTIVE),
         'document_number' => 'SOP-'.$department->code.'-00001',
     ]);
 }
@@ -60,14 +60,16 @@ function createLogTemplate(Department $department): SopTemplate
 {
     $logType = DocumentType::factory()->create([
         'name' => 'Log Document',
-        'code' => ControlledDocumentTypeCode::Log->value,
+        'code' => DocumentType::LOG,
+        'requires_sop_reference' => true,
+        'is_issuable' => true,
     ]);
 
     $template = SopTemplate::factory()->create([
         'department_id' => $department->id,
         'category_id' => DocumentCategory::factory(),
         'document_type_id' => $logType->id,
-        'status' => TemplateStatus::Published,
+        'template_status_id' => TemplateStatus::idFor(TemplateStatus::PUBLISHED),
         'current_version' => 1,
     ]);
 
@@ -85,9 +87,9 @@ function createLogTemplate(Department $department): SopTemplate
     ]);
 
     $version->variables()->createMany([
-        ['name' => 'department', 'label' => 'Department', 'required' => true],
-        ['name' => 'document_number', 'label' => 'Document Number', 'required' => true],
-        ['name' => 'referenced_sop', 'label' => 'Referenced SOP', 'required' => true],
+        ['name' => 'department', 'label' => 'Department', 'variable_data_type_id' => VariableDataType::idFor(VariableDataType::DEPARTMENT), 'required' => true],
+        ['name' => 'document_number', 'label' => 'Document Number', 'variable_data_type_id' => VariableDataType::idFor(VariableDataType::TEXT), 'required' => true],
+        ['name' => 'referenced_sop', 'label' => 'Referenced SOP', 'variable_data_type_id' => VariableDataType::idFor(VariableDataType::SOP_REFERENCE), 'required' => true],
     ]);
 
     return $template->load('publishedVersion');
@@ -124,7 +126,7 @@ it('creates a log document with snapshotted sop reference', function (): void {
         documentNumber: 'LOG-QA-00001',
     ));
 
-    expect($document->status)->toBe(DocumentStatus::Draft)
+    expect($document->documentStatus?->is(DocumentStatus::DRAFT))->toBeTrue()
         ->and($document->referenced_sop_document_id)->toBe($effectiveSop->id)
         ->and($document->referenced_sop_number)->toBe($effectiveSop->document_number)
         ->and($document->referenced_sop_version)->toBe($effectiveSop->version)
@@ -155,13 +157,13 @@ it('issues controlled copies only after approval to effective', function (): voi
     expect(fn () => app(IssueDocumentAction::class)->execute($document, $controller))
         ->toThrow(ValidationException::class);
 
-    $document->update(['status' => DocumentStatus::Effective]);
+    $document->update(['document_status_id' => DocumentStatus::idFor(DocumentStatus::EFFECTIVE)]);
 
     $issuance = app(IssueDocumentAction::class)->execute($document, $controller, [
         'issued_to_location' => 'Production Line 1',
     ]);
 
-    expect($issuance->status)->toBe(IssuanceStatus::Active)
+    expect($issuance->issuanceStatus?->is(IssuanceStatus::ACTIVE))->toBeTrue()
         ->and($issuance->copy_number)->toBe(1)
         ->and($issuance->issuance_number)->toBe('LOG-QA-00002-C01')
         ->and(SopAuditLog::query()->where('document_id', $document->id)->where('action', SopAuditLog::ACTION_ISSUED)->exists())->toBeTrue();
@@ -185,7 +187,7 @@ it('blocks printing log documents without an active controlled copy', function (
         documentNumber: 'LOG-QA-00003',
     ));
 
-    $document->update(['status' => DocumentStatus::Effective]);
+    $document->update(['document_status_id' => DocumentStatus::idFor(DocumentStatus::EFFECTIVE)]);
 
     actingAs($user);
 
@@ -211,7 +213,7 @@ it('allows printing log documents with an active controlled copy', function (): 
         documentNumber: 'LOG-QA-00004',
     ));
 
-    $document->update(['status' => DocumentStatus::Effective]);
+    $document->update(['document_status_id' => DocumentStatus::idFor(DocumentStatus::EFFECTIVE)]);
     $issuance = app(IssueDocumentAction::class)->execute($document, $user);
 
     actingAs($user);

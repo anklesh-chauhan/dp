@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use App\Enums\VariableDataType;
 use App\Models\SopTemplateVariable;
 use App\Models\SopTemplateVersion;
+use App\Models\VariableDataType;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -21,12 +21,14 @@ class SopTemplateVariableFactory extends Factory
      */
     public function definition(): array
     {
+        $name = fake()->unique()->word();
+
         return [
             'template_version_id' => SopTemplateVersion::factory(),
-            'name' => fake()->unique()->slug(2),
-            'label' => fake()->words(2, true),
-            'datatype' => VariableDataType::Text,
-            'default_value' => fake()->word(),
+            'name' => $name,
+            'label' => str($name)->replace('_', ' ')->title()->toString(),
+            'variable_data_type_id' => VariableDataType::idFor(VariableDataType::TEXT),
+            'default_value' => fake()->optional()->word(),
             'validation_rules' => null,
             'required' => false,
         ];

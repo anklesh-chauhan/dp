@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Enums\IssuanceStatus;
 use Database\Factories\DocumentIssuanceFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -25,7 +24,7 @@ class DocumentIssuance extends Model
         'issued_to_location',
         'issued_by',
         'issued_at',
-        'status',
+        'issuance_status_id',
         'recalled_by',
         'recalled_at',
         'recall_reason',
@@ -43,7 +42,6 @@ class DocumentIssuance extends Model
             'issued_at' => 'datetime',
             'recalled_at' => 'datetime',
             'destroyed_at' => 'datetime',
-            'status' => IssuanceStatus::class,
         ];
     }
 
@@ -95,9 +93,17 @@ class DocumentIssuance extends Model
         return $this->belongsTo(User::class, 'destroyed_by');
     }
 
+    /**
+     * @return BelongsTo<IssuanceStatus, $this>
+     */
+    public function issuanceStatus(): BelongsTo
+    {
+        return $this->belongsTo(IssuanceStatus::class);
+    }
+
     public function isActive(): bool
     {
-        return $this->status === IssuanceStatus::Active;
+        return $this->issuanceStatus?->hasCode(IssuanceStatus::ACTIVE) ?? false;
     }
 
     /**
@@ -106,6 +112,6 @@ class DocumentIssuance extends Model
      */
     public function scopeActive(Builder $query): Builder
     {
-        return $query->where('status', IssuanceStatus::Active);
+        return $query->whereHas('issuanceStatus', fn (Builder $statusQuery): Builder => $statusQuery->where('code', IssuanceStatus::ACTIVE));
     }
 }

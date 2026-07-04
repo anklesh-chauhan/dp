@@ -6,8 +6,9 @@ namespace App\Filament\Resources\LogDocuments\RelationManagers;
 
 use App\Actions\Sop\DestroyIssuanceAction;
 use App\Actions\Sop\RecallIssuanceAction;
-use App\Enums\IssuanceStatus;
+use App\Filament\Concerns\HandlesServiceExceptions;
 use App\Models\DocumentIssuance;
+use App\Models\IssuanceStatus;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -19,6 +20,8 @@ use Illuminate\Support\Facades\Auth;
 
 class IssuanceRelationManager extends RelationManager
 {
+    use HandlesServiceExceptions;
+
     protected static string $relationship = 'issuances';
 
     protected static ?string $title = 'Controlled Copy Issuance Register';
@@ -40,13 +43,14 @@ class IssuanceRelationManager extends RelationManager
                 TextColumn::make('issued_to_location')->label('Location')->placeholder('—'),
                 TextColumn::make('issuer.name')->label('Issued By'),
                 TextColumn::make('issued_at')->dateTime()->sortable(),
-                TextColumn::make('status')
+                TextColumn::make('issuanceStatus.name')
+                    ->label('Status')
                     ->badge()
-                    ->formatStateUsing(fn (IssuanceStatus $state): string => $state->label())
-                    ->color(fn (IssuanceStatus $state): string => match ($state) {
-                        IssuanceStatus::Active => 'success',
-                        IssuanceStatus::Recalled => 'warning',
-                        IssuanceStatus::Destroyed => 'danger',
+                    ->color(fn (DocumentIssuance $record): string => match ($record->issuanceStatus?->code) {
+                        IssuanceStatus::ACTIVE => 'success',
+                        IssuanceStatus::RECALLED => 'warning',
+                        IssuanceStatus::DESTROYED => 'danger',
+                        default => 'gray',
                     }),
             ])
             ->defaultSort('issued_at', 'desc')
@@ -67,23 +71,35 @@ class IssuanceRelationManager extends RelationManager
                     ->schema([Textarea::make('recall_reason')->required()])
                     ->visible(fn (DocumentIssuance $record): bool => $record->isActive()
                         && (Auth::user()?->can('recall', $record) ?? false))
-                    ->action(fn (DocumentIssuance $record, array $data): mixed => app(RecallIssuanceAction::class)->execute(
-                        $record,
-                        Auth::user(),
-                        $data['recall_reason'],
-                    )),
+                    ->action(function (DocumentIssuance $record, array $data): void {
+                        $this->runServiceAction(
+                            fn () => app(RecallIssuanceAction::class)->execute(
+                                $record,
+                                Auth::user(),
+                                $data['recall_reason'],
+                            ),
+                            failureTitle: 'Recall Failed',
+                            successTitle: 'Controlled copy recalled.',
+                        );
+                    }),
                 Action::make('destroyCopy')
                     ->label('Destroy Copy')
                     ->icon(Heroicon::Trash)
                     ->color('danger')
                     ->schema([Textarea::make('destroy_reason')->required()])
-                    ->visible(fn (DocumentIssuance $record): bool => $record->status !== IssuanceStatus::Destroyed
+                    ->visible(fn (DocumentIssuance $record): bool => ! $record->issuanceStatus?->hasCode(IssuanceStatus::DESTROYED)
                         && (Auth::user()?->can('destroyCopy', $record) ?? false))
-                    ->action(fn (DocumentIssuance $record, array $data): mixed => app(DestroyIssuanceAction::class)->execute(
-                        $record,
-                        Auth::user(),
-                        $data['destroy_reason'],
-                    )),
+                    ->action(function (DocumentIssuance $record, array $data): void {
+                        $this->runServiceAction(
+                            fn () => app(DestroyIssuanceAction::class)->execute(
+                                $record,
+                                Auth::user(),
+                                $data['destroy_reason'],
+                            ),
+                            failureTitle: 'Destroy Failed',
+                            successTitle: 'Controlled copy destroyed.',
+                        );
+                    }),
             ]);
     }
 }

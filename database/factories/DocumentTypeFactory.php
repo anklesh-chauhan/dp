@@ -22,6 +22,8 @@ class DocumentTypeFactory extends Factory
         return [
             'name' => 'Standard Operating Procedure',
             'code' => 'SOP',
+            'requires_sop_reference' => false,
+            'is_issuable' => false,
         ];
     }
 }

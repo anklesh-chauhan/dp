@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Enums\ControlledDocumentTypeCode;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -13,7 +12,28 @@ class DocumentType extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'code'];
+    public const SOP = 'SOP';
+
+    public const LOG = 'LOG';
+
+    public const BATCH_RECORD = 'BMR';
+
+    public const FORM = 'FORM';
+
+    protected $fillable = [
+        'name',
+        'code',
+        'requires_sop_reference',
+        'is_issuable',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'requires_sop_reference' => 'boolean',
+            'is_issuable' => 'boolean',
+        ];
+    }
 
     /**
      * @return HasMany<SopTemplate, $this>
@@ -33,15 +53,19 @@ class DocumentType extends Model
 
     public function requiresSopReference(): bool
     {
-        $code = ControlledDocumentTypeCode::tryFrom($this->code);
-
-        return $code?->requiresSopReference() ?? false;
+        return $this->requires_sop_reference;
     }
 
     public function isIssuableType(): bool
     {
-        $code = ControlledDocumentTypeCode::tryFrom($this->code);
+        return $this->is_issuable;
+    }
 
-        return $code !== null && in_array($code, ControlledDocumentTypeCode::issuableTypes(), true);
+    /**
+     * @return array<string, string>
+     */
+    public static function options(): array
+    {
+        return static::query()->orderBy('name')->pluck('name', 'id')->all();
     }
 }

@@ -7,13 +7,12 @@ namespace App\Filament\Resources\SopApprovals;
 use App\Actions\Sop\ApproveDocumentAction;
 use App\Actions\Sop\RejectDocumentAction;
 use App\Actions\Sop\ReturnDocumentAction;
-use App\Enums\ApprovalDecision;
-use App\Enums\ApprovalStepType;
-use App\Enums\DocumentStatus;
-use App\Enums\SopRole;
 use App\Filament\Resources\SopApprovals\Pages\ListSopApprovals;
 use App\Filament\Resources\SopDocuments\SopDocumentResource;
+use App\Filament\Support\ServiceExceptionHandler;
+use App\Models\ApprovalDecision;
 use App\Models\SopApproval;
+use App\Models\SopRole;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
 use Filament\Resources\Resource;
@@ -62,27 +61,26 @@ class SopApprovalResource extends Resource
                 TextColumn::make('document.department.name')
                     ->label('Department')
                     ->toggleable(),
-                TextColumn::make('document.status')
+                TextColumn::make('document.documentStatus.name')
                     ->label('Document Status')
-                    ->badge()
-                    ->formatStateUsing(fn (DocumentStatus $state): string => $state->label()),
+                    ->badge(),
                 TextColumn::make('workflowStep.step_no')
                     ->label('Step')
                     ->sortable(),
-                TextColumn::make('workflowStep.approval_type')
+                TextColumn::make('workflowStep.approvalStepType.name')
                     ->label('Type')
-                    ->badge()
-                    ->formatStateUsing(fn (ApprovalStepType $state): string => $state->label()),
+                    ->badge(),
                 TextColumn::make('workflowStep.role.name')
                     ->label('Required Role'),
-                TextColumn::make('decision')
+                TextColumn::make('approvalDecision.name')
+                    ->label('Decision')
                     ->badge()
-                    ->formatStateUsing(fn (ApprovalDecision $state): string => $state->label())
-                    ->color(fn (ApprovalDecision $state): string => match ($state) {
-                        ApprovalDecision::Pending => 'warning',
-                        ApprovalDecision::Approved => 'success',
-                        ApprovalDecision::Rejected => 'danger',
-                        ApprovalDecision::Returned => 'gray',
+                    ->color(fn (SopApproval $record): string => match ($record->approvalDecision?->code) {
+                        ApprovalDecision::PENDING => 'warning',
+                        ApprovalDecision::APPROVED => 'success',
+                        ApprovalDecision::REJECTED => 'danger',
+                        ApprovalDecision::RETURNED => 'gray',
+                        default => 'gray',
                     }),
                 TextColumn::make('approver.name')
                     ->label('Decided By')
@@ -98,9 +96,10 @@ class SopApprovalResource extends Resource
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
-                SelectFilter::make('decision')
-                    ->options(ApprovalDecision::options())
-                    ->default(ApprovalDecision::Pending->value),
+                SelectFilter::make('approval_decision_id')
+                    ->relationship('approvalDecision', 'name')
+                    ->label('Decision')
+                    ->default(fn (): int => ApprovalDecision::idFor(ApprovalDecision::PENDING)),
                 SelectFilter::make('workflowStep.role')
                     ->relationship('workflowStep.role', 'name')
                     ->label('Role'),
@@ -114,20 +113,32 @@ class SopApprovalResource extends Resource
                     ->icon(Heroicon::CheckCircle)
                     ->schema([Textarea::make('comments')])
                     ->visible(fn (SopApproval $record): bool => Auth::user()?->can('approve', $record) ?? false)
-                    ->action(fn (SopApproval $record, array $data): mixed => app(ApproveDocumentAction::class)->execute($record, Auth::user(), $data['comments'] ?? null)),
+                    ->action(fn (SopApproval $record, array $data): mixed => ServiceExceptionHandler::run(
+                        fn () => app(ApproveDocumentAction::class)->execute($record, Auth::user(), $data['comments'] ?? null),
+                        failureTitle: 'Approval Failed',
+                        successTitle: 'Document approved successfully.',
+                    )),
                 Action::make('return')
                     ->label('Return to Maker')
                     ->icon(Heroicon::ArrowUturnLeft)
                     ->color('warning')
                     ->schema([Textarea::make('comments')->required()])
                     ->visible(fn (SopApproval $record): bool => Auth::user()?->can('approve', $record) ?? false)
-                    ->action(fn (SopApproval $record, array $data): mixed => app(ReturnDocumentAction::class)->execute($record, Auth::user(), $data['comments'] ?? null)),
+                    ->action(fn (SopApproval $record, array $data): mixed => ServiceExceptionHandler::run(
+                        fn () => app(ReturnDocumentAction::class)->execute($record, Auth::user(), $data['comments'] ?? null),
+                        failureTitle: 'Return Failed',
+                        successTitle: 'Document returned to maker.',
+                    )),
                 Action::make('reject')
                     ->icon(Heroicon::XCircle)
                     ->color('danger')
                     ->schema([Textarea::make('comments')->required()])
                     ->visible(fn (SopApproval $record): bool => Auth::user()?->can('approve', $record) ?? false)
-                    ->action(fn (SopApproval $record, array $data): mixed => app(RejectDocumentAction::class)->execute($record, Auth::user(), $data['comments'] ?? null)),
+                    ->action(fn (SopApproval $record, array $data): mixed => ServiceExceptionHandler::run(
+                        fn () => app(RejectDocumentAction::class)->execute($record, Auth::user(), $data['comments'] ?? null),
+                        failureTitle: 'Reject Failed',
+                        successTitle: 'Document rejected.',
+                    )),
             ]);
     }
 
@@ -143,13 +154,16 @@ class SopApprovalResource extends Resource
         $query = parent::getEloquentQuery()
             ->with([
                 'document.department',
+                'document.documentStatus',
                 'workflowStep.role',
+                'workflowStep.approvalStepType',
                 'approver',
+                'approvalDecision',
             ]);
 
         $user = Auth::user();
 
-        if ($user !== null && $user->department_id !== null && ! $user->hasRole(SopRole::Administrator->value)) {
+        if ($user !== null && $user->department_id !== null && ! $user->hasRole(SopRole::ADMINISTRATOR)) {
             $query->whereHas('document', fn (Builder $documentQuery): Builder => $documentQuery->where('department_id', $user->department_id));
         }
 

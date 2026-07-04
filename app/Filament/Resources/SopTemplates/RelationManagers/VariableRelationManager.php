@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\SopTemplates\RelationManagers;
 
-use App\Enums\VariableDataType;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -32,7 +31,7 @@ class VariableRelationManager extends RelationManager
                     ->required(),
                 TextInput::make('name')->required()->maxLength(255),
                 TextInput::make('label')->required()->maxLength(255),
-                Select::make('datatype')->options(VariableDataType::options())->required(),
+                Select::make('variable_data_type_id')->relationship('variableDataType', 'name')->required(),
                 TextInput::make('default_value'),
                 Toggle::make('required'),
                 KeyValue::make('validation_rules')->columnSpanFull(),
@@ -48,7 +47,7 @@ class VariableRelationManager extends RelationManager
                 TextColumn::make('templateVersion.version')->label('Version')->sortable(),
                 TextColumn::make('name')->searchable(),
                 TextColumn::make('label')->searchable(),
-                TextColumn::make('datatype')->badge(),
+                TextColumn::make('variableDataType.name')->label('Data Type')->badge(),
                 IconColumn::make('required')->boolean(),
             ])
             ->headerActions([CreateAction::make()])
