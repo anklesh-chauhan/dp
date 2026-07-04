@@ -15,30 +15,16 @@ use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class CreateLogDocument extends CreateRecord
 {
     protected static string $resource = LogDocumentResource::class;
 
-    protected function handleRecordCreation(array $data): Model
+    public function create(bool $another = false): void
     {
         try {
-            $templateVersionId = $this->parseTemplateVersionId($data['template_version_id'] ?? null);
-
-            return app(CreateDocumentFromTemplateAction::class)->execute(new SopDocumentData(
-                templateId: (int) $data['template_id'],
-                title: (string) $data['title'],
-                ownerId: (int) $data['owner_id'],
-                createdBy: Auth::id(),
-                variables: $this->filterVariablesForVersion($templateVersionId, $data['variables'] ?? []),
-                effectiveDate: $this->parseDate($data['effective_date'] ?? null),
-                reviewDate: $this->parseDate($data['review_date'] ?? null),
-                templateVersionId: $templateVersionId,
-                referencedSopDocumentId: isset($data['referenced_sop_document_id']) ? (int) $data['referenced_sop_document_id'] : null,
-                batchNumber: $data['batch_number'] ?? null,
-                productName: $data['product_name'] ?? null,
-                purpose: $data['purpose'] ?? null,
-            ));
+            parent::create($another);
         } catch (ValidationException $exception) {
             Notification::make()
                 ->title('Unable to create log document')
@@ -47,7 +33,48 @@ class CreateLogDocument extends CreateRecord
                 ->send();
 
             throw $exception;
+        } catch (Throwable $exception) {
+            report($exception);
+
+            Notification::make()
+                ->title('Unable to create log document')
+                ->body($exception->getMessage())
+                ->danger()
+                ->send();
+
+            throw $exception;
         }
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        unset($data['variables']);
+
+        return $data;
+    }
+
+    protected function handleRecordCreation(array $data): Model
+    {
+        $templateVersionId = $this->parseTemplateVersionId($data['template_version_id'] ?? null);
+        $variables = $this->form->getRawState()['variables'] ?? [];
+
+        return app(CreateDocumentFromTemplateAction::class)->execute(new SopDocumentData(
+            templateId: (int) $data['template_id'],
+            title: (string) $data['title'],
+            ownerId: (int) $data['owner_id'],
+            createdBy: Auth::id(),
+            variables: $this->filterVariablesForVersion($templateVersionId, is_array($variables) ? $variables : []),
+            effectiveDate: $this->parseDate($data['effective_date'] ?? null),
+            reviewDate: $this->parseDate($data['review_date'] ?? null),
+            templateVersionId: $templateVersionId,
+            referencedSopDocumentId: isset($data['referenced_sop_document_id']) ? (int) $data['referenced_sop_document_id'] : null,
+            batchNumber: $data['batch_number'] ?? null,
+            productName: $data['product_name'] ?? null,
+            purpose: $data['purpose'] ?? null,
+        ));
     }
 
     protected function getRedirectUrl(): string

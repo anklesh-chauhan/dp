@@ -45,6 +45,7 @@ class LogDocumentResource extends Resource
      * @var list<string>
      */
     private const LOG_FORM_VARIABLE_EXCLUSIONS = [
+        'department',
         'batch_number',
         'product_name',
         'referenced_sop',
@@ -132,7 +133,13 @@ class LogDocumentResource extends Resource
                     self::LOG_FORM_VARIABLE_EXCLUSIONS,
                 ))
                 ->columns(2)
-                ->visible(fn ($livewire, Get $get): bool => $livewire instanceof CreateLogDocument && filled($get('template_version_id')))
+                ->visible(fn ($livewire, Get $get): bool => $livewire instanceof CreateLogDocument
+                    && filled($get('template_version_id'))
+                    && TemplateVariableFieldBuilder::fields(
+                        (int) $get('template_version_id'),
+                        (int) $get('template_id'),
+                        self::LOG_FORM_VARIABLE_EXCLUSIONS,
+                    ) !== [])
                 ->dehydrated(fn ($livewire): bool => $livewire instanceof CreateLogDocument)
                 ->columnSpanFull(),
         ]);
@@ -203,6 +210,20 @@ class LogDocumentResource extends Resource
         $user = Auth::user();
 
         return $user !== null && ($user->can('Create:LogDocument') || $user->can('Create:SopDocument'));
+    }
+
+    public static function canView($record): bool
+    {
+        $user = Auth::user();
+
+        return $user !== null && ($user->can('View:LogDocument') || $user->can('View:SopDocument'));
+    }
+
+    public static function canEdit($record): bool
+    {
+        $user = Auth::user();
+
+        return $user !== null && ($user->can('Update:LogDocument') || $user->can('Update:SopDocument'));
     }
 
     /**
