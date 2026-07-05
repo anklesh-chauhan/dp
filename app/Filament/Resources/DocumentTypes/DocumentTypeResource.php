@@ -15,13 +15,19 @@ use Filament\Actions\EditAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use UnitEnum;
 
 class DocumentTypeResource extends LookupResource
 {
     protected static ?string $model = DocumentType::class;
+
+    protected static string|UnitEnum|null $navigationGroup = 'Global Configuration';
+
+    protected static string|\BackedEnum|null $navigationIcon = Heroicon::DocumentText;
 
     public static function form(Schema $schema): Schema
     {
