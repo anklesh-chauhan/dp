@@ -24,8 +24,8 @@ class DocumentStatusResource extends LookupResource
     {
         return [
             'index' => ListDocumentStatuses::route('/'),
-            'create' => CreateDocumentStatus::route('/create'),
-            'edit' => EditDocumentStatus::route('/{record}/edit'),
+            // 'create' => CreateDocumentStatus::route('/create'),
+            // 'edit' => EditDocumentStatus::route('/{record}/edit'),
         ];
     }
 }

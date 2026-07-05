@@ -24,8 +24,8 @@ class VariableDataTypeResource extends LookupResource
     {
         return [
             'index' => ListVariableDataTypes::route('/'),
-            'create' => CreateVariableDataType::route('/create'),
-            'edit' => EditVariableDataType::route('/{record}/edit'),
+            //'create' => CreateVariableDataType::route('/create'),
+            //'edit' => EditVariableDataType::route('/{record}/edit'),
         ];
     }
 }

@@ -71,8 +71,8 @@ class DocumentTypeResource extends LookupResource
     {
         return [
             'index' => ListDocumentTypes::route('/'),
-            'create' => CreateDocumentType::route('/create'),
-            'edit' => EditDocumentType::route('/{record}/edit'),
+            //'create' => CreateDocumentType::route('/create'),
+            //'edit' => EditDocumentType::route('/{record}/edit'),
         ];
     }
 }

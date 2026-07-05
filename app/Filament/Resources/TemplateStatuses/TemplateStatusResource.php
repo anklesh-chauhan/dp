@@ -24,8 +24,8 @@ class TemplateStatusResource extends LookupResource
     {
         return [
             'index' => ListTemplateStatuses::route('/'),
-            'create' => CreateTemplateStatus::route('/create'),
-            'edit' => EditTemplateStatus::route('/{record}/edit'),
+            //'create' => CreateTemplateStatus::route('/create'),
+            //'edit' => EditTemplateStatus::route('/{record}/edit'),
         ];
     }
 }

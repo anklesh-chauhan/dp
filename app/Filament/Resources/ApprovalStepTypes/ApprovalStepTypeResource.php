@@ -24,8 +24,8 @@ class ApprovalStepTypeResource extends LookupResource
     {
         return [
             'index' => ListApprovalStepTypes::route('/'),
-            'create' => CreateApprovalStepType::route('/create'),
-            'edit' => EditApprovalStepType::route('/{record}/edit'),
+            // 'create' => CreateApprovalStepType::route('/create'),
+            // 'edit' => EditApprovalStepType::route('/{record}/edit'),
         ];
     }
 }

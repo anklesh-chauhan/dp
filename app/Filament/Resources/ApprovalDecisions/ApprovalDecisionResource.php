@@ -24,8 +24,8 @@ class ApprovalDecisionResource extends LookupResource
     {
         return [
             'index' => ListApprovalDecisions::route('/'),
-            'create' => CreateApprovalDecision::route('/create'),
-            'edit' => EditApprovalDecision::route('/{record}/edit'),
+            // 'create' => CreateApprovalDecision::route('/create'),
+            // 'edit' => EditApprovalDecision::route('/{record}/edit'),
         ];
     }
 }

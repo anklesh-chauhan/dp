@@ -24,8 +24,8 @@ class SopRoleResource extends LookupResource
     {
         return [
             'index' => ListSopRoles::route('/'),
-            'create' => CreateSopRole::route('/create'),
-            'edit' => EditSopRole::route('/{record}/edit'),
+            //'create' => CreateSopRole::route('/create'),
+            //'edit' => EditSopRole::route('/{record}/edit'),
         ];
     }
 }

@@ -24,8 +24,8 @@ class IssuanceStatusResource extends LookupResource
     {
         return [
             'index' => ListIssuanceStatuses::route('/'),
-            'create' => CreateIssuanceStatus::route('/create'),
-            'edit' => EditIssuanceStatus::route('/{record}/edit'),
+            //'create' => CreateIssuanceStatus::route('/create'),
+            //'edit' => EditIssuanceStatus::route('/{record}/edit'),
         ];
     }
 }
