@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\ApprovalStepTypes;
 
+use App\Filament\Clusters\Settings\SettingsCluster;
 use App\Filament\Resources\ApprovalStepTypes\Pages\CreateApprovalStepType;
 use App\Filament\Resources\ApprovalStepTypes\Pages\EditApprovalStepType;
 use App\Filament\Resources\ApprovalStepTypes\Pages\ListApprovalStepTypes;
@@ -16,7 +17,11 @@ class ApprovalStepTypeResource extends LookupResource
 {
     protected static ?string $model = ApprovalStepType::class;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Global Configuration';
+    protected static ?string $cluster = SettingsCluster::class;
+
+    protected static string|UnitEnum|null $navigationGroup = 'General Masters';
+
+    protected static ?int $navigationSort = 1002;
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::CheckCircle;
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\VariableDataTypes;
 
+use App\Filament\Clusters\Settings\SettingsCluster;
 use App\Filament\Resources\LookupResource;
 use App\Filament\Resources\VariableDataTypes\Pages\CreateVariableDataType;
 use App\Filament\Resources\VariableDataTypes\Pages\EditVariableDataType;
@@ -16,9 +17,13 @@ class VariableDataTypeResource extends LookupResource
 {
     protected static ?string $model = VariableDataType::class;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Global Configuration';
+    protected static ?string $cluster = SettingsCluster::class;
+
+    protected static string|UnitEnum|null $navigationGroup = 'General Masters';
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::CheckCircle;
+
+    protected static ?int $navigationSort = 1010;
 
     public static function getPages(): array
     {

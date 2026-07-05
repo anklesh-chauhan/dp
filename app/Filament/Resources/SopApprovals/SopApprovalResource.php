@@ -34,11 +34,18 @@ class SopApprovalResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Approvals';
 
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 3;
 
     protected static string|UnitEnum|null $navigationGroup = 'SOP Management';
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedCheckBadge;
+
+    public static function getNavigationBadge(): ?string
+    {
+        return strval(
+            static::getModel()::pending()->count()
+        );
+    }
 
     public static function form(Schema $schema): Schema
     {

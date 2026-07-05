@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Departments;
 
+use App\Filament\Clusters\Settings\SettingsCluster;
 use App\Filament\Resources\Departments\Pages\CreateDepartment;
 use App\Filament\Resources\Departments\Pages\EditDepartment;
 use App\Filament\Resources\Departments\Pages\ListDepartments;
@@ -23,7 +24,11 @@ class DepartmentResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'Department';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Global Configuration';
+    protected static ?string $cluster = SettingsCluster::class;
+
+    protected static string|UnitEnum|null $navigationGroup = 'General Masters';
+
+    protected static ?int $navigationSort = 1003;
 
     public static function form(Schema $schema): Schema
     {

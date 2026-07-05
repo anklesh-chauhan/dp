@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\DocumentCategories;
 
+use App\Filament\Clusters\Settings\SettingsCluster;
 use App\Filament\Resources\DocumentCategories\Pages\ManageDocumentCategories;
 use App\Models\DocumentCategory;
 use BackedEnum;
@@ -23,7 +24,11 @@ class DocumentCategoryResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::DocumentText;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Global Configuration';
+    protected static ?string $cluster = SettingsCluster::class;
+
+    protected static string|UnitEnum|null $navigationGroup = 'General Masters';
+
+    protected static ?int $navigationSort = 1004;
 
     protected static ?string $recordTitleAttribute = 'DocumentCategory';
 

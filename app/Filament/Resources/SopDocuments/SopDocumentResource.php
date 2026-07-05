@@ -31,6 +31,7 @@ use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Navigation\NavigationGroup;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
@@ -53,8 +54,15 @@ class SopDocumentResource extends Resource
     protected static string|UnitEnum|null $navigationGroup = 'SOP Management';
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentList;
-
     protected static ?string $recordTitleAttribute = 'document_number';
+
+    protected static ?int $navigationSort = 1;
+
+    public static function getNavigationBadge(): ?string
+    {
+        return strval(static::getModel()::count());
+    }
+
 
     public static function form(Schema $schema): Schema
     {

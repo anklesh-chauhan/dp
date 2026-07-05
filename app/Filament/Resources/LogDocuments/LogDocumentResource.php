@@ -67,6 +67,11 @@ class LogDocumentResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'document_number';
 
+    public static function getNavigationBadge(): ?string
+    {
+        return strval(static::getModel()::count());
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema->components([

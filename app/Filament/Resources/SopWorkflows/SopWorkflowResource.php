@@ -34,7 +34,14 @@ class SopWorkflowResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedQueueList;
 
+    protected static ?int $navigationSort = 4;
+
     protected static ?string $recordTitleAttribute = 'name';
+
+    public static function getNavigationBadge(): ?string
+    {
+        return strval(static::getModel()::count());
+    }
 
     public static function form(Schema $schema): Schema
     {

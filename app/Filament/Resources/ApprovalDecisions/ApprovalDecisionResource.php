@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\ApprovalDecisions;
 
+use App\Filament\Clusters\Settings\SettingsCluster;
 use App\Filament\Resources\ApprovalDecisions\Pages\CreateApprovalDecision;
 use App\Filament\Resources\ApprovalDecisions\Pages\EditApprovalDecision;
 use App\Filament\Resources\ApprovalDecisions\Pages\ListApprovalDecisions;
@@ -16,7 +17,11 @@ class ApprovalDecisionResource extends LookupResource
 {
     protected static ?string $model = ApprovalDecision::class;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Global Configuration';
+    protected static ?string $cluster = SettingsCluster::class;
+
+    protected static string|UnitEnum|null $navigationGroup = 'General Masters';
+
+    protected static ?int $navigationSort = 1001;
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::CheckCircle;
 

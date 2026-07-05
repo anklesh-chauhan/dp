@@ -38,6 +38,11 @@ class DocumentIssuanceResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentCheck;
 
+    public static function getNavigationBadge(): ?string
+    {
+        return strval(static::getModel()::count());
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema->components([]);
