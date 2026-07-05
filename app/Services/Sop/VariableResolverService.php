@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services\Sop;
 
+use App\Models\SopTemplateVariable;
 use App\Models\SopTemplateVersion;
+use App\Support\Sop\VariableTypes\VariableTypeRegistry;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -12,29 +14,50 @@ use InvalidArgumentException;
 
 class VariableResolverService
 {
+    public function __construct(
+        private readonly VariableTypeRegistry $variableTypeRegistry,
+    ) {}
+
     /**
      * @param  array<string, mixed>  $values
-     * @return array<string, string>
+     * @return array{storage: array<string, string>, substitution: array<string, string>}
      *
      * @throws ValidationException
      */
     public function resolveValues(SopTemplateVersion $version, array $values): array
     {
-        $version->loadMissing('variables');
+        $version->loadMissing('variables.variableDataType');
 
         $rawValues = $version->variables
-            ->mapWithKeys(fn ($variable): array => [
-                $variable->name => $values[$variable->name] ?? $variable->default_value,
+            ->mapWithKeys(fn (SopTemplateVariable $variable): array => [
+                $variable->name => $values[$variable->name] ?? $this->variableTypeRegistry->parseDefaultValue($variable),
             ])
             ->all();
 
         $this->validateRequiredVariables($version->variables, $rawValues);
 
-        $resolved = collect($rawValues)
-            ->map(fn (mixed $value): string => $this->stringifyValue($value))
+        $storage = $version->variables
+            ->mapWithKeys(fn (SopTemplateVariable $variable): array => [
+                $variable->name => $this->variableTypeRegistry->formatForStorage(
+                    $variable,
+                    $rawValues[$variable->name] ?? null,
+                ),
+            ])
             ->all();
 
-        return $this->resolveNestedValues($resolved);
+        $substitution = $version->variables
+            ->mapWithKeys(fn (SopTemplateVariable $variable): array => [
+                $variable->name => $this->variableTypeRegistry->formatForSubstitution(
+                    $variable,
+                    $rawValues[$variable->name] ?? null,
+                ),
+            ])
+            ->all();
+
+        return [
+            'storage' => $this->resolveNestedValues($storage),
+            'substitution' => $this->resolveNestedValues($substitution),
+        ];
     }
 
     /**
@@ -48,22 +71,25 @@ class VariableResolverService
     }
 
     /**
-     * @param  Collection<int, mixed>  $variables
-     * @param  array<string, string>  $values
+     * @param  Collection<int, SopTemplateVariable>  $variables
+     * @param  array<string, mixed>  $values
      *
      * @throws ValidationException
      */
     private function validateRequiredVariables(Collection $variables, array $values): void
     {
         $rules = $variables
-            ->mapWithKeys(function ($variable): array {
-                $rule = $variable->required ? ['required'] : ['nullable'];
+            ->mapWithKeys(function (SopTemplateVariable $variable): array {
+                $typeRules = array_values(array_filter(
+                    $this->variableTypeRegistry->validationRules($variable),
+                    fn (mixed $rule): bool => $rule !== 'nullable',
+                ));
 
-                if (is_array($variable->validation_rules)) {
-                    $rule = array_merge($rule, $this->normalizeValidationRules($variable->validation_rules));
-                }
+                $presenceRules = $variable->required ? ['required'] : ['nullable'];
 
-                return [$variable->name => $rule];
+                return [
+                    $variable->name => array_merge($presenceRules, $typeRules),
+                ];
             })
             ->all();
 
@@ -94,36 +120,5 @@ class VariableResolverService
         }
 
         throw new InvalidArgumentException('Nested SOP variables exceed the supported resolution depth.');
-    }
-
-    private function stringifyValue(mixed $value): string
-    {
-        if ($value === null) {
-            return '';
-        }
-
-        if (is_bool($value)) {
-            return $value ? 'Yes' : 'No';
-        }
-
-        return (string) $value;
-    }
-
-    /**
-     * @param  array<int|string, mixed>  $rules
-     * @return array<int, mixed>
-     */
-    private function normalizeValidationRules(array $rules): array
-    {
-        return collect($rules)
-            ->map(function (mixed $value, int|string $key): mixed {
-                if (is_int($key)) {
-                    return $value;
-                }
-
-                return filled($value) ? "{$key}:{$value}" : $key;
-            })
-            ->values()
-            ->all();
     }
 }

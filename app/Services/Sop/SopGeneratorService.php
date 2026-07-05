@@ -7,10 +7,10 @@ namespace App\Services\Sop;
 use App\Data\SopDocumentData;
 use App\Models\DocumentStatus;
 use App\Models\SopAuditLog;
-use App\Models\SopDocument;
 use App\Models\SopTemplate;
 use App\Models\SopTemplateVersion;
 use App\Models\TemplateStatus;
+use App\Models\SopDocument;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -96,11 +96,14 @@ class SopGeneratorService
                 $document->sections()->create([
                     'title' => $section->title,
                     'section_order' => $section->section_order,
-                    'content' => $this->variableResolverService->replace($section->content ?? '', $resolvedVariables),
+                    'content' => $this->variableResolverService->replace(
+                        $section->content ?? '',
+                        $resolvedVariables['substitution'],
+                    ),
                 ]);
             }
 
-            foreach ($resolvedVariables as $name => $value) {
+            foreach ($resolvedVariables['storage'] as $name => $value) {
                 $document->variables()->create([
                     'variable_name' => $name,
                     'value' => $value,
@@ -135,14 +138,6 @@ class SopGeneratorService
         SopDocumentData $data,
         array $sopReference,
     ): array {
-        if (isset($variables['referenced_sop']) && is_numeric($variables['referenced_sop'])) {
-            $referencedSop = SopDocument::query()->find((int) $variables['referenced_sop']);
-
-            if ($referencedSop !== null) {
-                $variables['referenced_sop'] = $referencedSop->document_number;
-            }
-        }
-
         $variables = array_merge($variables, [
             'document_number' => $documentNumber,
             'effective_date' => $data->effectiveDate?->toDateString(),
@@ -150,11 +145,11 @@ class SopGeneratorService
         ]);
 
         if (blank($variables['department'] ?? null)) {
-            $variables['department'] = $template->department->name;
+            $variables['department'] = $template->department_id;
         }
 
-        if (! empty($sopReference['referenced_sop_number'])) {
-            $variables['referenced_sop'] = $sopReference['referenced_sop_number'];
+        if (! empty($sopReference['referenced_sop_document_id'])) {
+            $variables['referenced_sop'] = $sopReference['referenced_sop_document_id'];
         }
 
         if (filled($data->batchNumber)) {
@@ -170,7 +165,7 @@ class SopGeneratorService
 
     /**
      * @param  array<string, mixed>  $variables
-     * @return array<string, string>
+     * @return array{storage: array<string, string>, substitution: array<string, string>}
      *
      * @throws ValidationException
      */

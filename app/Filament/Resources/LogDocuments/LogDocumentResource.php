@@ -18,6 +18,7 @@ use App\Models\DocumentType;
 use App\Models\SopDocument;
 use App\Models\SopTemplateVersion;
 use App\Models\TemplateStatus;
+use App\Services\Sop\SopReferenceService;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
@@ -106,7 +107,7 @@ class LogDocumentResource extends Resource
                             ->afterStateUpdated(fn (Set $set, ?int $state): mixed => $set('variables', self::templateVariableDefaultValues($state))),
                         Select::make('referenced_sop_document_id')
                             ->label('Referenced Effective SOP')
-                            ->options(fn (Get $get): array => TemplateVariableFieldBuilder::effectiveSopOptions((int) $get('template_id')))
+                            ->options(fn (Get $get): array => app(SopReferenceService::class)->effectiveSopOptions((int) $get('template_id')))
                             ->searchable()
                             ->preload()
                             ->required(fn ($livewire): bool => $livewire instanceof CreateLogDocument)

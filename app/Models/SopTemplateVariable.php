@@ -21,6 +21,7 @@ class SopTemplateVariable extends Model
         'variable_data_type_id',
         'default_value',
         'validation_rules',
+        'options',
         'required',
     ];
 
@@ -28,6 +29,7 @@ class SopTemplateVariable extends Model
     {
         return [
             'validation_rules' => 'array',
+            'options' => 'array',
             'required' => 'boolean',
         ];
     }

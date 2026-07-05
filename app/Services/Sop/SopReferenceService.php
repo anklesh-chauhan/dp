@@ -6,11 +6,38 @@ namespace App\Services\Sop;
 
 use App\Models\Department;
 use App\Models\DocumentStatus;
+use App\Models\DocumentType;
 use App\Models\SopDocument;
+use App\Models\SopTemplate;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\ValidationException;
 
 class SopReferenceService
 {
+    /**
+     * @return array<int, string>
+     */
+    public function effectiveSopOptions(?int $templateId): array
+    {
+        if ($templateId === null || $templateId === 0) {
+            return [];
+        }
+
+        $departmentId = SopTemplate::query()->whereKey($templateId)->value('department_id');
+
+        if ($departmentId === null) {
+            return [];
+        }
+
+        return SopDocument::query()
+            ->where('department_id', $departmentId)
+            ->whereHas('documentStatus', fn (Builder $query): Builder => $query->where('code', DocumentStatus::EFFECTIVE))
+            ->whereHas('documentType', fn (Builder $query): Builder => $query->where('code', DocumentType::SOP))
+            ->orderBy('document_number')
+            ->pluck('document_number', 'id')
+            ->all();
+    }
+
     /**
      * @return array{
      *     referenced_sop_document_id: int,

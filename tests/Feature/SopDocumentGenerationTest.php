@@ -68,7 +68,7 @@ it('creates an SOP document with template sections and resolved variables', func
         [
             'name' => 'document_number',
             'label' => 'Document Number',
-            'variable_data_type_id' => VariableDataType::idFor(VariableDataType::TEXT),
+            'variable_data_type_id' => VariableDataType::idFor(VariableDataType::DOCUMENT_NUMBER),
             'required' => true,
         ],
         [
@@ -106,10 +106,10 @@ it('creates an SOP document with template sections and resolved variables', func
         ->and($document->sections->first()->content)->toContain('Mixer for Quality Assurance on 2026-06-28. Shutdown: No.')
         ->and($document->variables->pluck('value', 'variable_name')->all())->toMatchArray([
             'equipment' => 'Mixer',
-            'department' => 'Quality Assurance',
+            'department' => (string) $department->id,
             'document_number' => 'SOP-QA-00001',
             'inspection_date' => '2026-06-28',
-            'requires_shutdown' => 'No',
+            'requires_shutdown' => '0',
         ]);
 });
 

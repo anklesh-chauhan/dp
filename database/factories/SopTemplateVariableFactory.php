@@ -30,6 +30,7 @@ class SopTemplateVariableFactory extends Factory
             'variable_data_type_id' => VariableDataType::idFor(VariableDataType::TEXT),
             'default_value' => fake()->optional()->word(),
             'validation_rules' => null,
+            'options' => null,
             'required' => false,
         ];
     }

@@ -282,18 +282,32 @@ class SopModuleSeeder extends Seeder
             ], [
                 'title' => $title,
                 'section_type' => 'rich_text',
-                'content' => "<p>{$title} for {{department}} document {{document_number}}.</p>",
+                'content' => "<p>{$title} for {{department}} document {{document_number}} using {{equipment_category}} equipment.</p>",
                 'is_required' => true,
             ]);
         }
 
-        foreach (['department', 'prepared_by', 'approved_by', 'equipment', 'effective_date', 'review_date', 'document_number'] as $name) {
+        foreach ([
+            'department' => [VariableDataType::DEPARTMENT, null, true],
+            'prepared_by' => [VariableDataType::EMPLOYEE, null, false],
+            'approved_by' => [VariableDataType::EMPLOYEE, null, false],
+            'equipment' => [VariableDataType::TEXT, null, false],
+            'equipment_category' => [VariableDataType::SELECT, [
+                'production' => 'Production Equipment',
+                'packaging' => 'Packaging Equipment',
+                'lab' => 'Laboratory Equipment',
+            ], false],
+            'effective_date' => [VariableDataType::DATE, null, false],
+            'review_date' => [VariableDataType::DATE, null, false],
+            'document_number' => [VariableDataType::DOCUMENT_NUMBER, null, true],
+        ] as $name => [$typeCode, $options, $required]) {
             $version->variables()->firstOrCreate([
                 'name' => $name,
             ], [
                 'label' => str($name)->replace('_', ' ')->title()->toString(),
-                'variable_data_type_id' => VariableDataType::idFor(VariableDataType::TEXT),
-                'required' => in_array($name, ['department', 'document_number'], true),
+                'variable_data_type_id' => VariableDataType::idFor($typeCode),
+                'options' => $options,
+                'required' => $required,
             ]);
         }
 
@@ -398,17 +412,25 @@ class SopModuleSeeder extends Seeder
             ]);
         }
 
-        foreach (['department', 'document_number', 'referenced_sop', 'batch_number', 'product_name'] as $name) {
+        foreach ([
+            'department' => [VariableDataType::DEPARTMENT, null, true],
+            'document_number' => [VariableDataType::DOCUMENT_NUMBER, null, true],
+            'referenced_sop' => [VariableDataType::SOP_REFERENCE, null, false],
+            'batch_number' => [VariableDataType::TEXT, null, false],
+            'product_name' => [VariableDataType::TEXT, null, false],
+            'log_type' => [VariableDataType::RADIO, [
+                'execution' => 'Execution Log',
+                'cleaning' => 'Cleaning Log',
+                'maintenance' => 'Maintenance Log',
+            ], false],
+        ] as $name => [$typeCode, $options, $required]) {
             $logVersion->variables()->firstOrCreate([
                 'name' => $name,
             ], [
                 'label' => str($name)->replace('_', ' ')->title()->toString(),
-                'variable_data_type_id' => match ($name) {
-                    'department' => VariableDataType::idFor(VariableDataType::DEPARTMENT),
-                    'referenced_sop' => VariableDataType::idFor(VariableDataType::SOP_REFERENCE),
-                    default => VariableDataType::idFor(VariableDataType::TEXT),
-                },
-                'required' => in_array($name, ['department', 'document_number'], true),
+                'variable_data_type_id' => VariableDataType::idFor($typeCode),
+                'options' => $options,
+                'required' => $required,
             ]);
         }
     }
