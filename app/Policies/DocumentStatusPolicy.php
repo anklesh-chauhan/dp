@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\DocumentStatus;
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Illuminate\Foundation\Auth\User as AuthUser;
 
 class DocumentStatusPolicy
 {
     use HandlesAuthorization;
-
+    
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:DocumentStatus');
@@ -106,4 +106,20 @@ class DocumentStatusPolicy
     {
         return $authUser->can('Unarchive:DocumentStatus');
     }
+
+    public function markObsolete(AuthUser $authUser, DocumentStatus $documentStatus): bool
+    {
+        return $authUser->can('MarkObsolete:DocumentStatus');
+    }
+
+    public function completeRetention(AuthUser $authUser, DocumentStatus $documentStatus): bool
+    {
+        return $authUser->can('CompleteRetention:DocumentStatus');
+    }
+
+    public function destroy(AuthUser $authUser, DocumentStatus $documentStatus): bool
+    {
+        return $authUser->can('Destroy:DocumentStatus');
+    }
+
 }

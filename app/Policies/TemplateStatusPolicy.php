@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\TemplateStatus;
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Illuminate\Foundation\Auth\User as AuthUser;
 
 class TemplateStatusPolicy
 {
     use HandlesAuthorization;
-
+    
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:TemplateStatus');
@@ -106,4 +106,20 @@ class TemplateStatusPolicy
     {
         return $authUser->can('Unarchive:TemplateStatus');
     }
+
+    public function markObsolete(AuthUser $authUser, TemplateStatus $templateStatus): bool
+    {
+        return $authUser->can('MarkObsolete:TemplateStatus');
+    }
+
+    public function completeRetention(AuthUser $authUser, TemplateStatus $templateStatus): bool
+    {
+        return $authUser->can('CompleteRetention:TemplateStatus');
+    }
+
+    public function destroy(AuthUser $authUser, TemplateStatus $templateStatus): bool
+    {
+        return $authUser->can('Destroy:TemplateStatus');
+    }
+
 }

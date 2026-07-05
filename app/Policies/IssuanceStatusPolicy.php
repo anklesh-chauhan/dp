@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\IssuanceStatus;
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Illuminate\Foundation\Auth\User as AuthUser;
 
 class IssuanceStatusPolicy
 {
     use HandlesAuthorization;
-
+    
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:IssuanceStatus');
@@ -106,4 +106,20 @@ class IssuanceStatusPolicy
     {
         return $authUser->can('Unarchive:IssuanceStatus');
     }
+
+    public function markObsolete(AuthUser $authUser, IssuanceStatus $issuanceStatus): bool
+    {
+        return $authUser->can('MarkObsolete:IssuanceStatus');
+    }
+
+    public function completeRetention(AuthUser $authUser, IssuanceStatus $issuanceStatus): bool
+    {
+        return $authUser->can('CompleteRetention:IssuanceStatus');
+    }
+
+    public function destroy(AuthUser $authUser, IssuanceStatus $issuanceStatus): bool
+    {
+        return $authUser->can('Destroy:IssuanceStatus');
+    }
+
 }

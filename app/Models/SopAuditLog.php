@@ -17,6 +17,12 @@ class SopAuditLog extends Model
 
     public const ACTION_ARCHIVED = 'archived';
 
+    public const ACTION_MARKED_OBSOLETE = 'marked_obsolete';
+
+    public const ACTION_RETENTION_COMPLETED = 'retention_completed';
+
+    public const ACTION_DESTROYED = 'destroyed';
+
     public const ACTION_VERSION_CREATED = 'version_created';
 
     public const ACTION_VERSION_UPDATED = 'version_updated';

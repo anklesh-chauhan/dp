@@ -107,4 +107,19 @@ class SopApprovalPolicy
         return $authUser->can('Unarchive:SopApproval');
     }
 
+    public function markObsolete(AuthUser $authUser, SopApproval $sopApproval): bool
+    {
+        return $authUser->can('MarkObsolete:SopApproval');
+    }
+
+    public function completeRetention(AuthUser $authUser, SopApproval $sopApproval): bool
+    {
+        return $authUser->can('CompleteRetention:SopApproval');
+    }
+
+    public function destroy(AuthUser $authUser, SopApproval $sopApproval): bool
+    {
+        return $authUser->can('Destroy:SopApproval');
+    }
+
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\SopTemplates\RelationManagers;
 
+use App\Filament\Concerns\ManagesEditableTemplates;
 use App\Models\SopAuditLog;
 use App\Models\SopTemplateVersion;
 use App\Models\TemplateStatus;
@@ -24,6 +25,8 @@ use Illuminate\Support\Facades\Auth;
 
 class VersionRelationManager extends RelationManager
 {
+    use ManagesEditableTemplates;
+
     protected static string $relationship = 'versions';
 
     public function form(Schema $schema): Schema
@@ -53,6 +56,7 @@ class VersionRelationManager extends RelationManager
             ])
             ->recordActions([
                 EditAction::make()
+                    ->visible(fn (): bool => $this->canManageTemplateRecord())
                     ->using(function (SopTemplateVersion $record, array $data): SopTemplateVersion {
                         $oldValues = [
                             'version' => $record->version,
@@ -77,10 +81,12 @@ class VersionRelationManager extends RelationManager
 
                         return $record;
                     }),
-                DeleteAction::make(),
+                DeleteAction::make()
+                    ->visible(fn (): bool => $this->canManageTemplateRecord()),
             ])
             ->headerActions([
                 CreateAction::make()
+                    ->visible(fn (): bool => $this->canManageTemplateRecord())
                     ->mutateDataUsing(function (array $data): array {
                         $data['template_status_id'] = TemplateStatus::idFor(TemplateStatus::DRAFT);
                         $data['created_by'] = Auth::id();

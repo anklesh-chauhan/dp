@@ -41,6 +41,34 @@ class SopTemplate extends Model
         ];
     }
 
+    public function isEditable(): bool
+    {
+        if ($this->isArchivedOrBeyond()) {
+            return false;
+        }
+
+        return in_array($this->templateStatus?->code, TemplateStatus::editableCodes(), true);
+    }
+
+    public function isArchivedOrBeyond(): bool
+    {
+        return in_array($this->templateStatus?->code, TemplateStatus::archivedOrBeyondCodes(), true);
+    }
+
+    public function isInRetentionLifecycle(): bool
+    {
+        return in_array($this->templateStatus?->code, TemplateStatus::retentionLifecycleCodes(), true);
+    }
+
+    public function canBeEditedBy(User $user): bool
+    {
+        if ($this->isArchivedOrBeyond()) {
+            return false;
+        }
+
+        return $this->isEditable() && ! $this->isLockedByOther($user);
+    }
+
     /**
      * @return BelongsTo<Department, $this>
      */

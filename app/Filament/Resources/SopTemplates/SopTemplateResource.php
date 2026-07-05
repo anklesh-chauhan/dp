@@ -106,7 +106,10 @@ class SopTemplateResource extends Resource
                     ->color(fn (SopTemplate $record): string => match ($record->templateStatus?->code) {
                         TemplateStatus::DRAFT => 'gray',
                         TemplateStatus::PUBLISHED => 'success',
-                        TemplateStatus::ARCHIVED => 'warning',
+                        TemplateStatus::OBSOLETE => 'warning',
+                        TemplateStatus::ARCHIVED => 'gray',
+                        TemplateStatus::RETENTION_COMPLETED => 'gray',
+                        TemplateStatus::DESTROYED => 'danger',
                         default => 'gray',
                     }),
                 TextColumn::make('current_version')->sortable(),

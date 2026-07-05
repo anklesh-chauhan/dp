@@ -56,7 +56,26 @@ class SopDocument extends Model
 
     public function isEditable(): bool
     {
+        if ($this->isArchivedOrBeyond()) {
+            return false;
+        }
+
         return $this->documentStatus?->hasCode(DocumentStatus::DRAFT) ?? false;
+    }
+
+    public function isArchivedOrBeyond(): bool
+    {
+        return in_array($this->documentStatus?->code, DocumentStatus::archivedOrBeyondCodes(), true);
+    }
+
+    public function isInRetentionLifecycle(): bool
+    {
+        return in_array($this->documentStatus?->code, DocumentStatus::retentionLifecycleCodes(), true);
+    }
+
+    public function isEffectiveForReference(): bool
+    {
+        return $this->documentStatus?->hasCode(DocumentStatus::EFFECTIVE) ?? false;
     }
 
     public function isLockedForEditing(User $user): bool
@@ -70,6 +89,10 @@ class SopDocument extends Model
 
     public function canBeEditedBy(User $user): bool
     {
+        if ($this->isArchivedOrBeyond()) {
+            return false;
+        }
+
         return $this->isEditable() && ! $this->isLockedByOther($user);
     }
 
@@ -83,6 +106,44 @@ class SopDocument extends Model
         return $this->documentType?->isIssuableType() ?? false;
     }
 
+    public function hasEffectiveReferencedSop(): bool
+    {
+        if (! $this->requiresSopReference()) {
+            return true;
+        }
+
+        if ($this->referenced_sop_document_id === null) {
+            return false;
+        }
+
+        return self::query()
+            ->whereKey($this->referenced_sop_document_id)
+            ->whereHas('documentStatus', fn (Builder $query): Builder => $query->where('code', DocumentStatus::EFFECTIVE))
+            ->exists();
+    }
+
+    public function referencedSopIsUnavailable(): bool
+    {
+        if ($this->referenced_sop_document_id === null) {
+            return true;
+        }
+
+        $referencedSop = self::query()
+            ->withTrashed()
+            ->with('documentStatus')
+            ->find($this->referenced_sop_document_id);
+
+        if ($referencedSop === null) {
+            return true;
+        }
+
+        if ($referencedSop->trashed()) {
+            return true;
+        }
+
+        return ! $referencedSop->isEffectiveForReference();
+    }
+
     public function canBeIssued(): bool
     {
         if (! $this->documentStatus?->hasCode(DocumentStatus::EFFECTIVE)) {
@@ -93,7 +154,7 @@ class SopDocument extends Model
             return false;
         }
 
-        if ($this->requiresSopReference() && $this->referenced_sop_document_id === null) {
+        if (! $this->hasEffectiveReferencedSop()) {
             return false;
         }
 

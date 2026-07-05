@@ -23,8 +23,8 @@ class TemplatePublisherService
         return DB::transaction(function () use ($template, $userId, $changeReason): SopTemplateVersion {
             $template = SopTemplate::query()->lockForUpdate()->findOrFail($template->id);
 
-            if ($template->templateStatus?->hasCode(TemplateStatus::ARCHIVED)) {
-                throw ValidationException::withMessages(['template' => 'Archived templates cannot be published.']);
+            if ($template->isInRetentionLifecycle()) {
+                throw ValidationException::withMessages(['template' => 'Templates in the retention lifecycle cannot be published.']);
             }
 
             $draftVersion = $template->versions()

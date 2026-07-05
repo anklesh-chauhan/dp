@@ -219,7 +219,15 @@ class LogDocumentResource extends Resource
     {
         $user = Auth::user();
 
-        return $user !== null && ($user->can('Update:LogDocument') || $user->can('Update:SopDocument'));
+        if ($user === null) {
+            return false;
+        }
+
+        if (! ($user->can('Update:LogDocument') || $user->can('Update:SopDocument'))) {
+            return false;
+        }
+
+        return $record instanceof SopDocument && $record->canBeEditedBy($user);
     }
 
     /**

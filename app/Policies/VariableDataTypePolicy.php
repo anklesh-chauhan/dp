@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\VariableDataType;
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Illuminate\Foundation\Auth\User as AuthUser;
 
 class VariableDataTypePolicy
 {
     use HandlesAuthorization;
-
+    
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:VariableDataType');
@@ -106,4 +106,20 @@ class VariableDataTypePolicy
     {
         return $authUser->can('Unarchive:VariableDataType');
     }
+
+    public function markObsolete(AuthUser $authUser, VariableDataType $variableDataType): bool
+    {
+        return $authUser->can('MarkObsolete:VariableDataType');
+    }
+
+    public function completeRetention(AuthUser $authUser, VariableDataType $variableDataType): bool
+    {
+        return $authUser->can('CompleteRetention:VariableDataType');
+    }
+
+    public function destroy(AuthUser $authUser, VariableDataType $variableDataType): bool
+    {
+        return $authUser->can('Destroy:VariableDataType');
+    }
+
 }

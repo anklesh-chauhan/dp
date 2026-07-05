@@ -166,7 +166,11 @@ class SopDocumentResource extends Resource
                         DocumentStatus::UNDER_REVIEW => 'warning',
                         DocumentStatus::APPROVED => 'info',
                         DocumentStatus::EFFECTIVE => 'success',
-                        DocumentStatus::OBSOLETE, DocumentStatus::REJECTED => 'danger',
+                        DocumentStatus::OBSOLETE => 'warning',
+                        DocumentStatus::ARCHIVED => 'gray',
+                        DocumentStatus::RETENTION_COMPLETED => 'gray',
+                        DocumentStatus::DESTROYED => 'danger',
+                        DocumentStatus::REJECTED => 'danger',
                         default => 'gray',
                     }),
                 TextColumn::make('lockedByUser.name')

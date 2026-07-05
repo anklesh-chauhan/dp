@@ -50,8 +50,17 @@ class SopModuleSeeder extends Seeder
         'Reorder:SopDocument',
         'Approve:SopDocument',
         'Submit:SopDocument',
+        'Archive:SopDocument',
+        'MarkObsolete:SopDocument',
+        'CompleteRetention:SopDocument',
+        'Destroy:SopDocument',
 
         'Approve:SopTemplate',
+        'Publish:SopTemplate',
+        'Archive:SopTemplate',
+        'MarkObsolete:SopTemplate',
+        'CompleteRetention:SopTemplate',
+        'Destroy:SopTemplate',
 
         'ViewAny:SopApproval',
         'View:SopApproval',
@@ -227,6 +236,10 @@ class SopModuleSeeder extends Seeder
             'Destroy:DocumentIssuance',
             'ViewAny:SopDocument',
             'View:SopDocument',
+            'MarkObsolete:SopDocument',
+            'Archive:SopDocument',
+            'CompleteRetention:SopDocument',
+            'Destroy:SopDocument',
         ]);
 
         $reviewerRole = Role::findOrCreate('qa reviewer', 'web');

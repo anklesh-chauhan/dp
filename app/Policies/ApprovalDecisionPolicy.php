@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\ApprovalDecision;
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Illuminate\Foundation\Auth\User as AuthUser;
 
 class ApprovalDecisionPolicy
 {
     use HandlesAuthorization;
-
+    
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:ApprovalDecision');
@@ -106,4 +106,20 @@ class ApprovalDecisionPolicy
     {
         return $authUser->can('Unarchive:ApprovalDecision');
     }
+
+    public function markObsolete(AuthUser $authUser, ApprovalDecision $approvalDecision): bool
+    {
+        return $authUser->can('MarkObsolete:ApprovalDecision');
+    }
+
+    public function completeRetention(AuthUser $authUser, ApprovalDecision $approvalDecision): bool
+    {
+        return $authUser->can('CompleteRetention:ApprovalDecision');
+    }
+
+    public function destroy(AuthUser $authUser, ApprovalDecision $approvalDecision): bool
+    {
+        return $authUser->can('Destroy:ApprovalDecision');
+    }
+
 }

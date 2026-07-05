@@ -22,7 +22,38 @@ class DocumentStatus extends Model
 
     public const OBSOLETE = 'obsolete';
 
+    public const ARCHIVED = 'archived';
+
+    public const RETENTION_COMPLETED = 'retention_completed';
+
+    public const DESTROYED = 'destroyed';
+
     public const REJECTED = 'rejected';
+
+    /**
+     * @return list<string>
+     */
+    public static function retentionLifecycleCodes(): array
+    {
+        return [
+            self::OBSOLETE,
+            self::ARCHIVED,
+            self::RETENTION_COMPLETED,
+            self::DESTROYED,
+        ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function archivedOrBeyondCodes(): array
+    {
+        return [
+            self::ARCHIVED,
+            self::RETENTION_COMPLETED,
+            self::DESTROYED,
+        ];
+    }
 
     protected $fillable = ['code', 'name', 'sort_order'];
 

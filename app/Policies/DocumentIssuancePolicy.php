@@ -107,4 +107,19 @@ class DocumentIssuancePolicy
         return $authUser->can('Unarchive:DocumentIssuance');
     }
 
+    public function markObsolete(AuthUser $authUser, DocumentIssuance $documentIssuance): bool
+    {
+        return $authUser->can('MarkObsolete:DocumentIssuance');
+    }
+
+    public function completeRetention(AuthUser $authUser, DocumentIssuance $documentIssuance): bool
+    {
+        return $authUser->can('CompleteRetention:DocumentIssuance');
+    }
+
+    public function destroy(AuthUser $authUser, DocumentIssuance $documentIssuance): bool
+    {
+        return $authUser->can('Destroy:DocumentIssuance');
+    }
+
 }

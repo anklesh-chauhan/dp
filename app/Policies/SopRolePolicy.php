@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\SopRole;
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Illuminate\Foundation\Auth\User as AuthUser;
 
 class SopRolePolicy
 {
     use HandlesAuthorization;
-
+    
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:SopRole');
@@ -106,4 +106,20 @@ class SopRolePolicy
     {
         return $authUser->can('Unarchive:SopRole');
     }
+
+    public function markObsolete(AuthUser $authUser, SopRole $sopRole): bool
+    {
+        return $authUser->can('MarkObsolete:SopRole');
+    }
+
+    public function completeRetention(AuthUser $authUser, SopRole $sopRole): bool
+    {
+        return $authUser->can('CompleteRetention:SopRole');
+    }
+
+    public function destroy(AuthUser $authUser, SopRole $sopRole): bool
+    {
+        return $authUser->can('Destroy:SopRole');
+    }
+
 }

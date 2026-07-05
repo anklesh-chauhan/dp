@@ -8,12 +8,12 @@ use App\Models\SopTemplate;
 use App\Models\User;
 use App\Services\Sop\RetentionLifecycleService;
 
-class ArchiveTemplateAction
+class CompleteTemplateRetentionAction
 {
     public function __construct(private readonly RetentionLifecycleService $retentionLifecycleService) {}
 
     public function execute(SopTemplate $template, User $user, ?string $reason = null): SopTemplate
     {
-        return $this->retentionLifecycleService->archiveTemplate($template, $user, $reason);
+        return $this->retentionLifecycleService->completeTemplateRetention($template, $user, $reason);
     }
 }

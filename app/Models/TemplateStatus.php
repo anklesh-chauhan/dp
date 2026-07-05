@@ -18,7 +18,49 @@ class TemplateStatus extends Model
 
     public const ARCHIVED = 'archived';
 
+    public const OBSOLETE = 'obsolete';
+
+    public const RETENTION_COMPLETED = 'retention_completed';
+
+    public const DESTROYED = 'destroyed';
+
     protected $fillable = ['code', 'name', 'sort_order'];
+
+    /**
+     * @return list<string>
+     */
+    public static function retentionLifecycleCodes(): array
+    {
+        return [
+            self::OBSOLETE,
+            self::ARCHIVED,
+            self::RETENTION_COMPLETED,
+            self::DESTROYED,
+        ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function archivedOrBeyondCodes(): array
+    {
+        return [
+            self::ARCHIVED,
+            self::RETENTION_COMPLETED,
+            self::DESTROYED,
+        ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function editableCodes(): array
+    {
+        return [
+            self::DRAFT,
+            self::PUBLISHED,
+        ];
+    }
 
     /**
      * @return HasMany<SopTemplate, $this>

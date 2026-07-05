@@ -31,7 +31,9 @@ class DocumentIssuanceService
     {
         if (! $document->canBeIssued()) {
             throw ValidationException::withMessages([
-                'issuance' => 'Only effective log documents with a valid SOP reference can be issued.',
+                'issuance' => $document->requiresSopReference() && $document->referencedSopIsUnavailable()
+                    ? 'Controlled copies cannot be issued when the referenced SOP is not effective or has been archived.'
+                    : 'Only effective log documents with a valid SOP reference can be issued.',
             ]);
         }
 

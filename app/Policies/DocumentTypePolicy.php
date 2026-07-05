@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\DocumentType;
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Illuminate\Foundation\Auth\User as AuthUser;
 
 class DocumentTypePolicy
 {
     use HandlesAuthorization;
-
+    
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:DocumentType');
@@ -106,4 +106,20 @@ class DocumentTypePolicy
     {
         return $authUser->can('Unarchive:DocumentType');
     }
+
+    public function markObsolete(AuthUser $authUser, DocumentType $documentType): bool
+    {
+        return $authUser->can('MarkObsolete:DocumentType');
+    }
+
+    public function completeRetention(AuthUser $authUser, DocumentType $documentType): bool
+    {
+        return $authUser->can('CompleteRetention:DocumentType');
+    }
+
+    public function destroy(AuthUser $authUser, DocumentType $documentType): bool
+    {
+        return $authUser->can('Destroy:DocumentType');
+    }
+
 }

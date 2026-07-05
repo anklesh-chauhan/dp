@@ -107,4 +107,19 @@ class SopWorkflowPolicy
         return $authUser->can('Unarchive:SopWorkflow');
     }
 
+    public function markObsolete(AuthUser $authUser, SopWorkflow $sopWorkflow): bool
+    {
+        return $authUser->can('MarkObsolete:SopWorkflow');
+    }
+
+    public function completeRetention(AuthUser $authUser, SopWorkflow $sopWorkflow): bool
+    {
+        return $authUser->can('CompleteRetention:SopWorkflow');
+    }
+
+    public function destroy(AuthUser $authUser, SopWorkflow $sopWorkflow): bool
+    {
+        return $authUser->can('Destroy:SopWorkflow');
+    }
+
 }

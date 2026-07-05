@@ -9,6 +9,7 @@ use App\Actions\Sop\LockDocumentAction;
 use App\Actions\Sop\SubmitDocumentAction;
 use App\Actions\Sop\UnlockDocumentAction;
 use App\Filament\Concerns\HandlesServiceExceptions;
+use App\Filament\Concerns\ProvidesRetentionLifecycleActions;
 use App\Filament\Resources\LogDocuments\LogDocumentResource;
 use App\Models\Department;
 use App\Models\DocumentStatus;
@@ -26,12 +27,14 @@ use Illuminate\Support\Facades\Auth;
 class ViewLogDocument extends ViewRecord
 {
     use HandlesServiceExceptions;
+    use ProvidesRetentionLifecycleActions;
 
     protected static string $resource = LogDocumentResource::class;
 
     protected function getActions(): array
     {
         return [
+            ...$this->getDocumentRetentionLifecycleActions(),
             Action::make('submitForApproval')
                 ->label('Submit for Approval')
                 ->icon(Heroicon::PaperAirplane)

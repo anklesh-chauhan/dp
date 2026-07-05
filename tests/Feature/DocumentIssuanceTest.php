@@ -169,6 +169,60 @@ it('issues controlled copies only after approval to effective', function (): voi
         ->and(SopAuditLog::query()->where('document_id', $document->id)->where('action', SopAuditLog::ACTION_ISSUED)->exists())->toBeTrue();
 });
 
+it('blocks controlled copy issuance when the referenced sop is not effective', function (): void {
+    $department = Department::factory()->create(['code' => 'QA']);
+    $controller = User::factory()->create(['department_id' => $department->id]);
+    Permission::findOrCreate('Issue:DocumentIssuance', 'web');
+    $controller->givePermissionTo('Issue:DocumentIssuance');
+
+    $effectiveSop = createEffectiveSop($department);
+    $template = createLogTemplate($department);
+    $maker = User::factory()->create(['department_id' => $department->id]);
+
+    $document = app(CreateDocumentFromTemplateAction::class)->execute(new SopDocumentData(
+        templateId: $template->id,
+        title: 'Batch Log',
+        ownerId: $maker->id,
+        createdBy: $maker->id,
+        referencedSopDocumentId: $effectiveSop->id,
+        documentNumber: 'LOG-QA-00005',
+    ));
+
+    $document->update(['document_status_id' => DocumentStatus::idFor(DocumentStatus::EFFECTIVE)]);
+
+    $effectiveSop->update(['document_status_id' => DocumentStatus::idFor(DocumentStatus::OBSOLETE)]);
+
+    expect(fn () => app(IssueDocumentAction::class)->execute($document, $controller))
+        ->toThrow(ValidationException::class, 'Controlled copies cannot be issued when the referenced SOP is not effective or has been archived.');
+});
+
+it('blocks controlled copy issuance when the referenced sop is archived', function (): void {
+    $department = Department::factory()->create(['code' => 'QA']);
+    $controller = User::factory()->create(['department_id' => $department->id]);
+    Permission::findOrCreate('Issue:DocumentIssuance', 'web');
+    $controller->givePermissionTo('Issue:DocumentIssuance');
+
+    $effectiveSop = createEffectiveSop($department);
+    $template = createLogTemplate($department);
+    $maker = User::factory()->create(['department_id' => $department->id]);
+
+    $document = app(CreateDocumentFromTemplateAction::class)->execute(new SopDocumentData(
+        templateId: $template->id,
+        title: 'Batch Log',
+        ownerId: $maker->id,
+        createdBy: $maker->id,
+        referencedSopDocumentId: $effectiveSop->id,
+        documentNumber: 'LOG-QA-00006',
+    ));
+
+    $document->update(['document_status_id' => DocumentStatus::idFor(DocumentStatus::EFFECTIVE)]);
+
+    $effectiveSop->update(['document_status_id' => DocumentStatus::idFor(DocumentStatus::ARCHIVED)]);
+
+    expect(fn () => app(IssueDocumentAction::class)->execute($document, $controller))
+        ->toThrow(ValidationException::class, 'Controlled copies cannot be issued when the referenced SOP is not effective or has been archived.');
+});
+
 it('blocks printing log documents without an active controlled copy', function (): void {
     $department = Department::factory()->create(['code' => 'QA']);
     $user = User::factory()->create();

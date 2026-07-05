@@ -8,6 +8,7 @@ use App\Actions\Sop\LockDocumentAction;
 use App\Actions\Sop\SubmitDocumentAction;
 use App\Actions\Sop\UnlockDocumentAction;
 use App\Filament\Concerns\HandlesServiceExceptions;
+use App\Filament\Concerns\ProvidesRetentionLifecycleActions;
 use App\Filament\Resources\SopDocuments\SopDocumentResource;
 use App\Models\DocumentStatus;
 use Filament\Actions\Action;
@@ -19,12 +20,14 @@ use Illuminate\Support\Facades\Auth;
 class ViewSopDocument extends ViewRecord
 {
     use HandlesServiceExceptions;
+    use ProvidesRetentionLifecycleActions;
 
     protected static string $resource = SopDocumentResource::class;
 
     protected function getActions(): array
     {
         return [
+            ...$this->getDocumentRetentionLifecycleActions(),
             Action::make('submitForApproval')
                 ->label('Submit for Approval')
                 ->icon(Heroicon::PaperAirplane)

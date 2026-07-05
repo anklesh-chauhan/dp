@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\SopTemplates\RelationManagers;
 
+use App\Filament\Concerns\ManagesEditableTemplates;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -20,6 +21,8 @@ use Filament\Tables\Table;
 
 class SectionRelationManager extends RelationManager
 {
+    use ManagesEditableTemplates;
+
     protected static string $relationship = 'sections';
 
     public function form(Schema $schema): Schema
@@ -50,7 +53,15 @@ class SectionRelationManager extends RelationManager
                 TextColumn::make('section_type')->badge(),
                 IconColumn::make('is_required')->boolean(),
             ])
-            ->headerActions([CreateAction::make()])
-            ->recordActions([EditAction::make(), DeleteAction::make()]);
+            ->headerActions([
+                CreateAction::make()
+                    ->visible(fn (): bool => $this->canManageTemplateRecord()),
+            ])
+            ->recordActions([
+                EditAction::make()
+                    ->visible(fn (): bool => $this->canManageTemplateRecord()),
+                DeleteAction::make()
+                    ->visible(fn (): bool => $this->canManageTemplateRecord()),
+            ]);
     }
 }

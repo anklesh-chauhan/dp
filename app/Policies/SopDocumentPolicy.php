@@ -107,4 +107,19 @@ class SopDocumentPolicy
         return $authUser->can('Unarchive:SopDocument');
     }
 
+    public function markObsolete(AuthUser $authUser, SopDocument $sopDocument): bool
+    {
+        return $authUser->can('MarkObsolete:SopDocument');
+    }
+
+    public function completeRetention(AuthUser $authUser, SopDocument $sopDocument): bool
+    {
+        return $authUser->can('CompleteRetention:SopDocument');
+    }
+
+    public function destroy(AuthUser $authUser, SopDocument $sopDocument): bool
+    {
+        return $authUser->can('Destroy:SopDocument');
+    }
+
 }

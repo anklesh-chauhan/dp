@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace App\Actions\Sop;
 
-use App\Models\SopTemplate;
+use App\Models\SopDocument;
 use App\Models\User;
 use App\Services\Sop\RetentionLifecycleService;
 
-class ArchiveTemplateAction
+class ArchiveDocumentAction
 {
     public function __construct(private readonly RetentionLifecycleService $retentionLifecycleService) {}
 
-    public function execute(SopTemplate $template, User $user, ?string $reason = null): SopTemplate
+    public function execute(SopDocument $document, User $user, ?string $reason = null): SopDocument
     {
-        return $this->retentionLifecycleService->archiveTemplate($template, $user, $reason);
+        return $this->retentionLifecycleService->archiveDocument($document, $user, $reason);
     }
 }

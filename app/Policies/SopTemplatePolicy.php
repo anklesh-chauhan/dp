@@ -107,4 +107,19 @@ class SopTemplatePolicy
         return $authUser->can('Unarchive:SopTemplate');
     }
 
+    public function markObsolete(AuthUser $authUser, SopTemplate $sopTemplate): bool
+    {
+        return $authUser->can('MarkObsolete:SopTemplate');
+    }
+
+    public function completeRetention(AuthUser $authUser, SopTemplate $sopTemplate): bool
+    {
+        return $authUser->can('CompleteRetention:SopTemplate');
+    }
+
+    public function destroy(AuthUser $authUser, SopTemplate $sopTemplate): bool
+    {
+        return $authUser->can('Destroy:SopTemplate');
+    }
+
 }

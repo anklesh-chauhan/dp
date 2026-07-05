@@ -107,4 +107,19 @@ class DepartmentPolicy
         return $authUser->can('Unarchive:Department');
     }
 
+    public function markObsolete(AuthUser $authUser, Department $department): bool
+    {
+        return $authUser->can('MarkObsolete:Department');
+    }
+
+    public function completeRetention(AuthUser $authUser, Department $department): bool
+    {
+        return $authUser->can('CompleteRetention:Department');
+    }
+
+    public function destroy(AuthUser $authUser, Department $department): bool
+    {
+        return $authUser->can('Destroy:Department');
+    }
+
 }
