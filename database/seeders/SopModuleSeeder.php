@@ -293,15 +293,16 @@ class SopModuleSeeder extends Seeder
         ]);
 
         foreach ([
-            1 => [ApprovalStepType::CHECKER, $checkerRole],
-            2 => [ApprovalStepType::QA_REVIEW, $checkerRole],
-            3 => [ApprovalStepType::APPROVER, $approverRole],
-        ] as $stepNo => [$approvalType, $role]) {
+            1 => [ApprovalStepType::CHECKER, $checkerRole, null],
+            2 => [ApprovalStepType::QA_REVIEW, $checkerRole, $qa->id],
+            3 => [ApprovalStepType::APPROVER, $approverRole, null],
+        ] as $stepNo => [$approvalType, $role, $departmentId]) {
             $globalWorkflow->steps()->firstOrCreate([
                 'step_no' => $stepNo,
             ], [
                 'role_id' => $role->id,
                 'approval_step_type_id' => ApprovalStepType::idFor($approvalType),
+                'department_id' => $departmentId,
                 'is_mandatory' => true,
             ]);
         }
@@ -315,14 +316,15 @@ class SopModuleSeeder extends Seeder
         ]);
 
         foreach ([
-            1 => [ApprovalStepType::CHECKER, $checkerRole],
-            2 => [ApprovalStepType::APPROVER, $approverRole],
-        ] as $stepNo => [$approvalType, $role]) {
+            1 => [ApprovalStepType::CHECKER, $checkerRole, null],
+            2 => [ApprovalStepType::APPROVER, $approverRole, null],
+        ] as $stepNo => [$approvalType, $role, $departmentId]) {
             $qaWorkflow->steps()->firstOrCreate([
                 'step_no' => $stepNo,
             ], [
                 'role_id' => $role->id,
                 'approval_step_type_id' => ApprovalStepType::idFor($approvalType),
+                'department_id' => $departmentId,
                 'is_mandatory' => true,
             ]);
         }
@@ -336,15 +338,16 @@ class SopModuleSeeder extends Seeder
         ]);
 
         foreach ([
-            1 => [ApprovalStepType::CHECKER, $checkerRole],
-            2 => [ApprovalStepType::QA_REVIEW, $checkerRole],
-            3 => [ApprovalStepType::APPROVER, $approverRole],
-        ] as $stepNo => [$approvalType, $role]) {
+            1 => [ApprovalStepType::CHECKER, $checkerRole, null],
+            2 => [ApprovalStepType::QA_REVIEW, $checkerRole, $qa->id],
+            3 => [ApprovalStepType::APPROVER, $approverRole, null],
+        ] as $stepNo => [$approvalType, $role, $departmentId]) {
             $prodWorkflow->steps()->firstOrCreate([
                 'step_no' => $stepNo,
             ], [
                 'role_id' => $role->id,
                 'approval_step_type_id' => ApprovalStepType::idFor($approvalType),
+                'department_id' => $departmentId,
                 'is_mandatory' => true,
             ]);
         }

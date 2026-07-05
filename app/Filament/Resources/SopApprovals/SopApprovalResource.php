@@ -12,7 +12,6 @@ use App\Filament\Resources\SopDocuments\SopDocumentResource;
 use App\Filament\Support\ServiceExceptionHandler;
 use App\Models\ApprovalDecision;
 use App\Models\SopApproval;
-use App\Models\SopRole;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
 use Filament\Resources\Resource;
@@ -59,7 +58,11 @@ class SopApprovalResource extends Resource
                     ->searchable()
                     ->limit(40),
                 TextColumn::make('document.department.name')
-                    ->label('Department')
+                    ->label('Document Dept.')
+                    ->toggleable(),
+                TextColumn::make('workflowStep.department.name')
+                    ->label('Step Dept.')
+                    ->placeholder('Same as document')
                     ->toggleable(),
                 TextColumn::make('document.documentStatus.name')
                     ->label('Document Status')
@@ -103,6 +106,9 @@ class SopApprovalResource extends Resource
                 SelectFilter::make('workflowStep.role')
                     ->relationship('workflowStep.role', 'name')
                     ->label('Role'),
+                SelectFilter::make('workflowStep.department')
+                    ->relationship('workflowStep.department', 'name')
+                    ->label('Step Department'),
             ])
             ->recordActions([
                 Action::make('viewDocument')
@@ -156,6 +162,7 @@ class SopApprovalResource extends Resource
                 'document.department',
                 'document.documentStatus',
                 'workflowStep.role',
+                'workflowStep.department',
                 'workflowStep.approvalStepType',
                 'approver',
                 'approvalDecision',
@@ -163,8 +170,8 @@ class SopApprovalResource extends Resource
 
         $user = Auth::user();
 
-        if ($user !== null && $user->department_id !== null && ! $user->hasRole(SopRole::ADMINISTRATOR)) {
-            $query->whereHas('document', fn (Builder $documentQuery): Builder => $documentQuery->where('department_id', $user->department_id));
+        if ($user !== null) {
+            $query->visibleToUser($user);
         }
 
         return $query;

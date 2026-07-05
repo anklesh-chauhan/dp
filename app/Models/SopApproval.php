@@ -78,14 +78,30 @@ class SopApproval extends Model
      * @param  Builder<SopApproval>  $query
      * @return Builder<SopApproval>
      */
+    public function scopeVisibleToUser(Builder $query, User $user): Builder
+    {
+        if ($user->department_id === null || $user->hasRole(SopRole::ADMINISTRATOR)) {
+            return $query;
+        }
+
+        return $query->where(function (Builder $approvalQuery) use ($user): void {
+            $approvalQuery
+                ->whereHas('workflowStep', fn (Builder $stepQuery): Builder => $stepQuery->where('department_id', $user->department_id))
+                ->orWhere(function (Builder $nestedQuery) use ($user): void {
+                    $nestedQuery
+                        ->whereHas('workflowStep', fn (Builder $stepQuery): Builder => $stepQuery->whereNull('department_id'))
+                        ->whereHas('document', fn (Builder $documentQuery): Builder => $documentQuery->where('department_id', $user->department_id));
+                });
+        });
+    }
+
+    /**
+     * @param  Builder<SopApproval>  $query
+     * @return Builder<SopApproval>
+     */
     public function scopeActionableFor(Builder $query, User $user): Builder
     {
-        return $query->pending()
-            ->whereHas('document', function (Builder $documentQuery) use ($user): void {
-                if ($user->department_id !== null && ! $user->hasRole(SopRole::ADMINISTRATOR)) {
-                    $documentQuery->where('department_id', $user->department_id);
-                }
-            });
+        return $query->pending()->visibleToUser($user);
     }
 
     public function isActionable(): bool
@@ -114,6 +130,7 @@ class SopApproval extends Model
 
         $this->loadMissing([
             'workflowStep.role',
+            'workflowStep.department',
             'document',
         ]);
 
@@ -163,6 +180,12 @@ class SopApproval extends Model
             return false;
         }
 
-        return $this->document->department_id !== $user->department_id;
+        $requiredDepartmentId = $this->workflowStep->resolveRequiredDepartmentId($this->document->department_id);
+
+        if ($requiredDepartmentId === null) {
+            return false;
+        }
+
+        return $requiredDepartmentId !== $user->department_id;
     }
 }

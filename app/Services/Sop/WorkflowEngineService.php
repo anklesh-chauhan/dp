@@ -24,7 +24,7 @@ class WorkflowEngineService
 
     public function start(SopDocument $document, User $submitter, ?SopWorkflow $workflow = null): void
     {
-        if (! $document->documentStatus?->is(DocumentStatus::DRAFT)) {
+        if (! $document->documentStatus?->hasCode(DocumentStatus::DRAFT)) {
             throw new WorkflowException(
                 message: 'Only draft documents can be submitted for approval.'
             );
@@ -43,6 +43,8 @@ class WorkflowEngineService
                 message: 'No active approval workflow is configured for this department.'
             );
         }
+
+        $workflow->loadMissing('steps.department');
 
         $pendingDecisionId = ApprovalDecision::idFor(ApprovalDecision::PENDING);
         $underReviewStatusId = DocumentStatus::idFor(DocumentStatus::UNDER_REVIEW);
@@ -188,7 +190,7 @@ class WorkflowEngineService
         $departmentWorkflow = SopWorkflow::query()
             ->where('is_active', true)
             ->where('department_id', $document->department_id)
-            ->with('steps')
+            ->with(['steps.department'])
             ->first();
 
         if ($departmentWorkflow !== null) {
@@ -198,7 +200,7 @@ class WorkflowEngineService
         return SopWorkflow::query()
             ->where('is_active', true)
             ->where('department_id', null)
-            ->with('steps')
+            ->with(['steps.department'])
             ->first();
     }
 

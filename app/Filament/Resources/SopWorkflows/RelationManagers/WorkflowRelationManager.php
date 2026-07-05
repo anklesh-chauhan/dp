@@ -32,6 +32,13 @@ class WorkflowRelationManager extends RelationManager
                     ->searchable()
                     ->preload()
                     ->required(),
+                Select::make('department_id')
+                    ->label('Department')
+                    ->relationship('department', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->placeholder('Same as document department')
+                    ->default(fn (): ?int => $this->getOwnerRecord()->department_id),
                 Toggle::make('is_mandatory')->default(true),
             ]),
         ]);
@@ -46,6 +53,9 @@ class WorkflowRelationManager extends RelationManager
                 TextColumn::make('approvalStepType.name')
                     ->label('Type')
                     ->badge(),
+                TextColumn::make('department.name')
+                    ->label('Department')
+                    ->placeholder('Same as document'),
                 IconColumn::make('is_mandatory')->boolean(),
             ])
             ->headerActions([CreateAction::make()])

@@ -33,6 +33,7 @@ class SopDocumentPrintController extends Controller
 
         $sopDocument->load([
             'approvals.approver',
+            'approvals.workflowStep.department',
             'approvals.workflowStep',
             'creator',
             'department',

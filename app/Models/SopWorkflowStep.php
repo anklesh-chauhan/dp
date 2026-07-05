@@ -21,6 +21,7 @@ class SopWorkflowStep extends Model
         'step_no',
         'role_id',
         'approval_step_type_id',
+        'department_id',
         'is_mandatory',
     ];
 
@@ -54,6 +55,19 @@ class SopWorkflowStep extends Model
     public function approvalStepType(): BelongsTo
     {
         return $this->belongsTo(ApprovalStepType::class);
+    }
+
+    /**
+     * @return BelongsTo<Department, $this>
+     */
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class);
+    }
+
+    public function resolveRequiredDepartmentId(?int $documentDepartmentId): ?int
+    {
+        return $this->department_id ?? $documentDepartmentId;
     }
 
     /**

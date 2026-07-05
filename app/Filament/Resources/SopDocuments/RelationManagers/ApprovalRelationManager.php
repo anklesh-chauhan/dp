@@ -36,6 +36,9 @@ class ApprovalRelationManager extends RelationManager
                     ->label('Type')
                     ->badge(),
                 TextColumn::make('workflowStep.role.name')->label('Role'),
+                TextColumn::make('workflowStep.department.name')
+                    ->label('Department')
+                    ->placeholder('Same as document'),
                 TextColumn::make('approvalDecision.name')
                     ->label('Decision')
                     ->badge(),

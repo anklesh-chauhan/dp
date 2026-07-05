@@ -31,4 +31,12 @@ class Department extends Model
     {
         return $this->hasMany(SopDocument::class);
     }
+
+    /**
+     * @return HasMany<SopWorkflowStep, $this>
+     */
+    public function workflowSteps(): HasMany
+    {
+        return $this->hasMany(SopWorkflowStep::class);
+    }
 }

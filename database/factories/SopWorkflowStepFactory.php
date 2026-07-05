@@ -27,6 +27,7 @@ class SopWorkflowStepFactory extends Factory
             'step_no' => fake()->numberBetween(1, 4),
             'role_id' => Role::findOrCreate('qa reviewer', 'web')->id,
             'approval_step_type_id' => ApprovalStepType::idFor(ApprovalStepType::APPROVAL),
+            'department_id' => null,
             'is_mandatory' => true,
         ];
     }

@@ -265,6 +265,7 @@
                 <thead>
                     <tr>
                         <th>Step</th>
+                        <th>Department</th>
                         <th>Decision</th>
                         <th>Approver</th>
                         <th>Approved At</th>
@@ -274,6 +275,7 @@
                     @foreach ($document->approvals as $approval)
                         <tr>
                             <td>{{ $approval->workflowStep?->approvalStepType->name  ?? '-' }}</td>
+                            <td>{{ $approval->workflowStep?->department?->name ?? $document->department?->name ?? '-' }}</td>
                             <td>{{ $approval->approvalDecision?->name ?? '-' }}</td>
                             <td>{{ $approval->approver?->name ?? '-' }}</td>
                             <td>{{ $approval->approved_at?->toDayDateTimeString() ?? '-' }}</td>

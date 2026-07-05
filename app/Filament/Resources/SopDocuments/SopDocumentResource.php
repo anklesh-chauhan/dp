@@ -14,7 +14,9 @@ use App\Filament\Resources\SopDocuments\RelationManagers\DocumentSectionRelation
 use App\Filament\Resources\SopDocuments\RelationManagers\DocumentVariableRelationManager;
 use App\Filament\Support\TemplateVariableFieldBuilder;
 use App\Models\DocumentStatus;
+use App\Models\DocumentType;
 use App\Models\SopDocument;
+use App\Models\SopTemplate;
 use App\Models\SopTemplateVersion;
 use App\Models\TemplateStatus;
 use Filament\Actions\Action;
@@ -86,11 +88,29 @@ class SopDocumentResource extends Resource
                             ->disabled(fn (Get $get): bool => blank($get('template_id')))
                             ->live()
                             ->afterStateUpdated(fn (Set $set, ?int $state): mixed => $set('variables', self::templateVariableDefaultValues($state))),
+
+                        Select::make('referenced_sop_document_id')
+                            ->label('Referenced SOP')
+                            ->relationship(
+                                'referencedSop',
+                                'document_number',
+                                modifyQueryUsing: fn (Builder $query) => $query
+                                    ->whereHas(
+                                        'documentType',
+                                        fn (Builder $q) => $q->where('code', DocumentType::SOP)
+                                    )
+                            )
+                            ->searchable()
+                            ->preload()
+                            ->visible(fn (Get $get) => self::requiresSopReference($get)),
+
                         TextInput::make('document_number')
                             ->visible(fn ($livewire): bool => ! ($livewire instanceof CreateSopDocument))
                             ->required(fn ($livewire): bool => ! ($livewire instanceof CreateSopDocument))
                             ->unique(ignoreRecord: true),
+
                         TextInput::make('title')->required()->maxLength(255),
+
                         TextInput::make('version')
                             ->numeric()
                             ->minValue(1)
@@ -116,6 +136,7 @@ class SopDocumentResource extends Resource
                     ]),
                 ])
                 ->columnSpanFull(),
+
             Section::make('Template Variable Values')
                 ->key(fn (Get $get): string => 'template-variables-'.($get('template_version_id') ?? 'none'))
                 ->schema(fn (Get $get): array => TemplateVariableFieldBuilder::fields(
@@ -242,5 +263,20 @@ class SopDocumentResource extends Resource
     private static function templateVariableDefaultValues(?int $templateVersionId): array
     {
         return TemplateVariableFieldBuilder::defaultValues($templateVersionId);
+    }
+
+    protected static function requiresSopReference(Get $get): bool
+    {
+        $templateId = $get('template_id');
+
+        if (blank($templateId)) {
+            return false;
+        }
+
+        return SopTemplate::query()
+            ->with('documentType')
+            ->find($templateId)
+            ?->documentType
+            ?->requiresSopReference() ?? false;
     }
 }

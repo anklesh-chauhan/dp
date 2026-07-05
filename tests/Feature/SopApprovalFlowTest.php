@@ -28,7 +28,7 @@ use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
-function createApprovalWorkflow(Department $department, Role $checkerRole, Role $approverRole): SopWorkflow
+function createApprovalWorkflow(Department $department, Role $checkerRole, Role $approverRole, ?int $approverStepDepartmentId = null): SopWorkflow
 {
     $workflow = SopWorkflow::factory()->create([
         'name' => "{$department->code} Workflow",
@@ -40,6 +40,7 @@ function createApprovalWorkflow(Department $department, Role $checkerRole, Role 
         'step_no' => 1,
         'role_id' => $checkerRole->id,
         'approval_step_type_id' => ApprovalStepType::idFor(ApprovalStepType::CHECKER),
+        'department_id' => null,
         'is_mandatory' => true,
     ]);
 
@@ -47,6 +48,7 @@ function createApprovalWorkflow(Department $department, Role $checkerRole, Role 
         'step_no' => 2,
         'role_id' => $approverRole->id,
         'approval_step_type_id' => ApprovalStepType::idFor(ApprovalStepType::APPROVER),
+        'department_id' => $approverStepDepartmentId,
         'is_mandatory' => true,
     ]);
 
@@ -291,4 +293,48 @@ it('prevents checkers from approving documents outside their department', functi
     $checkerApproval = $document->approvals()->whereHas('workflowStep', fn ($q) => $q->where('step_no', 1))->first();
 
     expect($checkerApproval->canBeApprovedBy($prodChecker))->toBeFalse();
+});
+
+it('routes approval steps to the department configured on the step', function (): void {
+    $qaDepartment = Department::factory()->create(['code' => 'QA']);
+    $prodDepartment = Department::factory()->create(['code' => 'PROD']);
+
+    $maker = User::factory()->create(['department_id' => $prodDepartment->id]);
+    $prodChecker = User::factory()->create(['department_id' => $prodDepartment->id]);
+    $qaApprover = User::factory()->create(['department_id' => $qaDepartment->id]);
+
+    grantMakerPermissions($maker);
+
+    $checkerRole = Role::findOrCreate(SopRole::CHECKER, 'web');
+    $approverRole = Role::findOrCreate(SopRole::APPROVER, 'web');
+
+    grantApproverPermissions($prodChecker);
+    grantApproverPermissions($qaApprover);
+    $prodChecker->assignRole($checkerRole);
+    $qaApprover->assignRole($approverRole);
+
+    createApprovalWorkflow($prodDepartment, $checkerRole, $approverRole, $qaDepartment->id);
+    $template = createPublishedTemplate($prodDepartment);
+
+    $document = app(CreateDocumentFromTemplateAction::class)->execute(new SopDocumentData(
+        templateId: $template->id,
+        title: 'Step Department SOP',
+        ownerId: $maker->id,
+        createdBy: $maker->id,
+        variables: [],
+        documentNumber: 'SOP-PROD-00002',
+    ));
+
+    app(SubmitDocumentAction::class)->execute($document, $maker);
+
+    $checkerApproval = $document->approvals()->whereHas('workflowStep', fn ($q) => $q->where('step_no', 1))->first();
+    $approverApproval = $document->approvals()->whereHas('workflowStep', fn ($q) => $q->where('step_no', 2))->first();
+
+    expect($checkerApproval->canBeApprovedBy($prodChecker))->toBeTrue()
+        ->and($approverApproval->canBeApprovedBy($prodChecker))->toBeFalse();
+
+    app(ApproveDocumentAction::class)->execute($checkerApproval, $prodChecker, 'Checked by production');
+
+    expect($approverApproval->refresh()->canBeApprovedBy($qaApprover))->toBeTrue()
+        ->and($approverApproval->canBeApprovedBy($prodChecker))->toBeFalse();
 });
