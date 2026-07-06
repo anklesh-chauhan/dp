@@ -7,21 +7,18 @@ namespace App\Services\Sop;
 use App\Models\Department;
 use App\Models\DocumentIssuance;
 use App\Models\SopDocument;
+use App\Services\NumberSeries\NumberSeriesService;
 use Illuminate\Support\Str;
 
 class DocumentNumberGeneratorService
 {
+    public function __construct(
+        private readonly NumberSeriesService $numberSeriesService,
+    ) {}
+
     public function generate(Department $department, string $typeCode = 'SOP'): string
     {
-        $prefix = sprintf('%s-%s-', Str::upper($typeCode), Str::upper($department->code));
-        $latestNumber = SopDocument::query()
-            ->where('document_number', 'like', $prefix.'%')
-            ->lockForUpdate()
-            ->pluck('document_number')
-            ->map(fn (string $documentNumber): int => (int) Str::afterLast($documentNumber, '-'))
-            ->max() ?? 0;
-
-        return $prefix.str_pad((string) ($latestNumber + 1), 5, '0', STR_PAD_LEFT);
+        return $this->numberSeriesService->generate($department, $typeCode);
     }
 
     public function generateIssuanceNumber(SopDocument $document, int $copyNumber): string
