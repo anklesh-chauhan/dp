@@ -9,10 +9,13 @@ use App\Filament\Resources\DocumentTypes\Pages\CreateDocumentType;
 use App\Filament\Resources\DocumentTypes\Pages\EditDocumentType;
 use App\Filament\Resources\DocumentTypes\Pages\ListDocumentTypes;
 use App\Filament\Resources\LookupResource;
+use App\Models\DocumentCategory;
 use App\Models\DocumentType;
+use App\Models\RegulationTag;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
@@ -46,6 +49,14 @@ class DocumentTypeResource extends LookupResource
                 ->unique(ignoreRecord: true),
             Toggle::make('requires_sop_reference'),
             Toggle::make('is_issuable'),
+            Select::make('category_id')
+                ->options(DocumentCategory::query()->pluck('name', 'id'))
+                ->required(),
+            Select::make('regulationTags')
+                ->relationship('regulationTags', 'name')
+                ->multiple()
+                ->preload()
+                ->required(),
         ]);
     }
 
@@ -57,6 +68,7 @@ class DocumentTypeResource extends LookupResource
                 TextColumn::make('code')->searchable()->sortable(),
                 IconColumn::make('requires_sop_reference')->boolean(),
                 IconColumn::make('is_issuable')->boolean(),
+                TextColumn::make('category.name')->searchable()->sortable(),
                 TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()

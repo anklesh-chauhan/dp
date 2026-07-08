@@ -3,18 +3,17 @@
 namespace App\Filament\Resources\DocumentCategories;
 
 use App\Filament\Clusters\Settings\SettingsCluster;
-use App\Filament\Resources\DocumentCategories\Pages\ManageDocumentCategories;
+use App\Filament\Resources\DocumentCategories\Pages\CreateDocumentCategory;
+use App\Filament\Resources\DocumentCategories\Pages\EditDocumentCategory;
+use App\Filament\Resources\DocumentCategories\Pages\ListDocumentCategories;
+use App\Filament\Resources\DocumentCategories\RelationManagers\DocumentTypeRelationManager;
+use App\Filament\Resources\DocumentCategories\Schemas\DocumentCategoryForm;
+use App\Filament\Resources\DocumentCategories\Tables\DocumentCategoriesTable;
 use App\Models\DocumentCategory;
 use BackedEnum;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
-use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
-use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use UnitEnum;
 
@@ -22,7 +21,9 @@ class DocumentCategoryResource extends Resource
 {
     protected static ?string $model = DocumentCategory::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::DocumentText;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+
+    protected static ?string $recordTitleAttribute = 'DocumentCategory';
 
     protected static ?string $cluster = SettingsCluster::class;
 
@@ -30,55 +31,29 @@ class DocumentCategoryResource extends Resource
 
     protected static ?int $navigationSort = 1004;
 
-    protected static ?string $recordTitleAttribute = 'DocumentCategory';
-
     public static function form(Schema $schema): Schema
     {
-        return $schema
-            ->components([
-                TextInput::make('name')
-                    ->required(),
-                TextInput::make('code')
-                    ->required(),
-            ]);
+        return DocumentCategoryForm::configure($schema);
     }
 
     public static function table(Table $table): Table
     {
-        return $table
-            ->recordTitleAttribute('DocumentCategory')
-            ->columns([
-                TextColumn::make('name')
-                    ->searchable(),
-                TextColumn::make('code')
-                    ->searchable(),
-                TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-            ])
-            ->filters([
-                //
-            ])
-            ->recordActions([
-                EditAction::make(),
-                DeleteAction::make(),
-            ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
-            ]);
+        return DocumentCategoriesTable::configure($table);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            DocumentTypeRelationManager::class,
+        ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => ManageDocumentCategories::route('/'),
+            'index' => ListDocumentCategories::route('/'),
+            'create' => CreateDocumentCategory::route('/create'),
+            'edit' => EditDocumentCategory::route('/{record}/edit'),
         ];
     }
 }

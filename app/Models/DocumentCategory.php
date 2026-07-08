@@ -23,4 +23,12 @@ class DocumentCategory extends Model
     {
         return $this->hasMany(SopTemplate::class, 'category_id');
     }
+
+    /**
+     * @return HasMany<DocumentType, $this>
+     */
+    public function documentTypes(): HasMany
+    {
+        return $this->hasMany(DocumentType::class, 'category_id');
+    }
 }

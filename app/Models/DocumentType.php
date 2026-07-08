@@ -6,6 +6,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class DocumentType extends Model
@@ -25,6 +27,7 @@ class DocumentType extends Model
         'code',
         'requires_sop_reference',
         'is_issuable',
+        'category_id',
     ];
 
     protected function casts(): array
@@ -32,6 +35,7 @@ class DocumentType extends Model
         return [
             'requires_sop_reference' => 'boolean',
             'is_issuable' => 'boolean',
+            'category_id' => 'integer',
         ];
     }
 
@@ -51,6 +55,22 @@ class DocumentType extends Model
         return $this->hasMany(SopDocument::class);
     }
 
+    /**
+     * @return BelongsTo<DocumentCategory, $this>
+     */
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(DocumentCategory::class);
+    }
+
+    /**
+     * @return BelongsToMany<RegulationTag, $this>
+     */
+    public function regulationTags(): BelongsToMany
+    {
+        return $this->belongsToMany(RegulationTag::class, 'regulation_tag_document_type');
+    }
+
     public function requiresSopReference(): bool
     {
         return $this->requires_sop_reference;
@@ -66,6 +86,6 @@ class DocumentType extends Model
      */
     public static function options(): array
     {
-        return static::query()->orderBy('name')->pluck('name', 'id')->all();
+        return static::query()->orderBy('name')->pluck('name', 'id')->toArray();
     }
 }

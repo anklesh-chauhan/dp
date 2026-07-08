@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\DocumentType;
+use App\Observers\DocumentTypeObserver;
 use App\Support\Sop\VariableTypes\VariableTypeRegistry;
 use Illuminate\Support\ServiceProvider;
 
@@ -20,6 +22,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        DocumentType::observe(DocumentTypeObserver::class);
     }
 }

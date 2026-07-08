@@ -24,7 +24,7 @@ class NumberSeriesService
         $seriesKey = $this->registry->seriesKey($documentTypeCode, $department->code);
         $nextNumber = $this->incrementCounter($seriesKey, $definition);
 
-        return $definition->format($nextNumber, $department->code, $this->allowsExpandedPadding());
+        return $definition->format($nextNumber, $department->code, $this->registry->allowsExpandedPadding());
     }
 
     public function peekNext(Department $department, string $documentTypeCode): string
@@ -39,7 +39,7 @@ class NumberSeriesService
 
         $nextNumber = ($counter?->last_number ?? 0) + 1;
 
-        return $definition->format($nextNumber, $department->code, $this->allowsExpandedPadding());
+        return $definition->format($nextNumber, $department->code, $this->registry->allowsExpandedPadding());
     }
 
     public function synchronizeCounter(Department $department, string $documentTypeCode, int $lastNumber): void
@@ -86,7 +86,7 @@ class NumberSeriesService
 
     private function guardAgainstOverflow(NumberSeriesDefinition $definition, string $seriesKey, int $number): void
     {
-        if ($number <= $definition->maxPaddedValue() || $this->allowsExpandedPadding()) {
+        if ($number <= $definition->maxPaddedValue() || $this->registry->allowsExpandedPadding()) {
             return;
         }
 
@@ -95,10 +95,5 @@ class NumberSeriesService
             $number,
             $definition->maxPaddedValue(),
         );
-    }
-
-    private function allowsExpandedPadding(): bool
-    {
-        return config('number-series.overflow_behavior', 'expand') === 'expand';
     }
 }
