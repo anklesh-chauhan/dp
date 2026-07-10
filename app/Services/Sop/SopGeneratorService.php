@@ -7,10 +7,10 @@ namespace App\Services\Sop;
 use App\Data\SopDocumentData;
 use App\Models\DocumentStatus;
 use App\Models\SopAuditLog;
+use App\Models\SopDocument;
 use App\Models\SopTemplate;
 use App\Models\SopTemplateVersion;
 use App\Models\TemplateStatus;
-use App\Models\SopDocument;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -116,13 +116,18 @@ class SopGeneratorService
                     'template_id' => $template->id,
                     'template_version_id' => $version->id,
                     'document_type_id' => $documentType->id,
+                    'regulation_tag_ids' => $data->regulationTagIds,
                     'referenced_sop_document_id' => $sopReference['referenced_sop_document_id'] ?? null,
                 ],
                 userId: $data->createdBy,
                 document: $document,
             );
 
-            return $document->refresh()->load(['sections', 'variables', 'documentType', 'referencedSop']);
+            if ($data->regulationTagIds !== []) {
+                $document->regulationTags()->sync($data->regulationTagIds);
+            }
+
+            return $document->refresh()->load(['sections', 'variables', 'documentType', 'referencedSop', 'regulationTags']);
         });
     }
 

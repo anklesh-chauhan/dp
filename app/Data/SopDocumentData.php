@@ -19,6 +19,8 @@ final readonly class SopDocumentData
         public array $variables = [],
         public ?CarbonInterface $effectiveDate = null,
         public ?CarbonInterface $reviewDate = null,
+        /** @var array<int> */
+        public array $regulationTagIds = [],
         public ?int $templateVersionId = null,
         public ?string $documentNumber = null,
         public ?int $referencedSopDocumentId = null,

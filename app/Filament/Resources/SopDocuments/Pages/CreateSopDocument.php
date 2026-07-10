@@ -27,29 +27,20 @@ class CreateSopDocument extends CreateRecord
 
             return app(CreateDocumentFromTemplateAction::class)->execute(
                 new SopDocumentData(
-                    (int) $data['template_id'],
-                    (string) $data['title'],
-                    (int) $data['owner_id'],
-                    Auth::id(),
-                    $this->filterVariablesForVersion($templateVersionId, $data['variables'] ?? []),
-                    $this->parseDate($data['effective_date'] ?? null),
-                    $this->parseDate($data['review_date'] ?? null),
-                    $templateVersionId,
-                    $data['document_number'] ?? null,
-                    $data['referenced_sop_document_id'] ?? null,
-                    $data['referenced_sop_number'] ?? null,
-                    $data['referenced_sop_version'] ?? null,
-                    $data['referenced_sop_effective_date'] ?? null,
-                    $data['batch_number'] ?? null,
-                    $data['product_name'] ?? null,
-                    $data['purpose'] ?? null,
-                    $data['document_status_id'] ?? null,
-                    $data['effective_date'] ?? null,
-                    $data['review_date'] ?? null,
-                    $data['owner_id'] ?? null,
-                    $data['created_by'] ?? null,
-                    $data['locked_by'] ?? null,
-                    $data['locked_at'] ?? null,
+                    templateId: (int) $data['template_id'],
+                    title: (string) $data['title'],
+                    ownerId: (int) $data['owner_id'],
+                    createdBy: Auth::id(),
+                    variables: $this->filterVariablesForVersion($templateVersionId, $data['variables'] ?? []),
+                    effectiveDate: $this->parseDate($data['effective_date'] ?? null),
+                    reviewDate: $this->parseDate($data['review_date'] ?? null),
+                    regulationTagIds: $this->parseRegulationTagIds($data['regulationTags'] ?? []),
+                    templateVersionId: $templateVersionId,
+                    documentNumber: $data['document_number'] ?? null,
+                    referencedSopDocumentId: $data['referenced_sop_document_id'] ?? null,
+                    batchNumber: $data['batch_number'] ?? null,
+                    productName: $data['product_name'] ?? null,
+                    purpose: $data['purpose'] ?? null,
                 )
             );
         } catch (ValidationException $e) {
@@ -122,5 +113,22 @@ class CreateSopDocument extends CreateRecord
         }
 
         return CarbonImmutable::parse($date);
+    }
+
+    /**
+     * @param  array<int|string>|int|string|null  $value
+     * @return array<int>
+     */
+    private function parseRegulationTagIds(mixed $value): array
+    {
+        if ($value === null || $value === '') {
+            return [];
+        }
+
+        return collect(is_array($value) ? $value : [$value])
+            ->filter(fn (mixed $id): bool => filled($id))
+            ->map(fn (mixed $id): int => (int) $id)
+            ->values()
+            ->all();
     }
 }

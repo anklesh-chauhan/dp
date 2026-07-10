@@ -25,10 +25,21 @@ class CreateSopTemplate extends CreateRecord
 
     protected function afterCreate(): void
     {
-        $template = $this->record;
+        $template = $this->record->loadMissing('regulationTags');
 
-        // Hardcoded or dynamically extracted from your document types relation
-        $regulationTags = 'World Health Organization Good Manufacturing Practice (WHO GMP), United States Food and Drug Administration Good Manufacturing Practice (US FDA 210 & 211), India Drug Price Control Order (DPCO)';
+        $regulationTags = $template->regulationTags
+            ->pluck('name')
+            ->implode(', ');
+
+        if ($regulationTags === '') {
+            Notification::make()
+                ->title('Regulation tags required')
+                ->body('Select at least one regulation tag before generating the template structure.')
+                ->danger()
+                ->send();
+
+            return;
+        }
 
         $template->update([
             'generation_status' => $template::GENERATION_STATUS_PROCESSING,

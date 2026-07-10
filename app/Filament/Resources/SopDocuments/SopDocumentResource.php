@@ -86,6 +86,7 @@ class SopDocumentResource extends Resource
 
                                 $set('template_version_id', $versionId);
                                 $set('variables', self::templateVariableDefaultValues($versionId));
+                                $set('regulationTags', DocumentClassificationFormFields::regulationTagIdsForTemplate($state));
                             }),
                         Select::make('template_version_id')
                             ->label('Template Version')
@@ -172,7 +173,7 @@ class SopDocumentResource extends Resource
                     ->label('Document Type')
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('documentType.regulationTags.name')
+                TextColumn::make('regulationTags.name')
                     ->label('Regulation Tags')
                     ->badge()
                     ->toggleable(),
@@ -253,7 +254,7 @@ class SopDocumentResource extends Resource
     {
         return parent::getEloquentQuery()
             ->withoutGlobalScopes([SoftDeletingScope::class])
-            ->with(['department', 'template.category', 'template.documentType.regulationTags', 'documentType.category', 'documentType.regulationTags', 'documentStatus', 'lockedByUser']);
+            ->with(['department', 'template.category', 'template.regulationTags', 'documentType.category', 'regulationTags', 'documentStatus', 'lockedByUser']);
     }
 
     private static function publishedTemplateVersionId(?int $templateId): ?int

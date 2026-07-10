@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -239,6 +240,16 @@ class SopDocument extends Model
     public function documentType(): BelongsTo
     {
         return $this->belongsTo(DocumentType::class);
+    }
+
+    /**
+     * Regulation tags selected for this document at creation time.
+     *
+     * @return BelongsToMany<RegulationTag, $this>
+     */
+    public function regulationTags(): BelongsToMany
+    {
+        return $this->belongsToMany(RegulationTag::class, 'regulation_tag_sop_document');
     }
 
     /**

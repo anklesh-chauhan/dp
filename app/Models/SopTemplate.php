@@ -131,19 +131,13 @@ class SopTemplate extends Model
     }
 
     /**
-     * Regulation tags inherited from the selected document type.
+     * Regulation tags selected for this template at creation time.
      *
      * @return BelongsToMany<RegulationTag, $this>
      */
     public function regulationTags(): BelongsToMany
     {
-        return $this->belongsToMany(
-            RegulationTag::class,
-            'regulation_tag_document_type',
-            'document_type_id',
-            'regulation_tag_id',
-            'document_type_id',
-        );
+        return $this->belongsToMany(RegulationTag::class, 'regulation_tag_sop_template');
     }
 
     /**

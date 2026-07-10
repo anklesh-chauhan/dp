@@ -9,6 +9,7 @@ use App\Models\Department;
 use App\Models\DocumentCategory;
 use App\Models\DocumentStatus;
 use App\Models\DocumentType;
+use App\Models\RegulationTag;
 use App\Models\SopAuditLog;
 use App\Models\SopDocument;
 use App\Models\SopTemplate;
@@ -171,6 +172,71 @@ it('creates an SOP document from a specific published template version', functio
 
     expect($document->template_version_id)->toBe($versionOne->id)
         ->and($document->sections->first()->content)->toContain('Legacy content');
+});
+
+it('stores selected regulation tags when creating an SOP document', function (): void {
+    $department = Department::factory()->create(['name' => 'Quality Assurance', 'code' => 'QA']);
+    $owner = User::factory()->create();
+    $creator = User::factory()->create();
+
+    $whoGmp = RegulationTag::factory()->create(['name' => 'WHO GMP', 'code' => 'WHO_GMP']);
+    $usFda = RegulationTag::factory()->create(['name' => 'US FDA 210 & 211', 'code' => 'US_FDA_210_211']);
+    $dpco = RegulationTag::factory()->create(['name' => 'India DPCO', 'code' => 'INDIA_DPCO']);
+
+    $documentType = DocumentType::factory()->create();
+    $documentType->regulationTags()->sync([$whoGmp->id, $usFda->id, $dpco->id]);
+
+    $template = SopTemplate::factory()->create([
+        'department_id' => $department->id,
+        'category_id' => $documentType->category_id,
+        'document_type_id' => $documentType->id,
+        'template_status_id' => TemplateStatus::idFor(TemplateStatus::PUBLISHED),
+        'current_version' => 1,
+    ]);
+    $template->regulationTags()->sync([$whoGmp->id, $usFda->id]);
+
+    $version = SopTemplateVersion::factory()
+        ->published()
+        ->create([
+            'sop_template_id' => $template->id,
+            'version' => 1,
+        ]);
+
+    $version->sections()->create([
+        'title' => 'Purpose',
+        'section_order' => 1,
+        'section_type' => 'rich_text',
+        'content' => '<p>Controlled document for {{department}}.</p>',
+        'is_required' => true,
+    ]);
+
+    $version->variables()->createMany([
+        [
+            'name' => 'department',
+            'label' => 'Department',
+            'variable_data_type_id' => VariableDataType::idFor(VariableDataType::DEPARTMENT),
+            'required' => true,
+        ],
+        [
+            'name' => 'document_number',
+            'label' => 'Document Number',
+            'variable_data_type_id' => VariableDataType::idFor(VariableDataType::DOCUMENT_NUMBER),
+            'required' => true,
+        ],
+    ]);
+
+    $document = app(CreateDocumentFromTemplateAction::class)->execute(new SopDocumentData(
+        templateId: $template->id,
+        title: 'Tagged SOP',
+        ownerId: $owner->id,
+        createdBy: $creator->id,
+        regulationTagIds: [$whoGmp->id, $dpco->id],
+        templateVersionId: $version->id,
+        documentNumber: 'SOP-QA-00020',
+    ));
+
+    expect($document->regulationTags->pluck('id')->sort()->values()->all())
+        ->toBe(collect([$whoGmp->id, $dpco->id])->sort()->values()->all());
 });
 
 it('logs template version publish changes in the audit log', function (): void {

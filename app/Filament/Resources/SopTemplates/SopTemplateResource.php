@@ -142,6 +142,10 @@ class SopTemplateResource extends Resource
                     ->label('Document Type')
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('regulationTags.name')
+                    ->label('Regulation Tags')
+                    ->badge()
+                    ->toggleable(),
                 TextColumn::make('templateStatus.name')
                     ->label('Status')
                     ->badge()
