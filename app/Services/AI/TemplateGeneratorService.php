@@ -4,13 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services\AI;
 
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use App\Services\AI\LLMServiceInterface;
 
 class TemplateGeneratorService
 {
-    // Inject the interface via the constructor
     public function __construct(
         protected LLMServiceInterface $llmService
     ) {}

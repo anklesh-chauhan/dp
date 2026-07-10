@@ -3,8 +3,8 @@
 namespace App\Services\AI;
 
 use Illuminate\Support\Facades\Log;
-use Exception;
-use Illuminate\Support\Facades\Http;
+use RuntimeException;
+use Throwable;
 
 class FallbackLLMService implements LLMServiceInterface
 {
@@ -16,10 +16,31 @@ class FallbackLLMService implements LLMServiceInterface
     public function generateStructured(string $prompt, array $jsonSchema): ?array
     {
         try {
-            return $this->geminiService->generateStructured($prompt, $jsonSchema);
-        } catch (\Exception $e) {
-            Log::warning('Gemini structured generation failed, trying Ollama: ' . $e->getMessage());
-            return $this->ollamaService->generateStructured($prompt, $jsonSchema);
+            $result = $this->geminiService->generateStructured($prompt, $jsonSchema);
+
+            if ($result !== null) {
+                Log::info('Structured LLM generation succeeded via Gemini.');
+
+                return $result;
+            }
+
+            Log::warning('Gemini structured generation returned null, trying Ollama.');
+        } catch (Throwable $e) {
+            Log::warning('Gemini structured generation failed, trying Ollama: '.$e->getMessage());
+        }
+
+        try {
+            $result = $this->ollamaService->generateStructured($prompt, $jsonSchema);
+
+            if ($result !== null) {
+                Log::info('Structured LLM generation succeeded via Ollama fallback.');
+
+                return $result;
+            }
+
+            throw new RuntimeException('Ollama structured generation returned null.');
+        } catch (Throwable $e) {
+            throw new RuntimeException('All LLM providers failed. Last error: '.$e->getMessage(), 0, $e);
         }
     }
 }

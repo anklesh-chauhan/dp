@@ -34,7 +34,7 @@ class GenerateRegulatedTemplateJob implements ShouldQueue
     {
         // Checkpoint 1: Initialized
         $this->template->update([
-            'generation_status' => 'Connecting to local LLM...',
+            'generation_status' => 'Connecting to AI service (Gemini, with Ollama fallback)...',
             'generation_progress' => 15,
         ]);
 

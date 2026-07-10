@@ -16,7 +16,14 @@ return [
 
     'ollama' => [
         'url' => env('OLLAMA_BASE_URL', 'http://localhost:11434'),
-        'model' => env('OLLAMA_MODEL', 'qwen3.6:latest'),
+        'model' => env('OLLAMA_MODEL', 'qwen2.5:7b'),
+        'timeout' => (int) env('OLLAMA_TIMEOUT', 600),
+    ],
+
+    'gemini' => [
+        'key' => env('GEMINI_API_KEY'),
+        'model' => env('GEMINI_MODEL', 'gemini-3.5-flash'),
+        'timeout' => (int) env('GEMINI_TIMEOUT', 180),
     ],
 
     'postmark' => [
