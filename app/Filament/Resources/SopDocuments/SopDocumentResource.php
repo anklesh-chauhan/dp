@@ -12,6 +12,7 @@ use App\Filament\Resources\SopDocuments\RelationManagers\ApprovalRelationManager
 use App\Filament\Resources\SopDocuments\RelationManagers\AuditRelationManager;
 use App\Filament\Resources\SopDocuments\RelationManagers\DocumentSectionRelationManager;
 use App\Filament\Resources\SopDocuments\RelationManagers\DocumentVariableRelationManager;
+use App\Filament\Support\DocumentClassificationFormFields;
 use App\Filament\Support\TemplateVariableFieldBuilder;
 use App\Models\DocumentStatus;
 use App\Models\DocumentType;
@@ -31,7 +32,6 @@ use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Navigation\NavigationGroup;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
@@ -54,6 +54,7 @@ class SopDocumentResource extends Resource
     protected static string|UnitEnum|null $navigationGroup = 'SOP Management';
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentList;
+
     protected static ?string $recordTitleAttribute = 'document_number';
 
     protected static ?int $navigationSort = 1;
@@ -62,7 +63,6 @@ class SopDocumentResource extends Resource
     {
         return strval(static::getModel()::count());
     }
-
 
     public static function form(Schema $schema): Schema
     {
@@ -96,7 +96,7 @@ class SopDocumentResource extends Resource
                             ->disabled(fn (Get $get): bool => blank($get('template_id')))
                             ->live()
                             ->afterStateUpdated(fn (Set $set, ?int $state): mixed => $set('variables', self::templateVariableDefaultValues($state))),
-
+                        ...DocumentClassificationFormFields::templateDerivedDisplayFields(),
                         Select::make('referenced_sop_document_id')
                             ->label('Referenced SOP')
                             ->relationship(
@@ -164,6 +164,18 @@ class SopDocumentResource extends Resource
             ->columns([
                 TextColumn::make('document_number')->searchable()->sortable(),
                 TextColumn::make('title')->searchable()->sortable(),
+                TextColumn::make('documentType.category.name')
+                    ->label('Category')
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('documentType.name')
+                    ->label('Document Type')
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('documentType.regulationTags.name')
+                    ->label('Regulation Tags')
+                    ->badge()
+                    ->toggleable(),
                 TextColumn::make('department.name')->searchable(),
                 TextColumn::make('template.code')->searchable(),
                 TextColumn::make('documentStatus.name')
@@ -189,6 +201,12 @@ class SopDocumentResource extends Resource
                 TextColumn::make('review_date')->date()->sortable(),
             ])
             ->filters([
+                SelectFilter::make('document_type_id')
+                    ->relationship('documentType', 'name')
+                    ->label('Document Type'),
+                SelectFilter::make('category_id')
+                    ->relationship('category', 'name')
+                    ->label('Category'),
                 SelectFilter::make('document_status_id')->relationship('documentStatus', 'name')->label('Status'),
                 TrashedFilter::make(),
             ])
@@ -235,7 +253,7 @@ class SopDocumentResource extends Resource
     {
         return parent::getEloquentQuery()
             ->withoutGlobalScopes([SoftDeletingScope::class])
-            ->with(['department', 'template', 'documentStatus', 'lockedByUser']);
+            ->with(['department', 'template.category', 'template.documentType.regulationTags', 'documentType.category', 'documentType.regulationTags', 'documentStatus', 'lockedByUser']);
     }
 
     private static function publishedTemplateVersionId(?int $templateId): ?int

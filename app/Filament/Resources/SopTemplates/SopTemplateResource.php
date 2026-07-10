@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\SopTemplates;
 
+use App\Filament\Concerns\HasGenerationPolling;
 use App\Filament\Resources\SopTemplates\Pages\CreateSopTemplate;
 use App\Filament\Resources\SopTemplates\Pages\EditSopTemplate;
 use App\Filament\Resources\SopTemplates\Pages\ListSopTemplates;
@@ -12,6 +13,7 @@ use App\Filament\Resources\SopTemplates\RelationManagers\SectionRelationManager;
 use App\Filament\Resources\SopTemplates\RelationManagers\TemplateAuditRelationManager;
 use App\Filament\Resources\SopTemplates\RelationManagers\VariableRelationManager;
 use App\Filament\Resources\SopTemplates\RelationManagers\VersionRelationManager;
+use App\Filament\Support\DocumentClassificationFormFields;
 use App\Models\SopTemplate;
 use App\Models\TemplateStatus;
 use Filament\Actions\DeleteAction;
@@ -21,6 +23,7 @@ use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -35,11 +38,15 @@ use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\HtmlString;
 use Illuminate\Validation\Rules\Unique;
 use UnitEnum;
 
 class SopTemplateResource extends Resource
 {
+    use HasGenerationPolling;
+
     protected static ?string $model = SopTemplate::class;
 
     protected static string|UnitEnum|null $navigationGroup = 'SOP Management';
@@ -60,6 +67,33 @@ class SopTemplateResource extends Resource
         return $schema->components([
             Section::make('Template Details')
                 ->schema([
+
+                    Section::make('AI Generation Tracker')
+                        ->icon('heroicon-m-sparkles')
+                        ->collapsible()
+                        ->visible(fn (?SopTemplate $record): bool => $record?->isGenerationInProgress() ?? false)
+                        ->schema([
+                            Placeholder::make('progress_bar')
+                                ->hiddenLabel()
+                                ->content(fn (SopTemplate $record): HtmlString => new HtmlString("
+                                    <div wire:poll.3s class='space-y-3 p-2'>
+                                        <div class='flex justify-between items-center text-sm font-medium'>
+                                            <span class='text-primary-600 dark:text-primary-400 animate-pulse flex items-center gap-2'>
+                                                ".Blade::render('<x-filament::loading-indicator class="h-5 w-5" />')."
+                                                Current Step: <span class='font-semibold'>".e($record->generation_status)."</span>
+                                            </span>
+                                            <span class='font-bold text-gray-700 dark:text-gray-300'>".(int) $record->generation_progress."%</span>
+                                        </div>
+                                        <div class='w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden'>
+                                            <div class='bg-primary-600 h-2.5 rounded-full transition-all duration-500' style='width: ".(int) $record->generation_progress."%'></div>
+                                        </div>
+                                        <p class='text-xs text-gray-400 dark:text-gray-500'>
+                                            Your laptop's CPU is processing regulatory logic locally. The structural sections and variables will reveal themselves automatically when finished.
+                                        </p>
+                                    </div>
+                                ")),
+                        ]),
+
                     Grid::make(2)->schema([
                         TextInput::make('name')
                             ->required()
@@ -73,16 +107,7 @@ class SopTemplateResource extends Resource
                             ->searchable()
                             ->preload()
                             ->required(),
-                        Select::make('category_id')
-                            ->relationship('category', 'name')
-                            ->searchable()
-                            ->preload()
-                            ->required(),
-                        Select::make('document_type_id')
-                            ->relationship('documentType', 'name')
-                            ->searchable()
-                            ->preload()
-                            ->required(),
+                        ...DocumentClassificationFormFields::templateFields(),
                         Select::make('template_status_id')
                             ->relationship('templateStatus', 'name')
                             ->default(fn (): int => TemplateStatus::idFor(TemplateStatus::DRAFT))
@@ -96,6 +121,7 @@ class SopTemplateResource extends Resource
                             ->columnSpanFull(),
                     ]),
                 ])
+                ->disabled(fn (?SopTemplate $record): bool => $record?->isGenerationInProgress() ?? false)
                 ->columnSpanFull(),
         ]);
     }
@@ -107,6 +133,14 @@ class SopTemplateResource extends Resource
                 TextColumn::make('code')->searchable()->sortable(),
                 TextColumn::make('name')->searchable()->sortable(),
                 TextColumn::make('department.name')->searchable()->sortable(),
+                TextColumn::make('category.name')
+                    ->label('Category')
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('documentType.name')
+                    ->label('Document Type')
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('templateStatus.name')
                     ->label('Status')
                     ->badge()
@@ -123,6 +157,9 @@ class SopTemplateResource extends Resource
                 TextColumn::make('updated_at')->dateTime()->sortable(),
             ])
             ->filters([
+                SelectFilter::make('category_id')->relationship('category', 'name')->label('Category'),
+                SelectFilter::make('document_type_id')->relationship('documentType', 'name')->label('Document Type'),
+                SelectFilter::make('regulationTags')->relationship('regulationTags', 'name')->label('Regulation Tag'),
                 SelectFilter::make('template_status_id')->relationship('templateStatus', 'name')->label('Status'),
                 TrashedFilter::make(),
             ])
@@ -163,6 +200,6 @@ class SopTemplateResource extends Resource
     {
         return parent::getEloquentQuery()
             ->withoutGlobalScopes([SoftDeletingScope::class])
-            ->with(['department', 'category', 'documentType', 'templateStatus']);
+            ->with(['department', 'category', 'documentType', 'regulationTags', 'templateStatus']);
     }
 }

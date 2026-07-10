@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class SopDocument extends Model
@@ -215,6 +216,21 @@ class SopDocument extends Model
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
+    }
+
+    /**
+     * @return HasOneThrough<DocumentCategory, DocumentType, $this>
+     */
+    public function category(): HasOneThrough
+    {
+        return $this->hasOneThrough(
+            DocumentCategory::class,
+            DocumentType::class,
+            'id',
+            'id',
+            'document_type_id',
+            'category_id',
+        );
     }
 
     /**

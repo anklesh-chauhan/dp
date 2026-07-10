@@ -14,6 +14,11 @@ return [
     |
     */
 
+    'ollama' => [
+        'url' => env('OLLAMA_BASE_URL', 'http://localhost:11434'),
+        'model' => env('OLLAMA_MODEL', 'qwen3.6:latest'),
+    ],
+
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],

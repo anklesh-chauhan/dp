@@ -18,6 +18,19 @@ class SopTemplateFactory extends Factory
 {
     protected $model = SopTemplate::class;
 
+    public function configure(): static
+    {
+        return $this->afterMaking(function (SopTemplate $template): void {
+            if ($template->document_type_id === null) {
+                return;
+            }
+
+            $template->category_id = DocumentType::query()
+                ->whereKey($template->document_type_id)
+                ->value('category_id');
+        });
+    }
+
     /**
      * @return array<string, mixed>
      */

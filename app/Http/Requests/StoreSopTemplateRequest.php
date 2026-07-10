@@ -25,7 +25,13 @@ class StoreSopTemplateRequest extends FormRequest
             'description' => ['nullable', 'string'],
             'department_id' => ['required', 'integer', 'exists:departments,id'],
             'category_id' => ['required', 'integer', 'exists:document_categories,id'],
-            'document_type_id' => ['required', 'integer', 'exists:document_types,id'],
+            'document_type_id' => [
+                'required',
+                'integer',
+                Rule::exists('document_types', 'id')->where(
+                    fn ($query) => $query->where('category_id', $this->integer('category_id')),
+                ),
+            ],
             'template_status_id' => ['nullable', 'integer', Rule::exists('template_statuses', 'id')],
         ];
     }

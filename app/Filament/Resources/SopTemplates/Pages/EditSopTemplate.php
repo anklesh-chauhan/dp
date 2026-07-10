@@ -6,6 +6,7 @@ namespace App\Filament\Resources\SopTemplates\Pages;
 
 use App\Actions\Sop\PublishTemplateAction;
 use App\Filament\Concerns\HandlesServiceExceptions;
+use App\Filament\Concerns\HasGenerationPolling;
 use App\Filament\Resources\SopTemplates\SopTemplateResource;
 use App\Models\TemplateStatus;
 use Filament\Actions\Action;
@@ -18,6 +19,8 @@ use Illuminate\Support\Facades\Auth;
 class EditSopTemplate extends EditRecord
 {
     use HandlesServiceExceptions;
+
+    use HasGenerationPolling;
 
     protected static string $resource = SopTemplateResource::class;
 
@@ -64,4 +67,5 @@ class EditSopTemplate extends EditRecord
 
         return $data;
     }
+
 }

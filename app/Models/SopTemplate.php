@@ -9,6 +9,7 @@ use Database\Factories\SopTemplateFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -16,8 +17,29 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class SopTemplate extends Model
 {
+    public const GENERATION_STATUS_PENDING = 'pending';
+
+    public const GENERATION_STATUS_PROCESSING = 'processing';
+
+    public const GENERATION_STATUS_COMPLETED = 'completed';
+
+    public const GENERATION_STATUS_FAILED = 'failed';
+
     /** @use HasFactory<SopTemplateFactory> */
     use HasFactory, Lockable, SoftDeletes;
+
+    protected static function booted(): void
+    {
+        static::saving(function (SopTemplate $template): void {
+            if ($template->document_type_id === null) {
+                return;
+            }
+
+            $template->category_id = DocumentType::query()
+                ->whereKey($template->document_type_id)
+                ->value('category_id');
+        });
+    }
 
     protected $fillable = [
         'name',
@@ -31,6 +53,8 @@ class SopTemplate extends Model
         'created_by',
         'locked_by',
         'locked_at',
+        'generation_status',
+        'generation_progress',
     ];
 
     protected function casts(): array
@@ -39,6 +63,19 @@ class SopTemplate extends Model
             'current_version' => 'integer',
             'locked_at' => 'datetime',
         ];
+    }
+
+    public function isGenerationInProgress(): bool
+    {
+        if (in_array($this->generation_status, [
+            self::GENERATION_STATUS_PENDING,
+            self::GENERATION_STATUS_COMPLETED,
+            self::GENERATION_STATUS_FAILED,
+        ], true)) {
+            return false;
+        }
+
+        return $this->generation_progress < 100;
     }
 
     public function isEditable(): bool
@@ -91,6 +128,22 @@ class SopTemplate extends Model
     public function documentType(): BelongsTo
     {
         return $this->belongsTo(DocumentType::class);
+    }
+
+    /**
+     * Regulation tags inherited from the selected document type.
+     *
+     * @return BelongsToMany<RegulationTag, $this>
+     */
+    public function regulationTags(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            RegulationTag::class,
+            'regulation_tag_document_type',
+            'document_type_id',
+            'regulation_tag_id',
+            'document_type_id',
+        );
     }
 
     /**
