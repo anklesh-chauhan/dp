@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Jobs;
 
 use App\Models\SopTemplate;
+use App\Models\TemplateStatus;
 use App\Models\VariableDataType;
 use App\Services\AI\TemplateGeneratorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -59,12 +62,15 @@ class GenerateRegulatedTemplateJob implements ShouldQueue
         // 2. Perform your Postgres transaction
         DB::transaction(function () use ($result) {
             // Initialize version 1
-            $version = $this->template->versions()->create([
-                'version' => 1,
-                'status' => 'draft',
+            $version = $this->template->versions()->updateOrCreate(
+                ['version' => 1,],
+                [
+                'template_status_id' => TemplateStatus::idFor(TemplateStatus::DRAFT),
                 'change_reason' => 'Auto-generated base boilerplate compliant with specified regulation tags.',
                 'created_by' => $this->template->created_by,
             ]);
+
+            $this->template->update(['current_version' => 1]);
 
             // Save sections
             foreach ($result['sections'] as $section) {

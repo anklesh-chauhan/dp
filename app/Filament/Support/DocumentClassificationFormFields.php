@@ -8,6 +8,7 @@ use App\Models\DocumentType;
 use App\Models\SopTemplate;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 
@@ -53,12 +54,22 @@ final class DocumentClassificationFormFields
                         $set('category_id', $categoryId);
                     }
                 }),
-            Placeholder::make('regulation_tags_display')
+            TextEntry::make('regulation_tags_display')
                 ->label('Regulation Tags')
-                ->content(fn (Get $get): string => self::regulationTagsLabel(
-                    self::resolveDocumentTypeId($get('document_type_id')),
+                ->state(fn (Get $get): array => array_filter(
+                    array_map(
+                        'trim',
+                        explode(
+                            ',',
+                            self::regulationTagsLabel(
+                                self::resolveDocumentTypeId($get('document_type_id')),
+                            ),
+                        ),
+                    ),
                 ))
-                ->visible(fn (Get $get): bool => filled($get('document_type_id'))),
+                ->badge()
+                ->visible(fn (Get $get): bool => filled($get('document_type_id')))
+                ->columnSpanFull(),
         ];
     }
 

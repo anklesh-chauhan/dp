@@ -94,7 +94,7 @@ class SopTemplateResource extends Resource
                                 ")),
                         ]),
 
-                    Grid::make(2)->schema([
+                    Grid::make(3)->schema([
                         TextInput::make('name')
                             ->required()
                             ->maxLength(255),
@@ -107,6 +107,8 @@ class SopTemplateResource extends Resource
                             ->searchable()
                             ->preload()
                             ->required(),
+                        Textarea::make('description')
+                            ->columnSpanFull(),
                         ...DocumentClassificationFormFields::templateFields(),
                         Select::make('template_status_id')
                             ->relationship('templateStatus', 'name')
@@ -117,8 +119,7 @@ class SopTemplateResource extends Resource
                             ->minValue(0)
                             ->default(0)
                             ->required(),
-                        Textarea::make('description')
-                            ->columnSpanFull(),
+
                     ]),
                 ])
                 ->disabled(fn (?SopTemplate $record): bool => $record?->isGenerationInProgress() ?? false)
