@@ -6,9 +6,15 @@ namespace App\Services\AI;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use App\Services\AI\LLMServiceInterface;
 
 class TemplateGeneratorService
 {
+    // Inject the interface via the constructor
+    public function __construct(
+        protected LLMServiceInterface $llmService
+    ) {}
+
     public function generateRegulatedTemplate(array $formData, string $regulationTags): ?array
     {
 
@@ -66,26 +72,9 @@ class TemplateGeneratorService
         ];
 
         try {
-            $response = Http::withOptions([
-                'timeout' => 300,
-                'curl' => [
-                    CURLOPT_TIMEOUT => 300,
-                ],
-            ])->post(config('services.ollama.url').'/api/generate', [
-                'model' => config('services.ollama.model', 'qwen2.5:7b'),
-                'prompt' => $prompt,
-                'stream' => false,
-                'format' => $jsonSchema,
-                'options' => [
-                    'temperature' => 0.1,
-                ],
-            ]);
-
-            if ($response->successful()) {
-                return json_decode($response->json('response'), true);
-            }
+            return $this->llmService->generateStructured($prompt, $jsonSchema);
         } catch (\Exception $e) {
-            Log::error('Regulated Template Generation Failed: '.$e->getMessage());
+            Log::error('Regulated Template Generation Failed completely: '.$e->getMessage());
         }
 
         return null;
