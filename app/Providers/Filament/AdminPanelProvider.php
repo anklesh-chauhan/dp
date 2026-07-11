@@ -13,7 +13,6 @@ use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Support\Icons\Heroicon;
-use Filament\Widgets\AccountWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -36,6 +35,7 @@ class AdminPanelProvider extends PanelProvider
             ->navigationGroups([
                 NavigationGroup::make('SOP Management')->icon(Heroicon::DocumentText),
                 NavigationGroup::make('Document Issuance')->icon(Heroicon::OutlinedClipboardDocumentCheck),
+                NavigationGroup::make('Help & Knowledge')->icon(Heroicon::OutlinedBookOpen),
                 NavigationGroup::make('User Management')->icon(Heroicon::UserGroup),
                 NavigationGroup::make('Settings')->icon(Heroicon::OutlinedSquares2x2),
             ])

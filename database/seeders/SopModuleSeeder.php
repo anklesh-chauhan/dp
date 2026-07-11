@@ -170,12 +170,26 @@ class SopModuleSeeder extends Seeder
         'Update:NumberSeries',
 
         'View:ManageNumberSeriesSettings',
+
+        'ViewAny:KnowledgeGuide',
+        'View:KnowledgeGuide',
+        'Create:KnowledgeGuide',
+        'Update:KnowledgeGuide',
+        'Delete:KnowledgeGuide',
+        'DeleteAny:KnowledgeGuide',
+        'ForceDelete:KnowledgeGuide',
+        'ForceDeleteAny:KnowledgeGuide',
+        'Restore:KnowledgeGuide',
+        'RestoreAny:KnowledgeGuide',
+        'Replicate:KnowledgeGuide',
+        'Reorder:KnowledgeGuide',
     ];
 
     public function run(): void
     {
         $this->call(LookupTableSeeder::class);
         $this->call(NumberSeriesSeeder::class);
+        $this->call(KnowledgeGuideSeeder::class);
 
         $qa = Department::query()->firstOrCreate(['code' => 'QA'], ['name' => 'Quality Assurance']);
         $production = Department::query()->firstOrCreate(['code' => 'PROD'], ['name' => 'Production']);
@@ -228,9 +242,9 @@ class SopModuleSeeder extends Seeder
             );
         }
 
-        ////////////////////////////////////////////////////////////////
-        ////////////////  Document Types  //////////////////////////////
-        ////////////////////////////////////////////////////////////////
+        // //////////////////////////////////////////////////////////////
+        // //////////////  Document Types  //////////////////////////////
+        // //////////////////////////////////////////////////////////////
         $categories = DocumentCategory::pluck('id', 'name')->toArray();
         $tags = RegulationTag::pluck('id', 'code')->toArray();
 
@@ -256,7 +270,7 @@ class SopModuleSeeder extends Seeder
                     ['code' => 'QMS_DOC', 'name' => 'Documentation & Records'],
                     ['code' => 'QMS_AUD', 'name' => 'Audits & Reviews'],
                     ['code' => 'QMS_QCU', 'name' => 'Quality Control Unit Responsibilities'],
-                ]
+                ],
             ],
             [
                 'category_name' => 'Facility & Equipment',
@@ -277,7 +291,7 @@ class SopModuleSeeder extends Seeder
                     ['code' => 'FAC_EQUIP', 'name' => 'Equipment Design & Calibration'],
                     ['code' => 'FAC_WTR', 'name' => 'Water & HVAC Systems'],
                     ['code' => 'FAC_MNT', 'name' => 'Maintenance & Cleaning'],
-                ]
+                ],
             ],
             [
                 'category_name' => 'Materials & Warehouse',
@@ -300,7 +314,7 @@ class SopModuleSeeder extends Seeder
                     ['code' => 'MAT_QUAR', 'name' => 'Quarantine & Labeling'],
                     ['code' => 'MAT_COMP', 'name' => 'Components, Containers & Closures'],
                     ['code' => 'MAT_TEST', 'name' => 'Purchase, Testing & Rejection'],
-                ]
+                ],
             ],
             [
                 'category_name' => 'Production / Manufacturing',
@@ -322,7 +336,7 @@ class SopModuleSeeder extends Seeder
                     ['code' => 'PRD_BCH', 'name' => 'Batch Records & Documentation'],
                     ['code' => 'PRD_IPC', 'name' => 'In-process Checks'],
                     ['code' => 'PRD_PKG', 'name' => 'Labeling & Packaging Controls'],
-                ]
+                ],
             ],
             [
                 'category_name' => 'Quality Control (QC) & Laboratory',
@@ -346,7 +360,7 @@ class SopModuleSeeder extends Seeder
                     ['code' => 'LAB_STAB', 'name' => 'Stability Testing & Methods'],
                     ['code' => 'LAB_STD', 'name' => 'Reference Standards Management'],
                     ['code' => 'LAB_OOS', 'name' => 'Out of Specification (OOS)'],
-                ]
+                ],
             ],
             [
                 'category_name' => 'Validation & Qualification',
@@ -367,7 +381,7 @@ class SopModuleSeeder extends Seeder
                     ['code' => 'VAL_CLN', 'name' => 'Cleaning Validation'],
                     ['code' => 'VAL_CSV', 'name' => 'Computerized Systems Validation'],
                     ['code' => 'VAL_ER', 'name' => 'Electronic Records & Signatures'],
-                ]
+                ],
             ],
             [
                 'category_name' => 'Compliance & Risk Management',
@@ -389,7 +403,7 @@ class SopModuleSeeder extends Seeder
                     ['code' => 'CMP_INV', 'name' => 'Deviations & Investigations'],
                     ['code' => 'CMP_CAPA', 'name' => 'CAPA Processing'],
                     ['code' => 'CMP_RCL', 'name' => 'Complaints & Recalls'],
-                ]
+                ],
             ],
             [
                 'category_name' => 'Training & Personnel',
@@ -409,7 +423,7 @@ class SopModuleSeeder extends Seeder
                     ['code' => 'TRN_QUAL', 'name' => 'Personnel Qualifications & Training'],
                     ['code' => 'TRN_AWR', 'name' => 'GMP Awareness'],
                     ['code' => 'TRN_HYG', 'name' => 'Personnel Hygiene Requirements'],
-                ]
+                ],
             ],
             [
                 'category_name' => 'Distribution & Supply Chain',
@@ -427,7 +441,7 @@ class SopModuleSeeder extends Seeder
                     ['code' => 'DST_CTRL', 'name' => 'Distribution Controls & Storage'],
                     ['code' => 'DST_CLD', 'name' => 'Cold Chain Management'],
                     ['code' => 'DST_RCL', 'name' => 'Recall Execution Support'],
-                ]
+                ],
             ],
             [
                 'category_name' => 'Regulatory & Product Licensing',
@@ -445,20 +459,20 @@ class SopModuleSeeder extends Seeder
                     ['code' => 'REG_LIC', 'name' => 'Licensing & GMP Certification'],
                     ['code' => 'REG_INS', 'name' => 'Regulatory Inspections'],
                     ['code' => 'REG_LBL', 'name' => 'Labeling Compliance & Submissions'],
-                ]
+                ],
             ],
         ];
 
         // 3. Process Execution Loop
         foreach ($data as $block) {
             $categoryId = $categories[$block['category_name']] ?? null;
-            if (!$categoryId) {
+            if (! $categoryId) {
                 continue;
             }
 
             // Map and filter existing base Regulation Tag IDs
             $allTagIds = collect($block['regulations'])
-                ->map(fn($code) => $tags[$code] ?? null)
+                ->map(fn ($code) => $tags[$code] ?? null)
                 ->filter()
                 ->toArray();
 
@@ -492,7 +506,7 @@ class SopModuleSeeder extends Seeder
                 $docType->regulationTags()->sync($allTagIds);
             }
         }
-        /////////////  End Document Types  ////////////////////////////////////////////////////////////////
+        // ///////////  End Document Types  ////////////////////////////////////////////////////////////////
 
         // Permissions
         foreach ($this->permissions as $permission) {
@@ -509,6 +523,8 @@ class SopModuleSeeder extends Seeder
             'Create:SopDocument',
             'Update:SopDocument',
             'Submit:SopDocument',
+            'ViewAny:KnowledgeGuide',
+            'View:KnowledgeGuide',
         ]);
 
         $checkerRole = Role::findOrCreate('sop checker', 'web');
@@ -519,6 +535,8 @@ class SopModuleSeeder extends Seeder
             'ViewAny:SopApproval',
             'View:SopApproval',
             'Approve:SopApproval',
+            'ViewAny:KnowledgeGuide',
+            'View:KnowledgeGuide',
         ]);
 
         $approverRole = Role::findOrCreate('sop approver', 'web');
@@ -529,6 +547,8 @@ class SopModuleSeeder extends Seeder
             'ViewAny:SopApproval',
             'View:SopApproval',
             'Approve:SopApproval',
+            'ViewAny:KnowledgeGuide',
+            'View:KnowledgeGuide',
         ]);
 
         $logMakerRole = Role::findOrCreate('log maker', 'web');
@@ -540,6 +560,8 @@ class SopModuleSeeder extends Seeder
             'Submit:SopDocument',
             'ViewAny:SopDocument',
             'View:SopDocument',
+            'ViewAny:KnowledgeGuide',
+            'View:KnowledgeGuide',
         ]);
 
         $documentControllerRole = Role::findOrCreate('document controller', 'web');
@@ -557,6 +579,8 @@ class SopModuleSeeder extends Seeder
             'Archive:SopDocument',
             'CompleteRetention:SopDocument',
             'Destroy:SopDocument',
+            'ViewAny:KnowledgeGuide',
+            'View:KnowledgeGuide',
         ]);
 
         $reviewerRole = Role::findOrCreate('qa reviewer', 'web');
@@ -567,6 +591,8 @@ class SopModuleSeeder extends Seeder
             'ViewAny:SopApproval',
             'View:SopApproval',
             'Approve:SopApproval',
+            'ViewAny:KnowledgeGuide',
+            'View:KnowledgeGuide',
         ]);
 
         $publishedStatusId = TemplateStatus::idFor(TemplateStatus::PUBLISHED);
