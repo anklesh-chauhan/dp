@@ -30,6 +30,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -41,6 +42,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\HtmlString;
 use Illuminate\Validation\Rules\Unique;
+use Livewire\Component;
 use UnitEnum;
 
 class SopTemplateResource extends Resource
@@ -97,23 +99,44 @@ class SopTemplateResource extends Resource
                     Grid::make(3)->schema([
                         TextInput::make('name')
                             ->required()
-                            ->maxLength(255),
+                            ->maxLength(255)
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(
+                                fn (Component $livewire, Set $set) =>
+                                    self::runAiClassification($livewire, $set)
+                            ),
+
                         TextInput::make('code')
                             ->required()
                             ->maxLength(255)
                             ->unique(ignoreRecord: true, modifyRuleUsing: fn (Unique $rule): Unique => $rule),
+
                         Select::make('department_id')
                             ->relationship('department', 'name')
                             ->searchable()
                             ->preload()
-                            ->required(),
+                            ->required()
+                            ->live()
+                            ->afterStateUpdated(
+                                fn (Component $livewire, Set $set) =>
+                                    self::runAiClassification($livewire, $set)
+                            ),
+
                         Textarea::make('description')
-                            ->columnSpanFull(),
+                            ->columnSpanFull()
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(
+                                fn (Component $livewire, Set $set) =>
+                                    self::runAiClassification($livewire, $set)
+                            ),
+
                         ...DocumentClassificationFormFields::templateFields(),
+
                         Select::make('template_status_id')
                             ->relationship('templateStatus', 'name')
                             ->default(fn (): int => TemplateStatus::idFor(TemplateStatus::DRAFT))
                             ->required(),
+
                         TextInput::make('current_version')
                             ->numeric()
                             ->minValue(0)
@@ -206,5 +229,16 @@ class SopTemplateResource extends Resource
         return parent::getEloquentQuery()
             ->withoutGlobalScopes([SoftDeletingScope::class])
             ->with(['department', 'category', 'documentType', 'regulationTags', 'templateStatus']);
+    }
+
+    protected static function runAiClassification(
+        Component $livewire,
+        Set $set,
+    ): void {
+        if (! method_exists($livewire, 'classifyFromMetadata')) {
+            return;
+        }
+
+        $livewire->classifyFromMetadata($set);
     }
 }
