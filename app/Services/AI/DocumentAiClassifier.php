@@ -6,13 +6,19 @@ namespace App\Services\AI;
 
 use App\Models\DocumentCategory;
 use App\Models\DocumentType;
-use Illuminate\Database\Eloquent\Collection;
+use App\Services\AI\Data\LLMRequest;
+use App\Services\AI\Enums\AIDataClassification;
+use App\Services\AI\Enums\AIUseCase;
+use App\Services\AI\Enums\LLMCapability;
+use App\Services\AI\Routing\LLMManager;
 use Illuminate\Support\Facades\Log;
+use Throwable;
+use App\Services\AI\Contracts\DocumentClassifier;
 
-final class DocumentAiClassifier
+final class DocumentAiClassifier implements DocumentClassifier
 {
     public function __construct(
-        private readonly LLMServiceInterface $llmService,
+        private LLMManager $llmManager,
     ) {}
 
     /**
@@ -59,7 +65,7 @@ final class DocumentAiClassifier
                     $documentType->regulationTags->modelKeys(),
                 ),
             ];
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             Log::error(
                 'Document AI classification failed.',
                 [
@@ -74,37 +80,41 @@ final class DocumentAiClassifier
     }
 
     private function classifyCategory(
-    string $name,
-    string $description,
-    string $departmentName,
-): ?DocumentCategory {
-    $categories = DocumentCategory::query()
-        ->orderBy('name')
-        ->get();
+        string $name,
+        string $description,
+        string $departmentName,
+    ): ?DocumentCategory {
+        $categories = DocumentCategory::query()
+            ->orderBy('name')
+            ->get();
 
-    if ($categories->isEmpty()) {
-        return null;
-    }
+        if ($categories->isEmpty()) {
+            return null;
+        }
 
-    $categoryOptions = $categories
-        ->mapWithKeys(
-            fn (DocumentCategory $category): array => [
-                $category->code => $category->name,
-            ],
-        )
-        ->all();
+        if ($categories->count() === 1) {
+            return $categories->first();
+        }
 
-    $authorizedCategories = collect($categoryOptions)
-        ->map(
-            fn (string $categoryName, string $code): string => sprintf(
-                '%s: %s',
-                $code,
-                $categoryName,
-            ),
-        )
-        ->implode("\n");
+        $categoryOptions = $categories
+            ->mapWithKeys(
+                fn (DocumentCategory $category): array => [
+                    $category->code => $category->name,
+                ],
+            )
+            ->all();
 
-    $prompt = <<<PROMPT
+        $authorizedCategories = collect($categoryOptions)
+            ->map(
+                fn (string $categoryName, string $code): string => sprintf(
+                    '%s: %s',
+                    $code,
+                    $categoryName,
+                ),
+            )
+            ->implode("\n");
+
+        $prompt = <<<PROMPT
 You are an expert pharmaceutical Quality Assurance and regulatory compliance auditor.
 
 Analyze the document metadata and select the single most appropriate document category.
@@ -133,78 +143,89 @@ CLASSIFICATION RULES
 5. Do not invent categories.
 PROMPT;
 
-    $jsonSchema = [
-        'type' => 'object',
+        $jsonSchema = [
+            'type' => 'object',
 
-        'properties' => [
-            'category_code' => [
-                'type' => 'string',
-                'enum' => array_keys($categoryOptions),
-                'description' => 'The code of the best matching authorized document category.',
+            'properties' => [
+                'category_code' => [
+                    'type' => 'string',
+                    'enum' => array_keys($categoryOptions),
+                    'description' => 'The code of the best matching authorized document category.',
+                ],
             ],
-        ],
 
-        'required' => [
-            'category_code',
-        ],
-    ];
-
-    $output = $this->llmService->generateStructured(
-        $prompt,
-        $jsonSchema,
-    );
-
-    $categoryCode = $output['category_code'] ?? null;
-
-    if (! is_string($categoryCode)) {
-        return null;
-    }
-
-    return $categories->first(
-        fn (DocumentCategory $category): bool =>
-            $category->code === $categoryCode,
-    );
-}
-
-private function classifyDocumentType(
-    DocumentCategory $category,
-    string $name,
-    string $description,
-    string $departmentName,
-): ?DocumentType {
-    $documentTypes = DocumentType::query()
-        ->with('regulationTags')
-        ->whereBelongsTo($category, 'category')
-        ->orderBy('name')
-        ->get();
-
-    if ($documentTypes->isEmpty()) {
-        return null;
-    }
-
-    if ($documentTypes->count() === 1) {
-        return $documentTypes->first();
-    }
-
-    $documentTypeOptions = $documentTypes
-        ->mapWithKeys(
-            fn (DocumentType $documentType): array => [
-                $documentType->code => $documentType->name,
+            'required' => [
+                'category_code',
             ],
-        )
-        ->all();
 
-    $authorizedDocumentTypes = collect($documentTypeOptions)
-        ->map(
-            fn (string $documentTypeName, string $code): string => sprintf(
-                '%s: %s',
-                $code,
-                $documentTypeName,
+        ];
+
+        $response = $this->llmManager->generate(
+            new LLMRequest(
+                prompt: $prompt,
+                useCase: AIUseCase::DOCUMENT_CLASSIFICATION,
+                capability: LLMCapability::STRUCTURED_OUTPUT,
+                dataClassification: AIDataClassification::INTERNAL,
+                jsonSchema: $jsonSchema,
+                temperature: 0.1,
+                metadata: [
+                    'feature' => 'document_category_classification',
+                ],
             ),
-        )
-        ->implode("\n");
+        );
 
-    $prompt = <<<PROMPT
+        $output = $response->structured();
+
+        $categoryCode = $output['category_code'] ?? null;
+
+        if (! is_string($categoryCode)) {
+            return null;
+        }
+
+        return $categories->first(
+            fn (DocumentCategory $category): bool => $category->code === $categoryCode,
+        );
+    }
+
+    private function classifyDocumentType(
+        DocumentCategory $category,
+        string $name,
+        string $description,
+        string $departmentName,
+    ): ?DocumentType {
+        $documentTypes = DocumentType::query()
+            ->with('regulationTags')
+            ->whereBelongsTo($category, 'category')
+            ->orderBy('name')
+            ->get();
+
+        if ($documentTypes->isEmpty()) {
+            return null;
+        }
+
+        if ($documentTypes->count() === 1) {
+            return $documentTypes->first();
+        }
+
+        $documentTypeOptions = $documentTypes
+            ->mapWithKeys(
+                fn (DocumentType $documentType): array => [
+                    $documentType->code => $documentType->name,
+                ],
+            )
+            ->all();
+
+        $authorizedDocumentTypes = collect($documentTypeOptions)
+            ->map(
+                fn (string $documentTypeName, string $code): string => sprintf(
+                    '%s: %s',
+                    $code,
+                    $documentTypeName,
+                ),
+            )
+            ->implode("\n");
+
+        $prompt = <<<PROMPT
 You are an expert pharmaceutical Quality Assurance and regulatory compliance auditor.
 
 The document has already been classified into this category:
@@ -238,36 +259,65 @@ CLASSIFICATION RULES
 6. Do not invent document types.
 PROMPT;
 
-    $jsonSchema = [
-        'type' => 'object',
+        $jsonSchema = [
+            'type' => 'object',
 
-        'properties' => [
-            'document_type_code' => [
-                'type' => 'string',
-                'enum' => array_keys($documentTypeOptions),
-                'description' => 'The code of the best matching authorized document type.',
+            'properties' => [
+                'document_type_code' => [
+                    'type' => 'string',
+                    'enum' => array_keys($documentTypeOptions),
+                    'description' => 'The code of the best matching authorized document type.',
+                ],
             ],
-        ],
 
-        'required' => [
-            'document_type_code',
-        ],
-    ];
+            'required' => [
+                'document_type_code',
+            ],
 
-    $output = $this->llmService->generateStructured(
-        $prompt,
-        $jsonSchema,
-    );
+        ];
 
-    $documentTypeCode = $output['document_type_code'] ?? null;
+        $response = $this->llmManager->generate(
+            new LLMRequest(
+                prompt: $prompt,
+                useCase: AIUseCase::DOCUMENT_TYPE_SELECTION,
+                capability: LLMCapability::STRUCTURED_OUTPUT,
+                dataClassification: AIDataClassification::INTERNAL,
+                jsonSchema: $jsonSchema,
+                temperature: 0.1,
+                metadata: [
+                    'feature' => 'document_type_classification',
+                    'document_category_id' => (int) $category->getKey(),
+                    'document_category_code' => $category->code,
+                ],
+            ),
+        );
 
-    if (! is_string($documentTypeCode)) {
-        return null;
+        $output = $response->structured();
+
+        $documentTypeCode = $output['document_type_code'] ?? null;
+
+        if (! is_string($documentTypeCode)) {
+            return null;
+        }
+
+        return $documentTypes->first(
+            fn (DocumentType $documentType): bool => $documentType->code === $documentTypeCode,
+        );
     }
 
-    return $documentTypes->first(
-        fn (DocumentType $documentType): bool =>
-            $documentType->code === $documentTypeCode,
-    );
-}
+    /**
+     * @return array{
+     *     category_id: null,
+     *     document_type_id: null,
+     *     regulation_tag_ids: array<int>
+     * }
+     */
+    private function emptyResult(): array
+    {
+        return [
+            'category_id' => null,
+            'document_type_id' => null,
+            'regulation_tag_ids' => [],
+        ];
+    }
 }

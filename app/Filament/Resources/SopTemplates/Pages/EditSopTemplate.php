@@ -7,8 +7,7 @@ namespace App\Filament\Resources\SopTemplates\Pages;
 use App\Actions\Sop\PublishTemplateAction;
 use App\Filament\Concerns\HandlesServiceExceptions;
 use App\Filament\Concerns\HasGenerationPolling;
-use App\Filament\Concerns\ClassifiesSopTemplateFromMetadata;
-use App\Filament\Concerns\GeneratesSopTemplateDescriptionFromMetadata;
+use App\Filament\Concerns\ProcessesSopTemplateMetadataAi;
 use App\Filament\Resources\SopTemplates\SopTemplateResource;
 use App\Models\TemplateStatus;
 use Filament\Actions\Action;
@@ -21,9 +20,8 @@ use Illuminate\Support\Facades\Auth;
 class EditSopTemplate extends EditRecord
 {
     use HandlesServiceExceptions;
-    use ClassifiesSopTemplateFromMetadata;
-    use GeneratesSopTemplateDescriptionFromMetadata;
     use HasGenerationPolling;
+    use ProcessesSopTemplateMetadataAi;
 
     protected static string $resource = SopTemplateResource::class;
 

@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\SopTemplates\Pages;
 
-use App\Filament\Concerns\ClassifiesSopTemplateFromMetadata;
-use App\Filament\Concerns\GeneratesSopTemplateDescriptionFromMetadata;
+use App\Filament\Concerns\ProcessesSopTemplateMetadataAi;
 use App\Filament\Resources\SopTemplates\SopTemplateResource;
 use App\Jobs\GenerateRegulatedTemplateJob;
 use App\Models\TemplateStatus;
@@ -15,8 +14,7 @@ use Illuminate\Support\Facades\Auth;
 
 class CreateSopTemplate extends CreateRecord
 {
-    use ClassifiesSopTemplateFromMetadata;
-    use GeneratesSopTemplateDescriptionFromMetadata;
+    use ProcessesSopTemplateMetadataAi;
 
     protected static string $resource = SopTemplateResource::class;
 
@@ -25,16 +23,24 @@ class CreateSopTemplate extends CreateRecord
      */
     private array $regulationTagIds = [];
 
+    /**
+     * @param array<string, mixed> $data
+     *
+     * @return array<string, mixed>
+     */
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $this->regulationTagIds = array_map(
-            'intval',
-            $data['regulationTags'] ?? [],
+        $this->regulationTagIds = array_values(
+            array_map(
+                'intval',
+                $data['regulationTags'] ?? [],
+            ),
         );
 
         unset($data['regulationTags']);
 
         $data['created_by'] = Auth::id();
+
         $data['template_status_id'] ??= TemplateStatus::idFor(
             TemplateStatus::DRAFT,
         );
@@ -46,7 +52,9 @@ class CreateSopTemplate extends CreateRecord
     {
         $template = $this->record;
 
-        $template->regulationTags()->sync($this->regulationTagIds);
+        $template->regulationTags()->sync(
+            $this->regulationTagIds,
+        );
 
         $template->load('regulationTags');
 
@@ -55,7 +63,9 @@ class CreateSopTemplate extends CreateRecord
             ->implode(', ');
 
         $template->update([
-            'generation_status' => $template::GENERATION_STATUS_PROCESSING,
+            'generation_status' =>
+                $template::GENERATION_STATUS_PROCESSING,
+
             'generation_progress' => 0,
         ]);
 

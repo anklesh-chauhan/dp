@@ -14,6 +14,7 @@ use App\Filament\Resources\SopTemplates\RelationManagers\TemplateAuditRelationMa
 use App\Filament\Resources\SopTemplates\RelationManagers\VariableRelationManager;
 use App\Filament\Resources\SopTemplates\RelationManagers\VersionRelationManager;
 use App\Filament\Support\DocumentClassificationFormFields;
+use App\Models\AiTask;
 use App\Models\SopTemplate;
 use App\Models\TemplateStatus;
 use Filament\Actions\Action;
@@ -33,6 +34,7 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
+use Filament\Schemas\Components\View;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -115,23 +117,35 @@ class SopTemplateResource extends Resource
                             ->required()
                             ->live(),
 
+                        View::make(
+                                'filament.sop-templates.metadata-ai-progress',
+                            )
+                                ->visible(
+                                    fn (Component $livewire): bool =>
+                                        $livewire->metadataAiTaskPolling
+                                )
+                                ->columnSpanFull(),
+
                         Textarea::make('description')
                             ->columnSpanFull()
-                            ->live(onBlur: true)
-                            // Automatically run classification if the user manually changes/blurs the description text
-                            ->afterStateUpdated(
-                                fn (Component $livewire, Set $set) => self::runAiClassification($livewire, $set)
-                            )
+                            ->rows(5)
                             ->hintAction(
-                                Action::make('generateDescription')
+                                Action::make('generateMetadataWithAi')
                                     ->label('Generate with AI')
                                     ->icon('heroicon-m-sparkles')
-                                    // Only allow clicking once Name and Department are filled out
-                                    ->visible(fn (callable $get) => filled($get('name')) && filled($get('department_id')))
-                                    ->action(function (Component $livewire, Set $set) {
-                                        // Triggers the phased sequence: Description -> Classification
-                                        self::runAiDescriptionGeneration($livewire, $set);
-                                    })
+                                    ->visible(
+                                        fn (callable $get): bool =>
+                                            filled($get('name'))
+                                            && filled($get('department_id'))
+                                    )
+                                    ->disabled(
+                                        fn (Component $livewire): bool =>
+                                            $livewire->metadataAiTaskPolling
+                                    )
+                                    ->action(
+                                        fn (Component $livewire) =>
+                                            $livewire->startMetadataAiGeneration()
+                                    )
                             ),
 
                         ...DocumentClassificationFormFields::templateFields(),
@@ -235,25 +249,29 @@ class SopTemplateResource extends Resource
             ->with(['department', 'category', 'documentType', 'regulationTags', 'templateStatus']);
     }
 
-    protected static function runAiClassification(
+    private static function runAiClassification(
         Component $livewire,
         Set $set,
+        ?string $description = null,
     ): void {
         if (! method_exists($livewire, 'classifyFromMetadata')) {
             return;
         }
 
-        $livewire->classifyFromMetadata($set);
+        $livewire->classifyFromMetadata(
+            set: $set,
+            description: $description,
+        );
     }
 
-    protected static function runAiDescriptionGeneration(
+    private static function runAiDescriptionGeneration(
         Component $livewire,
         Set $set,
-    ): void {
+    ): ?string {
         if (! method_exists($livewire, 'generateDescriptionFromMetadata')) {
-            return;
+            return null;
         }
 
-        $livewire->generateDescriptionFromMetadata($set);
+        return $livewire->generateDescriptionFromMetadata($set);
     }
 }
