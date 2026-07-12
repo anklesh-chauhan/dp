@@ -69,7 +69,7 @@ class LogDocumentResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return strval(static::getModel()::count());
+        return strval(static::getModel()::issuableDocuments()->count());
     }
 
     public static function form(Schema $schema): Schema
@@ -86,10 +86,7 @@ class LogDocumentResource extends Resource
                                 modifyQueryUsing: fn (Builder $query): Builder => $query
                                     ->whereHas('templateStatus', fn (Builder $statusQuery): Builder => $statusQuery->where('code', TemplateStatus::PUBLISHED))
                                     ->whereHas('publishedVersion')
-                                    ->whereHas('documentType', fn (Builder $typeQuery): Builder => $typeQuery->whereIn(
-                                        'code',
-                                        [DocumentType::LOG, DocumentType::BATCH_RECORD, DocumentType::FORM],
-                                    ))
+                                    ->whereHas('documentType', fn (Builder $typeQuery): Builder => $typeQuery->where('is_issuable', true))
                             )
                             ->searchable()
                             ->preload()

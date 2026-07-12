@@ -23,6 +23,8 @@ return new class extends Migration
         });
 
         Schema::table('sop_templates', function (Blueprint $table): void {
+            $table->dropIndex(['department_id', 'status']);
+            $table->dropIndex(['status']);
             $table->dropColumn('status');
 
             $table->foreignId('template_status_id')
@@ -33,6 +35,7 @@ return new class extends Migration
         });
 
         Schema::table('sop_template_versions', function (Blueprint $table): void {
+            $table->dropIndex(['status']);
             $table->dropColumn('status');
             $table->foreignId('template_status_id')
                 ->nullable()
@@ -51,7 +54,9 @@ return new class extends Migration
         });
 
         Schema::table('sop_documents', function (Blueprint $table): void {
-
+            $table->dropIndex(['department_id', 'status']);
+            $table->dropIndex(['document_type_id', 'status']);
+            $table->dropIndex(['status']);
             $table->dropColumn('status');
 
             $table->foreignId('document_status_id')
@@ -74,6 +79,7 @@ return new class extends Migration
         });
 
         Schema::table('sop_approvals', function (Blueprint $table): void {
+            $table->dropIndex(['decision']);
             $table->dropColumn('decision');
 
             $table->foreignId('approval_decision_id')
@@ -84,7 +90,8 @@ return new class extends Migration
         });
 
         Schema::table('document_issuances', function (Blueprint $table): void {
-
+            $table->dropIndex(['document_id', 'status']);
+            $table->dropIndex(['status']);
             $table->dropColumn('status');
 
             $table->foreignId('issuance_status_id')

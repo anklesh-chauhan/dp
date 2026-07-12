@@ -16,6 +16,7 @@ use App\Filament\Resources\SopTemplates\RelationManagers\VersionRelationManager;
 use App\Filament\Support\DocumentClassificationFormFields;
 use App\Models\SopTemplate;
 use App\Models\TemplateStatus;
+use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -100,11 +101,7 @@ class SopTemplateResource extends Resource
                         TextInput::make('name')
                             ->required()
                             ->maxLength(255)
-                            ->live(onBlur: true)
-                            ->afterStateUpdated(
-                                fn (Component $livewire, Set $set) =>
-                                    self::runAiClassification($livewire, $set)
-                            ),
+                            ->live(onBlur: true),
 
                         TextInput::make('code')
                             ->required()
@@ -116,18 +113,25 @@ class SopTemplateResource extends Resource
                             ->searchable()
                             ->preload()
                             ->required()
-                            ->live()
-                            ->afterStateUpdated(
-                                fn (Component $livewire, Set $set) =>
-                                    self::runAiClassification($livewire, $set)
-                            ),
+                            ->live(),
 
                         Textarea::make('description')
                             ->columnSpanFull()
                             ->live(onBlur: true)
+                            // Automatically run classification if the user manually changes/blurs the description text
                             ->afterStateUpdated(
-                                fn (Component $livewire, Set $set) =>
-                                    self::runAiClassification($livewire, $set)
+                                fn (Component $livewire, Set $set) => self::runAiClassification($livewire, $set)
+                            )
+                            ->hintAction(
+                                Action::make('generateDescription')
+                                    ->label('Generate with AI')
+                                    ->icon('heroicon-m-sparkles')
+                                    // Only allow clicking once Name and Department are filled out
+                                    ->visible(fn (callable $get) => filled($get('name')) && filled($get('department_id')))
+                                    ->action(function (Component $livewire, Set $set) {
+                                        // Triggers the phased sequence: Description -> Classification
+                                        self::runAiDescriptionGeneration($livewire, $set);
+                                    })
                             ),
 
                         ...DocumentClassificationFormFields::templateFields(),
@@ -240,5 +244,16 @@ class SopTemplateResource extends Resource
         }
 
         $livewire->classifyFromMetadata($set);
+    }
+
+    protected static function runAiDescriptionGeneration(
+        Component $livewire,
+        Set $set,
+    ): void {
+        if (! method_exists($livewire, 'generateDescriptionFromMetadata')) {
+            return;
+        }
+
+        $livewire->generateDescriptionFromMetadata($set);
     }
 }

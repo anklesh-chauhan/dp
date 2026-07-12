@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\SopTemplates\Pages;
 
 use App\Filament\Concerns\ClassifiesSopTemplateFromMetadata;
+use App\Filament\Concerns\GeneratesSopTemplateDescriptionFromMetadata;
 use App\Filament\Resources\SopTemplates\SopTemplateResource;
 use App\Jobs\GenerateRegulatedTemplateJob;
 use App\Models\TemplateStatus;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\Auth;
 class CreateSopTemplate extends CreateRecord
 {
     use ClassifiesSopTemplateFromMetadata;
+    use GeneratesSopTemplateDescriptionFromMetadata;
 
     protected static string $resource = SopTemplateResource::class;
 

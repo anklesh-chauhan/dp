@@ -6,7 +6,6 @@ namespace Database\Factories;
 
 use App\Models\DocumentCategory;
 use App\Models\DocumentType;
-use App\Models\RegulationTag;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -25,7 +24,6 @@ class DocumentTypeFactory extends Factory
             'name' => 'Standard Operating Procedure',
             'code' => 'SOP',
             'category_id' => DocumentCategory::factory(),
-            'regulation_tags' => RegulationTag::factory(),
             'requires_sop_reference' => false,
             'is_issuable' => false,
         ];

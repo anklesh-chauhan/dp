@@ -13,6 +13,8 @@ use Illuminate\Support\Str;
 
 class KnowledgeGuide extends Model
 {
+    public const string ClassificationSlug = 'document-classification';
+
     /** @use HasFactory<KnowledgeGuideFactory> */
     use HasFactory;
 
@@ -60,5 +62,13 @@ class KnowledgeGuide extends Model
     public function renderedHtml(): string
     {
         return Str::markdown($this->content);
+    }
+
+    public static function classificationGuide(): ?self
+    {
+        return self::query()
+            ->published()
+            ->where('slug', self::ClassificationSlug)
+            ->first();
     }
 }

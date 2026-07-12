@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\KnowledgeGuides\Schemas;
 
-use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -59,8 +58,9 @@ class KnowledgeGuideForm
 
                 Section::make('Content')
                     ->schema([
-                        RichEditor::make('content')
+                        Textarea::make('content')
                             ->required()
+                            ->rows(24)
                             ->columnSpanFull()
                             ->helperText('Markdown supported. Use headings, lists, and tables for structured guides.'),
                     ])
