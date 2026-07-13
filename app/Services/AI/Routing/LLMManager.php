@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace App\Services\AI\Routing;
 
+use App\Services\AI\Contracts\LLMManagerContract;
 use App\Services\AI\Data\LLMRequest;
 use App\Services\AI\Data\LLMResponse;
 use App\Services\AI\Exceptions\AllProvidersFailedException;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-final readonly class LLMManager
+
+final readonly class LLMManager implements LLMManagerContract
 {
     public function __construct(
         private ProviderRouter $router,

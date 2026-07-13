@@ -59,14 +59,50 @@ class EditSopTemplate extends EditRecord
         ];
     }
 
+    /**
+     * @var array<int>
+     */
+    private array $regulationTagIds = [];
+
+    protected function beforeSave(): void
+    {
+        $state = $this->form->getRawState();
+
+        $this->regulationTagIds = array_values(
+            array_map(
+                'intval',
+                $state['regulationTags'] ?? [],
+            ),
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     *
+     * @return array<string, mixed>
+     */
     protected function mutateFormDataBeforeSave(array $data): array
     {
-        if ($this->record->templateStatus?->hasCode(TemplateStatus::PUBLISHED)) {
-            $data['template_status_id'] = TemplateStatus::idFor(TemplateStatus::DRAFT);
+        if (
+            $this->record
+                ->templateStatus
+                ?->hasCode(TemplateStatus::PUBLISHED)
+        ) {
+            $data['template_status_id'] = TemplateStatus::idFor(
+                TemplateStatus::DRAFT,
+            );
+
             $data['current_version'] = $this->record->current_version;
         }
 
         return $data;
+    }
+
+    protected function afterSave(): void
+    {
+        $this->record
+            ->regulationTags()
+            ->sync($this->regulationTagIds);
     }
 
 }

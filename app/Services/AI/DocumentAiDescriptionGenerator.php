@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace App\Services\AI;
 
+use App\Services\AI\Contracts\LLMManagerContract;
 use App\Services\AI\Contracts\DocumentDescriptionGenerator;
 use App\Services\AI\Data\LLMRequest;
 use App\Services\AI\Enums\AIDataClassification;
 use App\Services\AI\Enums\AIUseCase;
 use App\Services\AI\Enums\LLMCapability;
-use App\Services\AI\Routing\LLMManager;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
 final readonly class DocumentAiDescriptionGenerator implements DocumentDescriptionGenerator
 {
     public function __construct(
-        private LLMManager $llmManager,
+        private LLMManagerContract $llmManager,
     ) {}
 
     /**
