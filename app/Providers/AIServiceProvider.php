@@ -15,6 +15,8 @@ use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 use App\Services\AI\Contracts\LLMManagerContract;
 use App\Services\AI\Routing\LLMManager;
+use App\Services\AI\Contracts\TemplateGenerator;
+use App\Services\AI\TemplateGeneratorService;
 
 final class AIServiceProvider extends ServiceProvider
 {
@@ -64,6 +66,11 @@ final class AIServiceProvider extends ServiceProvider
         $this->app->bind(
             LLMManagerContract::class,
             LLMManager::class,
+        );
+
+        $this->app->bind(
+            TemplateGenerator::class,
+            TemplateGeneratorService::class,
         );
     }
 
