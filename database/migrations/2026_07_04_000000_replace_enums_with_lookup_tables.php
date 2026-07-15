@@ -23,7 +23,6 @@ return new class extends Migration
         });
 
         Schema::table('sop_templates', function (Blueprint $table): void {
-            $table->dropIndex(['department_id', 'status']);
             $table->dropIndex(['status']);
             $table->dropColumn('status');
 
@@ -54,8 +53,6 @@ return new class extends Migration
         });
 
         Schema::table('sop_documents', function (Blueprint $table): void {
-            $table->dropIndex(['department_id', 'status']);
-            $table->dropIndex(['document_type_id', 'status']);
             $table->dropIndex(['status']);
             $table->dropColumn('status');
 
