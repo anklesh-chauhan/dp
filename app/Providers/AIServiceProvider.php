@@ -17,6 +17,8 @@ use App\Services\AI\Contracts\LLMManagerContract;
 use App\Services\AI\Routing\LLMManager;
 use App\Services\AI\Contracts\TemplateGenerator;
 use App\Services\AI\TemplateGeneratorService;
+use App\Services\AI\Contracts\AiExecutionRecorder;
+use App\Services\AI\Observability\DatabaseAiExecutionRecorder;
 
 final class AIServiceProvider extends ServiceProvider
 {
@@ -72,6 +74,12 @@ final class AIServiceProvider extends ServiceProvider
             TemplateGenerator::class,
             TemplateGeneratorService::class,
         );
+
+        $this->app->bind(
+            AiExecutionRecorder::class,
+            DatabaseAiExecutionRecorder::class,
+        );
+
     }
 
     /**
