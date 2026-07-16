@@ -20,7 +20,7 @@ interface ValidationEngine
      */
     public function validate(
         mixed $artifact,
-        ValidationRuleCollection $rules,
         ValidationContext $context,
+        ValidationRuleCollection $rules,
     ): ValidationResult;
 }

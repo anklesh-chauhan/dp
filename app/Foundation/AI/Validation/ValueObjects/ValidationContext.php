@@ -61,6 +61,8 @@ final readonly class ValidationContext
      */
     public function get(string $key, mixed $default = null): mixed
     {
-        return $this->attributes[$key] ?? $default;
+        return array_key_exists($key, $this->attributes)
+            ? $this->attributes[$key]
+            : $default;
     }
 }
