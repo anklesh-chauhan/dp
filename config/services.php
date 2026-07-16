@@ -16,7 +16,7 @@ return [
 
     'ollama' => [
         'url' => env('OLLAMA_BASE_URL', 'http://localhost:11434'),
-        'model' => env('OLLAMA_MODEL', 'qwen2.5:7b'),
+        'model' => env('OLLAMA_MODEL', 'qwen2.5:3b'),
         'timeout' => (int) env('OLLAMA_TIMEOUT', 600),
     ],
 

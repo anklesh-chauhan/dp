@@ -88,7 +88,7 @@ class GenerateRegulatedTemplateJob implements ShouldQueue
                 );
 
                 $this->template->update([
-                    'current_version' => 1,
+                    'current_version' => 0,
                 ]);
 
                 $this->updateProgress(
@@ -276,7 +276,7 @@ class GenerateRegulatedTemplateJob implements ShouldQueue
         $version = $this->template
             ->versions()
             ->withTrashed()
-            ->where('version', 1)
+            ->where('version', 0)
             ->first();
 
         if ($version === null) {

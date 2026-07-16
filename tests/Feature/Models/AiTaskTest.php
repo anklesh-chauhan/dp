@@ -113,14 +113,14 @@ it('marks an ai task as completed', function (): void {
     $task->markAsCompleted(
         result: $result,
         provider: 'ollama',
-        model: 'qwen2.5:7b',
+        model: 'qwen2.5:3b',
     );
 
     expect($task)
         ->status->toBe(AiTaskStatus::COMPLETED)
         ->result->toBe($result)
         ->provider->toBe('ollama')
-        ->model->toBe('qwen2.5:7b')
+        ->model->toBe('qwen2.5:3b')
         ->progress->toBe(100)
         ->current_step->toBeNull()
         ->error_message->toBeNull()

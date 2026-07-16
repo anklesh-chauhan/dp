@@ -38,7 +38,7 @@ return [
             ),
             'model' => env(
                 'OLLAMA_MODEL',
-                'qwen2.5:7b',
+                'qwen2.5:3b',
             ),
             'timeout' => env('OLLAMA_TIMEOUT', 600),
         ],

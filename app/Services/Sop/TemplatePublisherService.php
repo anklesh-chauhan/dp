@@ -37,7 +37,12 @@ class TemplatePublisherService
                 throw ValidationException::withMessages(['version' => 'Create a draft template version before publishing.']);
             }
 
-            $nextVersion = max($template->current_version + 1, $draftVersion->version);
+            if ($template->current_version === 0) {
+                $nextVersion = 1;
+            } else {
+                $nextVersion = $template->current_version + 1;
+            }
+
             $previousVersion = $template->current_version;
             $previousPublishedVersionId = $template->versions()
                 ->whereHas('templateStatus', fn ($query) => $query->where('code', TemplateStatus::PUBLISHED))
