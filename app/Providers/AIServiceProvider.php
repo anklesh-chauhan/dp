@@ -56,6 +56,21 @@ final class AIServiceProvider extends ServiceProvider
     private function registerDomainServices(): void
     {
         $this->app->bind(
+            \App\Foundation\AI\Validation\Contracts\RepairPipeline::class,
+            \App\Foundation\AI\Validation\Pipeline\DefaultRepairPipeline::class,
+        );
+
+        $this->app->bind(
+            \App\Foundation\AI\Validation\Contracts\RepairService::class,
+            \App\Foundation\AI\Validation\Services\DefaultRepairService::class,
+        );
+
+        $this->app->bind(
+            \App\Foundation\AI\Validation\Contracts\RepairExecutor::class,
+            \App\Foundation\AI\Validation\Services\DefaultRepairExecutor::class,
+        );
+
+        $this->app->bind(
             DocumentDescriptionGenerator::class,
             DocumentAiDescriptionGenerator::class,
         );

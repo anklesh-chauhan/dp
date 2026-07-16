@@ -4,21 +4,14 @@ declare(strict_types=1);
 
 namespace App\Foundation\AI\Validation\Contracts;
 
+use App\Foundation\AI\Validation\ValueObjects\RepairResult;
 use App\Foundation\AI\Validation\ValueObjects\ValidationContext;
 use App\Foundation\AI\Validation\ValueObjects\ValidationResult;
-use App\Foundation\AI\Validation\ValueObjects\RepairResult;
 
-/**
- * Repairs an artifact based on validation issues.
- */
-interface RepairService
+interface RepairPipeline
 {
     /**
-     * Attempts to repair the supplied artifact.
-     *
-     * @param mixed $artifact The artifact to repair.
-     *
-     * @return mixed The repaired artifact.
+     * @param mixed $artifact
      */
     public function repair(
         mixed $artifact,
