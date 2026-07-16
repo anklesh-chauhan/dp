@@ -20,14 +20,14 @@ return new class extends Migration
         Schema::create('document_categories', function (Blueprint $table): void {
             $table->id();
             $table->string('name')->unique();
-            $table->string('code', 20)->unique();
+            $table->string('code', 50)->unique();
             $table->timestamps();
         });
 
         Schema::create('document_types', function (Blueprint $table): void {
             $table->id();
             $table->string('name')->unique();
-            $table->string('code', 20)->unique();
+            $table->string('code', 50)->unique();
             $table->timestamps();
         });
 

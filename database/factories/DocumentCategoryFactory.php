@@ -24,7 +24,7 @@ class DocumentCategoryFactory extends Factory
 
         return [
             'name' => Str::title($name),
-            'code' => Str::upper(Str::substr(Str::slug($name, ''), 0, 6)),
+            'code' => fake()->unique()->bothify('CAT####'),
         ];
     }
 }

@@ -12,6 +12,8 @@ use App\Services\AI\Routing\ProviderRegistry;
 use App\Services\AI\Routing\ProviderRouter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\AI\FakeLLMProvider;
+use App\Services\AI\Contracts\AiExecutionRecorder;
+use Mockery;
 
 uses(RefreshDatabase::class);
 
@@ -30,8 +32,14 @@ beforeEach(function (): void {
         $this->registry,
     );
 
+    $this->recorder = Mockery::mock(AiExecutionRecorder::class);
+
+    $this->recorder
+        ->shouldIgnoreMissing();
+
     $this->manager = new LLMManager(
         $this->router,
+        $this->recorder,
     );
 });
 

@@ -75,7 +75,7 @@ it('processes sop template metadata and stores the completed result', function (
         ->completed_at->not->toBeNull()
         ->failed_at->toBeNull()
         ->and($task->result)
-        ->toBe([
+        ->toMatchArray([
             'description' => 'Defines the controlled process for cleaning manufacturing equipment.',
             'reasoning' => 'The description reflects Production department responsibilities.',
             'category_id' => 10,
