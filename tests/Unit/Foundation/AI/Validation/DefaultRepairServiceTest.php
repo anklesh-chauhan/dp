@@ -8,7 +8,6 @@ use App\Foundation\AI\Validation\ValueObjects\ValidationContext;
 use App\Foundation\AI\Validation\Collections\ValidationIssueCollection;
 use App\Foundation\AI\Validation\ValueObjects\ValidationResult;
 use App\Foundation\AI\Validation\Services\DefaultRepairService;
-use Mockery;
 
 it('delegates repair to the pipeline', function (): void {
     $artifact = [];

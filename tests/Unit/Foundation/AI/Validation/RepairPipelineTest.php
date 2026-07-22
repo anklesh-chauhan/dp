@@ -9,7 +9,6 @@ use App\Foundation\AI\Validation\ValueObjects\RepairResult;
 use App\Foundation\AI\Validation\ValueObjects\ValidationContext;
 use App\Foundation\AI\Validation\Collections\ValidationIssueCollection;
 use App\Foundation\AI\Validation\ValueObjects\ValidationResult;
-use Mockery;
 
 it('returns the first successful repair', function (): void {
     $artifact = [];

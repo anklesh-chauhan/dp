@@ -9,8 +9,6 @@ use App\Foundation\AI\Validation\Services\DefaultRepairExecutor;
 use App\Foundation\AI\Validation\ValueObjects\RepairResult;
 use App\Foundation\AI\Validation\ValueObjects\ValidationContext;
 use App\Foundation\AI\Validation\ValueObjects\ValidationResult;
-use Mockery;
-use RuntimeException;
 
 it('executes a supported strategy', function (): void {
     $artifact = ['foo' => 'bar'];
