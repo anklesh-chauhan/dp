@@ -1,5 +1,12 @@
 <?php
 
+use App\Domain\SopTemplate\AI\Providers\SopTemplateRuleProvider;
+use App\Domain\SopTemplate\AI\Services\SopTemplateIntegrityService;
+use App\Domain\SopTemplate\AI\Support\GeneratedTemplateAnalysisResolver;
+use App\Domain\SopTemplate\AI\Support\PlaceholderExtractor;
+use App\Foundation\AI\Validation\DefaultValidationEngine;
+use App\Foundation\AI\Validation\Pipeline\RuleExecutor;
+use App\Foundation\AI\Validation\Pipeline\ValidationPipeline;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -47,4 +54,19 @@ expect()->extend('toBeOne', function () {
 function something()
 {
     // ..
+}
+
+function createIntegrityService(): SopTemplateIntegrityService
+{
+    return new SopTemplateIntegrityService(
+        validationEngine: new DefaultValidationEngine(
+            new ValidationPipeline(
+                new RuleExecutor(),
+            ),
+        ),
+        ruleProvider: new SopTemplateRuleProvider(
+            new GeneratedTemplateAnalysisResolver(),
+        ),
+        placeholderExtractor: new PlaceholderExtractor(),
+    );
 }
