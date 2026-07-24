@@ -20,6 +20,8 @@ class DocumentStatus extends Model
 
     public const EFFECTIVE = 'effective';
 
+    public const SUPERSEDED = 'superseded';
+
     public const OBSOLETE = 'obsolete';
 
     public const ARCHIVED = 'archived';
@@ -36,6 +38,7 @@ class DocumentStatus extends Model
     public static function retentionLifecycleCodes(): array
     {
         return [
+            self::SUPERSEDED,
             self::OBSOLETE,
             self::ARCHIVED,
             self::RETENTION_COMPLETED,

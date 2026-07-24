@@ -55,7 +55,8 @@ trait ProvidesRetentionLifecycleActions
                 ->schema([
                     Textarea::make('reason')->label('Reason')->rows(2),
                 ])
-                ->visible(fn (): bool => $record->documentStatus?->hasCode(DocumentStatus::OBSOLETE)
+                ->visible(fn (): bool => ($record->documentStatus?->hasCode(DocumentStatus::SUPERSEDED)
+                    || $record->documentStatus?->hasCode(DocumentStatus::OBSOLETE))
                     && (Auth::user()?->can('archive', $record) ?? false))
                 ->action(function (array $data): void {
                     $this->runRetentionAction(

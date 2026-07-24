@@ -11,6 +11,7 @@ use App\Models\SopTemplate;
 use App\Models\SopTemplateVersion;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 /**
  * @extends Factory<SopDocument>
@@ -25,6 +26,7 @@ class SopDocumentFactory extends Factory
     public function definition(): array
     {
         return [
+            'document_series_id' => (string) Str::uuid(),
             'template_id' => SopTemplate::factory(),
             'template_version_id' => SopTemplateVersion::factory(),
             'document_number' => 'SOP-QA-'.fake()->unique()->numerify('#####'),

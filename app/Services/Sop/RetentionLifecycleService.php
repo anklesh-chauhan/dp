@@ -38,8 +38,8 @@ class RetentionLifecycleService
     {
         $this->ensureDocumentStatus(
             $document,
-            [DocumentStatus::OBSOLETE],
-            'Only obsolete documents can be archived.',
+            [DocumentStatus::SUPERSEDED, DocumentStatus::OBSOLETE],
+            'Only superseded or obsolete documents can be archived.',
         );
 
         return $this->transitionDocument(

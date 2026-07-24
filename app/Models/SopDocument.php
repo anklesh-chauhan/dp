@@ -14,18 +14,29 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class SopDocument extends Model
 {
     /** @use HasFactory<SopDocumentFactory> */
     use HasFactory, Lockable, SoftDeletes;
 
+    protected static function booted(): void
+    {
+        static::creating(function (SopDocument $document): void {
+            $document->document_series_id ??= (string) Str::uuid();
+        });
+    }
+
     protected $fillable = [
         'template_id',
         'template_version_id',
+        'document_series_id',
+        'supersedes_document_id',
         'document_number',
         'title',
         'version',
+        'revision_reason',
         'department_id',
         'document_type_id',
         'referenced_sop_document_id',
@@ -209,6 +220,31 @@ class SopDocument extends Model
     public function templateVersion(): BelongsTo
     {
         return $this->belongsTo(SopTemplateVersion::class, 'template_version_id');
+    }
+
+    /**
+     * @return BelongsTo<SopDocument, $this>
+     */
+    public function supersedesDocument(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'supersedes_document_id');
+    }
+
+    /**
+     * @return HasMany<SopDocument, $this>
+     */
+    public function subsequentVersions(): HasMany
+    {
+        return $this->hasMany(self::class, 'supersedes_document_id');
+    }
+
+    /**
+     * @return HasMany<SopDocument, $this>
+     */
+    public function versionHistory(): HasMany
+    {
+        return $this->hasMany(self::class, 'document_series_id', 'document_series_id')
+            ->orderByDesc('version');
     }
 
     /**

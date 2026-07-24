@@ -20,6 +20,7 @@ class WorkflowEngineService
     public function __construct(
         private readonly AuditLogService $auditLogService,
         private readonly DocumentLockService $documentLockService,
+        private readonly DocumentActivationService $documentActivationService,
     ) {}
 
     public function start(SopDocument $document, User $submitter, ?SopWorkflow $workflow = null): void
@@ -94,10 +95,9 @@ class WorkflowEngineService
         }
 
         $approvedDecisionId = ApprovalDecision::idFor(ApprovalDecision::APPROVED);
-        $effectiveStatusId = DocumentStatus::idFor(DocumentStatus::EFFECTIVE);
         $approvedStatusId = DocumentStatus::idFor(DocumentStatus::APPROVED);
 
-        return DB::transaction(function () use ($approval, $approver, $comments, $approvedDecisionId, $effectiveStatusId, $approvedStatusId): SopApproval {
+        return DB::transaction(function () use ($approval, $approver, $comments, $approvedDecisionId, $approvedStatusId): SopApproval {
             $approval->update([
                 'approved_by' => $approver->id,
                 'approval_decision_id' => $approvedDecisionId,
@@ -110,7 +110,7 @@ class WorkflowEngineService
             $mandatoryApprovals = $document->approvals->filter(fn (SopApproval $item): bool => $item->workflowStep->is_mandatory);
 
             if ($mandatoryApprovals->every(fn (SopApproval $item): bool => $item->approvalDecision?->hasCode(ApprovalDecision::APPROVED))) {
-                $document->update(['document_status_id' => $effectiveStatusId]);
+                $this->documentActivationService->activate($document, $approver);
             } else {
                 $document->update(['document_status_id' => $approvedStatusId]);
             }

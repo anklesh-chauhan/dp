@@ -115,8 +115,7 @@ class SopDocumentResource extends Resource
 
                         TextInput::make('document_number')
                             ->visible(fn ($livewire): bool => ! ($livewire instanceof CreateSopDocument))
-                            ->required(fn ($livewire): bool => ! ($livewire instanceof CreateSopDocument))
-                            ->unique(ignoreRecord: true),
+                            ->required(fn ($livewire): bool => ! ($livewire instanceof CreateSopDocument)),
 
                         TextInput::make('title')->required()->maxLength(255),
 
@@ -164,6 +163,12 @@ class SopDocumentResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('document_number')->searchable()->sortable(),
+                TextColumn::make('version')
+                    ->label('Document Version')
+                    ->sortable(),
+                TextColumn::make('templateVersion.version')
+                    ->label('Template Version')
+                    ->sortable(),
                 TextColumn::make('title')->searchable()->sortable(),
                 TextColumn::make('documentType.category.name')
                     ->label('Category')
@@ -187,6 +192,7 @@ class SopDocumentResource extends Resource
                         DocumentStatus::UNDER_REVIEW => 'warning',
                         DocumentStatus::APPROVED => 'info',
                         DocumentStatus::EFFECTIVE => 'success',
+                        DocumentStatus::SUPERSEDED => 'warning',
                         DocumentStatus::OBSOLETE => 'warning',
                         DocumentStatus::ARCHIVED => 'gray',
                         DocumentStatus::RETENTION_COMPLETED => 'gray',
@@ -254,7 +260,7 @@ class SopDocumentResource extends Resource
     {
         return parent::getEloquentQuery()
             ->withoutGlobalScopes([SoftDeletingScope::class])
-            ->with(['department', 'template.category', 'template.regulationTags', 'documentType.category', 'regulationTags', 'documentStatus', 'lockedByUser']);
+            ->with(['department', 'template.category', 'template.regulationTags', 'templateVersion', 'documentType.category', 'regulationTags', 'documentStatus', 'lockedByUser']);
     }
 
     private static function publishedTemplateVersionId(?int $templateId): ?int

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\SopDocuments\Pages;
 
+use App\Actions\Sop\CreateDocumentRevisionAction;
 use App\Actions\Sop\LockDocumentAction;
 use App\Actions\Sop\SubmitDocumentAction;
 use App\Actions\Sop\UnlockDocumentAction;
@@ -13,6 +14,7 @@ use App\Filament\Resources\SopDocuments\SopDocumentResource;
 use App\Models\DocumentStatus;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Textarea;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Auth;
@@ -28,6 +30,35 @@ class ViewSopDocument extends ViewRecord
     {
         return [
             ...$this->getDocumentRetentionLifecycleActions(),
+            Action::make('createRevision')
+                ->label('Create Revision')
+                ->icon(Heroicon::DocumentDuplicate)
+                ->color('warning')
+                ->schema([
+                    Textarea::make('revision_reason')
+                        ->label('Reason for revision')
+                        ->required()
+                        ->maxLength(2000),
+                ])
+                ->visible(fn (): bool => in_array($this->record->documentStatus?->code, [
+                    DocumentStatus::APPROVED,
+                    DocumentStatus::EFFECTIVE,
+                    DocumentStatus::OBSOLETE,
+                ], true) && (Auth::user()?->can('revise', $this->record) ?? false))
+                ->action(function (array $data): void {
+                    $this->runServiceAction(
+                        fn () => app(CreateDocumentRevisionAction::class)->execute(
+                            $this->record,
+                            Auth::user(),
+                            $data['revision_reason'],
+                        ),
+                        failureTitle: 'Revision Failed',
+                        successTitle: 'Draft revision created',
+                        afterSuccess: fn ($revision) => $this->redirect(
+                            SopDocumentResource::getUrl('edit', ['record' => $revision])
+                        ),
+                    );
+                }),
             Action::make('submitForApproval')
                 ->label('Submit for Approval')
                 ->icon(Heroicon::PaperAirplane)

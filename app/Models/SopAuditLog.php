@@ -19,6 +19,8 @@ class SopAuditLog extends Model
 
     public const ACTION_MARKED_OBSOLETE = 'marked_obsolete';
 
+    public const ACTION_SUPERSEDED = 'superseded';
+
     public const ACTION_RETENTION_COMPLETED = 'retention_completed';
 
     public const ACTION_DESTROYED = 'destroyed';
@@ -28,6 +30,8 @@ class SopAuditLog extends Model
     public const ACTION_VERSION_UPDATED = 'version_updated';
 
     public const ACTION_VERSION_PUBLISHED = 'version_published';
+
+    public const ACTION_DOCUMENT_REVISION_CREATED = 'document_revision_created';
 
     public const ACTION_GENERATED_SOP = 'generated_sop';
 

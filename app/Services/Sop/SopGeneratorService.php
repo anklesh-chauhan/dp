@@ -12,6 +12,7 @@ use App\Models\SopTemplate;
 use App\Models\SopTemplateVersion;
 use App\Models\TemplateStatus;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class SopGeneratorService
@@ -74,6 +75,7 @@ class SopGeneratorService
             $resolvedVariables = $this->resolveVariables($version, $variables);
 
             $document = SopDocument::query()->create([
+                'document_series_id' => (string) Str::uuid(),
                 'template_id' => $template->id,
                 'template_version_id' => $version->id,
                 'document_number' => $documentNumber,

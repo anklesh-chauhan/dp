@@ -23,11 +23,12 @@ class LookupTableSeeder extends Seeder
             [DocumentStatus::UNDER_REVIEW, 'Under Review', 2],
             [DocumentStatus::APPROVED, 'Approved', 3],
             [DocumentStatus::EFFECTIVE, 'Effective', 4],
-            [DocumentStatus::OBSOLETE, 'Obsolete', 5],
-            [DocumentStatus::ARCHIVED, 'Archived', 6],
-            [DocumentStatus::RETENTION_COMPLETED, 'Retention Completed', 7],
-            [DocumentStatus::DESTROYED, 'Destroyed', 8],
-            [DocumentStatus::REJECTED, 'Rejected', 9],
+            [DocumentStatus::SUPERSEDED, 'Superseded', 5],
+            [DocumentStatus::OBSOLETE, 'Obsolete', 6],
+            [DocumentStatus::ARCHIVED, 'Archived', 7],
+            [DocumentStatus::RETENTION_COMPLETED, 'Retention Completed', 8],
+            [DocumentStatus::DESTROYED, 'Destroyed', 9],
+            [DocumentStatus::REJECTED, 'Rejected', 10],
         ]);
 
         $this->seedLookup(TemplateStatus::class, [
