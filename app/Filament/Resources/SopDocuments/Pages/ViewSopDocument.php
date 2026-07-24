@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\SopDocuments\Pages;
 
-use App\Actions\Sop\CreateDocumentRevisionAction;
 use App\Actions\Sop\LockDocumentAction;
 use App\Actions\Sop\SubmitDocumentAction;
 use App\Actions\Sop\UnlockDocumentAction;
+use App\Domain\DMS\Actions\CreateDocumentRevisionAction;
 use App\Filament\Concerns\HandlesServiceExceptions;
 use App\Filament\Concerns\ProvidesRetentionLifecycleActions;
 use App\Filament\Resources\SopDocuments\SopDocumentResource;

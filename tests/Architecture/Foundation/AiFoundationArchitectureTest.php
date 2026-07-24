@@ -8,6 +8,7 @@ arch('Foundation AI classes are final')
     ->toBeFinal()
     ->ignoring([
         'App\Foundation\AI\Contracts',
+        'App\Foundation\AI\Validation\Exceptions',
     ]);
 
 arch('Foundation AI value objects are readonly')

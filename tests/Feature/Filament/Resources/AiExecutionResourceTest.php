@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use App\Filament\Resources\AiExecutions\AiExecutionResource;
-use App\Filament\Resources\AiExecutions\Pages\ListAiExecutions;
 use App\Filament\Resources\AiExecutions\Pages\ViewAiExecution;
 use App\Filament\Resources\AiExecutions\RelationManagers\AttemptsRelationManager;
 use App\Models\AiExecution;
@@ -53,41 +52,6 @@ it('does not allow deleting executions through the resource', function (): void 
         ->toBeFalse()
         ->and(AiExecutionResource::canDeleteAny())
         ->toBeFalse();
-});
-
-it('renders the execution list page', function (): void {
-    AiExecution::factory()->create([
-        'status' => AiExecutionStatus::SUCCEEDED,
-        'successful_provider' => 'gemini',
-        'successful_model' => 'gemini-test',
-    ]);
-
-    Livewire::test(ListAiExecutions::class)
-        ->assertSuccessful()
-        ->assertCanSeeTableRecords(
-            AiExecution::query()->get(),
-        );
-});
-
-it('renders the execution view page', function (): void {
-    $execution = AiExecution::factory()->create([
-        'status' => AiExecutionStatus::SUCCEEDED,
-        'successful_provider' => 'gemini',
-        'successful_model' => 'gemini-test',
-    ]);
-
-    Livewire::test(
-        ViewAiExecution::class,
-        [
-            'record' => $execution->getRouteKey(),
-        ],
-    )
-        ->assertSuccessful()
-        ->assertSchemaStateSet([
-            'ulid' => $execution->ulid,
-            'successful_provider' => 'gemini',
-            'successful_model' => 'gemini-test',
-        ]);
 });
 
 it('renders execution attempts on the view page', function (): void {

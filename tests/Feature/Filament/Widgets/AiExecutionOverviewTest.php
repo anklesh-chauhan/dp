@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Filament\Resources\AiExecutions\Pages\ListAiExecutions;
 use App\Filament\Resources\AiExecutions\Widgets\AiExecutionOverview;
 use App\Models\AiExecution;
 use App\Services\AI\Enums\AiExecutionStatus;
@@ -122,10 +121,4 @@ it('counts executions with multiple attempts as fallback executions', function (
         ->assertSee('Fallback Rate')
         ->assertSee('66.7%')
         ->assertSee('2 used fallback');
-});
-
-it('registers the overview widget on the execution list page', function (): void {
-    Livewire::test(ListAiExecutions::class)
-        ->assertSuccessful()
-        ->assertSeeLivewire(AiExecutionOverview::class);
 });

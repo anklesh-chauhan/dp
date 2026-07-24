@@ -4,16 +4,9 @@ declare(strict_types=1);
 
 namespace App\Actions\Sop;
 
-use App\Models\SopDocument;
-use App\Models\User;
-use App\Services\Sop\DocumentRevisionService;
+use App\Domain\DMS\Actions\CreateDocumentRevisionAction as DmsCreateDocumentRevisionAction;
 
-class CreateDocumentRevisionAction
-{
-    public function __construct(private readonly DocumentRevisionService $documentRevisionService) {}
-
-    public function execute(SopDocument $document, User $user, string $reason): SopDocument
-    {
-        return $this->documentRevisionService->create($document, $user, $reason);
-    }
-}
+/**
+ * @deprecated Use the DMS domain action.
+ */
+class CreateDocumentRevisionAction extends DmsCreateDocumentRevisionAction {}

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Concerns\Lockable;
+use App\Domain\DMS\Contracts\ControlledDocument;
 use Database\Factories\SopDocumentFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -16,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
-class SopDocument extends Model
+class SopDocument extends Model implements ControlledDocument
 {
     /** @use HasFactory<SopDocumentFactory> */
     use HasFactory, Lockable, SoftDeletes;
@@ -65,6 +66,21 @@ class SopDocument extends Model
             'referenced_sop_version' => 'integer',
             'locked_at' => 'datetime',
         ];
+    }
+
+    public function controlledDocumentReference(): string
+    {
+        return (string) $this->document_number;
+    }
+
+    public function controlledDocumentTitle(): string
+    {
+        return (string) $this->title;
+    }
+
+    public function controlledDocumentVersion(): int
+    {
+        return (int) $this->version;
     }
 
     public function isEditable(): bool

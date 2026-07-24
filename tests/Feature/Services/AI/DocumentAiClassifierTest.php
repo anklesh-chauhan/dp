@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Models\DocumentCategory;
 use App\Models\DocumentType;
 use App\Models\RegulationTag;
+use App\Services\AI\Contracts\AiExecutionRecorder;
 use App\Services\AI\Data\LLMResponse;
 use App\Services\AI\DocumentAiClassifier;
 use App\Services\AI\Routing\LLMManager;
@@ -12,8 +13,6 @@ use App\Services\AI\Routing\ProviderRegistry;
 use App\Services\AI\Routing\ProviderRouter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\AI\FakeLLMProvider;
-use App\Services\AI\Contracts\AiExecutionRecorder;
-use Mockery;
 
 uses(RefreshDatabase::class);
 
@@ -26,7 +25,7 @@ beforeEach(function (): void {
         'fake',
     ]);
 
-    $this->registry = new ProviderRegistry();
+    $this->registry = new ProviderRegistry;
 
     $this->router = new ProviderRouter(
         $this->registry,

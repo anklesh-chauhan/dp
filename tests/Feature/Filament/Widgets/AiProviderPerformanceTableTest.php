@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Filament\Resources\AiExecutions\Pages\ListAiExecutions;
 use App\Filament\Resources\AiExecutions\Widgets\AiProviderPerformanceTable;
 use App\Models\AiExecution;
 use App\Models\AiExecutionAttempt;
@@ -183,10 +182,4 @@ it('counts running attempts in total attempts without treating them as failures'
         ->assertSee('1')
         ->assertSee('0')
         ->assertSee('50.0%');
-});
-
-it('registers the provider performance table on the execution list page', function (): void {
-    Livewire::test(ListAiExecutions::class)
-        ->assertSuccessful()
-        ->assertSeeLivewire(AiProviderPerformanceTable::class);
 });

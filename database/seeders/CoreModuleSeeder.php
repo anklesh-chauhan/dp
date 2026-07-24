@@ -9,14 +9,36 @@ use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 
-class AiModuleSeeder extends Seeder
+class CoreModuleSeeder extends Seeder
 {
     /**
      * @var array<int, string>
      */
     public const PERMISSIONS = [
-        'ViewAny:AiExecution',
-        'View:AiExecution',
+        'ViewAny:Role',
+        'View:Role',
+        'Create:Role',
+        'Update:Role',
+        'Delete:Role',
+        'DeleteAny:Role',
+        'ForceDelete:Role',
+        'ForceDeleteAny:Role',
+        'Restore:Role',
+        'RestoreAny:Role',
+        'Replicate:Role',
+        'Reorder:Role',
+        'ViewAny:User',
+        'View:User',
+        'Create:User',
+        'Update:User',
+        'Delete:User',
+        'DeleteAny:User',
+        'ForceDelete:User',
+        'ForceDeleteAny:User',
+        'Restore:User',
+        'RestoreAny:User',
+        'Replicate:User',
+        'Reorder:User',
     ];
 
     public function run(): void

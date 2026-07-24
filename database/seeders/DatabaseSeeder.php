@@ -23,8 +23,10 @@ class DatabaseSeeder extends Seeder
 
         $moduleManager = app(ModuleManager::class);
 
+        $this->call(CoreModuleSeeder::class);
+
         if ($moduleManager->enabled(ProductModule::DMS)) {
-            $this->call(SopModuleSeeder::class);
+            $this->call(DmsModuleSeeder::class);
         }
 
         if ($moduleManager->enabled(ProductModule::AI)) {

@@ -7,8 +7,10 @@
 - AI observability, template controls, actions, and queued jobs are entitlement-aware.
 - DMS-only template creation does not dispatch AI generation.
 - Database seeding is module-aware.
-- AI and QMS extension seeders exist.
-- Focused entitlement and document-version tests passed at the checkpoint.
+- Core, DMS, AI, and QMS module seeders own their permission boundaries and grants.
+- The legacy `SopDocument` model implements the DMS `ControlledDocument` contract without persistence renames.
+- Document revision uses canonical DMS action and service namespaces with legacy compatibility entry points.
+- Focused seeder, entitlement, and document-version tests passed at the checkpoint.
 
 Always verify these statements against the worktree before relying on them.
 
@@ -20,11 +22,13 @@ Always verify these statements against the worktree before relying on them.
 2. **Runtime enforcement — completed**
    Protect current DMS and AI routes, Filament surfaces, actions, jobs, and widgets.
 
-3. **Permission and seeder split — in progress**
+3. **Permission and seeder split — completed**
    Extract legacy DMS permissions and role assignment from `SopModuleSeeder` into Core and DMS seeders. Keep AI and future QMS permissions in their module seeders. Test DMS-only and DMS+AI seeding.
 
-4. **Domain boundaries**
+4. **Domain boundaries — in progress**
    Establish Shared, DMS, QMS, and AI namespaces incrementally. Avoid a large rename. Introduce generic controlled-document language before renaming persistent tables.
+   - Slice 1 completed: Added the DMS `ControlledDocument` contract and adapted `SopDocument`.
+   - Slice 2 completed: Moved document revision action and service ownership into the DMS domain while retaining legacy namespace compatibility.
 
 5. **Reusable approval workflow**
    Decouple approval subjects from `SopDocument` so controlled documents and future QMS records can share workflow infrastructure.
@@ -49,4 +53,4 @@ Always verify these statements against the worktree before relying on them.
 
 ## Immediate next task
 
-Complete phase 3 by extracting Core and DMS permission definitions and role grants from `database/seeders/SopModuleSeeder.php`, while preserving existing permission names and customer behavior.
+Continue phase 4 with the document issuance action/service pair, preserving legacy namespace compatibility and persistence.

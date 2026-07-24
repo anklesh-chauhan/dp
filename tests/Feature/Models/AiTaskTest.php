@@ -3,10 +3,9 @@
 declare(strict_types=1);
 
 use App\Models\AiTask;
-use App\Services\AI\Enums\AIUseCase;
 use App\Services\AI\Enums\AiTaskStatus;
+use App\Services\AI\Enums\AIUseCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use LogicException;
 
 uses(RefreshDatabase::class);
 
