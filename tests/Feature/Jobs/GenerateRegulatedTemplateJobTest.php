@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Domain\SopTemplate\AI\Services\SopTemplateIntegrityService;
 use App\Jobs\GenerateRegulatedTemplateJob;
-use App\Services\AI\Validation\GeneratedTemplateValidator;
 use App\Models\SopTemplate;
 use App\Models\SopTemplateSection;
 use App\Models\SopTemplateVariable;
@@ -27,8 +27,8 @@ function handleGenerateRegulatedTemplateJob(
 ): void {
     $job->handle(
         aiService: $generator,
-        generatedTemplateValidator: app(
-            GeneratedTemplateValidator::class,
+        integrityService: app(
+            SopTemplateIntegrityService::class,
         ),
     );
 }

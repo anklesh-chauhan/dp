@@ -2,27 +2,34 @@
 
 declare(strict_types=1);
 
-use App\Domain\SopTemplate\AI\Providers\SopTemplateRuleProvider;
-use App\Domain\SopTemplate\AI\Services\SopTemplateIntegrityService;
-use App\Domain\SopTemplate\AI\Support\GeneratedTemplateAnalysisResolver;
-use App\Domain\SopTemplate\AI\Support\PlaceholderExtractor;
-use App\Foundation\AI\Validation\DefaultValidationEngine;
-use App\Foundation\AI\Validation\Pipeline\RuleExecutor;
-use App\Foundation\AI\Validation\Pipeline\ValidationPipeline;
 use App\Foundation\AI\Validation\ValueObjects\ValidationResult;
-
 
 describe('SopTemplateIntegrityService', function (): void {
 
     it('returns a passing validation result for a valid template', function (): void {
         $template = [
             'variables' => [
-                ['name' => 'batch_number'],
-                ['name' => 'expiry_date'],
+                [
+                    'name' => 'batch_number',
+                    'label' => 'Batch Number',
+                    'datatype' => 'text',
+                    'default_value' => '',
+                    'required' => true,
+                ],
+                [
+                    'name' => 'expiry_date',
+                    'label' => 'Expiry Date',
+                    'datatype' => 'date',
+                    'default_value' => '',
+                    'required' => true,
+                ],
             ],
             'sections' => [
                 [
+                    'title' => 'Product details',
                     'content' => '{{batch_number}} {{expiry_date}}',
+                    'section_order' => 1,
+                    'section_type' => 'rich_text',
                 ],
             ],
         ];
@@ -42,11 +49,20 @@ describe('SopTemplateIntegrityService', function (): void {
     it('returns a failing validation result for an invalid template', function (): void {
         $template = [
             'variables' => [
-                ['name' => 'BatchNumber'],
+                [
+                    'name' => 'BatchNumber',
+                    'label' => 'Batch Number',
+                    'datatype' => 'text',
+                    'default_value' => '',
+                    'required' => true,
+                ],
             ],
             'sections' => [
                 [
+                    'title' => 'Product details',
                     'content' => '{{expiry_date}}',
+                    'section_order' => 1,
+                    'section_type' => 'rich_text',
                 ],
             ],
         ];

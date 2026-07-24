@@ -14,8 +14,7 @@ final readonly class EveryVariableMustBeReferencedRule implements ValidationRule
 {
     public function __construct(
         private GeneratedTemplateAnalysisResolver $analysisResolver,
-    ) {
-    }
+    ) {}
 
     public function code(): string
     {
@@ -28,7 +27,7 @@ final readonly class EveryVariableMustBeReferencedRule implements ValidationRule
     ): ValidationIssueCollection {
         $analysis = $this->analysisResolver->resolve($context);
 
-        $issues = new ValidationIssueCollection();
+        $issues = new ValidationIssueCollection;
 
         $referencedPlaceholders = array_flip(
             $analysis->placeholderNames(),
@@ -42,7 +41,7 @@ final readonly class EveryVariableMustBeReferencedRule implements ValidationRule
             }
 
             $issues = $issues->with(
-                ValidationIssueData::warning(
+                ValidationIssueData::error(
                     code: $this->code(),
                     message: sprintf(
                         'Variable "%s" is defined but never referenced.',

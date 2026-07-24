@@ -25,7 +25,7 @@ describe('EveryVariableMustBeReferencedRule', function (): void {
         ];
 
         $rule = new EveryVariableMustBeReferencedRule(
-            new GeneratedTemplateAnalysisResolver(),
+            new GeneratedTemplateAnalysisResolver,
         );
 
         $issues = $rule->validate(
@@ -51,7 +51,7 @@ describe('EveryVariableMustBeReferencedRule', function (): void {
         ];
 
         $rule = new EveryVariableMustBeReferencedRule(
-            new GeneratedTemplateAnalysisResolver(),
+            new GeneratedTemplateAnalysisResolver,
         );
 
         $issues = $rule->validate(
@@ -66,7 +66,7 @@ describe('EveryVariableMustBeReferencedRule', function (): void {
         expect($issue->code())
             ->toBe('referenced_variables')
             ->and($issue->severity())
-            ->toBe(ValidationSeverity::WARNING)
+            ->toBe(ValidationSeverity::ERROR)
             ->and($issue->path())
             ->toBe('variables[2].name')
             ->and($issue->metadata()['variable'])
@@ -91,7 +91,7 @@ describe('EveryVariableMustBeReferencedRule', function (): void {
         ];
 
         $rule = new EveryVariableMustBeReferencedRule(
-            new GeneratedTemplateAnalysisResolver(),
+            new GeneratedTemplateAnalysisResolver,
         );
 
         $issues = $rule->validate(
@@ -113,7 +113,7 @@ describe('EveryVariableMustBeReferencedRule', function (): void {
 
         foreach ($issues->all() as $issue) {
             expect($issue->severity())
-                ->toBe(ValidationSeverity::WARNING);
+                ->toBe(ValidationSeverity::ERROR);
 
             expect($issue->code())
                 ->toBe('referenced_variables');

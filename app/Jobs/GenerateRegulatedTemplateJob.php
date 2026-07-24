@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
+use App\Domain\SopTemplate\AI\Services\SopTemplateIntegrityService;
 use App\Models\SopTemplate;
 use App\Models\SopTemplateVersion;
 use App\Models\TemplateStatus;
 use App\Models\VariableDataType;
 use App\Services\AI\Contracts\TemplateGenerator;
-use App\Services\AI\Validation\GeneratedTemplateValidator;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
@@ -37,7 +37,7 @@ class GenerateRegulatedTemplateJob implements ShouldQueue
 
     public function handle(
         TemplateGenerator $aiService,
-        GeneratedTemplateValidator $generatedTemplateValidator,
+        SopTemplateIntegrityService $integrityService,
     ): void {
         try {
             $this->updateProgress(
@@ -56,12 +56,10 @@ class GenerateRegulatedTemplateJob implements ShouldQueue
                 return;
             }
 
-            $this->validateResult($result);
-
             $result = $this->validateOrRepairResult(
                 result: $result,
                 aiService: $aiService,
-                generatedTemplateValidator: $generatedTemplateValidator,
+                integrityService: $integrityService,
             );
 
             $this->updateProgress(
@@ -88,7 +86,7 @@ class GenerateRegulatedTemplateJob implements ShouldQueue
                 );
 
                 $this->template->update([
-                    'current_version' => 0,
+                    'current_version' => $version->version,
                 ]);
 
                 $this->updateProgress(
@@ -120,155 +118,50 @@ class GenerateRegulatedTemplateJob implements ShouldQueue
     /**
      * Validate generated template integrity or perform exactly one repair attempt.
      *
-     * @param array<string, mixed> $result
-     *
+     * @param  array<string, mixed>  $result
      * @return array<string, mixed>
      */
     private function validateOrRepairResult(
         array $result,
         TemplateGenerator $aiService,
-        GeneratedTemplateValidator $generatedTemplateValidator,
+        SopTemplateIntegrityService $integrityService,
     ): array {
-        try {
-            $generatedTemplateValidator->validate($result);
+        $validation = $integrityService->validate($result);
 
+        if ($validation->passed()) {
             return $result;
-        } catch (InvalidArgumentException $exception) {
-            $repairedResult = $aiService->repairRegulatedTemplate(
-                formData: $this->template->toArray(),
-                regulationTags: $this->regulationTags,
-                generatedTemplate: $result,
-                validationError: $exception->getMessage(),
-            );
-
-            if ($repairedResult === null) {
-                throw new RuntimeException(
-                    'AI template repair failed to return a structured result.',
-                    previous: $exception,
-                );
-            }
-
-            $this->validateResult($repairedResult);
-
-            $generatedTemplateValidator->validate($repairedResult);
-
-            return $repairedResult;
         }
-    }
 
-    /**
-     * @param array<string, mixed> $result
-     */
-    private function validateResult(array $result): void
-    {
-        if (
-            ! array_key_exists('sections', $result)
-            || ! is_array($result['sections'])
-        ) {
+        $validationError = $integrityService->failureMessage($validation);
+
+        if ($integrityService->hasStructuralErrors($validation)) {
             throw new RuntimeException(
-                'AI template generation returned invalid sections.',
+                $validationError,
             );
         }
 
-        if (
-            ! array_key_exists('variables', $result)
-            || ! is_array($result['variables'])
-        ) {
+        $repairedResult = $aiService->repairRegulatedTemplate(
+            formData: $this->template->toArray(),
+            regulationTags: $this->regulationTags,
+            generatedTemplate: $result,
+            validationError: $validationError,
+        );
+
+        if ($repairedResult === null) {
             throw new RuntimeException(
-                'AI template generation returned invalid variables.',
+                'AI template repair failed to return a structured result.',
             );
         }
 
-        foreach ($result['sections'] as $section) {
-            if (! is_array($section)) {
-                throw new RuntimeException(
-                    'AI template generation returned an invalid section.',
-                );
-            }
+        $repairedValidation = $integrityService->validate($repairedResult);
 
-            $this->validateSection($section);
-        }
-
-        foreach ($result['variables'] as $variable) {
-            if (! is_array($variable)) {
-                throw new RuntimeException(
-                    'AI template generation returned an invalid variable.',
-                );
-            }
-
-            $this->validateVariable($variable);
-        }
-    }
-
-    /**
-     * @param array<string, mixed> $section
-     */
-    private function validateSection(array $section): void
-    {
-        foreach (
-            [
-                'title',
-                'content',
-                'section_order',
-                'section_type',
-            ] as $requiredKey
-        ) {
-            if (! array_key_exists($requiredKey, $section)) {
-                throw new RuntimeException(
-                    "AI template section is missing [{$requiredKey}].",
-                );
-            }
-        }
-
-        if (
-            ! is_string($section['title'])
-            || trim($section['title']) === ''
-            || ! is_string($section['content'])
-            || ! is_int($section['section_order'])
-            || ! is_string($section['section_type'])
-            || trim($section['section_type']) === ''
-        ) {
-            throw new RuntimeException(
-                'AI template generation returned invalid section data.',
+        if ($repairedValidation->failed()) {
+            throw new InvalidArgumentException(
+                $integrityService->failureMessage($repairedValidation),
             );
         }
-    }
 
-    /**
-     * @param array<string, mixed> $variable
-     */
-    private function validateVariable(array $variable): void
-    {
-        foreach (
-            [
-                'name',
-                'label',
-                'datatype',
-                'default_value',
-                'required',
-            ] as $requiredKey
-        ) {
-            if (! array_key_exists($requiredKey, $variable)) {
-                throw new RuntimeException(
-                    "AI template variable is missing [{$requiredKey}].",
-                );
-            }
-        }
-
-        if (
-            ! is_string($variable['name'])
-            || trim($variable['name']) === ''
-            || ! is_string($variable['label'])
-            || trim($variable['label']) === ''
-            || ! is_string($variable['datatype'])
-            || trim($variable['datatype']) === ''
-            || ! is_string($variable['default_value'])
-            || ! is_bool($variable['required'])
-        ) {
-            throw new RuntimeException(
-                'AI template generation returned invalid variable data.',
-            );
-        }
+        return $repairedResult;
     }
 
     private function createOrResetVersion(): SopTemplateVersion
@@ -276,7 +169,7 @@ class GenerateRegulatedTemplateJob implements ShouldQueue
         $version = $this->template
             ->versions()
             ->withTrashed()
-            ->where('version', 0)
+            ->where('version', 1)
             ->first();
 
         if ($version === null) {
@@ -309,7 +202,7 @@ class GenerateRegulatedTemplateJob implements ShouldQueue
     }
 
     /**
-     * @param array<int, array<string, mixed>> $sections
+     * @param  array<int, array<string, mixed>>  $sections
      */
     private function persistSections(
         SopTemplateVersion $version,
@@ -327,7 +220,7 @@ class GenerateRegulatedTemplateJob implements ShouldQueue
     }
 
     /**
-     * @param array<int, array<string, mixed>> $variables
+     * @param  array<int, array<string, mixed>>  $variables
      */
     private function persistVariables(
         SopTemplateVersion $version,

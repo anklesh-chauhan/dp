@@ -4,28 +4,25 @@ declare(strict_types=1);
 
 namespace App\Domain\SopTemplate\AI\Support;
 
-use InvalidArgumentException;
-
 final readonly class GeneratedTemplateAnalysis
 {
     /**
-     * @param array<int, array<string, mixed>> $sections
-     * @param array<int, array<string, mixed>> $variables
-     * @param array<int, string> $variableNames
-     * @param array<int, string> $placeholderNames
+     * @param  array<int, array<string, mixed>>  $sections
+     * @param  array<int, array<string, mixed>>  $variables
+     * @param  array<int, string>  $variableNames
+     * @param  array<int, string>  $placeholderNames
      */
     private function __construct(
         private array $sections,
         private array $variables,
         private array $variableNames,
         private array $placeholderNames,
-    ) {
-    }
+    ) {}
 
     /**
      * Build an analysis from a generated template.
      *
-     * @param array<string, mixed> $generatedTemplate
+     * @param  array<string, mixed>  $generatedTemplate
      */
     public static function analyze(
         array $generatedTemplate,
@@ -83,8 +80,7 @@ final readonly class GeneratedTemplateAnalysis
     }
 
     /**
-     * @param array<string, mixed> $generatedTemplate
-     *
+     * @param  array<string, mixed>  $generatedTemplate
      * @return array<int, array<string, mixed>>
      */
     private static function extractSections(array $generatedTemplate): array
@@ -92,25 +88,17 @@ final readonly class GeneratedTemplateAnalysis
         $sections = $generatedTemplate['sections'] ?? null;
 
         if (! is_array($sections)) {
-            throw new InvalidArgumentException(
-                'Generated template sections must be an array.',
-            );
+            return [];
         }
 
-        foreach ($sections as $section) {
-            if (! is_array($section)) {
-                throw new InvalidArgumentException(
-                    'Every generated template section must be an array.',
-                );
-            }
-        }
-
-        return array_values($sections);
+        return array_values(array_filter(
+            $sections,
+            is_array(...),
+        ));
     }
 
     /**
-     * @param array<string, mixed> $generatedTemplate
-     *
+     * @param  array<string, mixed>  $generatedTemplate
      * @return array<int, array<string, mixed>>
      */
     private static function extractVariables(array $generatedTemplate): array
@@ -118,63 +106,38 @@ final readonly class GeneratedTemplateAnalysis
         $variables = $generatedTemplate['variables'] ?? null;
 
         if (! is_array($variables)) {
-            throw new InvalidArgumentException(
-                'Generated template variables must be an array.',
-            );
+            return [];
         }
 
-        foreach ($variables as $variable) {
-            if (! is_array($variable)) {
-                throw new InvalidArgumentException(
-                    'Every generated template variable must be an array.',
-                );
-            }
-        }
-
-        return array_values($variables);
+        return array_values(array_filter(
+            $variables,
+            is_array(...),
+        ));
     }
 
     /**
-     * @param array<int, array<string, mixed>> $variables
-     *
+     * @param  array<int, array<string, mixed>>  $variables
      * @return array<int, string>
      */
     private static function extractVariableNames(array $variables): array
     {
         $names = [];
 
-        foreach ($variables as $index => $variable) {
-            if (! array_key_exists('name', $variable)) {
-                throw new InvalidArgumentException(
-                    "Generated variable at index [{$index}] is missing its name.",
-                );
+        foreach ($variables as $variable) {
+            $name = $variable['name'] ?? null;
+
+            if (! is_string($name) || trim($name) === '') {
+                continue;
             }
 
-            $name = $variable['name'];
-
-            if (! is_string($name)) {
-                throw new InvalidArgumentException(
-                    "Generated variable name at index [{$index}] must be a string.",
-                );
-            }
-
-            $name = trim($name);
-
-            if ($name === '') {
-                throw new InvalidArgumentException(
-                    "Generated variable name at index [{$index}] must not be empty.",
-                );
-            }
-
-            $names[] = $name;
+            $names[] = trim($name);
         }
 
         return $names;
     }
 
     /**
-     * @param array<int, array<string, mixed>> $sections
-     *
+     * @param  array<int, array<string, mixed>>  $sections
      * @return array<int, string>
      */
     private static function extractPlaceholderNames(
@@ -183,19 +146,11 @@ final readonly class GeneratedTemplateAnalysis
     ): array {
         $placeholders = [];
 
-        foreach ($sections as $index => $section) {
-            if (! array_key_exists('content', $section)) {
-                throw new InvalidArgumentException(
-                    "Generated section at index [{$index}] is missing its content.",
-                );
-            }
-
-            $content = $section['content'];
+        foreach ($sections as $section) {
+            $content = $section['content'] ?? null;
 
             if (! is_string($content)) {
-                throw new InvalidArgumentException(
-                    "Generated section content at index [{$index}] must be a string.",
-                );
+                continue;
             }
 
             $placeholders = [

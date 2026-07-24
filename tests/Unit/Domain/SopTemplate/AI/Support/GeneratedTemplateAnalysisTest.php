@@ -46,7 +46,7 @@ describe('GeneratedTemplateAnalysis', function (): void {
     it('analyzes a valid generated template', function (): void {
         $analysis = GeneratedTemplateAnalysis::analyze(
             validGeneratedTemplate(),
-            new PlaceholderExtractor(),
+            new PlaceholderExtractor,
         );
 
         expect($analysis->sections())->toHaveCount(2)
@@ -64,7 +64,7 @@ describe('GeneratedTemplateAnalysis', function (): void {
     it('extracts all variable names', function (): void {
         $analysis = GeneratedTemplateAnalysis::analyze(
             validGeneratedTemplate(),
-            new PlaceholderExtractor(),
+            new PlaceholderExtractor,
         );
 
         expect($analysis->variableNames())
@@ -77,7 +77,7 @@ describe('GeneratedTemplateAnalysis', function (): void {
     it('extracts all placeholder names', function (): void {
         $analysis = GeneratedTemplateAnalysis::analyze(
             validGeneratedTemplate(),
-            new PlaceholderExtractor(),
+            new PlaceholderExtractor,
         );
 
         expect($analysis->placeholderNames())
@@ -95,7 +95,7 @@ describe('GeneratedTemplateAnalysis', function (): void {
 
         $analysis = GeneratedTemplateAnalysis::analyze(
             $template,
-            new PlaceholderExtractor(),
+            new PlaceholderExtractor,
         );
 
         expect($analysis->placeholderNames())
@@ -110,7 +110,7 @@ describe('GeneratedTemplateAnalysis', function (): void {
 
         $analysis = GeneratedTemplateAnalysis::analyze(
             $template,
-            new PlaceholderExtractor(),
+            new PlaceholderExtractor,
         );
 
         expect($analysis->sections())
@@ -122,70 +122,69 @@ describe('GeneratedTemplateAnalysis', function (): void {
 
         $analysis = GeneratedTemplateAnalysis::analyze(
             $template,
-            new PlaceholderExtractor(),
+            new PlaceholderExtractor,
         );
 
         expect($analysis->variables())
             ->toBe($template['variables']);
     });
 
-    it('throws when sections are missing', function (): void {
+    it('treats missing sections as unavailable analysis data', function (): void {
         $template = validGeneratedTemplate();
 
         unset($template['sections']);
 
-        expect(fn () => GeneratedTemplateAnalysis::analyze(
+        $analysis = GeneratedTemplateAnalysis::analyze(
             $template,
-            new PlaceholderExtractor(),
-        ))
-            ->toThrow(
-                InvalidArgumentException::class,
-                'Generated template sections must be an array.',
-            );
+            new PlaceholderExtractor,
+        );
+
+        expect($analysis->sections())->toBe([])
+            ->and($analysis->placeholderNames())->toBe([]);
     });
 
-    it('throws when variables are missing', function (): void {
+    it('treats missing variables as unavailable analysis data', function (): void {
         $template = validGeneratedTemplate();
 
         unset($template['variables']);
 
-        expect(fn () => GeneratedTemplateAnalysis::analyze(
+        $analysis = GeneratedTemplateAnalysis::analyze(
             $template,
-            new PlaceholderExtractor(),
-        ))
-            ->toThrow(
-                InvalidArgumentException::class,
-                'Generated template variables must be an array.',
-            );
+            new PlaceholderExtractor,
+        );
+
+        expect($analysis->variables())->toBe([])
+            ->and($analysis->variableNames())->toBe([]);
     });
 
-    it('throws when a variable name is missing', function (): void {
+    it('ignores invalid variable names during analysis', function (): void {
         $template = validGeneratedTemplate();
 
         unset($template['variables'][0]['name']);
 
-        expect(fn () => GeneratedTemplateAnalysis::analyze(
+        $analysis = GeneratedTemplateAnalysis::analyze(
             $template,
-            new PlaceholderExtractor(),
-        ))
-            ->toThrow(
-                InvalidArgumentException::class,
-                'Generated variable at index [0] is missing its name.',
-            );
+            new PlaceholderExtractor,
+        );
+
+        expect($analysis->variableNames())->toBe([
+            'revision_no',
+        ]);
     });
 
-    it('throws when section content is not a string', function (): void {
+    it('ignores invalid section content during analysis', function (): void {
         $template = validGeneratedTemplate();
 
         $template['sections'][0]['content'] = 123;
 
-        expect(fn () => GeneratedTemplateAnalysis::analyze(
+        $analysis = GeneratedTemplateAnalysis::analyze(
             $template,
-            new PlaceholderExtractor(),
-        ))
-            ->toThrow(
-                InvalidArgumentException::class,
-                'Generated section content at index [0] must be a string.',
-            );
+            new PlaceholderExtractor,
+        );
+
+        expect($analysis->placeholderNames())->toBe([
+            'revision_no',
+            'effective_date',
+        ]);
     });
 });
