@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\SopTemplates\Pages;
 
+use App\Enums\ProductModule;
 use App\Filament\Concerns\ProcessesSopTemplateMetadataAi;
 use App\Filament\Resources\SopTemplates\SopTemplateResource;
 use App\Jobs\GenerateRegulatedTemplateJob;
 use App\Models\TemplateStatus;
+use App\Support\Modules\ModuleManager;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Auth;
@@ -24,8 +26,7 @@ class CreateSopTemplate extends CreateRecord
     private array $regulationTagIds = [];
 
     /**
-     * @param array<string, mixed> $data
-     *
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     protected function mutateFormDataBeforeCreate(array $data): array
@@ -58,13 +59,22 @@ class CreateSopTemplate extends CreateRecord
 
         $template->load('regulationTags');
 
+        if (! app(ModuleManager::class)->enabled(ProductModule::AI)) {
+            Notification::make()
+                ->title('Template created')
+                ->body('Add a draft version, sections, and variables to complete the template.')
+                ->success()
+                ->send();
+
+            return;
+        }
+
         $regulationTags = $template->regulationTags
             ->pluck('name')
             ->implode(', ');
 
         $template->update([
-            'generation_status' =>
-                $template::GENERATION_STATUS_PROCESSING,
+            'generation_status' => $template::GENERATION_STATUS_PROCESSING,
 
             'generation_progress' => 0,
         ]);

@@ -8,5 +8,5 @@ Route::get('/', function () {
 });
 
 Route::get('/sop-documents/{sopDocument}/print', SopDocumentPrintController::class)
-    ->middleware(['auth', 'can:view,sopDocument'])
+    ->middleware(['auth', 'module:dms', 'can:view,sopDocument'])
     ->name('sop-documents.print');

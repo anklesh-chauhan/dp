@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Domain\SopTemplate\AI\Services\SopTemplateIntegrityService;
+use App\Enums\ProductModule;
 use App\Models\SopTemplate;
 use App\Models\SopTemplateVersion;
 use App\Models\TemplateStatus;
 use App\Models\VariableDataType;
 use App\Services\AI\Contracts\TemplateGenerator;
+use App\Support\Modules\ModuleManager;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
@@ -39,6 +41,8 @@ class GenerateRegulatedTemplateJob implements ShouldQueue
         TemplateGenerator $aiService,
         SopTemplateIntegrityService $integrityService,
     ): void {
+        app(ModuleManager::class)->ensureEnabled(ProductModule::AI);
+
         try {
             $this->updateProgress(
                 status: 'Connecting to AI service...',

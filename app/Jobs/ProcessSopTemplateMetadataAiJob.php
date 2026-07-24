@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
+use App\Enums\ProductModule;
 use App\Models\AiTask;
 use App\Services\AI\Contracts\DocumentClassifier;
 use App\Services\AI\Contracts\DocumentDescriptionGenerator;
+use App\Support\Modules\ModuleManager;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use RuntimeException;
@@ -37,6 +39,8 @@ final class ProcessSopTemplateMetadataAiJob implements ShouldQueue
         DocumentDescriptionGenerator $descriptionGenerator,
         DocumentClassifier $classifier,
     ): void {
+        app(ModuleManager::class)->ensureEnabled(ProductModule::AI);
+
         $task = AiTask::query()->findOrFail($this->aiTaskId);
 
         try {

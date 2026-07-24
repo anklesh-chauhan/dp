@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Filament\Concerns;
 
+use App\Enums\ProductModule;
 use App\Jobs\ProcessSopTemplateMetadataAiJob;
 use App\Models\AiTask;
 use App\Models\Department;
-use App\Services\AI\Enums\AIUseCase;
 use App\Services\AI\Enums\AiTaskStatus;
+use App\Services\AI\Enums\AIUseCase;
+use App\Support\Modules\ModuleManager;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Auth;
 use Throwable;
@@ -25,6 +27,8 @@ trait ProcessesSopTemplateMetadataAi
 
     public function startMetadataAiGeneration(): void
     {
+        app(ModuleManager::class)->ensureEnabled(ProductModule::AI);
+
         if ($this->metadataAiTaskPolling) {
             return;
         }
@@ -121,14 +125,11 @@ trait ProcessesSopTemplateMetadataAi
         $this->metadataAiCurrentStep = $task->current_step;
 
         match ($task->status) {
-            AiTaskStatus::COMPLETED =>
-                $this->applyMetadataAiResult($task),
+            AiTaskStatus::COMPLETED => $this->applyMetadataAiResult($task),
 
-            AiTaskStatus::FAILED =>
-                $this->handleMetadataAiFailure($task),
+            AiTaskStatus::FAILED => $this->handleMetadataAiFailure($task),
 
-            AiTaskStatus::CANCELLED =>
-                $this->handleMetadataAiCancellation(),
+            AiTaskStatus::CANCELLED => $this->handleMetadataAiCancellation(),
 
             default => null,
         };

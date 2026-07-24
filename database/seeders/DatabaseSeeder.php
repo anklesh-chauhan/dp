@@ -2,7 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Enums\ProductModule;
+use App\Models\SopRole;
 use App\Models\User;
+use App\Support\Modules\ModuleManager;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\PermissionRegistrar;
@@ -18,9 +21,24 @@ class DatabaseSeeder extends Seeder
     {
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-        $this->call(SopModuleSeeder::class);
+        $moduleManager = app(ModuleManager::class);
+
+        if ($moduleManager->enabled(ProductModule::DMS)) {
+            $this->call(SopModuleSeeder::class);
+        }
+
+        if ($moduleManager->enabled(ProductModule::AI)) {
+            $this->call(AiModuleSeeder::class);
+        }
+
+        if ($moduleManager->enabled(ProductModule::QMS)) {
+            $this->call(QmsModuleSeeder::class);
+        }
 
         $user = User::firstOrCreate(['email' => 'admin@example.com'], ['name' => 'Super Admin', 'password' => bcrypt('password')]);
-        $user->assignRole('super_admin');
+
+        if ($moduleManager->enabled(ProductModule::DMS)) {
+            $user->assignRole(SopRole::ADMINISTRATOR);
+        }
     }
 }

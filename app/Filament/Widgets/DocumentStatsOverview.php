@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Widgets;
 
+use App\Enums\ProductModule;
 use App\Filament\Resources\DocumentIssuances\DocumentIssuanceResource;
 use App\Filament\Resources\SopApprovals\SopApprovalResource;
 use App\Filament\Resources\SopDocuments\SopDocumentResource;
@@ -15,6 +16,7 @@ use App\Models\SopApproval;
 use App\Models\SopDocument;
 use App\Models\SopTemplate;
 use App\Models\TemplateStatus;
+use App\Support\Modules\ModuleManager;
 use Filament\Support\Icons\Heroicon;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
@@ -27,6 +29,11 @@ class DocumentStatsOverview extends StatsOverviewWidget
     protected ?string $heading = 'Document Control Overview';
 
     protected ?string $description = 'Key metrics across SOPs, approvals, and controlled copies.';
+
+    public static function canView(): bool
+    {
+        return app(ModuleManager::class)->enabled(ProductModule::DMS);
+    }
 
     protected function getStats(): array
     {

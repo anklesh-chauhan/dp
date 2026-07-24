@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\SopTemplates;
 
+use App\Enums\ProductModule;
 use App\Filament\Concerns\HasGenerationPolling;
 use App\Filament\Resources\SopTemplates\Pages\CreateSopTemplate;
 use App\Filament\Resources\SopTemplates\Pages\EditSopTemplate;
@@ -14,9 +15,9 @@ use App\Filament\Resources\SopTemplates\RelationManagers\TemplateAuditRelationMa
 use App\Filament\Resources\SopTemplates\RelationManagers\VariableRelationManager;
 use App\Filament\Resources\SopTemplates\RelationManagers\VersionRelationManager;
 use App\Filament\Support\DocumentClassificationFormFields;
-use App\Models\AiTask;
 use App\Models\SopTemplate;
 use App\Models\TemplateStatus;
+use App\Support\Modules\ModuleManager;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -33,8 +34,8 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Set;
-use Filament\Schemas\Schema;
 use Filament\Schemas\Components\View;
+use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -76,7 +77,8 @@ class SopTemplateResource extends Resource
                     Section::make('AI Generation Tracker')
                         ->icon('heroicon-m-sparkles')
                         ->collapsible()
-                        ->visible(fn (?SopTemplate $record): bool => $record?->isGenerationInProgress() ?? false)
+                        ->visible(fn (?SopTemplate $record): bool => app(ModuleManager::class)->enabled(ProductModule::AI)
+                            && ($record?->isGenerationInProgress() ?? false))
                         ->schema([
                             Placeholder::make('progress_bar')
                                 ->hiddenLabel()
@@ -118,13 +120,12 @@ class SopTemplateResource extends Resource
                             ->live(),
 
                         View::make(
-                                'filament.sop-templates.metadata-ai-progress',
+                            'filament.sop-templates.metadata-ai-progress',
+                        )
+                            ->visible(
+                                fn (Component $livewire): bool => $livewire->metadataAiTaskPolling
                             )
-                                ->visible(
-                                    fn (Component $livewire): bool =>
-                                        $livewire->metadataAiTaskPolling
-                                )
-                                ->columnSpanFull(),
+                            ->columnSpanFull(),
 
                         Textarea::make('description')
                             ->columnSpanFull()
@@ -134,17 +135,15 @@ class SopTemplateResource extends Resource
                                     ->label('Generate with AI')
                                     ->icon('heroicon-m-sparkles')
                                     ->visible(
-                                        fn (callable $get): bool =>
-                                            filled($get('name'))
+                                        fn (callable $get): bool => app(ModuleManager::class)->enabled(ProductModule::AI)
+                                            && filled($get('name'))
                                             && filled($get('department_id'))
                                     )
                                     ->disabled(
-                                        fn (Component $livewire): bool =>
-                                            $livewire->metadataAiTaskPolling
+                                        fn (Component $livewire): bool => $livewire->metadataAiTaskPolling
                                     )
                                     ->action(
-                                        fn (Component $livewire) =>
-                                            $livewire->startMetadataAiGeneration()
+                                        fn (Component $livewire) => $livewire->startMetadataAiGeneration()
                                     )
                             ),
 

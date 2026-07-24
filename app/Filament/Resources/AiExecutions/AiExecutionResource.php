@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\AiExecutions;
 
+use App\Enums\ProductModule;
 use App\Filament\Resources\AiExecutions\Pages\ListAiExecutions;
 use App\Filament\Resources\AiExecutions\Pages\ViewAiExecution;
 use App\Filament\Resources\AiExecutions\RelationManagers\AttemptsRelationManager;
 use App\Models\AiExecution;
 use App\Services\AI\Enums\AiExecutionStatus;
+use App\Services\AI\Enums\AIUseCase;
+use App\Services\AI\Enums\LLMCapability;
+use App\Support\Modules\ModuleManager;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
@@ -36,6 +40,18 @@ final class AiExecutionResource extends Resource
     protected static ?string $modelLabel = 'AI Execution';
 
     protected static ?string $pluralModelLabel = 'AI Executions';
+
+    public static function canAccess(): bool
+    {
+        return app(ModuleManager::class)->enabled(ProductModule::AI)
+            && parent::canAccess();
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return app(ModuleManager::class)->enabled(ProductModule::AI)
+            && parent::shouldRegisterNavigation();
+    }
 
     public static function infolist(Schema $schema): Schema
     {
@@ -253,9 +269,9 @@ final class AiExecutionResource extends Resource
 
                 SelectFilter::make('use_case')
                     ->options(
-                        collect(\App\Services\AI\Enums\AIUseCase::cases())
+                        collect(AIUseCase::cases())
                             ->mapWithKeys(
-                                fn (\App\Services\AI\Enums\AIUseCase $useCase): array => [
+                                fn (AIUseCase $useCase): array => [
                                     $useCase->value => self::formatEnumState($useCase),
                                 ],
                             )
@@ -264,9 +280,9 @@ final class AiExecutionResource extends Resource
 
                 SelectFilter::make('capability')
                     ->options(
-                        collect(\App\Services\AI\Enums\LLMCapability::cases())
+                        collect(LLMCapability::cases())
                             ->mapWithKeys(
-                                fn (\App\Services\AI\Enums\LLMCapability $capability): array => [
+                                fn (LLMCapability $capability): array => [
                                     $capability->value => self::formatEnumState($capability),
                                 ],
                             )

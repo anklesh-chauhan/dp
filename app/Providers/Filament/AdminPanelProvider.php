@@ -50,6 +50,7 @@ class AdminPanelProvider extends PanelProvider
                 //
             ])
             ->middleware([
+                'module:dms',
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,
