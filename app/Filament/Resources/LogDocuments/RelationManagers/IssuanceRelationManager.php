@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\LogDocuments\RelationManagers;
 
-use App\Actions\Sop\DestroyIssuanceAction;
-use App\Actions\Sop\RecallIssuanceAction;
+use App\Domain\DMS\Actions\DestroyIssuanceAction;
+use App\Domain\DMS\Actions\RecallIssuanceAction;
 use App\Filament\Concerns\HandlesServiceExceptions;
 use App\Models\DocumentIssuance;
 use App\Models\IssuanceStatus;
