@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Domain\Shared\Contracts\ApprovalWorkflowStepDefinition;
 use Database\Factories\SopWorkflowStepFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Permission\Models\Role;
 
-class SopWorkflowStep extends Model
+class SopWorkflowStep extends Model implements ApprovalWorkflowStepDefinition
 {
     /** @use HasFactory<SopWorkflowStepFactory> */
     use HasFactory;
@@ -31,6 +32,13 @@ class SopWorkflowStep extends Model
             'step_no' => 'integer',
             'is_mandatory' => 'boolean',
         ];
+    }
+
+    public function approvalWorkflowStepDefinitionKey(): int|string|null
+    {
+        $key = $this->getKey();
+
+        return is_int($key) || is_string($key) ? $key : null;
     }
 
     /**

@@ -20,6 +20,10 @@
 - Document activation uses the canonical DMS service from approval workflows with the legacy SOP entry point retained.
 - `SopDocument` implements the Shared `ApprovableSubject` contract for reusable workflow identity and attribution without approval persistence changes.
 - Workflow submission authorization consumes `ApprovableSubject`, allowing non-DMS subjects to use the existing permission and ownership rules without changing SOP approval persistence.
+- Workflow selection consumes `ApprovableSubject` department metadata while retaining `SopWorkflow` as the existing persistence adapter and preserving department-specific precedence with global fallback.
+- Shared workflow-definition and selector contracts now sit in front of the DMS `SopWorkflow` selection adapter, with the existing SOP engine return type and approval persistence retained.
+- Workflow execution consumes Shared workflow-definition and step identity metadata while retaining `SopApproval` rows, status transitions, and submitted audit payloads.
+- Approval-instance initialization is behind a Shared persistence contract, with the DMS adapter retaining `SopApproval` creation, resubmission reset behavior, and foreign keys.
 - Focused seeder, entitlement, and document-version tests passed at the checkpoint.
 
 Always verify these statements against the worktree before relying on them.
@@ -52,6 +56,10 @@ Always verify these statements against the worktree before relying on them.
    Decouple approval subjects from `SopDocument` so controlled documents and future QMS records can share workflow infrastructure.
    - Slice 1 completed: Added the module-neutral Shared `ApprovableSubject` contract and adapted `SopDocument` without changing approval persistence.
    - Slice 2 completed: Decoupled workflow submission authorization from `SopDocument` by consuming `ApprovableSubject`, while retaining SOP workflow and approval persistence.
+   - Slice 3 completed: Decoupled workflow selection from `SopDocument` by consuming `ApprovableSubject` department metadata, while retaining the existing SOP workflow persistence adapter.
+   - Slice 4 completed: Added Shared workflow-definition and selector boundaries, adapted `SopWorkflow`, and moved department/global selection into the DMS adapter without changing SOP approval persistence.
+   - Slice 5 completed: Adapted `SopWorkflowStep` to Shared step metadata and made workflow execution consume Shared workflow and step identities without changing `SopApproval`, document status, or audit persistence.
+   - Slice 6 completed: Extracted approval-instance initialization behind a Shared persistence contract and retained `SopApproval` as the DMS adapter, including pending resets and duplicate prevention on resubmission.
 
 6. **Electronic signatures**
    Add a shared attributable signable record with meaning, signer, timestamp, hash, reason, IP address, and user agent.
@@ -73,4 +81,4 @@ Always verify these statements against the worktree before relying on them.
 
 ## Immediate next task
 
-Continue phase 5 by making workflow selection consume `ApprovableSubject` department metadata, while retaining the existing SOP workflow persistence adapter.
+Continue phase 5 by adapting `SopApproval` to a Shared approval-instance contract before decoupling decision execution.

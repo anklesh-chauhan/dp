@@ -7,6 +7,9 @@ namespace App\Services\Sop;
 use App\Domain\DMS\Services\DocumentActivationService;
 use App\Domain\DMS\Services\DocumentLockService;
 use App\Domain\Shared\Contracts\ApprovableSubject;
+use App\Domain\Shared\Contracts\ApprovalInstancePersistence;
+use App\Domain\Shared\Contracts\ApprovalWorkflowDefinition;
+use App\Domain\Shared\Contracts\ApprovalWorkflowDefinitionSelector;
 use App\Domain\Shared\Services\AuditLogService;
 use App\Exceptions\WorkflowException;
 use App\Models\ApprovalDecision;
@@ -15,7 +18,6 @@ use App\Models\SopApproval;
 use App\Models\SopAuditLog;
 use App\Models\SopDocument;
 use App\Models\SopRole;
-use App\Models\SopWorkflow;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
@@ -25,9 +27,11 @@ class WorkflowEngineService
         private readonly AuditLogService $auditLogService,
         private readonly DocumentLockService $documentLockService,
         private readonly DocumentActivationService $documentActivationService,
+        private readonly ApprovalWorkflowDefinitionSelector $workflowDefinitionSelector,
+        private readonly ApprovalInstancePersistence $approvalInstancePersistence,
     ) {}
 
-    public function start(SopDocument $document, User $submitter, ?SopWorkflow $workflow = null): void
+    public function start(SopDocument $document, User $submitter, ?ApprovalWorkflowDefinition $workflow = null): void
     {
         if (! $document->documentStatus?->hasCode(DocumentStatus::DRAFT)) {
             throw new WorkflowException(
@@ -49,39 +53,21 @@ class WorkflowEngineService
             );
         }
 
-        $workflow->loadMissing('steps.department');
-
-        $pendingDecisionId = ApprovalDecision::idFor(ApprovalDecision::PENDING);
         $underReviewStatusId = DocumentStatus::idFor(DocumentStatus::UNDER_REVIEW);
 
-        DB::transaction(function () use ($document, $workflow, $submitter, $pendingDecisionId, $underReviewStatusId): void {
+        DB::transaction(function () use ($document, $workflow, $submitter, $underReviewStatusId): void {
             if ($document->isLocked()) {
                 $this->documentLockService->unlockDocument($document, $submitter, force: true);
             }
 
-            $document->approvals()->update([
-                'approval_decision_id' => $pendingDecisionId,
-                'approved_by' => null,
-                'comments' => null,
-                'approved_at' => null,
-                'signature_hash' => null,
-            ]);
-
-            foreach ($workflow->steps as $step) {
-                SopApproval::query()->firstOrCreate([
-                    'document_id' => $document->id,
-                    'workflow_step_id' => $step->id,
-                ], [
-                    'approval_decision_id' => $pendingDecisionId,
-                ]);
-            }
+            $this->approvalInstancePersistence->initializeFor($document, $workflow);
 
             $document->update(['document_status_id' => $underReviewStatusId]);
 
             $this->auditLogService->log(
                 action: SopAuditLog::ACTION_SUBMITTED,
                 newValues: [
-                    'workflow_id' => $workflow->id,
+                    'workflow_id' => $workflow->approvalWorkflowDefinitionKey(),
                     'submitted_by' => $submitter->id,
                 ],
                 userId: $submitter->id,
@@ -189,23 +175,9 @@ class WorkflowEngineService
         });
     }
 
-    public function resolveWorkflow(SopDocument $document): ?SopWorkflow
+    public function resolveWorkflow(ApprovableSubject $subject): ?ApprovalWorkflowDefinition
     {
-        $departmentWorkflow = SopWorkflow::query()
-            ->where('is_active', true)
-            ->where('department_id', $document->department_id)
-            ->with(['steps.department'])
-            ->first();
-
-        if ($departmentWorkflow !== null) {
-            return $departmentWorkflow;
-        }
-
-        return SopWorkflow::query()
-            ->where('is_active', true)
-            ->where('department_id', null)
-            ->with(['steps.department'])
-            ->first();
+        return $this->workflowDefinitionSelector->selectFor($subject);
     }
 
     public function canSubmit(ApprovableSubject $subject, User $user): bool
