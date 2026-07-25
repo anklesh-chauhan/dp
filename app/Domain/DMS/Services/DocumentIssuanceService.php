@@ -2,12 +2,12 @@
 
 namespace App\Domain\DMS\Services;
 
+use App\Domain\Shared\Services\AuditLogService;
 use App\Models\DocumentIssuance;
 use App\Models\IssuanceStatus;
 use App\Models\SopAuditLog;
 use App\Models\SopDocument;
 use App\Models\User;
-use App\Services\Sop\AuditLogService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 

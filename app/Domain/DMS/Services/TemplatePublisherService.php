@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Domain\DMS\Services;
 
+use App\Domain\Shared\Services\AuditLogService;
 use App\Models\SopAuditLog;
 use App\Models\SopTemplate;
 use App\Models\SopTemplateVersion;
 use App\Models\TemplateStatus;
-use App\Services\Sop\AuditLogService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 

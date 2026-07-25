@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\SopTemplates\RelationManagers;
 
+use App\Domain\Shared\Services\AuditLogService;
 use App\Filament\Concerns\ManagesEditableTemplates;
 use App\Models\SopAuditLog;
 use App\Models\SopTemplateVersion;
 use App\Models\TemplateStatus;
-use App\Services\Sop\AuditLogService;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;

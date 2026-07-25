@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\Domain\DMS\Services;
 
 use App\Data\SopDocumentData;
+use App\Domain\Shared\Services\AuditLogService;
 use App\Models\DocumentStatus;
 use App\Models\SopAuditLog;
 use App\Models\SopDocument;
 use App\Models\SopTemplate;
 use App\Models\SopTemplateVersion;
 use App\Models\TemplateStatus;
-use App\Services\Sop\AuditLogService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Domain\Shared\Services\AuditLogService;
 use App\Models\DocumentIssuance;
 use App\Models\SopAuditLog;
 use App\Models\SopDocument;
-use App\Services\Sop\AuditLogService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;

@@ -2,11 +2,11 @@
 
 namespace App\Domain\DMS\Services;
 
+use App\Domain\Shared\Services\AuditLogService;
 use App\Models\DocumentStatus;
 use App\Models\SopAuditLog;
 use App\Models\SopDocument;
 use App\Models\User;
-use App\Services\Sop\AuditLogService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;

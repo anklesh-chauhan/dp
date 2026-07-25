@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Actions\Sop\CreateDocumentRevisionAction as LegacyCreateDocumentRevisionAction;
 use App\Domain\DMS\Actions\CreateDocumentRevisionAction;
+use App\Domain\DMS\Services\DocumentActivationService;
 use App\Domain\DMS\Services\DocumentRevisionService;
 use App\Models\DocumentStatus;
 use App\Models\SopAuditLog;
@@ -12,7 +13,6 @@ use App\Models\SopTemplate;
 use App\Models\SopTemplateVersion;
 use App\Models\TemplateStatus;
 use App\Models\User;
-use App\Services\Sop\DocumentActivationService;
 use App\Services\Sop\DocumentRevisionService as LegacyDocumentRevisionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;

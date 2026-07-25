@@ -16,6 +16,10 @@
 - Template publishing uses canonical DMS namespaces with legacy compatibility entry points.
 - Controlled-document generation uses canonical DMS namespaces for SOP and log creation with legacy compatibility entry points.
 - Document numbering, SOP-reference resolution, and template-variable resolution use canonical DMS services with legacy compatibility entry points.
+- Audit logging uses a canonical Shared service across DMS and workflow consumers with the legacy SOP entry point and persistence retained.
+- Document activation uses the canonical DMS service from approval workflows with the legacy SOP entry point retained.
+- `SopDocument` implements the Shared `ApprovableSubject` contract for reusable workflow identity and attribution without approval persistence changes.
+- Workflow submission authorization consumes `ApprovableSubject`, allowing non-DMS subjects to use the existing permission and ownership rules without changing SOP approval persistence.
 - Focused seeder, entitlement, and document-version tests passed at the checkpoint.
 
 Always verify these statements against the worktree before relying on them.
@@ -31,7 +35,7 @@ Always verify these statements against the worktree before relying on them.
 3. **Permission and seeder split — completed**
    Extract legacy DMS permissions and role assignment from `SopModuleSeeder` into Core and DMS seeders. Keep AI and future QMS permissions in their module seeders. Test DMS-only and DMS+AI seeding.
 
-4. **Domain boundaries — in progress**
+4. **Domain boundaries — completed**
    Establish Shared, DMS, QMS, and AI namespaces incrementally. Avoid a large rename. Introduce generic controlled-document language before renaming persistent tables.
    - Slice 1 completed: Added the DMS `ControlledDocument` contract and adapted `SopDocument`.
    - Slice 2 completed: Moved document revision action and service ownership into the DMS domain while retaining legacy namespace compatibility.
@@ -41,9 +45,13 @@ Always verify these statements against the worktree before relying on them.
    - Slice 6 completed: Moved template publishing action and service ownership into the DMS domain while retaining legacy namespace compatibility.
    - Slice 7 completed: Moved controlled-document generation action and service ownership into the DMS domain while retaining legacy namespace compatibility.
    - Slice 8 completed: Moved document numbering, SOP-reference resolution, and template-variable resolution into the DMS domain while retaining legacy namespace compatibility.
+   - Slice 9 completed: Established canonical Shared ownership for audit logging while retaining the legacy SOP entry point and persistence.
+   - Slice 10 completed: Moved approval-driven document activation into the DMS domain while retaining legacy namespace compatibility and supersession behavior.
 
-5. **Reusable approval workflow**
+5. **Reusable approval workflow — in progress**
    Decouple approval subjects from `SopDocument` so controlled documents and future QMS records can share workflow infrastructure.
+   - Slice 1 completed: Added the module-neutral Shared `ApprovableSubject` contract and adapted `SopDocument` without changing approval persistence.
+   - Slice 2 completed: Decoupled workflow submission authorization from `SopDocument` by consuming `ApprovableSubject`, while retaining SOP workflow and approval persistence.
 
 6. **Electronic signatures**
    Add a shared attributable signable record with meaning, signer, timestamp, hash, reason, IP address, and user agent.
@@ -65,4 +73,4 @@ Always verify these statements against the worktree before relying on them.
 
 ## Immediate next task
 
-Continue phase 4 by establishing the Shared audit boundary for reusable audit infrastructure, preserving the legacy SOP audit entry point and persistence.
+Continue phase 5 by making workflow selection consume `ApprovableSubject` department metadata, while retaining the existing SOP workflow persistence adapter.

@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services\Sop;
 
+use App\Domain\DMS\Services\DocumentActivationService;
 use App\Domain\DMS\Services\DocumentLockService;
+use App\Domain\Shared\Contracts\ApprovableSubject;
+use App\Domain\Shared\Services\AuditLogService;
 use App\Exceptions\WorkflowException;
 use App\Models\ApprovalDecision;
 use App\Models\DocumentStatus;
@@ -205,7 +208,7 @@ class WorkflowEngineService
             ->first();
     }
 
-    public function canSubmit(SopDocument $document, User $user): bool
+    public function canSubmit(ApprovableSubject $subject, User $user): bool
     {
         if (! $user->can('Submit:SopDocument') && ! $user->can('Update:SopDocument')) {
             return false;
@@ -216,14 +219,15 @@ class WorkflowEngineService
         }
 
         if ($user->hasRole(SopRole::MAKER)) {
-            if ($user->department_id !== null && $user->department_id !== $document->department_id) {
+            if ($user->department_id !== null && $user->department_id !== $subject->approvalSubjectDepartmentId()) {
                 return false;
             }
 
             return true;
         }
 
-        return $document->created_by === $user->id || $document->owner_id === $user->id;
+        return $subject->approvalSubjectCreatedById() === $user->id
+            || $subject->approvalSubjectOwnerId() === $user->id;
     }
 
     private function decide(SopApproval $approval, User $approver, int $decisionId, int $documentStatusId, string $auditAction, ?string $comments): SopApproval

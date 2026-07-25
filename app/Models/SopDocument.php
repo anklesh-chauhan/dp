@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Concerns\Lockable;
 use App\Domain\DMS\Contracts\ControlledDocument;
+use App\Domain\Shared\Contracts\ApprovableSubject;
 use Database\Factories\SopDocumentFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -17,7 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
-class SopDocument extends Model implements ControlledDocument
+class SopDocument extends Model implements ApprovableSubject, ControlledDocument
 {
     /** @use HasFactory<SopDocumentFactory> */
     use HasFactory, Lockable, SoftDeletes;
@@ -81,6 +82,38 @@ class SopDocument extends Model implements ControlledDocument
     public function controlledDocumentVersion(): int
     {
         return (int) $this->version;
+    }
+
+    public function approvalSubjectKey(): int|string|null
+    {
+        $key = $this->getKey();
+
+        return is_int($key) || is_string($key) ? $key : null;
+    }
+
+    public function approvalSubjectReference(): string
+    {
+        return $this->controlledDocumentReference();
+    }
+
+    public function approvalSubjectTitle(): string
+    {
+        return $this->controlledDocumentTitle();
+    }
+
+    public function approvalSubjectDepartmentId(): ?int
+    {
+        return $this->department_id === null ? null : (int) $this->department_id;
+    }
+
+    public function approvalSubjectCreatedById(): ?int
+    {
+        return $this->created_by === null ? null : (int) $this->created_by;
+    }
+
+    public function approvalSubjectOwnerId(): ?int
+    {
+        return $this->owner_id === null ? null : (int) $this->owner_id;
     }
 
     public function isEditable(): bool
