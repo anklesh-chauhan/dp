@@ -31,6 +31,8 @@ class SopApprovalFactory extends Factory
             'comments' => fake()->optional()->sentence(),
             'approved_at' => now(),
             'signature_hash' => hash('sha256', fake()->uuid()),
+            'signature_ip_address' => fake()->ipv4(),
+            'signature_user_agent' => fake()->userAgent(),
         ];
     }
 }

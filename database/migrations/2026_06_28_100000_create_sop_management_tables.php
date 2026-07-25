@@ -151,6 +151,8 @@ return new class extends Migration
             $table->text('comments')->nullable();
             $table->timestamp('approved_at')->nullable();
             $table->string('signature_hash')->nullable();
+            $table->ipAddress('signature_ip_address')->nullable();
+            $table->text('signature_user_agent')->nullable();
             $table->timestamps();
             $table->unique(['document_id', 'workflow_step_id']);
         });

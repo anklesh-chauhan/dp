@@ -4,14 +4,18 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Exceptions\WorkflowException;
+use App\Domain\Shared\Contracts\ApprovableSubject;
+use App\Domain\Shared\Contracts\ApprovalDecisionAuthorization;
+use App\Domain\Shared\Contracts\ApprovalInstance;
+use App\Domain\Shared\Contracts\ApprovalWorkflowStepDefinition;
 use Database\Factories\SopApprovalFactory;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class SopApproval extends Model
+class SopApproval extends Model implements ApprovalInstance
 {
     /** @use HasFactory<SopApprovalFactory> */
     use HasFactory;
@@ -24,6 +28,8 @@ class SopApproval extends Model
         'comments',
         'approved_at',
         'signature_hash',
+        'signature_ip_address',
+        'signature_user_agent',
     ];
 
     protected function casts(): array
@@ -31,6 +37,83 @@ class SopApproval extends Model
         return [
             'approved_at' => 'datetime',
         ];
+    }
+
+    public function approvalInstanceKey(): int|string|null
+    {
+        $key = $this->getKey();
+
+        return is_int($key) || is_string($key) ? $key : null;
+    }
+
+    public function approvalInstanceSubject(): ApprovableSubject
+    {
+        return $this->document;
+    }
+
+    public function approvalInstanceWorkflowStepDefinition(): ApprovalWorkflowStepDefinition
+    {
+        return $this->workflowStep;
+    }
+
+    public function approvalInstanceDecisionCode(): ?string
+    {
+        return $this->approvalDecision?->code;
+    }
+
+    public function approvalInstanceApproverId(): ?int
+    {
+        return $this->approved_by === null ? null : (int) $this->approved_by;
+    }
+
+    public function approvalInstanceComments(): ?string
+    {
+        return $this->comments;
+    }
+
+    public function approvalInstanceDecidedAt(): ?DateTimeInterface
+    {
+        return $this->approved_at;
+    }
+
+    public function approvalInstanceSignatureHash(): ?string
+    {
+        return $this->signature_hash;
+    }
+
+    public function signatureMeaning(): ?string
+    {
+        return $this->approvalInstanceDecisionCode();
+    }
+
+    public function signatureSignerId(): ?int
+    {
+        return $this->approvalInstanceApproverId();
+    }
+
+    public function signatureTimestamp(): ?DateTimeInterface
+    {
+        return $this->approvalInstanceDecidedAt();
+    }
+
+    public function signatureHash(): ?string
+    {
+        return $this->approvalInstanceSignatureHash();
+    }
+
+    public function signatureReason(): ?string
+    {
+        return $this->approvalInstanceComments();
+    }
+
+    public function signatureIpAddress(): ?string
+    {
+        return $this->signature_ip_address;
+    }
+
+    public function signatureUserAgent(): ?string
+    {
+        return $this->signature_user_agent;
     }
 
     /**
@@ -122,70 +205,8 @@ class SopApproval extends Model
 
     public function canBeApprovedBy(User $user): bool
     {
-        if (! $this->isActionable()) {
-            throw new WorkflowException(
-                message: 'This approval step is not currently available.'
-            );
-        }
-
-        $this->loadMissing([
-            'workflowStep.role',
-            'workflowStep.department',
-            'document',
-        ]);
-
-        if (! $user->can('Approve:SopDocument')) {
-            throw new WorkflowException(
-                message: 'You do not have permission to approve SOP documents.'
-            );
-        }
-
-        if (! $user->hasRole($this->workflowStep->role)) {
-            throw new WorkflowException(
-                message: "Only users with the '{$this->workflowStep->role->name}' role can approve this step."
-            );
-        }
-
-        if ($this->violatesSeparationOfDuties($user)) {
-            throw new WorkflowException(
-                message: 'You cannot approve this document because of the separation of duties policy.'
-            );
-        }
-
-        if ($this->violatesDepartmentScope($user)) {
-            throw new WorkflowException(
-                message: 'You can only approve documents for your own department.'
-            );
-        }
+        app(ApprovalDecisionAuthorization::class)->authorizeDecision($this, $user);
 
         return true;
-    }
-
-    private function violatesSeparationOfDuties(User $user): bool
-    {
-        if ($user->hasRole(SopRole::ADMINISTRATOR)) {
-            return false;
-        }
-
-        return $this->document->created_by === $user->id;
-    }
-
-    private function violatesDepartmentScope(User $user): bool
-    {
-        if ($user->hasRole(SopRole::ADMINISTRATOR)) {
-            return false;
-        }
-
-        if ($user->department_id === null) {
-            return false;
-        }
-
-        $requiredDepartmentId = $this->workflowStep->resolveRequiredDepartmentId($this->document->department_id);
-
-        if ($requiredDepartmentId === null) {
-            return false;
-        }
-
-        return $requiredDepartmentId !== $user->department_id;
     }
 }

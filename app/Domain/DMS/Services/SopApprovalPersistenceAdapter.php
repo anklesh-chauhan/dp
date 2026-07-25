@@ -32,6 +32,8 @@ class SopApprovalPersistenceAdapter implements ApprovalInstancePersistence
             'comments' => null,
             'approved_at' => null,
             'signature_hash' => null,
+            'signature_ip_address' => null,
+            'signature_user_agent' => null,
         ]);
 
         foreach ($workflow->approvalWorkflowStepDefinitions() as $step) {
