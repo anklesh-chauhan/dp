@@ -14,6 +14,7 @@ use App\Domain\Shared\Contracts\ApprovalSubmissionAuthorization;
 use App\Domain\Shared\Contracts\ApprovalSubmissionLifecycle;
 use App\Domain\Shared\Contracts\ApprovalWorkflowDefinition;
 use App\Domain\Shared\Contracts\ApprovalWorkflowDefinitionSelector;
+use App\Domain\Shared\Contracts\ElectronicSignatureHasher;
 use App\Domain\Shared\Enums\ApprovalDecisionCode;
 use App\Exceptions\WorkflowException;
 use App\Models\User;
@@ -30,6 +31,7 @@ class ApprovalWorkflowEngineService
         private readonly ApprovalDecisionAuthorization $approvalDecisionAuthorization,
         private readonly ApprovalDecisionOutcome $approvalDecisionOutcome,
         private readonly ApprovalDecisionPersistence $approvalDecisionPersistence,
+        private readonly ElectronicSignatureHasher $electronicSignatureHasher,
         private readonly Request $request,
     ) {}
 
@@ -62,30 +64,7 @@ class ApprovalWorkflowEngineService
     {
         $this->approvalDecisionAuthorization->authorizeDecision($approval, $approver);
 
-        $decidedAt = now();
-        $signatureHash = hash(
-            'sha256',
-            $approval->approvalInstanceKey().'|'.$approver->id.'|'.$decidedAt->toISOString()
-        );
-
-        return DB::transaction(function () use ($approval, $approver, $comments, $decidedAt, $signatureHash): ApprovalInstance {
-            $approval = $this->approvalDecisionPersistence->recordDecision(
-                approval: $approval,
-                decisionCode: ApprovalDecisionCode::APPROVED->value,
-                decidedById: $approver->id,
-                comments: $comments,
-                decidedAt: $decidedAt,
-                signatureHash: $signatureHash,
-                signatureIpAddress: $this->request->ip(),
-                signatureUserAgent: $this->request->userAgent(),
-            );
-
-            return $this->approvalDecisionOutcome->applyOutcome(
-                approval: $approval,
-                decisionCode: ApprovalDecisionCode::APPROVED->value,
-                decidedBy: $approver,
-            );
-        });
+        return $this->decide($approval, $approver, ApprovalDecisionCode::APPROVED, $comments);
     }
 
     public function reject(ApprovalInstance $approval, User $approver, ?string $comments = null): ApprovalInstance
@@ -104,23 +83,7 @@ class ApprovalWorkflowEngineService
     {
         $this->approvalDecisionAuthorization->authorizeDecision($approval, $approver);
 
-        return DB::transaction(function () use ($approval, $approver, $comments): ApprovalInstance {
-            $approval = $this->approvalDecisionPersistence->recordDecision(
-                approval: $approval,
-                decisionCode: ApprovalDecisionCode::RETURNED->value,
-                decidedById: $approver->id,
-                comments: $comments,
-                decidedAt: now(),
-                signatureIpAddress: $this->request->ip(),
-                signatureUserAgent: $this->request->userAgent(),
-            );
-
-            return $this->approvalDecisionOutcome->applyOutcome(
-                approval: $approval,
-                decisionCode: ApprovalDecisionCode::RETURNED->value,
-                decidedBy: $approver,
-            );
-        });
+        return $this->decide($approval, $approver, ApprovalDecisionCode::RETURNED, $comments);
     }
 
     public function resolveWorkflow(ApprovableSubject $subject): ?ApprovalWorkflowDefinition
@@ -135,15 +98,29 @@ class ApprovalWorkflowEngineService
 
     private function decide(ApprovalInstance $approval, User $approver, ApprovalDecisionCode $decisionCode, ?string $comments): ApprovalInstance
     {
-        return DB::transaction(function () use ($approval, $approver, $decisionCode, $comments): ApprovalInstance {
+        $decidedAt = now();
+        $signatureIpAddress = $this->request->ip();
+        $signatureUserAgent = $this->request->userAgent();
+        $signatureHash = $this->electronicSignatureHasher->hashFor(
+            recordKey: $approval->approvalInstanceKey(),
+            meaning: $decisionCode->value,
+            signerId: $approver->id,
+            signedAt: $decidedAt,
+            reason: $comments,
+            ipAddress: $signatureIpAddress,
+            userAgent: $signatureUserAgent,
+        );
+
+        return DB::transaction(function () use ($approval, $approver, $decisionCode, $comments, $decidedAt, $signatureHash, $signatureIpAddress, $signatureUserAgent): ApprovalInstance {
             $approval = $this->approvalDecisionPersistence->recordDecision(
                 approval: $approval,
                 decisionCode: $decisionCode->value,
                 decidedById: $approver->id,
                 comments: $comments,
-                decidedAt: now(),
-                signatureIpAddress: $this->request->ip(),
-                signatureUserAgent: $this->request->userAgent(),
+                decidedAt: $decidedAt,
+                signatureHash: $signatureHash,
+                signatureIpAddress: $signatureIpAddress,
+                signatureUserAgent: $signatureUserAgent,
             );
 
             return $this->approvalDecisionOutcome->applyOutcome(

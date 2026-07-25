@@ -6,7 +6,7 @@ namespace App\Domain\Shared\Contracts;
 
 use DateTimeInterface;
 
-interface ApprovalInstance extends ElectronicSignatureMetadata
+interface ApprovalInstance extends ElectronicSignatureRecord
 {
     public function approvalInstanceKey(): int|string|null;
 

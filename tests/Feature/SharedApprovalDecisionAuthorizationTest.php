@@ -3,9 +3,13 @@
 declare(strict_types=1);
 
 use App\Actions\Sop\ApproveDocumentAction;
+use App\Actions\Sop\RejectDocumentAction;
+use App\Actions\Sop\ReturnDocumentAction;
 use App\Domain\Shared\Contracts\ApprovalDecisionAuthorization;
 use App\Domain\Shared\Contracts\ApprovalDecisionOutcome;
 use App\Domain\Shared\Contracts\ApprovalInstance;
+use App\Domain\Shared\Contracts\ElectronicSignatureHasher;
+use App\Domain\Shared\Contracts\ElectronicSignatureVerifier;
 use App\Exceptions\WorkflowException;
 use App\Models\ApprovalDecision;
 use App\Models\Department;
@@ -230,14 +234,71 @@ it('retains the existing DMS action return type for Filament callers', function 
         $this->approver,
         'Approved through the DMS action.',
     );
+    $result->refresh();
+    $expectedSignatureHash = app(ElectronicSignatureHasher::class)->hashFor(
+        recordKey: $result->id,
+        meaning: ApprovalDecision::APPROVED,
+        signerId: $this->approver->id,
+        signedAt: $result->approved_at,
+        reason: 'Approved through the DMS action.',
+        ipAddress: '203.0.113.42',
+        userAgent: 'DocuPharma Signature Test',
+    );
 
     expect($result)->toBe($this->approval)
         ->and($result)->toBeInstanceOf(SopApproval::class)
-        ->and($result->refresh()->approvalDecision?->code)->toBe(ApprovalDecision::APPROVED)
+        ->and($result->approvalDecision?->code)->toBe(ApprovalDecision::APPROVED)
+        ->and($result->signatureHash())->toBe($expectedSignatureHash)
+        ->and(app(ElectronicSignatureVerifier::class)->isValid($result))->toBeTrue()
         ->and($result->signatureIpAddress())->toBe('203.0.113.42')
         ->and($result->signatureUserAgent())->toBe('DocuPharma Signature Test')
         ->and($this->document->refresh()->documentStatus?->code)->toBe(DocumentStatus::EFFECTIVE);
 });
+
+it('canonically signs rejected and returned decisions through existing DMS actions', function (
+    string $actionClass,
+    string $decisionCode,
+    string $expectedStatus,
+): void {
+    request()->server->set('REMOTE_ADDR', '203.0.113.43');
+    request()->headers->set('User-Agent', 'DocuPharma Terminal Signature Test');
+    $reason = "Decision recorded as {$decisionCode}.";
+
+    $result = app($actionClass)->execute($this->approval, $this->approver, $reason);
+    $result->refresh();
+    $expectedSignatureHash = app(ElectronicSignatureHasher::class)->hashFor(
+        recordKey: $result->id,
+        meaning: $decisionCode,
+        signerId: $this->approver->id,
+        signedAt: $result->approved_at,
+        reason: $reason,
+        ipAddress: '203.0.113.43',
+        userAgent: 'DocuPharma Terminal Signature Test',
+    );
+
+    expect($result)->toBe($this->approval)
+        ->and($result)->toBeInstanceOf(SopApproval::class)
+        ->and($result->approvalDecision?->code)->toBe($decisionCode)
+        ->and($result->signatureMeaning())->toBe($decisionCode)
+        ->and($result->signatureSignerId())->toBe($this->approver->id)
+        ->and($result->signatureReason())->toBe($reason)
+        ->and($result->signatureHash())->toBe($expectedSignatureHash)
+        ->and(app(ElectronicSignatureVerifier::class)->isValid($result))->toBeTrue()
+        ->and($result->signatureIpAddress())->toBe('203.0.113.43')
+        ->and($result->signatureUserAgent())->toBe('DocuPharma Terminal Signature Test')
+        ->and($this->document->refresh()->documentStatus?->code)->toBe($expectedStatus);
+})->with([
+    'rejected' => [
+        RejectDocumentAction::class,
+        ApprovalDecision::REJECTED,
+        DocumentStatus::REJECTED,
+    ],
+    'returned' => [
+        ReturnDocumentAction::class,
+        ApprovalDecision::RETURNED,
+        DocumentStatus::DRAFT,
+    ],
+]);
 
 it('preserves terminal decision status, unlocking, and audit payloads', function (
     string $decisionCode,

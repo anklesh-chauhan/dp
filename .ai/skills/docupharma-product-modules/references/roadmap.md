@@ -36,6 +36,9 @@
 - Canonical workflow-engine ownership is in the Shared domain, with the legacy SOP service retained as a compatibility subclass and all product behavior supplied through Shared contracts and DMS adapters.
 - Shared electronic-signature metadata now covers meaning, signer, timestamp, hash, reason, IP address, and user agent; `SopApproval` adapts its existing decision, approver, approval timestamp, signature hash, and comments while returning null for metadata not present in the existing approval schema.
 - SOP approval decisions now persist request IP address and user agent through the Shared decision-persistence boundary, reset that context on workflow reinitialization, and expose it through the Shared electronic-signature metadata contract.
+- Approved SOP decisions now use a module-neutral Shared hashing contract with deterministic SHA-256 hashing over canonical record identity, meaning, signer, UTC timestamp, reason, IP address, and user-agent metadata, and persisted approvals can reproduce their stored hash.
+- Approved, rejected, and returned SOP decisions now share the same atomic canonical-signature path while retaining existing authorization, DMS action return types, status transitions, audit payloads, and transactional rollback behavior.
+- Shared electronic-signature integrity verification now reconstructs canonical metadata hashes and uses timing-safe comparison; persisted approved, rejected, and returned SOP decisions adapt to this reusable verification boundary.
 - Focused seeder, entitlement, and document-version tests passed at the checkpoint.
 
 Always verify these statements against the worktree before relying on them.
@@ -83,10 +86,13 @@ Always verify these statements against the worktree before relying on them.
    - Slice 15 completed: Introduced Shared approval decision-code vocabulary for workflow orchestration while retaining existing `approval_decisions` lookup rows, codes, foreign keys, DMS model constants, and string adapter boundaries.
    - Slice 16 completed: Moved canonical workflow-engine ownership into the Shared domain while retaining `App\Services\Sop\WorkflowEngineService` as a compatibility subclass and preserving existing action, Filament, and container-resolution behavior.
 
-6. **Electronic signatures**
+6. **Electronic signatures — completed**
    Add a shared attributable signable record with meaning, signer, timestamp, hash, reason, IP address, and user agent.
    - Slice 1 completed: Added the module-neutral Shared electronic-signature metadata contract and adapted existing SOP approval signature metadata without persistence changes.
    - Slice 2 completed: Added IP address and user-agent fields to the original SOP approval schema, captured them for approval decisions through Shared orchestration, persisted them in the DMS adapter, and reset them on workflow reinitialization.
+   - Slice 3 completed: Extracted electronic-signature hashing behind a Shared contract, added deterministic canonical SHA-256 hashing across all attributable metadata, and made approved SOP decisions use the new boundary with reproducible persisted hashes.
+   - Slice 4 completed: Applied canonical Shared electronic signatures to rejected and returned decisions through the existing DMS actions while preserving status, audit, authorization, and rollback behavior.
+   - Slice 5 completed: Added module-neutral electronic-signature record and verifier contracts, implemented canonical timing-safe integrity verification, and adapted persisted SOP approval decisions to the verification boundary.
 
 7. **Module-aware presentation**
    Separate DMS and QMS dashboards, settings, help, reports, navigation groups, and metrics.
@@ -105,4 +111,4 @@ Always verify these statements against the worktree before relying on them.
 
 ## Immediate next task
 
-Continue phase 6 by extracting electronic-signature creation and canonical metadata hashing behind a Shared boundary while retaining existing approval behavior.
+Begin phase 7 with the smallest module-aware presentation slice by separating DMS and QMS navigation and dashboard ownership while retaining server-side entitlement enforcement.

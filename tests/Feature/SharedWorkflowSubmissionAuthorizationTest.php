@@ -471,11 +471,9 @@ it('routes Shared approval instances through configured decision boundaries', fu
     $approval = Mockery::mock(ApprovalInstance::class);
     $approver = User::factory()->create();
 
-    if ($decisionMethod === 'approve') {
-        $approval->shouldReceive('approvalInstanceKey')
-            ->once()
-            ->andReturn('shared-approval-42');
-    }
+    $approval->shouldReceive('approvalInstanceKey')
+        ->once()
+        ->andReturn('shared-approval-42');
 
     $authorization = Mockery::mock(ApprovalDecisionAuthorization::class);
     $authorization->shouldReceive('authorizeDecision')

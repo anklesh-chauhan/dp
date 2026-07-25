@@ -16,6 +16,10 @@ use App\Domain\Shared\Contracts\ApprovalInstancePersistence;
 use App\Domain\Shared\Contracts\ApprovalSubmissionAuthorization;
 use App\Domain\Shared\Contracts\ApprovalSubmissionLifecycle;
 use App\Domain\Shared\Contracts\ApprovalWorkflowDefinitionSelector;
+use App\Domain\Shared\Contracts\ElectronicSignatureHasher;
+use App\Domain\Shared\Contracts\ElectronicSignatureVerifier;
+use App\Domain\Shared\Services\CanonicalElectronicSignatureVerifier;
+use App\Domain\Shared\Services\Sha256ElectronicSignatureHasher;
 use App\Models\DocumentType;
 use App\Observers\DocumentTypeObserver;
 use App\Support\Sop\VariableTypes\VariableTypeRegistry;
@@ -35,6 +39,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(ApprovalSubmissionAuthorization::class, SopApprovalSubmissionAuthorizationAdapter::class);
         $this->app->bind(ApprovalSubmissionLifecycle::class, SopApprovalSubmissionLifecycleAdapter::class);
         $this->app->bind(ApprovalWorkflowDefinitionSelector::class, SopWorkflowDefinitionSelector::class);
+        $this->app->bind(ElectronicSignatureHasher::class, Sha256ElectronicSignatureHasher::class);
+        $this->app->bind(ElectronicSignatureVerifier::class, CanonicalElectronicSignatureVerifier::class);
         $this->app->singleton(VariableTypeRegistry::class, fn (): VariableTypeRegistry => VariableTypeRegistry::default());
     }
 

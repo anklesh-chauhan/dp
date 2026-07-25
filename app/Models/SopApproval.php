@@ -86,6 +86,11 @@ class SopApproval extends Model implements ApprovalInstance
         return $this->approvalInstanceDecisionCode();
     }
 
+    public function signatureRecordKey(): int|string|null
+    {
+        return $this->approvalInstanceKey();
+    }
+
     public function signatureSignerId(): ?int
     {
         return $this->approvalInstanceApproverId();
