@@ -4,16 +4,9 @@ declare(strict_types=1);
 
 namespace App\Actions\Sop;
 
-use App\Models\SopTemplate;
-use App\Models\SopTemplateVersion;
-use App\Services\Sop\TemplatePublisherService;
+use App\Domain\DMS\Actions\PublishTemplateAction as DmsPublishTemplateAction;
 
-class PublishTemplateAction
-{
-    public function __construct(private readonly TemplatePublisherService $publisherService) {}
-
-    public function execute(SopTemplate $template, int $userId, ?string $changeReason = null): SopTemplateVersion
-    {
-        return $this->publisherService->publish($template, $userId, $changeReason);
-    }
-}
+/**
+ * @deprecated Use the DMS domain action.
+ */
+class PublishTemplateAction extends DmsPublishTemplateAction {}

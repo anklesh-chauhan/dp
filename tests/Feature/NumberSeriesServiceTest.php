@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\DMS\Services\DocumentNumberGeneratorService;
 use App\Enums\NumberSeriesOverflowBehavior;
 use App\Exceptions\NumberSeriesOverflowException;
 use App\Models\Department;
@@ -10,7 +11,6 @@ use App\Models\NumberSeries;
 use App\Models\NumberSeriesCounter;
 use App\Models\NumberSeriesSetting;
 use App\Services\NumberSeries\NumberSeriesService;
-use App\Services\Sop\DocumentNumberGeneratorService;
 use App\Support\NumberSeries\NumberSeriesRegistry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 

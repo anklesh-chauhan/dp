@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\SopDocuments\Pages;
 
-use App\Actions\Sop\CreateDocumentFromTemplateAction;
 use App\Data\SopDocumentData;
+use App\Domain\DMS\Actions\CreateDocumentFromTemplateAction;
 use App\Filament\Resources\SopDocuments\SopDocumentResource;
 use App\Models\SopTemplateVersion;
 use Carbon\CarbonImmutable;

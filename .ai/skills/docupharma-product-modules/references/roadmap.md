@@ -13,6 +13,9 @@
 - Document issuance, recall, and controlled-copy destruction use canonical DMS namespaces with legacy compatibility entry points.
 - Document and template retention lifecycle actions use canonical DMS namespaces with legacy compatibility entry points.
 - Document locking uses canonical DMS namespaces across Filament and workflow consumers with legacy compatibility entry points.
+- Template publishing uses canonical DMS namespaces with legacy compatibility entry points.
+- Controlled-document generation uses canonical DMS namespaces for SOP and log creation with legacy compatibility entry points.
+- Document numbering, SOP-reference resolution, and template-variable resolution use canonical DMS services with legacy compatibility entry points.
 - Focused seeder, entitlement, and document-version tests passed at the checkpoint.
 
 Always verify these statements against the worktree before relying on them.
@@ -35,6 +38,9 @@ Always verify these statements against the worktree before relying on them.
    - Slice 3 completed: Moved document issuance lifecycle actions and service ownership into the DMS domain while retaining legacy namespace compatibility.
    - Slice 4 completed: Moved document and template retention lifecycle actions and service ownership into the DMS domain while retaining legacy namespace compatibility.
    - Slice 5 completed: Moved document locking actions and service ownership into the DMS domain while retaining legacy namespace compatibility.
+   - Slice 6 completed: Moved template publishing action and service ownership into the DMS domain while retaining legacy namespace compatibility.
+   - Slice 7 completed: Moved controlled-document generation action and service ownership into the DMS domain while retaining legacy namespace compatibility.
+   - Slice 8 completed: Moved document numbering, SOP-reference resolution, and template-variable resolution into the DMS domain while retaining legacy namespace compatibility.
 
 5. **Reusable approval workflow**
    Decouple approval subjects from `SopDocument` so controlled documents and future QMS records can share workflow infrastructure.
@@ -59,4 +65,4 @@ Always verify these statements against the worktree before relying on them.
 
 ## Immediate next task
 
-Continue phase 4 with the template publishing action and service, preserving legacy namespace compatibility and persistence.
+Continue phase 4 by establishing the Shared audit boundary for reusable audit infrastructure, preserving the legacy SOP audit entry point and persistence.

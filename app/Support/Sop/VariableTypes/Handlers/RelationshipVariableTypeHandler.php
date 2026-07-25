@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Support\Sop\VariableTypes\Handlers;
 
+use App\Domain\DMS\Services\SopReferenceService;
 use App\Models\Department;
 use App\Models\SopDocument;
 use App\Models\SopRole;
 use App\Models\SopTemplateVariable;
 use App\Models\User;
 use App\Models\VariableDataType;
-use App\Services\Sop\SopReferenceService;
 use App\Support\Sop\VariableTypes\VariableTypeFieldContext;
 use Filament\Forms\Components\Field;
 use Filament\Forms\Components\Select;

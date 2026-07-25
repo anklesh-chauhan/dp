@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\LogDocuments;
 
+use App\Domain\DMS\Services\SopReferenceService;
 use App\Filament\Resources\LogDocuments\Pages\CreateLogDocument;
 use App\Filament\Resources\LogDocuments\Pages\EditLogDocument;
 use App\Filament\Resources\LogDocuments\Pages\ListLogDocuments;
@@ -14,11 +15,9 @@ use App\Filament\Resources\SopDocuments\RelationManagers\AuditRelationManager;
 use App\Filament\Resources\SopDocuments\RelationManagers\DocumentSectionRelationManager;
 use App\Filament\Resources\SopDocuments\RelationManagers\DocumentVariableRelationManager;
 use App\Filament\Support\TemplateVariableFieldBuilder;
-use App\Models\DocumentType;
 use App\Models\SopDocument;
 use App\Models\SopTemplateVersion;
 use App\Models\TemplateStatus;
-use App\Services\Sop\SopReferenceService;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;

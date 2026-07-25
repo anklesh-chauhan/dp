@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\SopTemplates\Pages;
 
-use App\Actions\Sop\PublishTemplateAction;
+use App\Domain\DMS\Actions\PublishTemplateAction;
 use App\Filament\Concerns\HandlesServiceExceptions;
 use App\Filament\Concerns\HasGenerationPolling;
 use App\Filament\Concerns\ProcessesSopTemplateMetadataAi;
@@ -77,8 +77,7 @@ class EditSopTemplate extends EditRecord
     }
 
     /**
-     * @param array<string, mixed> $data
-     *
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     protected function mutateFormDataBeforeSave(array $data): array
@@ -104,5 +103,4 @@ class EditSopTemplate extends EditRecord
             ->regulationTags()
             ->sync($this->regulationTagIds);
     }
-
 }

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\LogDocuments\Pages;
 
-use App\Actions\Sop\CreateDocumentFromTemplateAction;
 use App\Data\SopDocumentData;
+use App\Domain\DMS\Actions\CreateDocumentFromTemplateAction;
 use App\Exceptions\ServiceException;
 use App\Filament\Resources\LogDocuments\LogDocumentResource;
 use App\Filament\Support\ServiceExceptionHandler;
