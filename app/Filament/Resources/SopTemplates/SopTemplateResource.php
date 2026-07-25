@@ -55,7 +55,7 @@ class SopTemplateResource extends Resource
 
     protected static ?string $model = SopTemplate::class;
 
-    protected static string|UnitEnum|null $navigationGroup = 'SOP Management';
+    protected static string|UnitEnum|null $navigationGroup = 'DMS · Document Control';
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentText;
 

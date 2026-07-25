@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\AiExecutions\Widgets;
 
+use App\Enums\ProductModule;
+use App\Filament\Concerns\RequiresProductModule;
 use App\Models\AiExecutionAttempt;
 use App\Services\AI\Enums\AiExecutionStatus;
 use Filament\Tables\Columns\TextColumn;
@@ -13,9 +15,16 @@ use Illuminate\Database\Eloquent\Builder;
 
 final class AiProviderPerformanceTable extends TableWidget
 {
+    use RequiresProductModule;
+
     protected static ?string $heading = 'Provider Performance';
 
     protected int|string|array $columnSpan = 'full';
+
+    public static function productModule(): ProductModule
+    {
+        return ProductModule::AI;
+    }
 
     public function table(Table $table): Table
     {

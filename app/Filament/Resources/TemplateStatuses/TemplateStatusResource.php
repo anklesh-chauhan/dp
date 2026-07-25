@@ -19,7 +19,7 @@ class TemplateStatusResource extends LookupResource
 
     protected static ?string $cluster = SettingsCluster::class;
 
-    protected static string|UnitEnum|null $navigationGroup = 'General Masters';
+    protected static string|UnitEnum|null $navigationGroup = 'DMS Configuration';
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::CheckCircle;
 
@@ -29,8 +29,8 @@ class TemplateStatusResource extends LookupResource
     {
         return [
             'index' => ListTemplateStatuses::route('/'),
-            //'create' => CreateTemplateStatus::route('/create'),
-            //'edit' => EditTemplateStatus::route('/{record}/edit'),
+            // 'create' => CreateTemplateStatus::route('/create'),
+            // 'edit' => EditTemplateStatus::route('/{record}/edit'),
         ];
     }
 }

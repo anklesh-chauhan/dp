@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Enums\ProductModule;
 use App\Models\KnowledgeGuide;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
@@ -25,6 +26,7 @@ class KnowledgeGuideFactory extends Factory
         return [
             'title' => rtrim($title, '.'),
             'slug' => Str::slug($title),
+            'product_module' => ProductModule::DMS,
             'summary' => fake()->paragraph(),
             'content' => "# {$title}\n\n".fake()->paragraphs(3, true),
             'sort_order' => fake()->numberBetween(1, 100),

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Filament\Widgets;
 
+use App\Enums\ProductModule;
+use App\Filament\Concerns\RequiresProductModule;
 use App\Filament\Resources\SopDocuments\SopDocumentResource;
 use App\Models\SopApproval;
 use Filament\Actions\Action;
@@ -16,9 +18,16 @@ use Illuminate\Support\Facades\Auth;
 
 class PendingApprovalsTable extends TableWidget
 {
+    use RequiresProductModule;
+
     protected static ?int $sort = 4;
 
     protected int|string|array $columnSpan = 'full';
+
+    public static function productModule(): ProductModule
+    {
+        return ProductModule::DMS;
+    }
 
     public function table(Table $table): Table
     {

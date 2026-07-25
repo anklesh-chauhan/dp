@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace App\Filament\Widgets;
 
+use App\Enums\ProductModule;
+use App\Filament\Concerns\RequiresProductModule;
 use App\Models\SopDocument;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Carbon;
 
 class DocumentsCreatedChart extends ChartWidget
 {
+    use RequiresProductModule;
+
     protected static ?int $sort = 3;
 
     protected ?string $heading = 'Documents Created';
@@ -20,6 +24,11 @@ class DocumentsCreatedChart extends ChartWidget
         'default' => 'full',
         'md' => 1,
     ];
+
+    public static function productModule(): ProductModule
+    {
+        return ProductModule::DMS;
+    }
 
     protected function getData(): array
     {

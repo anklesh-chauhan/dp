@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\AiExecutions\Widgets;
 
+use App\Enums\ProductModule;
+use App\Filament\Concerns\RequiresProductModule;
 use App\Models\AiExecution;
 use App\Services\AI\Enums\AiExecutionStatus;
 use Filament\Widgets\StatsOverviewWidget;
@@ -11,6 +13,13 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 final class AiExecutionOverview extends StatsOverviewWidget
 {
+    use RequiresProductModule;
+
+    public static function productModule(): ProductModule
+    {
+        return ProductModule::AI;
+    }
+
     protected function getStats(): array
     {
         $metrics = AiExecution::query()

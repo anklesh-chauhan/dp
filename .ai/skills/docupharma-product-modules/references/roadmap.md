@@ -39,6 +39,10 @@
 - Approved SOP decisions now use a module-neutral Shared hashing contract with deterministic SHA-256 hashing over canonical record identity, meaning, signer, UTC timestamp, reason, IP address, and user-agent metadata, and persisted approvals can reproduce their stored hash.
 - Approved, rejected, and returned SOP decisions now share the same atomic canonical-signature path while retaining existing authorization, DMS action return types, status transitions, audit payloads, and transactional rollback behavior.
 - Shared electronic-signature integrity verification now reconstructs canonical metadata hashes and uses timing-safe comparison; persisted approved, rejected, and returned SOP decisions adapt to this reusable verification boundary.
+- The primary Filament dashboard and all DMS metrics now declare DMS entitlement ownership, while document-control, issuance, and knowledge navigation use explicit DMS group labels that leave room for future QMS presentation.
+- Filament settings now separate Core organization and identity navigation from DMS configuration; the DMS settings cluster has explicit entitlement access and existing panel middleware continues to block disabled-module direct routes.
+- Knowledge guides now carry explicit product-module ownership, existing content defaults to DMS, and Filament queries, filters, and management choices are constrained to enabled entitlements so future QMS guidance can reuse the library without leaking across module boundaries.
+- Reporting widgets now declare their owning product module through one reusable Filament concern; all DMS dashboard metrics and AI performance metrics enforce their own entitlement directly, leaving future QMS reporting independent of DMS presentation wiring.
 - Focused seeder, entitlement, and document-version tests passed at the checkpoint.
 
 Always verify these statements against the worktree before relying on them.
@@ -89,13 +93,17 @@ Always verify these statements against the worktree before relying on them.
 6. **Electronic signatures — completed**
    Add a shared attributable signable record with meaning, signer, timestamp, hash, reason, IP address, and user agent.
    - Slice 1 completed: Added the module-neutral Shared electronic-signature metadata contract and adapted existing SOP approval signature metadata without persistence changes.
-   - Slice 2 completed: Added IP address and user-agent fields to the original SOP approval schema, captured them for approval decisions through Shared orchestration, persisted them in the DMS adapter, and reset them on workflow reinitialization.
+   - Slice 2 completed: Added IP address and user-agent fields through an additive SOP approval migration, captured them for approval decisions through Shared orchestration, persisted them in the DMS adapter, and reset them on workflow reinitialization.
    - Slice 3 completed: Extracted electronic-signature hashing behind a Shared contract, added deterministic canonical SHA-256 hashing across all attributable metadata, and made approved SOP decisions use the new boundary with reproducible persisted hashes.
    - Slice 4 completed: Applied canonical Shared electronic signatures to rejected and returned decisions through the existing DMS actions while preserving status, audit, authorization, and rollback behavior.
    - Slice 5 completed: Added module-neutral electronic-signature record and verifier contracts, implemented canonical timing-safe integrity verification, and adapted persisted SOP approval decisions to the verification boundary.
 
-7. **Module-aware presentation**
+7. **Module-aware presentation â€” completed**
    Separate DMS and QMS dashboards, settings, help, reports, navigation groups, and metrics.
+   - Slice 1 completed: Established explicit DMS dashboard, navigation-group, and metric ownership, including enabled and disabled entitlement coverage, without introducing empty QMS surfaces.
+   - Slice 2 completed: Moved Departments and Users into explicit Core organization and identity groups, made the remaining settings cluster and configuration sub-navigation DMS-owned, and verified disabled-module direct-route enforcement.
+   - Slice 3 completed: Added product-module ownership to knowledge guides with a DMS-safe additive default, enum casting, entitlement-scoped resource queries and direct record resolution, enabled-only management choices, and module-aware table presentation.
+   - Slice 4 completed: Added reusable product-module ownership and entitlement enforcement for reporting widgets, covering all existing DMS dashboard metrics and AI execution-performance metrics without coupling future QMS reports to either surface.
 
 8. **License lifecycle**
    Add signed activation, expiry, grace behavior, audit events, administrative visibility, and upgrade handling behind the existing entitlement contract.
@@ -111,4 +119,4 @@ Always verify these statements against the worktree before relying on them.
 
 ## Immediate next task
 
-Begin phase 7 with the smallest module-aware presentation slice by separating DMS and QMS navigation and dashboard ownership while retaining server-side entitlement enforcement.
+Begin phase 8 with the signed-license persistence and verification foundation behind the existing `ModuleManager` entitlement contract, without changing current environment-based behavior.

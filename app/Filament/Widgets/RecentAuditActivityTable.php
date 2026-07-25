@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Filament\Widgets;
 
 use App\Enums\ProductModule;
+use App\Filament\Concerns\RequiresProductModule;
 use App\Models\SopAuditLog;
-use App\Support\Modules\ModuleManager;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -15,13 +15,15 @@ use Illuminate\Database\Eloquent\Builder;
 
 class RecentAuditActivityTable extends TableWidget
 {
+    use RequiresProductModule;
+
     protected static ?int $sort = 5;
 
     protected int|string|array $columnSpan = 'full';
 
-    public static function canView(): bool
+    public static function productModule(): ProductModule
     {
-        return app(ModuleManager::class)->enabled(ProductModule::DMS);
+        return ProductModule::DMS;
     }
 
     public function table(Table $table): Table

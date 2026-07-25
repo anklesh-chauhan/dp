@@ -18,7 +18,7 @@ use UnitEnum;
 
 abstract class LookupResource extends Resource
 {
-    protected static string|UnitEnum|null $navigationGroup = 'SOP Management';
+    protected static string|UnitEnum|null $navigationGroup = 'DMS · Document Control';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 

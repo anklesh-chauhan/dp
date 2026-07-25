@@ -19,7 +19,7 @@ class SopRoleResource extends LookupResource
 
     protected static ?string $cluster = SettingsCluster::class;
 
-    protected static string|UnitEnum|null $navigationGroup = 'General Masters';
+    protected static string|UnitEnum|null $navigationGroup = 'DMS Configuration';
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::UserGroup;
 
@@ -29,8 +29,8 @@ class SopRoleResource extends LookupResource
     {
         return [
             'index' => ListSopRoles::route('/'),
-            //'create' => CreateSopRole::route('/create'),
-            //'edit' => EditSopRole::route('/{record}/edit'),
+            // 'create' => CreateSopRole::route('/create'),
+            // 'edit' => EditSopRole::route('/{record}/edit'),
         ];
     }
 }

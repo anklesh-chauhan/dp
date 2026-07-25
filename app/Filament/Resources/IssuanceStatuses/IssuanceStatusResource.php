@@ -19,7 +19,7 @@ class IssuanceStatusResource extends LookupResource
 
     protected static ?string $cluster = SettingsCluster::class;
 
-    protected static string|UnitEnum|null $navigationGroup = 'General Masters';
+    protected static string|UnitEnum|null $navigationGroup = 'DMS Configuration';
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::ArrowPath;
 
@@ -29,8 +29,8 @@ class IssuanceStatusResource extends LookupResource
     {
         return [
             'index' => ListIssuanceStatuses::route('/'),
-            //'create' => CreateIssuanceStatus::route('/create'),
-            //'edit' => EditIssuanceStatus::route('/{record}/edit'),
+            // 'create' => CreateIssuanceStatus::route('/create'),
+            // 'edit' => EditIssuanceStatus::route('/{record}/edit'),
         ];
     }
 }

@@ -19,7 +19,7 @@ class VariableDataTypeResource extends LookupResource
 
     protected static ?string $cluster = SettingsCluster::class;
 
-    protected static string|UnitEnum|null $navigationGroup = 'General Masters';
+    protected static string|UnitEnum|null $navigationGroup = 'DMS Configuration';
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::CheckCircle;
 
@@ -29,8 +29,8 @@ class VariableDataTypeResource extends LookupResource
     {
         return [
             'index' => ListVariableDataTypes::route('/'),
-            //'create' => CreateVariableDataType::route('/create'),
-            //'edit' => EditVariableDataType::route('/{record}/edit'),
+            // 'create' => CreateVariableDataType::route('/create'),
+            // 'edit' => EditVariableDataType::route('/{record}/edit'),
         ];
     }
 }

@@ -33,11 +33,12 @@ class AdminPanelProvider extends PanelProvider
                 'primary' => Color::Amber,
             ])
             ->navigationGroups([
-                NavigationGroup::make('SOP Management')->icon(Heroicon::DocumentText),
-                NavigationGroup::make('Document Issuance')->icon(Heroicon::OutlinedClipboardDocumentCheck),
-                NavigationGroup::make('Help & Knowledge')->icon(Heroicon::OutlinedBookOpen),
-                NavigationGroup::make('User Management')->icon(Heroicon::UserGroup),
-                NavigationGroup::make('Settings')->icon(Heroicon::OutlinedSquares2x2),
+                NavigationGroup::make('DMS · Document Control')->icon(Heroicon::DocumentText),
+                NavigationGroup::make('DMS · Issuance')->icon(Heroicon::OutlinedClipboardDocumentCheck),
+                NavigationGroup::make('DMS · Help & Knowledge')->icon(Heroicon::OutlinedBookOpen),
+                NavigationGroup::make('DMS · Settings')->icon(Heroicon::OutlinedSquares2x2),
+                NavigationGroup::make('Core · Organization')->icon(Heroicon::BuildingOffice),
+                NavigationGroup::make('Core · Identity & Access')->icon(Heroicon::UserGroup),
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
@@ -62,7 +63,7 @@ class AdminPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
             ])
             ->plugins([
-                FilamentShieldPlugin::make()->navigationGroup('User Management'),
+                FilamentShieldPlugin::make()->navigationGroup('Core · Identity & Access'),
             ])
             ->sidebarCollapsibleOnDesktop()
             ->sidebarWidth('w-64')

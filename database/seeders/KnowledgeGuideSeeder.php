@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Enums\ProductModule;
 use App\Models\KnowledgeGuide;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\File;
@@ -52,6 +53,7 @@ class KnowledgeGuideSeeder extends Seeder
             ['slug' => 'document-classification'],
             [
                 'title' => $title,
+                'product_module' => ProductModule::DMS,
                 'summary' => $summary,
                 'content' => $content,
                 'sort_order' => 1,

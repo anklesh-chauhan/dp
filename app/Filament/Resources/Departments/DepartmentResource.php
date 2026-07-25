@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Departments;
 
-use App\Filament\Clusters\Settings\SettingsCluster;
 use App\Filament\Resources\Departments\Pages\CreateDepartment;
 use App\Filament\Resources\Departments\Pages\EditDepartment;
 use App\Filament\Resources\Departments\Pages\ListDepartments;
@@ -24,9 +23,7 @@ class DepartmentResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'Department';
 
-    protected static ?string $cluster = SettingsCluster::class;
-
-    protected static string|UnitEnum|null $navigationGroup = 'General Masters';
+    protected static string|UnitEnum|null $navigationGroup = 'Core · Organization';
 
     protected static ?int $navigationSort = 1003;
 
@@ -51,8 +48,8 @@ class DepartmentResource extends Resource
     {
         return [
             'index' => ListDepartments::route('/'),
-            //'create' => CreateDepartment::route('/create'),
-            //'edit' => EditDepartment::route('/{record}/edit'),
+            // 'create' => CreateDepartment::route('/create'),
+            // 'edit' => EditDepartment::route('/{record}/edit'),
         ];
     }
 }

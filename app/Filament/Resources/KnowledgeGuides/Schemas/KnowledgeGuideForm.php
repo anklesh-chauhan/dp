@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\KnowledgeGuides\Schemas;
 
+use App\Enums\ProductModule;
+use App\Filament\Resources\KnowledgeGuides\KnowledgeGuideResource;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -38,6 +41,12 @@ class KnowledgeGuideForm
                                     ->maxLength(255)
                                     ->unique(ignoreRecord: true)
                                     ->helperText('Used in URLs. Auto-generated from the title on create.'),
+                                Select::make('product_module')
+                                    ->label('Product module')
+                                    ->options(fn (): array => KnowledgeGuideResource::enabledModuleOptions())
+                                    ->default(ProductModule::DMS->value)
+                                    ->required()
+                                    ->helperText('Only users entitled to this module can see the guide.'),
                                 TextInput::make('sort_order')
                                     ->numeric()
                                     ->default(0)
@@ -52,7 +61,7 @@ class KnowledgeGuideForm
                                     ->columnSpanFull()
                                     ->helperText('Short description shown in the knowledge library list.'),
 
-                                ]),
+                            ]),
                     ])
                     ->columnSpanFull(),
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\ProductModule;
 use Database\Factories\KnowledgeGuideFactory;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
@@ -21,6 +22,7 @@ class KnowledgeGuide extends Model
     protected $fillable = [
         'title',
         'slug',
+        'product_module',
         'summary',
         'content',
         'sort_order',
@@ -42,6 +44,7 @@ class KnowledgeGuide extends Model
     protected function casts(): array
     {
         return [
+            'product_module' => ProductModule::class,
             'is_published' => 'boolean',
             'sort_order' => 'integer',
         ];

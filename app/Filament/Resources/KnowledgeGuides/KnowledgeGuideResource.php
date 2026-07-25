@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\KnowledgeGuides;
 
+use App\Enums\ProductModule;
 use App\Filament\Resources\KnowledgeGuides\Pages\CreateKnowledgeGuide;
 use App\Filament\Resources\KnowledgeGuides\Pages\EditKnowledgeGuide;
 use App\Filament\Resources\KnowledgeGuides\Pages\ListKnowledgeGuides;
@@ -11,6 +12,7 @@ use App\Filament\Resources\KnowledgeGuides\Pages\ViewKnowledgeGuide;
 use App\Filament\Resources\KnowledgeGuides\Schemas\KnowledgeGuideForm;
 use App\Filament\Resources\KnowledgeGuides\Tables\KnowledgeGuidesTable;
 use App\Models\KnowledgeGuide;
+use App\Support\Modules\ModuleManager;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -26,7 +28,7 @@ class KnowledgeGuideResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBookOpen;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Help & Knowledge';
+    protected static string|UnitEnum|null $navigationGroup = 'DMS · Help & Knowledge';
 
     protected static ?int $navigationSort = 1;
 
@@ -50,7 +52,13 @@ class KnowledgeGuideResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        $query = parent::getEloquentQuery();
+        $enabledModules = array_map(
+            fn (ProductModule $module): string => $module->value,
+            app(ModuleManager::class)->enabledModules(),
+        );
+
+        $query = parent::getEloquentQuery()
+            ->whereIn('product_module', $enabledModules);
 
         $user = Auth::user();
 
@@ -59,6 +67,16 @@ class KnowledgeGuideResource extends Resource
         }
 
         return $query->ordered();
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function enabledModuleOptions(): array
+    {
+        return collect(app(ModuleManager::class)->enabledModules())
+            ->mapWithKeys(fn (ProductModule $module): array => [$module->value => $module->label()])
+            ->all();
     }
 
     public static function getRelations(): array

@@ -19,7 +19,7 @@ class DocumentStatusResource extends LookupResource
 
     protected static ?string $cluster = SettingsCluster::class;
 
-    protected static string|UnitEnum|null $navigationGroup = 'General Masters';
+    protected static string|UnitEnum|null $navigationGroup = 'DMS Configuration';
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::DocumentText;
 

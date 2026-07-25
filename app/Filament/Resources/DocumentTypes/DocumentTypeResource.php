@@ -11,7 +11,6 @@ use App\Filament\Resources\DocumentTypes\Pages\ListDocumentTypes;
 use App\Filament\Resources\LookupResource;
 use App\Models\DocumentCategory;
 use App\Models\DocumentType;
-use App\Models\RegulationTag;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -31,7 +30,7 @@ class DocumentTypeResource extends LookupResource
 
     protected static ?string $cluster = SettingsCluster::class;
 
-    protected static string|UnitEnum|null $navigationGroup = 'General Masters';
+    protected static string|UnitEnum|null $navigationGroup = 'DMS Configuration';
 
     protected static ?int $navigationSort = 1006;
 
@@ -88,8 +87,8 @@ class DocumentTypeResource extends LookupResource
     {
         return [
             'index' => ListDocumentTypes::route('/'),
-            //'create' => CreateDocumentType::route('/create'),
-            //'edit' => EditDocumentType::route('/{record}/edit'),
+            // 'create' => CreateDocumentType::route('/create'),
+            // 'edit' => EditDocumentType::route('/{record}/edit'),
         ];
     }
 }
