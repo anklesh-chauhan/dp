@@ -4,16 +4,9 @@ declare(strict_types=1);
 
 namespace App\Actions\Sop;
 
-use App\Models\SopTemplate;
-use App\Models\User;
-use App\Services\Sop\RetentionLifecycleService;
+use App\Domain\DMS\Actions\ArchiveTemplateAction as DmsArchiveTemplateAction;
 
-class ArchiveTemplateAction
-{
-    public function __construct(private readonly RetentionLifecycleService $retentionLifecycleService) {}
-
-    public function execute(SopTemplate $template, User $user, ?string $reason = null): SopTemplate
-    {
-        return $this->retentionLifecycleService->archiveTemplate($template, $user, $reason);
-    }
-}
+/**
+ * @deprecated Use the DMS domain action.
+ */
+class ArchiveTemplateAction extends DmsArchiveTemplateAction {}

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Sop;
 
+use App\Domain\DMS\Services\DocumentLockService;
 use App\Exceptions\WorkflowException;
 use App\Models\ApprovalDecision;
 use App\Models\DocumentStatus;

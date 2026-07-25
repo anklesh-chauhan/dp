@@ -4,16 +4,9 @@ declare(strict_types=1);
 
 namespace App\Actions\Sop;
 
-use App\Models\SopDocument;
-use App\Models\User;
-use App\Services\Sop\DocumentLockService;
+use App\Domain\DMS\Actions\LockDocumentAction as DmsLockDocumentAction;
 
-class LockDocumentAction
-{
-    public function __construct(private readonly DocumentLockService $documentLockService) {}
-
-    public function execute(SopDocument $document, User $user): SopDocument
-    {
-        return $this->documentLockService->lockDocument($document, $user);
-    }
-}
+/**
+ * @deprecated Use the DMS domain action.
+ */
+class LockDocumentAction extends DmsLockDocumentAction {}

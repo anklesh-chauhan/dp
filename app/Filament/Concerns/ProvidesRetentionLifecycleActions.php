@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Filament\Concerns;
 
-use App\Actions\Sop\ArchiveDocumentAction;
-use App\Actions\Sop\ArchiveTemplateAction;
-use App\Actions\Sop\CompleteDocumentRetentionAction;
-use App\Actions\Sop\CompleteTemplateRetentionAction;
-use App\Actions\Sop\DestroyDocumentAction;
-use App\Actions\Sop\DestroyTemplateAction;
-use App\Actions\Sop\MarkDocumentObsoleteAction;
-use App\Actions\Sop\MarkTemplateObsoleteAction;
+use App\Domain\DMS\Actions\ArchiveDocumentAction;
+use App\Domain\DMS\Actions\ArchiveTemplateAction;
+use App\Domain\DMS\Actions\CompleteDocumentRetentionAction;
+use App\Domain\DMS\Actions\CompleteTemplateRetentionAction;
+use App\Domain\DMS\Actions\DestroyDocumentAction;
+use App\Domain\DMS\Actions\DestroyTemplateAction;
+use App\Domain\DMS\Actions\MarkDocumentObsoleteAction;
+use App\Domain\DMS\Actions\MarkTemplateObsoleteAction;
 use App\Models\DocumentStatus;
 use App\Models\SopDocument;
 use App\Models\SopTemplate;

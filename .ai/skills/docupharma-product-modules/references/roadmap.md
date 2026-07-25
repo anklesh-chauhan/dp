@@ -11,6 +11,8 @@
 - The legacy `SopDocument` model implements the DMS `ControlledDocument` contract without persistence renames.
 - Document revision uses canonical DMS action and service namespaces with legacy compatibility entry points.
 - Document issuance, recall, and controlled-copy destruction use canonical DMS namespaces with legacy compatibility entry points.
+- Document and template retention lifecycle actions use canonical DMS namespaces with legacy compatibility entry points.
+- Document locking uses canonical DMS namespaces across Filament and workflow consumers with legacy compatibility entry points.
 - Focused seeder, entitlement, and document-version tests passed at the checkpoint.
 
 Always verify these statements against the worktree before relying on them.
@@ -31,6 +33,8 @@ Always verify these statements against the worktree before relying on them.
    - Slice 1 completed: Added the DMS `ControlledDocument` contract and adapted `SopDocument`.
    - Slice 2 completed: Moved document revision action and service ownership into the DMS domain while retaining legacy namespace compatibility.
    - Slice 3 completed: Moved document issuance lifecycle actions and service ownership into the DMS domain while retaining legacy namespace compatibility.
+   - Slice 4 completed: Moved document and template retention lifecycle actions and service ownership into the DMS domain while retaining legacy namespace compatibility.
+   - Slice 5 completed: Moved document locking actions and service ownership into the DMS domain while retaining legacy namespace compatibility.
 
 5. **Reusable approval workflow**
    Decouple approval subjects from `SopDocument` so controlled documents and future QMS records can share workflow infrastructure.
@@ -55,4 +59,4 @@ Always verify these statements against the worktree before relying on them.
 
 ## Immediate next task
 
-Continue phase 4 with the document retention lifecycle actions and service, preserving legacy namespace compatibility and persistence.
+Continue phase 4 with the template publishing action and service, preserving legacy namespace compatibility and persistence.

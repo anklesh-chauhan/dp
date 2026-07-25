@@ -4,16 +4,9 @@ declare(strict_types=1);
 
 namespace App\Actions\Sop;
 
-use App\Models\SopDocument;
-use App\Models\User;
-use App\Services\Sop\RetentionLifecycleService;
+use App\Domain\DMS\Actions\DestroyDocumentAction as DmsDestroyDocumentAction;
 
-class DestroyDocumentAction
-{
-    public function __construct(private readonly RetentionLifecycleService $retentionLifecycleService) {}
-
-    public function execute(SopDocument $document, User $user, string $reason): SopDocument
-    {
-        return $this->retentionLifecycleService->destroyDocument($document, $user, $reason);
-    }
-}
+/**
+ * @deprecated Use the DMS domain action.
+ */
+class DestroyDocumentAction extends DmsDestroyDocumentAction {}
