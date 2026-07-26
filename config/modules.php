@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 return [
+    'entitlement_source' => env('DOCUPHARMA_ENTITLEMENT_SOURCE', 'environment'),
+
     /*
     |--------------------------------------------------------------------------
     | Licensed Product Modules
@@ -17,4 +19,10 @@ return [
         static fn (string $module): string => strtolower(trim($module)),
         explode(',', (string) env('DOCUPHARMA_MODULES', 'dms,ai')),
     ))),
+
+    'license' => [
+        'public_keys' => array_filter([
+            (string) env('DOCUPHARMA_LICENSE_KEY_ID', 'default') => env('DOCUPHARMA_LICENSE_PUBLIC_KEY'),
+        ]),
+    ],
 ];

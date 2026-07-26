@@ -37,10 +37,12 @@ class DatabaseSeeder extends Seeder
             $this->call(QmsModuleSeeder::class);
         }
 
-        $user = User::firstOrCreate(['email' => 'admin@example.com'], ['name' => 'Super Admin', 'password' => bcrypt('password')]);
+        if (app()->environment(['local', 'testing'])) {
+            $user = User::firstOrCreate(['email' => 'admin@example.com'], ['name' => 'Super Admin', 'password' => bcrypt('password')]);
 
-        if ($moduleManager->enabled(ProductModule::DMS)) {
-            $user->assignRole(SopRole::ADMINISTRATOR);
+            if ($moduleManager->enabled(ProductModule::DMS)) {
+                $user->assignRole(SopRole::ADMINISTRATOR);
+            }
         }
     }
 }

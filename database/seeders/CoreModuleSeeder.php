@@ -39,6 +39,8 @@ class CoreModuleSeeder extends Seeder
         'RestoreAny:User',
         'Replicate:User',
         'Reorder:User',
+        'ViewAny:ProductLicense',
+        'View:ProductLicense',
     ];
 
     public function run(): void

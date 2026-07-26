@@ -6,17 +6,19 @@ namespace App\Support\Modules;
 
 use App\Enums\ProductModule;
 use App\Exceptions\ModuleNotEnabledException;
-use Illuminate\Contracts\Config\Repository;
+use App\Support\Modules\Contracts\ModuleEntitlementProvider;
 
 class ModuleManager
 {
-    public function __construct(private readonly Repository $config) {}
+    public function __construct(
+        private readonly ModuleEntitlementProvider $entitlementProvider,
+    ) {}
 
     public function enabled(ProductModule|string $module): bool
     {
         $module = $this->resolve($module);
 
-        if (! in_array($module, $this->configuredModules(), true)) {
+        if (! in_array($module, $this->entitlementProvider->modules(), true)) {
             return false;
         }
 
@@ -42,21 +44,6 @@ class ModuleManager
             ProductModule::cases(),
             fn (ProductModule $module): bool => $this->enabled($module),
         ));
-    }
-
-    /**
-     * @return list<ProductModule>
-     */
-    private function configuredModules(): array
-    {
-        return collect($this->config->get('modules.enabled', []))
-            ->map(fn (mixed $module): ?ProductModule => $module instanceof ProductModule
-                ? $module
-                : ProductModule::tryFrom(strtolower(trim((string) $module)))
-            )
-            ->filter()
-            ->values()
-            ->all();
     }
 
     private function resolve(ProductModule|string $module): ProductModule
