@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\IssuanceStatus;
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Illuminate\Foundation\Auth\User as AuthUser;
 
 class IssuanceStatusPolicy
 {
     use HandlesAuthorization;
-
+    
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:IssuanceStatus');
@@ -126,4 +126,5 @@ class IssuanceStatusPolicy
     {
         return $authUser->can('Destroy:IssuanceStatus');
     }
+
 }

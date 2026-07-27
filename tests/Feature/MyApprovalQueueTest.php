@@ -1,0 +1,158 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Domain\DMS\Enums\TemplateApprovalStatus;
+use App\Domain\QMS\Models\Deviation;
+use App\Domain\QMS\Models\QualityApprovalInstance;
+use App\Domain\QMS\Models\QualityApprovalWorkflow;
+use App\Domain\QMS\Models\QualityApprovalWorkflowStep;
+use App\Filament\Pages\MyApprovalQueue;
+use App\Filament\Resources\SopApprovals\SopApprovalResource;
+use App\Filament\Resources\SopTemplateApprovalInstances\SopTemplateApprovalInstanceResource;
+use App\Filament\Support\MyApprovalQueueService;
+use App\Filament\Widgets\PendingApprovalsTable;
+use App\Models\ApprovalDecision;
+use App\Models\Department;
+use App\Models\DocumentCategory;
+use App\Models\DocumentStatus;
+use App\Models\DocumentType;
+use App\Models\SopApproval;
+use App\Models\SopDocument;
+use App\Models\SopTemplate;
+use App\Models\SopTemplateApprovalInstance;
+use App\Models\SopTemplateVersion;
+use App\Models\SopWorkflow;
+use App\Models\SopWorkflowStep;
+use App\Models\TemplateStatus;
+use App\Models\User;
+use Database\Seeders\LookupTableSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
+
+uses(RefreshDatabase::class);
+
+beforeEach(function (): void {
+    $this->seed(LookupTableSeeder::class);
+    config()->set('modules.enabled', ['dms', 'qms']);
+
+    foreach ([
+        'Approve:SopDocument',
+        'Decide:SopTemplateApproval',
+        'Decide:QualityApproval',
+        'Investigate:Deviation',
+    ] as $permission) {
+        Permission::findOrCreate($permission, 'web');
+    }
+
+    $this->department = Department::factory()->create();
+    $this->reviewerRole = Role::findOrCreate('central queue reviewer', 'web');
+    $this->author = User::factory()->create(['department_id' => $this->department]);
+    $this->reviewer = User::factory()->create(['department_id' => $this->department]);
+    $this->reviewer->assignRole($this->reviewerRole);
+    $this->reviewer->assignRole(Role::findOrCreate('panel_user', 'web'));
+    $this->reviewer->givePermissionTo([
+        'Approve:SopDocument',
+        'Decide:SopTemplateApproval',
+        'Decide:QualityApproval',
+        'Investigate:Deviation',
+    ]);
+});
+
+it('combines only actionable document template and QMS approvals for the signed-in user', function (): void {
+    $documentType = DocumentType::query()->where('code', DocumentType::SOP)->firstOrFail();
+    $documentType->update(['category_id' => DocumentCategory::factory()->create()->id]);
+    $template = SopTemplate::factory()->create([
+        'department_id' => $this->department,
+        'created_by' => $this->author,
+        'document_type_id' => $documentType,
+        'template_status_id' => TemplateStatus::idFor(TemplateStatus::DRAFT),
+    ]);
+    $templateVersion = SopTemplateVersion::factory()->create([
+        'sop_template_id' => $template,
+        'created_by' => $this->author,
+        'submitted_by' => $this->author,
+        'submitted_at' => now(),
+        'approval_status' => TemplateApprovalStatus::Submitted,
+    ]);
+    $workflow = SopWorkflow::factory()->create(['department_id' => $this->department]);
+    $step = SopWorkflowStep::factory()->create([
+        'workflow_id' => $workflow,
+        'role_id' => $this->reviewerRole,
+        'department_id' => $this->department,
+        'step_no' => 1,
+    ]);
+    $document = SopDocument::factory()->create([
+        'template_id' => $template,
+        'template_version_id' => $templateVersion,
+        'department_id' => $this->department,
+        'created_by' => $this->author,
+        'owner_id' => $this->author,
+        'document_status_id' => DocumentStatus::idFor(DocumentStatus::UNDER_REVIEW),
+    ]);
+    SopApproval::factory()->create([
+        'document_id' => $document,
+        'workflow_step_id' => $step,
+        'approved_by' => null,
+        'approval_decision_id' => ApprovalDecision::idFor(ApprovalDecision::PENDING),
+        'approved_at' => null,
+        'signature_hash' => null,
+    ]);
+    SopTemplateApprovalInstance::factory()->create([
+        'sop_template_version_id' => $templateVersion,
+        'workflow_id' => $workflow,
+        'workflow_step_id' => $step,
+    ]);
+
+    $qualityWorkflow = QualityApprovalWorkflow::factory()->create([
+        'department_id' => $this->department,
+    ]);
+    $qualityStep = QualityApprovalWorkflowStep::factory()->create([
+        'workflow_id' => $qualityWorkflow,
+        'role_id' => $this->reviewerRole,
+        'department_id' => $this->department,
+    ]);
+    $deviation = Deviation::factory()->create([
+        'department_id' => $this->department,
+        'reported_by' => $this->author,
+        'status' => 'open',
+    ]);
+    QualityApprovalInstance::factory()->create([
+        'subject_type' => Deviation::class,
+        'subject_id' => $deviation,
+        'workflow_id' => $qualityWorkflow,
+        'workflow_step_id' => $qualityStep,
+    ]);
+
+    $this->actingAs($this->reviewer);
+    $items = app(MyApprovalQueueService::class)->forUser($this->reviewer);
+
+    expect($items)->toHaveCount(3)
+        ->and($items->pluck('work_type')->sort()->values()->all())
+        ->toBe(['Deviation', 'SOP Document', 'SOP Template'])
+        ->and($items->every(fn (array $item): bool => filled($item['review_url'])))->toBeTrue()
+        ->and(MyApprovalQueue::canAccess())->toBeTrue();
+
+    Livewire::test(MyApprovalQueue::class)
+        ->assertOk()
+        ->assertSee('SOP Document')
+        ->assertSee('SOP Template')
+        ->assertSee('Deviation');
+
+    Livewire::test(PendingApprovalsTable::class)
+        ->assertSee('SOP Document')
+        ->assertSee('SOP Template')
+        ->assertSee('Deviation');
+});
+
+it('does not expose unavailable work or duplicate queue navigation', function (): void {
+    $unauthorizedUser = User::factory()->create();
+    $this->actingAs($unauthorizedUser);
+
+    expect(app(MyApprovalQueueService::class)->forUser($unauthorizedUser))->toBeEmpty()
+        ->and(MyApprovalQueue::canAccess())->toBeFalse()
+        ->and(SopApprovalResource::shouldRegisterNavigation())->toBeFalse()
+        ->and(SopTemplateApprovalInstanceResource::shouldRegisterNavigation())->toBeFalse();
+});

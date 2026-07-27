@@ -6,14 +6,12 @@ namespace App\Filament\Widgets;
 
 use App\Enums\ProductModule;
 use App\Filament\Concerns\RequiresProductModule;
-use App\Filament\Resources\SopDocuments\SopDocumentResource;
-use App\Models\SopApproval;
+use App\Filament\Support\MyApprovalQueueService;
 use Filament\Actions\Action;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 
 class PendingApprovalsTable extends TableWidget
@@ -32,65 +30,37 @@ class PendingApprovalsTable extends TableWidget
     public function table(Table $table): Table
     {
         return $table
-            ->heading('Your Approval Queue')
-            ->description('Pending approvals visible to you.')
-            ->query(fn (): Builder => $this->getTableQuery())
+            ->heading('My Approval Queue')
+            ->description('Your next actionable approvals across DMS and QMS.')
+            ->records(fn () => app(MyApprovalQueueService::class)
+                ->forUser(Auth::user())
+                ->take(5))
             ->columns([
-                TextColumn::make('document.document_number')
-                    ->label('Document #')
-                    ->searchable(),
-                TextColumn::make('document.title')
-                    ->label('Title')
-                    ->limit(40)
-                    ->searchable(),
-                TextColumn::make('document.department.name')
-                    ->label('Department'),
-                TextColumn::make('workflowStep.step_no')
-                    ->label('Step')
-                    ->sortable(),
-                TextColumn::make('workflowStep.approvalStepType.name')
-                    ->label('Type')
+                TextColumn::make('module')->badge(),
+                TextColumn::make('work_type')
+                    ->label('Approval Type')
                     ->badge(),
-                TextColumn::make('workflowStep.role.name')
+                TextColumn::make('reference')
+                    ->label('Reference'),
+                TextColumn::make('title')
+                    ->label('Title')
+                    ->limit(40),
+                TextColumn::make('step')->label('Step'),
+                TextColumn::make('required_role')
                     ->label('Required Role'),
-                TextColumn::make('created_at')
+                TextColumn::make('submitted_at')
                     ->label('Submitted')
-                    ->since()
-                    ->sortable(),
+                    ->dateTime(),
             ])
-            ->defaultSort('created_at', 'desc')
-            ->paginated([5, 10])
-            ->defaultPaginationPageOption(5)
+            ->paginated(false)
             ->recordActions([
-                Action::make('viewDocument')
-                    ->label('View')
+                Action::make('review')
+                    ->label('Review')
                     ->icon(Heroicon::Eye)
-                    ->url(fn (SopApproval $record): string => SopDocumentResource::getUrl('view', ['record' => $record->document_id])),
+                    ->url(fn (array $record): string => $record['review_url']),
             ])
             ->emptyStateHeading('No pending approvals')
             ->emptyStateDescription('You are all caught up. New submissions will appear here.')
             ->emptyStateIcon(Heroicon::OutlinedCheckBadge);
-    }
-
-    /**
-     * @return Builder<SopApproval>
-     */
-    protected function getTableQuery(): Builder
-    {
-        $query = SopApproval::query()
-            ->pending()
-            ->with([
-                'document.department',
-                'workflowStep.approvalStepType',
-                'workflowStep.role',
-            ]);
-
-        $user = Auth::user();
-
-        if ($user !== null) {
-            $query->visibleToUser($user);
-        }
-
-        return $query;
     }
 }

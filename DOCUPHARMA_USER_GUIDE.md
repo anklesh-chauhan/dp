@@ -197,10 +197,12 @@ Purpose: Define reporting, investigation, CAPA, and closure requirements.
 
 ### 6.4 Review and approve
 
-1. Open **DMS · Document Control → Approval Queue**.
+1. Open **DMS · Document Control → My Approval Queue**.
 2. Open the pending approval assigned to your role and department.
 3. Review the document content and metadata.
 4. Approve, reject, or return the record with an attributable reason.
+
+The queue combines your currently actionable SOP document, SOP template, and licensed QMS approvals. Use the **Module** and **Approval Type** filters when you want to focus on one workflow. Selecting **Review** opens the owning document, template approval, or quality record; decisions continue to use that module's signed workflow.
 
 Approval decisions create electronic-signature metadata and append-only audit history. A user may be prevented from approving their own submission when separation-of-duties rules apply.
 

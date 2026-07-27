@@ -26,6 +26,8 @@ use UnitEnum;
 
 class SopApprovalResource extends Resource
 {
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?string $model = SopApproval::class;
 
     protected static ?string $navigationLabel = 'Approval Queue';

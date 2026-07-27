@@ -19,6 +19,8 @@ use UnitEnum;
 
 class SopTemplateApprovalInstanceResource extends Resource
 {
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?string $model = SopTemplateApprovalInstance::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;

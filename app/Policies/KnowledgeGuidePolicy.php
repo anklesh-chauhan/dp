@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\KnowledgeGuide;
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Illuminate\Foundation\Auth\User as AuthUser;
 
 class KnowledgeGuidePolicy
 {
     use HandlesAuthorization;
-
+    
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:KnowledgeGuide');
@@ -126,4 +126,5 @@ class KnowledgeGuidePolicy
     {
         return $authUser->can('Destroy:KnowledgeGuide');
     }
+
 }

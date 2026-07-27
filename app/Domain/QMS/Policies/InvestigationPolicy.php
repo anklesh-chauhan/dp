@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Domain\QMS\Policies;
 
+use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Domain\QMS\Models\Investigation;
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Illuminate\Foundation\Auth\User as AuthUser;
 
 class InvestigationPolicy
 {
     use HandlesAuthorization;
-
+    
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:Investigation');
@@ -126,4 +126,5 @@ class InvestigationPolicy
     {
         return $authUser->can('Destroy:Investigation');
     }
+
 }
