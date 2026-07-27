@@ -129,7 +129,7 @@ return [
         'methods' => [
             'viewAny', 'view', 'create', 'update', 'delete', 'deleteAny', 'restore',
             'forceDelete', 'forceDeleteAny', 'restoreAny', 'replicate', 'reorder', 'approve',
-            'submit', 'review', 'publish', 'unpublish', 'archive', 'unarchive',
+            'submit', 'review', 'publish', 'unpublish', 'revise', 'archive', 'unarchive',
             'markObsolete', 'completeRetention', 'destroy',
         ],
         'single_parameter_methods' => [
@@ -241,6 +241,7 @@ return [
         'review',
         'publish',
         'unpublish',
+        'revise',
         'archive',
         'unarchive',
         'mark_obsolete',

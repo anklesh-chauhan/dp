@@ -170,6 +170,35 @@ it('preserves mandatory step ordering', function (): void {
         );
 });
 
+it('requires a unique signer for every SOP document approval step', function (): void {
+    $this->approval->update([
+        'approved_by' => $this->approver->id,
+        'approval_decision_id' => ApprovalDecision::idFor(ApprovalDecision::APPROVED),
+        'approved_at' => now(),
+    ]);
+    $secondStep = SopWorkflowStep::factory()->create([
+        'workflow_id' => $this->workflow->id,
+        'step_no' => 2,
+        'role_id' => $this->approverRole->id,
+        'department_id' => $this->department->id,
+        'is_mandatory' => true,
+    ]);
+    $secondApproval = SopApproval::factory()->create([
+        'document_id' => $this->document->id,
+        'workflow_step_id' => $secondStep->id,
+        'approved_by' => null,
+        'approval_decision_id' => ApprovalDecision::idFor(ApprovalDecision::PENDING),
+        'approved_at' => null,
+    ]);
+
+    expect(fn () => app(ApprovalDecisionAuthorization::class)
+        ->authorizeDecision($secondApproval, $this->approver))
+        ->toThrow(
+            WorkflowException::class,
+            'Every SOP approval step must be decided by a different user.',
+        );
+});
+
 it('keeps an approved document awaiting its remaining mandatory approval', function (): void {
     $remainingStep = SopWorkflowStep::factory()->create([
         'workflow_id' => $this->workflow->id,

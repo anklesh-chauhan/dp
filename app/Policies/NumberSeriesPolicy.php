@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\NumberSeries;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
 class NumberSeriesPolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:NumberSeries');
@@ -97,6 +97,11 @@ class NumberSeriesPolicy
         return $authUser->can('Unpublish:NumberSeries');
     }
 
+    public function revise(AuthUser $authUser, NumberSeries $numberSeries): bool
+    {
+        return $authUser->can('Revise:NumberSeries');
+    }
+
     public function archive(AuthUser $authUser, NumberSeries $numberSeries): bool
     {
         return $authUser->can('Archive:NumberSeries');
@@ -121,5 +126,4 @@ class NumberSeriesPolicy
     {
         return $authUser->can('Destroy:NumberSeries');
     }
-
 }

@@ -4,23 +4,37 @@ declare(strict_types=1);
 
 namespace App\Domain\DMS\Services;
 
+use App\Domain\DMS\Enums\TemplateApprovalStatus;
+use App\Domain\Shared\Contracts\ElectronicSignatureVerifier;
+use App\Domain\Shared\Enums\ApprovalDecisionCode;
 use App\Domain\Shared\Services\AuditLogService;
+use App\Enums\ProductModule;
 use App\Models\SopAuditLog;
 use App\Models\SopTemplate;
+use App\Models\SopTemplateApprovalInstance;
 use App\Models\SopTemplateVersion;
 use App\Models\TemplateStatus;
+use App\Models\User;
+use App\Support\Modules\ModuleManager;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class TemplatePublisherService
 {
-    public function __construct(private readonly AuditLogService $auditLogService) {}
+    public function __construct(
+        private readonly AuditLogService $auditLogService,
+        private readonly ModuleManager $moduleManager,
+        private readonly ElectronicSignatureVerifier $electronicSignatureVerifier,
+    ) {}
 
     /**
      * @throws ValidationException
      */
     public function publish(SopTemplate $template, int $userId, ?string $changeReason = null): SopTemplateVersion
     {
+        $this->moduleManager->ensureEnabled(ProductModule::DMS);
+
         return DB::transaction(function () use ($template, $userId, $changeReason): SopTemplateVersion {
             $template = SopTemplate::query()->lockForUpdate()->findOrFail($template->id);
 
@@ -38,17 +52,47 @@ class TemplatePublisherService
                 throw ValidationException::withMessages(['version' => 'Create a draft template version before publishing.']);
             }
 
-            if ($template->current_version === 0) {
-                $nextVersion = 1;
-            } else {
-                $nextVersion = $template->current_version + 1;
+            if ($draftVersion->approval_status !== TemplateApprovalStatus::Approved) {
+                throw ValidationException::withMessages([
+                    'approval_status' => 'The draft template version must be independently reviewed and approved before publishing.',
+                ]);
+            }
+
+            $latestSubmissionUuid = $draftVersion->approvalInstances()->latest('id')->value('submission_uuid');
+            $instances = SopTemplateApprovalInstance::query()
+                ->where('submission_uuid', $latestSubmissionUuid)
+                ->with('workflowStep')
+                ->get();
+            $mandatoryInstances = $instances->filter(
+                fn (SopTemplateApprovalInstance $instance): bool => $instance->workflowStep->is_mandatory,
+            );
+            $requiredInstances = $mandatoryInstances->isEmpty() ? $instances : $mandatoryInstances;
+
+            if (
+                $requiredInstances->isEmpty()
+                || ! $requiredInstances->every(
+                    fn (SopTemplateApprovalInstance $instance): bool => $instance->decision_code === ApprovalDecisionCode::APPROVED->value
+                        && $this->electronicSignatureVerifier->isValid($instance),
+                )
+            ) {
+                throw ValidationException::withMessages([
+                    'approval_status' => 'Every mandatory workflow step must have a valid signed approval before publishing.',
+                ]);
+            }
+
+            $publisher = User::query()->find($userId);
+
+            if ($publisher === null || ! $publisher->can('Publish:SopTemplate')) {
+                throw new AuthorizationException('You do not have permission to publish SOP templates.');
             }
 
             $previousVersion = $template->current_version;
-            $previousPublishedVersionId = $template->versions()
+            $previousPublishedVersion = $template->versions()
                 ->whereHas('templateStatus', fn ($query) => $query->where('code', TemplateStatus::PUBLISHED))
                 ->orderByDesc('version')
-                ->value('id');
+                ->first(['id', 'version']);
+            $previousPublishedVersionId = $previousPublishedVersion?->id;
+            $nextVersion = ($previousPublishedVersion?->version ?? 0) + 1;
 
             if ($draftVersion->version !== $nextVersion) {
                 $draftVersion->update(['version' => $nextVersion]);

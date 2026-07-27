@@ -27,6 +27,11 @@ class DmsModuleSeeder extends Seeder
         'RestoreAny:SopTemplate',
         'Replicate:SopTemplate',
         'Reorder:SopTemplate',
+        'Submit:SopTemplate',
+        'Review:SopTemplate',
+        'Decide:SopTemplateApproval',
+        'ViewAny:SopTemplateApproval',
+        'View:SopTemplateApproval',
         'ViewAny:SopDocument',
         'View:SopDocument',
         'Create:SopDocument',
@@ -149,6 +154,11 @@ class DmsModuleSeeder extends Seeder
 
         $makerRole = Role::findOrCreate('sop maker', 'web');
         $makerRole->givePermissionTo([
+            'ViewAny:SopTemplate',
+            'View:SopTemplate',
+            'Create:SopTemplate',
+            'Update:SopTemplate',
+            'Submit:SopTemplate',
             'ViewAny:SopDocument',
             'View:SopDocument',
             'Create:SopDocument',
@@ -160,6 +170,11 @@ class DmsModuleSeeder extends Seeder
 
         $checkerRole = Role::findOrCreate('sop checker', 'web');
         $checkerRole->givePermissionTo([
+            'ViewAny:SopTemplate',
+            'View:SopTemplate',
+            'Decide:SopTemplateApproval',
+            'ViewAny:SopTemplateApproval',
+            'View:SopTemplateApproval',
             'ViewAny:SopDocument',
             'View:SopDocument',
             'Approve:SopDocument',
@@ -172,6 +187,12 @@ class DmsModuleSeeder extends Seeder
 
         $approverRole = Role::findOrCreate('sop approver', 'web');
         $approverRole->givePermissionTo([
+            'ViewAny:SopTemplate',
+            'View:SopTemplate',
+            'Approve:SopTemplate',
+            'Decide:SopTemplateApproval',
+            'ViewAny:SopTemplateApproval',
+            'View:SopTemplateApproval',
             'ViewAny:SopDocument',
             'View:SopDocument',
             'Approve:SopDocument',
@@ -197,6 +218,9 @@ class DmsModuleSeeder extends Seeder
 
         $documentControllerRole = Role::findOrCreate('document controller', 'web');
         $documentControllerRole->givePermissionTo([
+            'ViewAny:SopTemplate',
+            'View:SopTemplate',
+            'Publish:SopTemplate',
             'ViewAny:LogDocument',
             'View:LogDocument',
             'ViewAny:DocumentIssuance',
@@ -216,6 +240,12 @@ class DmsModuleSeeder extends Seeder
 
         $reviewerRole = Role::findOrCreate('qa reviewer', 'web');
         $reviewerRole->givePermissionTo([
+            'ViewAny:SopTemplate',
+            'View:SopTemplate',
+            'Review:SopTemplate',
+            'Decide:SopTemplateApproval',
+            'ViewAny:SopTemplateApproval',
+            'View:SopTemplateApproval',
             'ViewAny:SopDocument',
             'View:SopDocument',
             'Approve:SopDocument',

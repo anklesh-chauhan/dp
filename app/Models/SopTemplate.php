@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Concerns\Lockable;
+use App\Domain\DMS\Enums\TemplateApprovalStatus;
 use Database\Factories\SopTemplateFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -103,7 +104,23 @@ class SopTemplate extends Model
             return false;
         }
 
-        return $this->isEditable() && ! $this->isLockedByOther($user);
+        if (! $this->isEditable() || $this->isLockedByOther($user)) {
+            return false;
+        }
+
+        $draftApprovalStatus = $this->versions()
+            ->whereHas('templateStatus', fn ($query) => $query->where('code', TemplateStatus::DRAFT))
+            ->latest('version')
+            ->value('approval_status');
+
+        if ($draftApprovalStatus === null) {
+            return true;
+        }
+
+        return ($draftApprovalStatus instanceof TemplateApprovalStatus
+            ? $draftApprovalStatus
+            : TemplateApprovalStatus::from($draftApprovalStatus)
+        )->isEditable();
     }
 
     /**
@@ -175,6 +192,16 @@ class SopTemplate extends Model
     }
 
     /**
+     * @return HasOne<SopTemplateVersion, $this>
+     */
+    public function latestDraftVersion(): HasOne
+    {
+        return $this->hasOne(SopTemplateVersion::class)
+            ->whereHas('templateStatus', fn ($query) => $query->where('code', TemplateStatus::DRAFT))
+            ->ofMany('version', 'max');
+    }
+
+    /**
      * @return HasMany<SopDocument, $this>
      */
     public function documents(): HasMany
@@ -188,6 +215,32 @@ class SopTemplate extends Model
     public function auditLogs(): HasMany
     {
         return $this->hasMany(SopAuditLog::class, 'sop_template_id');
+    }
+
+    /**
+     * @return HasManyThrough<SopTemplateApprovalEvent, SopTemplateVersion, $this>
+     */
+    public function approvalEvents(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            SopTemplateApprovalEvent::class,
+            SopTemplateVersion::class,
+            'sop_template_id',
+            'sop_template_version_id',
+        );
+    }
+
+    /**
+     * @return HasManyThrough<SopTemplateApprovalInstance, SopTemplateVersion, $this>
+     */
+    public function approvalInstances(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            SopTemplateApprovalInstance::class,
+            SopTemplateVersion::class,
+            'sop_template_id',
+            'sop_template_version_id',
+        );
     }
 
     /**

@@ -10,6 +10,8 @@ use App\Filament\Resources\SopTemplates\Pages\CreateSopTemplate;
 use App\Filament\Resources\SopTemplates\Pages\EditSopTemplate;
 use App\Filament\Resources\SopTemplates\Pages\ListSopTemplates;
 use App\Filament\Resources\SopTemplates\Pages\ViewSopTemplate;
+use App\Filament\Resources\SopTemplates\RelationManagers\ApprovalEventsRelationManager;
+use App\Filament\Resources\SopTemplates\RelationManagers\ApprovalInstancesRelationManager;
 use App\Filament\Resources\SopTemplates\RelationManagers\SectionRelationManager;
 use App\Filament\Resources\SopTemplates\RelationManagers\TemplateAuditRelationManager;
 use App\Filament\Resources\SopTemplates\RelationManagers\VariableRelationManager;
@@ -225,6 +227,8 @@ class SopTemplateResource extends Resource
     {
         return [
             VersionRelationManager::class,
+            ApprovalInstancesRelationManager::class,
+            ApprovalEventsRelationManager::class,
             SectionRelationManager::class,
             VariableRelationManager::class,
             TemplateAuditRelationManager::class,

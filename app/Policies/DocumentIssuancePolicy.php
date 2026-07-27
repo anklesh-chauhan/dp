@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\DocumentIssuance;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
 class DocumentIssuancePolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:DocumentIssuance');
@@ -97,6 +97,11 @@ class DocumentIssuancePolicy
         return $authUser->can('Unpublish:DocumentIssuance');
     }
 
+    public function revise(AuthUser $authUser, DocumentIssuance $documentIssuance): bool
+    {
+        return $authUser->can('Revise:DocumentIssuance');
+    }
+
     public function archive(AuthUser $authUser, DocumentIssuance $documentIssuance): bool
     {
         return $authUser->can('Archive:DocumentIssuance');
@@ -121,5 +126,4 @@ class DocumentIssuancePolicy
     {
         return $authUser->can('Destroy:DocumentIssuance');
     }
-
 }

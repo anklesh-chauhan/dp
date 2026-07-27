@@ -52,6 +52,12 @@ class SopApprovalDecisionAuthorizationAdapter implements ApprovalDecisionAuthori
             );
         }
 
+        if ($this->hasAlreadyDecidedAnotherStep($approval, $user)) {
+            throw new WorkflowException(
+                message: 'Every SOP approval step must be decided by a different user.'
+            );
+        }
+
         if ($this->violatesDepartmentScope($approval, $user)) {
             throw new WorkflowException(
                 message: 'You can only approve documents for your own department.'
@@ -103,5 +109,14 @@ class SopApprovalDecisionAuthorizationAdapter implements ApprovalDecisionAuthori
         }
 
         return $requiredDepartmentId !== $user->department_id;
+    }
+
+    private function hasAlreadyDecidedAnotherStep(SopApproval $approval, User $user): bool
+    {
+        return SopApproval::query()
+            ->where('document_id', $approval->document_id)
+            ->whereKeyNot($approval->id)
+            ->where('approved_by', $user->id)
+            ->exists();
     }
 }

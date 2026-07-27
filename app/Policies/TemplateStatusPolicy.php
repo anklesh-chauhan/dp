@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\TemplateStatus;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
 class TemplateStatusPolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:TemplateStatus');
@@ -97,6 +97,11 @@ class TemplateStatusPolicy
         return $authUser->can('Unpublish:TemplateStatus');
     }
 
+    public function revise(AuthUser $authUser, TemplateStatus $templateStatus): bool
+    {
+        return $authUser->can('Revise:TemplateStatus');
+    }
+
     public function archive(AuthUser $authUser, TemplateStatus $templateStatus): bool
     {
         return $authUser->can('Archive:TemplateStatus');
@@ -121,5 +126,4 @@ class TemplateStatusPolicy
     {
         return $authUser->can('Destroy:TemplateStatus');
     }
-
 }

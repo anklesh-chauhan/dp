@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Foundation\Auth\User as AuthUser;
 use Spatie\Permission\Models\Role;
-use Illuminate\Auth\Access\HandlesAuthorization;
 
 class RolePolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:Role');
@@ -97,6 +97,11 @@ class RolePolicy
         return $authUser->can('Unpublish:Role');
     }
 
+    public function revise(AuthUser $authUser, Role $role): bool
+    {
+        return $authUser->can('Revise:Role');
+    }
+
     public function archive(AuthUser $authUser, Role $role): bool
     {
         return $authUser->can('Archive:Role');
@@ -121,5 +126,4 @@ class RolePolicy
     {
         return $authUser->can('Destroy:Role');
     }
-
 }

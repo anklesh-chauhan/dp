@@ -50,6 +50,16 @@ class VersionRelationManager extends RelationManager
                 TextColumn::make('templateStatus.name')
                     ->label('Status')
                     ->badge(),
+                TextColumn::make('approval_status')
+                    ->label('Approval')
+                    ->formatStateUsing(fn ($state): string => $state->label())
+                    ->badge()
+                    ->color(fn ($state): string => match ($state->value) {
+                        'approved' => 'success',
+                        'submitted', 'reviewed' => 'warning',
+                        'rejected' => 'danger',
+                        default => 'gray',
+                    }),
                 TextColumn::make('sections_count')->counts('sections')->label('Sections'),
                 TextColumn::make('variables_count')->counts('variables')->label('Variables'),
                 TextColumn::make('effective_date')->date(),

@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\SopRole;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
 class SopRolePolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:SopRole');
@@ -97,6 +97,11 @@ class SopRolePolicy
         return $authUser->can('Unpublish:SopRole');
     }
 
+    public function revise(AuthUser $authUser, SopRole $sopRole): bool
+    {
+        return $authUser->can('Revise:SopRole');
+    }
+
     public function archive(AuthUser $authUser, SopRole $sopRole): bool
     {
         return $authUser->can('Archive:SopRole');
@@ -121,5 +126,4 @@ class SopRolePolicy
     {
         return $authUser->can('Destroy:SopRole');
     }
-
 }

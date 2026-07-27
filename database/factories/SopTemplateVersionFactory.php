@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Domain\DMS\Enums\TemplateApprovalStatus;
 use App\Models\SopTemplate;
 use App\Models\SopTemplateVersion;
 use App\Models\TemplateStatus;
@@ -28,6 +29,7 @@ class SopTemplateVersionFactory extends Factory
             'effective_date' => now()->toDateString(),
             'change_reason' => fake()->optional()->sentence(),
             'template_status_id' => TemplateStatus::idFor(TemplateStatus::DRAFT),
+            'approval_status' => TemplateApprovalStatus::Draft,
         ];
     }
 
@@ -35,6 +37,7 @@ class SopTemplateVersionFactory extends Factory
     {
         return $this->state(fn (array $attributes): array => [
             'template_status_id' => TemplateStatus::idFor(TemplateStatus::PUBLISHED),
+            'approval_status' => TemplateApprovalStatus::Approved,
         ]);
     }
 }

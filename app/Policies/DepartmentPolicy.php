@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\Department;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
 class DepartmentPolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:Department');
@@ -97,6 +97,11 @@ class DepartmentPolicy
         return $authUser->can('Unpublish:Department');
     }
 
+    public function revise(AuthUser $authUser, Department $department): bool
+    {
+        return $authUser->can('Revise:Department');
+    }
+
     public function archive(AuthUser $authUser, Department $department): bool
     {
         return $authUser->can('Archive:Department');
@@ -121,5 +126,4 @@ class DepartmentPolicy
     {
         return $authUser->can('Destroy:Department');
     }
-
 }

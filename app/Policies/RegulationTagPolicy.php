@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\RegulationTag;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
 class RegulationTagPolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:RegulationTag');
@@ -97,6 +97,11 @@ class RegulationTagPolicy
         return $authUser->can('Unpublish:RegulationTag');
     }
 
+    public function revise(AuthUser $authUser, RegulationTag $regulationTag): bool
+    {
+        return $authUser->can('Revise:RegulationTag');
+    }
+
     public function archive(AuthUser $authUser, RegulationTag $regulationTag): bool
     {
         return $authUser->can('Archive:RegulationTag');
@@ -121,5 +126,4 @@ class RegulationTagPolicy
     {
         return $authUser->can('Destroy:RegulationTag');
     }
-
 }

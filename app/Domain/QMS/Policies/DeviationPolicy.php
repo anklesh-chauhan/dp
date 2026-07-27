@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Domain\QMS\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Domain\QMS\Models\Deviation;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
 class DeviationPolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:Deviation');
@@ -97,6 +97,11 @@ class DeviationPolicy
         return $authUser->can('Unpublish:Deviation');
     }
 
+    public function revise(AuthUser $authUser, Deviation $deviation): bool
+    {
+        return $authUser->can('Revise:Deviation');
+    }
+
     public function archive(AuthUser $authUser, Deviation $deviation): bool
     {
         return $authUser->can('Archive:Deviation');
@@ -121,5 +126,4 @@ class DeviationPolicy
     {
         return $authUser->can('Destroy:Deviation');
     }
-
 }

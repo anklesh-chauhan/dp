@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\AiExecution;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
 class AiExecutionPolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:AiExecution');
@@ -97,6 +97,11 @@ class AiExecutionPolicy
         return $authUser->can('Unpublish:AiExecution');
     }
 
+    public function revise(AuthUser $authUser, AiExecution $aiExecution): bool
+    {
+        return $authUser->can('Revise:AiExecution');
+    }
+
     public function archive(AuthUser $authUser, AiExecution $aiExecution): bool
     {
         return $authUser->can('Archive:AiExecution');
@@ -121,5 +126,4 @@ class AiExecutionPolicy
     {
         return $authUser->can('Destroy:AiExecution');
     }
-
 }

@@ -4,15 +4,12 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\SopTemplates\Pages;
 
-use App\Domain\DMS\Actions\PublishTemplateAction;
 use App\Filament\Concerns\HandlesServiceExceptions;
 use App\Filament\Concerns\HasGenerationPolling;
 use App\Filament\Concerns\ProcessesSopTemplateMetadataAi;
 use App\Filament\Resources\SopTemplates\SopTemplateResource;
 use App\Models\TemplateStatus;
-use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
-use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Support\Facades\Auth;
@@ -29,7 +26,10 @@ class EditSopTemplate extends EditRecord
     {
         parent::mount($record);
 
-        if (! Auth::user()?->can('update', $this->record)) {
+        if (
+            ! Auth::user()?->can('update', $this->record)
+            || ! $this->record->canBeEditedBy(Auth::user())
+        ) {
             Notification::make()
                 ->title('Template is not editable')
                 ->body('Archived templates and templates in retention cannot be edited.')
@@ -43,18 +43,6 @@ class EditSopTemplate extends EditRecord
     protected function getActions(): array
     {
         return [
-            Action::make('publish')
-                ->schema([
-                    Textarea::make('change_reason')->required(),
-                ])
-                ->visible(fn (): bool => Auth::user()?->can('publish', $this->record) ?? false)
-                ->action(function (array $data): void {
-                    $this->runServiceAction(
-                        fn () => app(PublishTemplateAction::class)->execute($this->record, (int) Auth::id(), $data['change_reason'] ?? null),
-                        failureTitle: 'Publish Failed',
-                        successTitle: 'Template published',
-                    );
-                }),
             DeleteAction::make(),
         ];
     }
