@@ -61,7 +61,7 @@ class SopAuditLog extends Model
 
     protected $fillable = [
         'document_id',
-        'sop_template_id',
+        'document_template_id',
         'user_id',
         'action',
         'old_values',
@@ -79,19 +79,19 @@ class SopAuditLog extends Model
     }
 
     /**
-     * @return BelongsTo<SopDocument, $this>
+     * @return BelongsTo<ControlledDocument, $this>
      */
     public function document(): BelongsTo
     {
-        return $this->belongsTo(SopDocument::class, 'document_id');
+        return $this->belongsTo(ControlledDocument::class, 'document_id');
     }
 
     /**
-     * @return BelongsTo<SopTemplate, $this>
+     * @return BelongsTo<DocumentTemplate, $this>
      */
     public function template(): BelongsTo
     {
-        return $this->belongsTo(SopTemplate::class, 'sop_template_id');
+        return $this->belongsTo(DocumentTemplate::class, 'document_template_id');
     }
 
     /**

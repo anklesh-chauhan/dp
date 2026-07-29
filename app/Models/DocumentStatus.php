@@ -61,10 +61,10 @@ class DocumentStatus extends Model
     protected $fillable = ['code', 'name', 'sort_order'];
 
     /**
-     * @return HasMany<SopDocument, $this>
+     * @return HasMany<ControlledDocument, $this>
      */
     public function documents(): HasMany
     {
-        return $this->hasMany(SopDocument::class);
+        return $this->hasMany(ControlledDocument::class);
     }
 }

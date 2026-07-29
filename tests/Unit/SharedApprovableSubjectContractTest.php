@@ -3,10 +3,10 @@
 declare(strict_types=1);
 
 use App\Domain\Shared\Contracts\ApprovableSubject;
-use App\Models\SopDocument;
+use App\Models\ControlledDocument;
 
 it('adapts a controlled document to the Shared approvable subject contract', function (): void {
-    $document = new SopDocument([
+    $document = new ControlledDocument([
         'document_number' => 'SOP-QA-00001',
         'title' => 'Deviation Management Procedure',
         'department_id' => 7,

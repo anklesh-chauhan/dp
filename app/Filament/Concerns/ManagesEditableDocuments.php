@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Concerns;
 
-use App\Models\SopDocument;
+use App\Models\ControlledDocument;
 use Illuminate\Support\Facades\Auth;
 
 trait ManagesEditableDocuments
@@ -13,7 +13,7 @@ trait ManagesEditableDocuments
     {
         $owner = $this->getOwnerRecord();
 
-        if (! $owner instanceof SopDocument) {
+        if (! $owner instanceof ControlledDocument) {
             return true;
         }
 

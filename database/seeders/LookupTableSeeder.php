@@ -63,7 +63,7 @@ class LookupTableSeeder extends Seeder
             [VariableDataType::DEPARTMENT, 'Department', 20],
             [VariableDataType::DESIGNATION, 'Designation', 21],
             [VariableDataType::SOP_REFERENCE, 'SOP Reference', 22],
-            [VariableDataType::SOP_DOCUMENT, 'SOP Document', 23],
+            [VariableDataType::CONTROLLED_DOCUMENT, 'Controlled Document', 23],
             [VariableDataType::DOCUMENT_NUMBER, 'Document Number', 24],
             [VariableDataType::FILE, 'File', 25],
             [VariableDataType::IMAGE, 'Image', 26],

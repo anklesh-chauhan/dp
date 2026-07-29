@@ -6,7 +6,7 @@ namespace App\Filament\Widgets;
 
 use App\Enums\ProductModule;
 use App\Filament\Concerns\RequiresProductModule;
-use App\Models\SopDocument;
+use App\Models\ControlledDocument;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Carbon;
 
@@ -36,7 +36,7 @@ class DocumentsCreatedChart extends ChartWidget
             ->map(fn (int $monthsAgo): Carbon => now()->subMonths($monthsAgo)->startOfMonth());
 
         $counts = $months->map(
-            fn (Carbon $month): int => SopDocument::query()
+            fn (Carbon $month): int => ControlledDocument::query()
                 ->whereBetween('created_at', [
                     $month->copy()->startOfMonth(),
                     $month->copy()->endOfMonth(),

@@ -11,8 +11,8 @@ use App\Domain\DMS\Actions\DestroyTemplateAction;
 use App\Domain\DMS\Actions\MarkDocumentObsoleteAction;
 use App\Domain\DMS\Actions\MarkTemplateObsoleteAction;
 use App\Domain\DMS\Services\RetentionLifecycleService;
-use App\Models\SopDocument;
-use App\Models\SopTemplate;
+use App\Models\ControlledDocument;
+use App\Models\DocumentTemplate;
 use App\Models\User;
 use Illuminate\Validation\ValidationException;
 
@@ -37,14 +37,14 @@ it('resolves canonical and legacy retention entry points through the DMS boundar
 
 it('keeps the canonical document retention guard behavior', function (): void {
     expect(fn () => app(MarkDocumentObsoleteAction::class)->execute(
-        new SopDocument,
+        new ControlledDocument,
         new User,
     ))->toThrow(ValidationException::class, 'Only effective or approved documents');
 });
 
 it('keeps the canonical template retention guard behavior', function (): void {
     expect(fn () => app(MarkTemplateObsoleteAction::class)->execute(
-        new SopTemplate,
+        new DocumentTemplate,
         new User,
     ))->toThrow(ValidationException::class, 'Only published templates');
 });

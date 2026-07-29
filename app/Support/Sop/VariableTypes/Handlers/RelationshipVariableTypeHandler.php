@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Support\Sop\VariableTypes\Handlers;
 
 use App\Domain\DMS\Services\SopReferenceService;
+use App\Models\ControlledDocument;
 use App\Models\Department;
-use App\Models\SopDocument;
+use App\Models\DocumentTemplateVariable;
 use App\Models\SopRole;
-use App\Models\SopTemplateVariable;
 use App\Models\User;
 use App\Models\VariableDataType;
 use App\Support\Sop\VariableTypes\VariableTypeFieldContext;
@@ -25,11 +25,11 @@ class RelationshipVariableTypeHandler extends AbstractVariableTypeHandler
             VariableDataType::DEPARTMENT,
             VariableDataType::DESIGNATION,
             VariableDataType::SOP_REFERENCE,
-            VariableDataType::SOP_DOCUMENT,
+            VariableDataType::CONTROLLED_DOCUMENT,
         ];
     }
 
-    public function makeField(SopTemplateVariable $variable, VariableTypeFieldContext $context): Field
+    public function makeField(DocumentTemplateVariable $variable, VariableTypeFieldContext $context): Field
     {
         $field = Select::make($context->fieldName)
             ->options(fn (): array => $this->relationshipOptions($variable, $context))
@@ -49,25 +49,25 @@ class RelationshipVariableTypeHandler extends AbstractVariableTypeHandler
         return is_numeric($defaultValue) ? (int) $defaultValue : $defaultValue;
     }
 
-    public function validationRules(SopTemplateVariable $variable): array
+    public function validationRules(DocumentTemplateVariable $variable): array
     {
         $baseRules = match ($variable->variableDataType?->code) {
             VariableDataType::DEPARTMENT => ['nullable', 'integer', 'exists:departments,id'],
             VariableDataType::USER, VariableDataType::EMPLOYEE => ['nullable', 'integer', 'exists:users,id'],
             VariableDataType::DESIGNATION => ['nullable', 'integer', 'exists:sop_roles,id'],
-            VariableDataType::SOP_REFERENCE, VariableDataType::SOP_DOCUMENT => ['nullable', 'integer', 'exists:sop_documents,id'],
+            VariableDataType::SOP_REFERENCE, VariableDataType::CONTROLLED_DOCUMENT => ['nullable', 'integer', 'exists:controlled_documents,id'],
             default => ['nullable'],
         };
 
         return $this->mergeValidationRules($variable, $baseRules);
     }
 
-    public function formatForStorage(SopTemplateVariable $variable, mixed $value): string
+    public function formatForStorage(DocumentTemplateVariable $variable, mixed $value): string
     {
         return $this->stringifyScalar($value);
     }
 
-    public function formatForSubstitution(SopTemplateVariable $variable, mixed $value): string
+    public function formatForSubstitution(DocumentTemplateVariable $variable, mixed $value): string
     {
         if ($value === null || $value === '') {
             return '';
@@ -77,7 +77,7 @@ class RelationshipVariableTypeHandler extends AbstractVariableTypeHandler
             VariableDataType::USER, VariableDataType::EMPLOYEE => User::query()->whereKey($value)->value('name') ?? (string) $value,
             VariableDataType::DEPARTMENT => Department::query()->whereKey($value)->value('name') ?? (string) $value,
             VariableDataType::DESIGNATION => SopRole::query()->whereKey($value)->value('name') ?? (string) $value,
-            VariableDataType::SOP_REFERENCE, VariableDataType::SOP_DOCUMENT => SopDocument::query()->whereKey($value)->value('document_number') ?? (string) $value,
+            VariableDataType::SOP_REFERENCE, VariableDataType::CONTROLLED_DOCUMENT => ControlledDocument::query()->whereKey($value)->value('document_number') ?? (string) $value,
             default => $this->formatForStorage($variable, $value),
         };
     }
@@ -85,13 +85,13 @@ class RelationshipVariableTypeHandler extends AbstractVariableTypeHandler
     /**
      * @return array<int|string, string>
      */
-    private function relationshipOptions(SopTemplateVariable $variable, VariableTypeFieldContext $context): array
+    private function relationshipOptions(DocumentTemplateVariable $variable, VariableTypeFieldContext $context): array
     {
         return match ($variable->variableDataType?->code) {
             VariableDataType::USER, VariableDataType::EMPLOYEE => User::query()->orderBy('name')->pluck('name', 'id')->all(),
             VariableDataType::DEPARTMENT => Department::query()->orderBy('name')->pluck('name', 'id')->all(),
             VariableDataType::DESIGNATION => SopRole::query()->orderBy('sort_order')->pluck('name', 'id')->all(),
-            VariableDataType::SOP_REFERENCE, VariableDataType::SOP_DOCUMENT => app(SopReferenceService::class)
+            VariableDataType::SOP_REFERENCE, VariableDataType::CONTROLLED_DOCUMENT => app(SopReferenceService::class)
                 ->effectiveSopOptions($context->templateId),
             default => [],
         };

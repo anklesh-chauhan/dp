@@ -112,6 +112,18 @@ class QmsModuleSeeder extends Seeder
         'Complete:ManagementReview',
         'Manage:ManagementReview',
         'View:QualityMetrics',
+        'ViewAny:CsvValidationProject',
+        'View:CsvValidationProject',
+        'Create:CsvValidationProject',
+        'Update:CsvValidationProject',
+        'Assess:CsvValidationProject',
+        'Plan:CsvValidationProject',
+        'Specify:CsvValidationProject',
+        'Test:CsvValidationProject',
+        'Review:CsvValidationProject',
+        'Release:CsvValidationProject',
+        'PeriodicReview:CsvValidationProject',
+        'Manage:CsvValidationProject',
     ];
 
     public function run(): void

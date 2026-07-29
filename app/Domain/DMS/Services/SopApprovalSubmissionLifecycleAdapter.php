@@ -9,9 +9,9 @@ use App\Domain\Shared\Contracts\ApprovalSubmissionLifecycle;
 use App\Domain\Shared\Contracts\ApprovalWorkflowDefinition;
 use App\Domain\Shared\Services\AuditLogService;
 use App\Exceptions\WorkflowException;
+use App\Models\ControlledDocument;
 use App\Models\DocumentStatus;
 use App\Models\SopAuditLog;
-use App\Models\SopDocument;
 use App\Models\User;
 use InvalidArgumentException;
 
@@ -64,11 +64,11 @@ class SopApprovalSubmissionLifecycleAdapter implements ApprovalSubmissionLifecyc
         );
     }
 
-    private function sopDocument(ApprovableSubject $subject): SopDocument
+    private function sopDocument(ApprovableSubject $subject): ControlledDocument
     {
-        if (! $subject instanceof SopDocument) {
+        if (! $subject instanceof ControlledDocument) {
             throw new InvalidArgumentException(
-                'The SOP approval submission lifecycle adapter requires a SopDocument subject.'
+                'The SOP approval submission lifecycle adapter requires a ControlledDocument subject.'
             );
         }
 

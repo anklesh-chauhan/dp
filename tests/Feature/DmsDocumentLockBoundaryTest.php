@@ -5,8 +5,8 @@ declare(strict_types=1);
 use App\Domain\DMS\Actions\LockDocumentAction;
 use App\Domain\DMS\Actions\UnlockDocumentAction;
 use App\Domain\DMS\Services\DocumentLockService;
-use App\Models\SopDocument;
-use App\Models\SopTemplate;
+use App\Models\ControlledDocument;
+use App\Models\DocumentTemplate;
 use App\Models\User;
 use Illuminate\Validation\ValidationException;
 
@@ -25,13 +25,13 @@ it('resolves canonical and legacy lock entry points through the DMS boundary', f
 
 it('keeps the canonical document lock guard behavior', function (): void {
     expect(fn () => app(LockDocumentAction::class)->execute(
-        new SopDocument,
+        new ControlledDocument,
         new User,
     ))->toThrow(ValidationException::class, 'not in an editable state');
 });
 
 it('keeps unlocking an already unlocked document idempotent', function (): void {
-    $document = new SopDocument;
+    $document = new ControlledDocument;
 
     expect(app(UnlockDocumentAction::class)->execute(
         $document,
@@ -41,7 +41,7 @@ it('keeps unlocking an already unlocked document idempotent', function (): void 
 
 it('keeps the canonical template lock guard behavior', function (): void {
     expect(fn () => app(DocumentLockService::class)->lockTemplate(
-        new SopTemplate,
+        new DocumentTemplate,
         new User,
     ))->toThrow(ValidationException::class, 'Only draft templates');
 });

@@ -6,10 +6,10 @@ namespace App\Domain\DMS\Services;
 
 use App\Domain\DMS\Enums\TemplateApprovalStatus;
 use App\Enums\ProductModule;
-use App\Models\SopTemplate;
-use App\Models\SopTemplateApprovalEvent;
-use App\Models\SopTemplateApprovalInstance;
-use App\Models\SopTemplateVersion;
+use App\Models\DocumentTemplate;
+use App\Models\DocumentTemplateApprovalEvent;
+use App\Models\DocumentTemplateApprovalInstance;
+use App\Models\DocumentTemplateVersion;
 use App\Models\SopWorkflow;
 use App\Models\TemplateStatus;
 use App\Models\User;
@@ -28,16 +28,16 @@ class TemplateApprovalService
     ) {}
 
     public function submit(
-        SopTemplate $template,
+        DocumentTemplate $template,
         User $actor,
         string $reason,
         ?string $ipAddress = null,
         ?string $userAgent = null,
-    ): SopTemplateVersion {
+    ): DocumentTemplateVersion {
         $this->moduleManager->ensureEnabled(ProductModule::DMS);
 
-        if (! $actor->can('Submit:SopTemplate')) {
-            throw new AuthorizationException('You do not have permission to submit SOP templates.');
+        if (! $actor->can('Submit:DocumentTemplate')) {
+            throw new AuthorizationException('You do not have permission to submit document templates.');
         }
 
         $reason = trim($reason);
@@ -46,8 +46,8 @@ class TemplateApprovalService
             throw ValidationException::withMessages(['reason' => 'An attributable reason is required.']);
         }
 
-        return DB::transaction(function () use ($template, $actor, $reason): SopTemplateVersion {
-            $template = SopTemplate::query()->lockForUpdate()->findOrFail($template->id);
+        return DB::transaction(function () use ($template, $actor, $reason): DocumentTemplateVersion {
+            $template = DocumentTemplate::query()->lockForUpdate()->findOrFail($template->id);
 
             if ($template->isInRetentionLifecycle()) {
                 throw ValidationException::withMessages([
@@ -92,10 +92,10 @@ class TemplateApprovalService
             $submissionUuid = (string) Str::uuid();
 
             foreach ($steps as $step) {
-                SopTemplateApprovalInstance::query()->create([
+                DocumentTemplateApprovalInstance::query()->create([
                     'instance_uuid' => (string) Str::uuid(),
                     'submission_uuid' => $submissionUuid,
-                    'sop_template_version_id' => $version->id,
+                    'document_template_version_id' => $version->id,
                     'workflow_id' => $workflow->id,
                     'workflow_step_id' => $step->id,
                     'decision_code' => 'pending',
@@ -115,8 +115,8 @@ class TemplateApprovalService
                 'approved_at' => null,
             ]);
 
-            SopTemplateApprovalEvent::query()->create([
-                'sop_template_version_id' => $version->id,
+            DocumentTemplateApprovalEvent::query()->create([
+                'document_template_version_id' => $version->id,
                 'event_uuid' => (string) Str::uuid(),
                 'from_status' => $from,
                 'to_status' => TemplateApprovalStatus::Submitted,

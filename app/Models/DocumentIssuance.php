@@ -46,11 +46,11 @@ class DocumentIssuance extends Model
     }
 
     /**
-     * @return BelongsTo<SopDocument, $this>
+     * @return BelongsTo<ControlledDocument, $this>
      */
     public function document(): BelongsTo
     {
-        return $this->belongsTo(SopDocument::class, 'document_id');
+        return $this->belongsTo(ControlledDocument::class, 'document_id');
     }
 
     /**

@@ -31,7 +31,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('sop_templates', function (Blueprint $table): void {
+        Schema::create('document_templates', function (Blueprint $table): void {
             $table->id();
             $table->string('name');
             $table->string('code')->unique();
@@ -47,9 +47,9 @@ return new class extends Migration
             $table->index(['department_id', 'status']);
         });
 
-        Schema::create('sop_template_versions', function (Blueprint $table): void {
+        Schema::create('document_template_versions', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('sop_template_id')->constrained()->cascadeOnUpdate()->cascadeOnDelete();
+            $table->foreignId('document_template_id')->constrained()->cascadeOnUpdate()->cascadeOnDelete();
             $table->unsignedInteger('version');
             $table->json('content_json')->nullable();
             $table->date('effective_date')->nullable();
@@ -58,24 +58,24 @@ return new class extends Migration
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
             $table->softDeletes();
-            $table->unique(['sop_template_id', 'version']);
+            $table->unique(['document_template_id', 'version']);
         });
 
-        Schema::create('sop_template_sections', function (Blueprint $table): void {
+        Schema::create('document_template_sections', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('template_version_id')->constrained('sop_template_versions')->cascadeOnUpdate()->cascadeOnDelete();
+            $table->foreignId('template_version_id')->constrained('document_template_versions')->cascadeOnUpdate()->cascadeOnDelete();
             $table->string('title');
             $table->unsignedInteger('section_order')->default(1);
             $table->string('section_type')->default('rich_text');
             $table->longText('content')->nullable();
             $table->boolean('is_required')->default(true);
             $table->timestamps();
-            $table->index(['template_version_id', 'section_order']);
+            $table->index(['template_version_id', 'section_order'], 'doc_tpl_sections_version_order_idx');
         });
 
-        Schema::create('sop_template_variables', function (Blueprint $table): void {
+        Schema::create('document_template_variables', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('template_version_id')->constrained('sop_template_versions')->cascadeOnUpdate()->cascadeOnDelete();
+            $table->foreignId('template_version_id')->constrained('document_template_versions')->cascadeOnUpdate()->cascadeOnDelete();
             $table->string('name');
             $table->string('label');
             $table->string('datatype')->default('text');
@@ -83,13 +83,13 @@ return new class extends Migration
             $table->json('validation_rules')->nullable();
             $table->boolean('required')->default(false);
             $table->timestamps();
-            $table->unique(['template_version_id', 'name']);
+            $table->unique(['template_version_id', 'name'], 'doc_tpl_variables_version_name_unique');
         });
 
-        Schema::create('sop_documents', function (Blueprint $table): void {
+        Schema::create('controlled_documents', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('template_id')->constrained('sop_templates')->cascadeOnUpdate()->restrictOnDelete();
-            $table->foreignId('template_version_id')->constrained('sop_template_versions')->cascadeOnUpdate()->restrictOnDelete();
+            $table->foreignId('template_id')->constrained('document_templates')->cascadeOnUpdate()->restrictOnDelete();
+            $table->foreignId('template_version_id')->constrained('document_template_versions')->cascadeOnUpdate()->restrictOnDelete();
             $table->string('document_number')->unique();
             $table->string('title');
             $table->unsignedInteger('version')->default(1);
@@ -104,9 +104,9 @@ return new class extends Migration
             $table->index(['department_id', 'status']);
         });
 
-        Schema::create('sop_document_sections', function (Blueprint $table): void {
+        Schema::create('controlled_document_sections', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('document_id')->constrained('sop_documents')->cascadeOnUpdate()->cascadeOnDelete();
+            $table->foreignId('document_id')->constrained('controlled_documents')->cascadeOnUpdate()->cascadeOnDelete();
             $table->string('title');
             $table->unsignedInteger('section_order')->default(1);
             $table->longText('content')->nullable();
@@ -114,9 +114,9 @@ return new class extends Migration
             $table->index(['document_id', 'section_order']);
         });
 
-        Schema::create('sop_document_variables', function (Blueprint $table): void {
+        Schema::create('controlled_document_variables', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('document_id')->constrained('sop_documents')->cascadeOnUpdate()->cascadeOnDelete();
+            $table->foreignId('document_id')->constrained('controlled_documents')->cascadeOnUpdate()->cascadeOnDelete();
             $table->string('variable_name');
             $table->text('value')->nullable();
             $table->timestamps();
@@ -144,7 +144,7 @@ return new class extends Migration
 
         Schema::create('sop_approvals', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('document_id')->constrained('sop_documents')->cascadeOnUpdate()->cascadeOnDelete();
+            $table->foreignId('document_id')->constrained('controlled_documents')->cascadeOnUpdate()->cascadeOnDelete();
             $table->foreignId('workflow_step_id')->constrained('sop_workflow_steps')->cascadeOnUpdate()->restrictOnDelete();
             $table->foreignId('approved_by')->nullable()->constrained('users')->nullOnDelete();
             $table->string('decision')->default('pending')->index();
@@ -157,7 +157,7 @@ return new class extends Migration
 
         Schema::create('sop_audit_logs', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('document_id')->nullable()->constrained('sop_documents')->cascadeOnUpdate()->cascadeOnDelete();
+            $table->foreignId('document_id')->nullable()->constrained('controlled_documents')->cascadeOnUpdate()->cascadeOnDelete();
             $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('action')->index();
             $table->json('old_values')->nullable();
@@ -175,13 +175,13 @@ return new class extends Migration
         Schema::dropIfExists('sop_approvals');
         Schema::dropIfExists('sop_workflow_steps');
         Schema::dropIfExists('sop_workflows');
-        Schema::dropIfExists('sop_document_variables');
-        Schema::dropIfExists('sop_document_sections');
-        Schema::dropIfExists('sop_documents');
-        Schema::dropIfExists('sop_template_variables');
-        Schema::dropIfExists('sop_template_sections');
-        Schema::dropIfExists('sop_template_versions');
-        Schema::dropIfExists('sop_templates');
+        Schema::dropIfExists('controlled_document_variables');
+        Schema::dropIfExists('controlled_document_sections');
+        Schema::dropIfExists('controlled_documents');
+        Schema::dropIfExists('document_template_variables');
+        Schema::dropIfExists('document_template_sections');
+        Schema::dropIfExists('document_template_versions');
+        Schema::dropIfExists('document_templates');
         Schema::dropIfExists('document_types');
         Schema::dropIfExists('document_categories');
         Schema::dropIfExists('departments');

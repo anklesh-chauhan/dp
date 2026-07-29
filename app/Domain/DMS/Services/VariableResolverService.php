@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\DMS\Services;
 
-use App\Models\SopTemplateVariable;
-use App\Models\SopTemplateVersion;
+use App\Models\DocumentTemplateVariable;
+use App\Models\DocumentTemplateVersion;
 use App\Support\Sop\VariableTypes\VariableTypeRegistry;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
@@ -24,12 +24,12 @@ class VariableResolverService
      *
      * @throws ValidationException
      */
-    public function resolveValues(SopTemplateVersion $version, array $values): array
+    public function resolveValues(DocumentTemplateVersion $version, array $values): array
     {
         $version->loadMissing('variables.variableDataType');
 
         $rawValues = $version->variables
-            ->mapWithKeys(fn (SopTemplateVariable $variable): array => [
+            ->mapWithKeys(fn (DocumentTemplateVariable $variable): array => [
                 $variable->name => $values[$variable->name] ?? $this->variableTypeRegistry->parseDefaultValue($variable),
             ])
             ->all();
@@ -37,7 +37,7 @@ class VariableResolverService
         $this->validateRequiredVariables($version->variables, $rawValues);
 
         $storage = $version->variables
-            ->mapWithKeys(fn (SopTemplateVariable $variable): array => [
+            ->mapWithKeys(fn (DocumentTemplateVariable $variable): array => [
                 $variable->name => $this->variableTypeRegistry->formatForStorage(
                     $variable,
                     $rawValues[$variable->name] ?? null,
@@ -46,7 +46,7 @@ class VariableResolverService
             ->all();
 
         $substitution = $version->variables
-            ->mapWithKeys(fn (SopTemplateVariable $variable): array => [
+            ->mapWithKeys(fn (DocumentTemplateVariable $variable): array => [
                 $variable->name => $this->variableTypeRegistry->formatForSubstitution(
                     $variable,
                     $rawValues[$variable->name] ?? null,
@@ -71,7 +71,7 @@ class VariableResolverService
     }
 
     /**
-     * @param  Collection<int, SopTemplateVariable>  $variables
+     * @param  Collection<int, DocumentTemplateVariable>  $variables
      * @param  array<string, mixed>  $values
      *
      * @throws ValidationException
@@ -79,7 +79,7 @@ class VariableResolverService
     private function validateRequiredVariables(Collection $variables, array $values): void
     {
         $rules = $variables
-            ->mapWithKeys(function (SopTemplateVariable $variable): array {
+            ->mapWithKeys(function (DocumentTemplateVariable $variable): array {
                 $typeRules = array_values(array_filter(
                     $this->variableTypeRegistry->validationRules($variable),
                     fn (mixed $rule): bool => $rule !== 'nullable',

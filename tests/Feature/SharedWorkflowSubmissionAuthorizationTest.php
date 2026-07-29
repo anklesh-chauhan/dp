@@ -15,16 +15,16 @@ use App\Domain\Shared\Contracts\ApprovalWorkflowStepDefinition;
 use App\Domain\Shared\Services\ApprovalWorkflowEngineService;
 use App\Exceptions\WorkflowException;
 use App\Models\ApprovalDecision;
+use App\Models\ControlledDocument;
 use App\Models\Department;
 use App\Models\DocumentCategory;
 use App\Models\DocumentStatus;
+use App\Models\DocumentTemplate;
+use App\Models\DocumentTemplateVersion;
 use App\Models\DocumentType;
 use App\Models\SopApproval;
 use App\Models\SopAuditLog;
-use App\Models\SopDocument;
 use App\Models\SopRole;
-use App\Models\SopTemplate;
-use App\Models\SopTemplateVersion;
 use App\Models\SopWorkflow;
 use App\Models\SopWorkflowStep;
 use App\Models\TemplateStatus;
@@ -47,13 +47,13 @@ it('resolves canonical and legacy workflow engine entry points', function (): vo
 });
 
 it('authorizes submission through the Shared approvable subject contract', function (): void {
-    Permission::findOrCreate('Submit:SopDocument', 'web');
+    Permission::findOrCreate('Submit:ControlledDocument', 'web');
 
     $owner = User::factory()->create();
-    $owner->givePermissionTo('Submit:SopDocument');
+    $owner->givePermissionTo('Submit:ControlledDocument');
 
     $otherUser = User::factory()->create();
-    $otherUser->givePermissionTo('Submit:SopDocument');
+    $otherUser->givePermissionTo('Submit:ControlledDocument');
 
     $subject = new class($owner->id) implements ApprovableSubject
     {
@@ -137,8 +137,8 @@ it('rejects a Shared approvable subject when the user lacks submission permissio
 });
 
 it('preserves SOP submission permission, role, department, creator, and owner rules', function (): void {
-    Permission::findOrCreate('Submit:SopDocument', 'web');
-    Permission::findOrCreate('Update:SopDocument', 'web');
+    Permission::findOrCreate('Submit:ControlledDocument', 'web');
+    Permission::findOrCreate('Update:ControlledDocument', 'web');
 
     $department = Department::factory()->create();
     $otherDepartment = Department::factory()->create();
@@ -184,29 +184,29 @@ it('preserves SOP submission permission, role, department, creator, and owner ru
     };
 
     $administrator = User::factory()->create(['department_id' => $otherDepartment->id]);
-    $administrator->givePermissionTo('Submit:SopDocument');
+    $administrator->givePermissionTo('Submit:ControlledDocument');
     $administrator->assignRole(Role::findOrCreate(SopRole::ADMINISTRATOR, 'web'));
 
     $administratorWithoutPermission = User::factory()->create();
     $administratorWithoutPermission->assignRole(Role::findOrCreate(SopRole::ADMINISTRATOR, 'web'));
 
     $maker = User::factory()->create(['department_id' => $department->id]);
-    $maker->givePermissionTo('Submit:SopDocument');
+    $maker->givePermissionTo('Submit:ControlledDocument');
     $maker->assignRole(Role::findOrCreate(SopRole::MAKER, 'web'));
 
     $otherDepartmentMaker = User::factory()->create(['department_id' => $otherDepartment->id]);
-    $otherDepartmentMaker->givePermissionTo('Submit:SopDocument');
+    $otherDepartmentMaker->givePermissionTo('Submit:ControlledDocument');
     $otherDepartmentMaker->assignRole(Role::findOrCreate(SopRole::MAKER, 'web'));
 
     $unscopedMaker = User::factory()->create(['department_id' => null]);
-    $unscopedMaker->givePermissionTo('Submit:SopDocument');
+    $unscopedMaker->givePermissionTo('Submit:ControlledDocument');
     $unscopedMaker->assignRole(Role::findOrCreate(SopRole::MAKER, 'web'));
 
-    $creator->givePermissionTo('Update:SopDocument');
-    $owner->givePermissionTo('Submit:SopDocument');
+    $creator->givePermissionTo('Update:ControlledDocument');
+    $owner->givePermissionTo('Submit:ControlledDocument');
 
     $unrelatedUser = User::factory()->create(['department_id' => $department->id]);
-    $unrelatedUser->givePermissionTo('Submit:SopDocument');
+    $unrelatedUser->givePermissionTo('Submit:ControlledDocument');
 
     $authorization = app(ApprovalSubmissionAuthorization::class);
     $workflow = app(WorkflowEngineService::class);
@@ -257,36 +257,38 @@ it('falls back to the global SOP workflow for a Shared subject without a departm
 
 it('persists the existing SOP approval workflow from Shared definition metadata', function (): void {
     $this->seed(LookupTableSeeder::class);
-    Permission::findOrCreate('Submit:SopDocument', 'web');
+    Permission::findOrCreate('Submit:ControlledDocument', 'web');
 
     $submitter = User::factory()->create();
-    $submitter->givePermissionTo('Submit:SopDocument');
+    $submitter->givePermissionTo('Submit:ControlledDocument');
 
     $department = Department::factory()->create();
     $documentType = DocumentType::query()->where('code', DocumentType::SOP)->firstOrFail();
-    $documentType->update(['category_id' => DocumentCategory::factory()->create()->id]);
-    $template = SopTemplate::query()->create([
+    $documentCategory = DocumentCategory::factory()->create();
+    $template = DocumentTemplate::query()->create([
         'name' => 'Shared Workflow Execution Template',
         'code' => 'TPL-SHARED-WORKFLOW',
         'department_id' => $department->id,
+        'category_id' => $documentCategory->id,
         'document_type_id' => $documentType->id,
         'template_status_id' => TemplateStatus::idFor(TemplateStatus::DRAFT),
         'current_version' => 1,
         'created_by' => $submitter->id,
     ]);
-    $templateVersion = SopTemplateVersion::query()->create([
-        'sop_template_id' => $template->id,
+    $templateVersion = DocumentTemplateVersion::query()->create([
+        'document_template_id' => $template->id,
         'version' => 1,
         'content_json' => [],
         'template_status_id' => TemplateStatus::idFor(TemplateStatus::DRAFT),
         'created_by' => $submitter->id,
     ]);
-    $document = SopDocument::query()->create([
+    $document = ControlledDocument::query()->create([
         'template_id' => $template->id,
         'template_version_id' => $templateVersion->id,
         'document_number' => 'SOP-SHARED-00001',
         'title' => 'Shared workflow execution',
         'department_id' => $department->id,
+        'category_id' => $documentCategory->id,
         'document_type_id' => $documentType->id,
         'document_status_id' => DocumentStatus::idFor(DocumentStatus::DRAFT),
         'created_by' => $submitter->id,
@@ -433,12 +435,12 @@ it('rejects non-DMS subjects at the SOP submission lifecycle boundary', function
     expect(fn () => app(ApprovalSubmissionLifecycle::class)->assertSubmittable($subject))
         ->toThrow(
             InvalidArgumentException::class,
-            'The SOP approval submission lifecycle adapter requires a SopDocument subject.',
+            'The SOP approval submission lifecycle adapter requires a ControlledDocument subject.',
         );
 });
 
 it('preserves SOP draft validation at the submission lifecycle boundary', function (): void {
-    $document = new SopDocument;
+    $document = new ControlledDocument;
     $document->setRelation('documentStatus', new DocumentStatus([
         'code' => DocumentStatus::APPROVED,
         'name' => 'Approved',
@@ -460,7 +462,7 @@ it('rejects non-DMS subjects at the SOP approval persistence adapter boundary', 
     })
         ->toThrow(
             InvalidArgumentException::class,
-            'The SOP approval persistence adapter requires a SopDocument subject.',
+            'The SOP approval persistence adapter requires a ControlledDocument subject.',
         );
 });
 

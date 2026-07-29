@@ -58,7 +58,7 @@ class VariableDataType extends Model
 
     public const SOP_REFERENCE = 'sop_reference';
 
-    public const SOP_DOCUMENT = 'sop_document';
+    public const CONTROLLED_DOCUMENT = 'controlled_document';
 
     public const DOCUMENT_NUMBER = 'document_number';
 
@@ -75,10 +75,10 @@ class VariableDataType extends Model
     protected $fillable = ['code', 'name', 'sort_order'];
 
     /**
-     * @return HasMany<SopTemplateVariable, $this>
+     * @return HasMany<DocumentTemplateVariable, $this>
      */
     public function templateVariables(): HasMany
     {
-        return $this->hasMany(SopTemplateVariable::class);
+        return $this->hasMany(DocumentTemplateVariable::class);
     }
 }

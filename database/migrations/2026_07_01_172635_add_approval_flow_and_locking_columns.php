@@ -28,7 +28,7 @@ return new class extends Migration
             $table->index(['department_id', 'is_active']);
         });
 
-        Schema::table('sop_documents', function (Blueprint $table): void {
+        Schema::table('controlled_documents', function (Blueprint $table): void {
             $table->foreignId('locked_by')
                 ->nullable()
                 ->after('created_by')
@@ -38,7 +38,7 @@ return new class extends Migration
             $table->timestamp('locked_at')->nullable()->after('locked_by');
         });
 
-        Schema::table('sop_templates', function (Blueprint $table): void {
+        Schema::table('document_templates', function (Blueprint $table): void {
             $table->foreignId('locked_by')
                 ->nullable()
                 ->after('created_by')
@@ -51,12 +51,12 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('sop_templates', function (Blueprint $table): void {
+        Schema::table('document_templates', function (Blueprint $table): void {
             $table->dropConstrainedForeignId('locked_by');
             $table->dropColumn('locked_at');
         });
 
-        Schema::table('sop_documents', function (Blueprint $table): void {
+        Schema::table('controlled_documents', function (Blueprint $table): void {
             $table->dropConstrainedForeignId('locked_by');
             $table->dropColumn('locked_at');
         });

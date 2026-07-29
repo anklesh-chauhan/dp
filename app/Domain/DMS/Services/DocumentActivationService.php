@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Domain\DMS\Services;
 
 use App\Domain\Shared\Services\AuditLogService;
+use App\Models\ControlledDocument;
 use App\Models\DocumentStatus;
 use App\Models\SopAuditLog;
-use App\Models\SopDocument;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
@@ -15,17 +15,17 @@ class DocumentActivationService
 {
     public function __construct(private readonly AuditLogService $auditLogService) {}
 
-    public function activate(SopDocument $document, User $user): SopDocument
+    public function activate(ControlledDocument $document, User $user): ControlledDocument
     {
-        return DB::transaction(function () use ($document, $user): SopDocument {
+        return DB::transaction(function () use ($document, $user): ControlledDocument {
             $effectiveStatusId = DocumentStatus::idFor(DocumentStatus::EFFECTIVE);
             $supersededStatusId = DocumentStatus::idFor(DocumentStatus::SUPERSEDED);
 
-            $activatingDocument = SopDocument::query()
+            $activatingDocument = ControlledDocument::query()
                 ->lockForUpdate()
                 ->findOrFail($document->id);
 
-            $priorEffectiveVersions = SopDocument::query()
+            $priorEffectiveVersions = ControlledDocument::query()
                 ->where('document_series_id', $activatingDocument->document_series_id)
                 ->whereKeyNot($activatingDocument->id)
                 ->where('version', '<', $activatingDocument->version)

@@ -17,19 +17,19 @@ class Department extends Model
     protected $fillable = ['name', 'code'];
 
     /**
-     * @return HasMany<SopTemplate, $this>
+     * @return HasMany<DocumentTemplate, $this>
      */
     public function sopTemplates(): HasMany
     {
-        return $this->hasMany(SopTemplate::class);
+        return $this->hasMany(DocumentTemplate::class);
     }
 
     /**
-     * @return HasMany<SopDocument, $this>
+     * @return HasMany<ControlledDocument, $this>
      */
     public function sopDocuments(): HasMany
     {
-        return $this->hasMany(SopDocument::class);
+        return $this->hasMany(ControlledDocument::class);
     }
 
     /**

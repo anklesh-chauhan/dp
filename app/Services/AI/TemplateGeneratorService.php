@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Services\AI;
 
-use App\Services\AI\Contracts\TemplateGenerator;
 use App\Models\VariableDataType;
+use App\Services\AI\Contracts\LLMManagerContract;
+use App\Services\AI\Contracts\TemplateGenerator;
 use App\Services\AI\Data\LLMRequest;
 use App\Services\AI\Enums\AIDataClassification;
 use App\Services\AI\Enums\AIUseCase;
 use App\Services\AI\Enums\LLMCapability;
-use App\Services\AI\Contracts\LLMManagerContract;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
 use Throwable;
@@ -22,8 +22,7 @@ final readonly class TemplateGeneratorService implements TemplateGenerator
     ) {}
 
     /**
-     * @param array<string, mixed> $formData
-     *
+     * @param  array<string, mixed>  $formData
      * @return array<string, mixed>|null
      */
     public function generateRegulatedTemplate(
@@ -67,9 +66,8 @@ final readonly class TemplateGeneratorService implements TemplateGenerator
     }
 
     /**
-     * @param array<string, mixed> $formData
-     * @param array<string, mixed> $generatedTemplate
-     *
+     * @param  array<string, mixed>  $formData
+     * @param  array<string, mixed>  $generatedTemplate
      * @return array<string, mixed>|null
      */
     public function repairRegulatedTemplate(
@@ -118,8 +116,8 @@ final readonly class TemplateGeneratorService implements TemplateGenerator
     }
 
     /**
-     * @param array<string, mixed> $formData
-     * @param array<string, mixed> $generatedTemplate
+     * @param  array<string, mixed>  $formData
+     * @param  array<string, mixed>  $generatedTemplate
      */
     private function buildRepairPrompt(
         array $formData,
@@ -129,6 +127,7 @@ final readonly class TemplateGeneratorService implements TemplateGenerator
     ): string {
         $name = $formData['name'] ?? '';
         $description = $formData['description'] ?? '';
+        $classificationContext = $this->classificationContext($formData);
 
         $generatedTemplateJson = json_encode(
             $generatedTemplate,
@@ -156,6 +155,10 @@ final readonly class TemplateGeneratorService implements TemplateGenerator
     Description:
     {$description}
 
+    DOCUMENT CLASSIFICATION
+
+    {$classificationContext}
+
     REGULATORY FRAMEWORKS
 
     {$regulationTags}
@@ -172,11 +175,15 @@ final readonly class TemplateGeneratorService implements TemplateGenerator
 
     1. Correct the exact validation failure identified above.
 
-    2. Preserve valid generated content unless modification is required to restore consistency.
+    2. Preserve the independent document category and document type intent shown under DOCUMENT CLASSIFICATION.
 
-    3. Every generated variable must be referenced in the content of at least one relevant section.
+    3. Preserve the structure appropriate to the document type unless changing it is required to correct the validation failure.
 
-    4. Variables must be inserted into section content using exactly this syntax:
+    4. Preserve valid generated content unless modification is required to restore consistency.
+
+    5. Every generated variable must be referenced in the content of at least one relevant section.
+
+    6. Variables must be inserted into section content using exactly this syntax:
 
     {{variable_name}}
 
@@ -213,7 +220,7 @@ final readonly class TemplateGeneratorService implements TemplateGenerator
     }
 
     /**
-     * @param array<string, mixed> $formData
+     * @param  array<string, mixed>  $formData
      */
     private function buildPrompt(
         array $formData,
@@ -221,6 +228,7 @@ final readonly class TemplateGeneratorService implements TemplateGenerator
     ): string {
         $name = $formData['name'] ?? '';
         $description = $formData['description'] ?? '';
+        $classificationContext = $this->classificationContext($formData);
 
         return <<<PROMPT
     You are an expert pharmaceutical and clinical Quality Management System auditor and technical writer.
@@ -235,6 +243,10 @@ final readonly class TemplateGeneratorService implements TemplateGenerator
     Description:
     {$description}
 
+    DOCUMENT CLASSIFICATION
+
+    {$classificationContext}
+
     REGULATORY FRAMEWORKS
 
     {$regulationTags}
@@ -243,37 +255,51 @@ final readonly class TemplateGeneratorService implements TemplateGenerator
 
     1. The structure, sections, and variable parameters must comply with the applicable regulatory frameworks listed above.
 
-    2. Generate practical QMS document sections appropriate for the template purpose.
+    2. Treat document category and document type as independent classification dimensions.
 
-    3. Do not invent regulatory requirements that cannot reasonably be inferred from the provided frameworks and template metadata.
+    3. Use the document category to determine the operational subject matter and business context.
 
-    4. For each variable, select the most accurate data type from the authorized data types provided by the response schema.
+    4. Use the document type to determine structure, writing style, sections, and variable layout. For example:
+       - SOP or work instruction: purpose, scope, responsibilities, prerequisites, sequential procedure, references, and revision history.
+       - Form or checklist: structured completion fields, attestations, checks, and signatures.
+       - Log or record: repeatable entry fields, dates, identifiers, performers, reviewers, and traceability.
+       - Protocol: objective, scope, responsibilities, method, acceptance criteria, deviations, and approval.
+       - Report: objective, method, results, analysis, conclusions, and approval.
+       - Specification: requirements, test methods, limits, and acceptance criteria.
 
-    5. Variable names must be concise, descriptive, use snake_case, and be suitable for application-level identifiers.
+    5. Do not treat the category as restricting which document types are available.
 
-    6. Every generated variable must be used in the content of at least one relevant section.
+    6. Generate practical QMS document sections appropriate for both the category and type.
 
-    7. Insert variables directly into section content using exactly this placeholder syntax:
+    7. Do not invent regulatory requirements that cannot reasonably be inferred from the provided frameworks and template metadata.
+
+    8. For each variable, select the most accurate data type from the authorized data types provided by the response schema.
+
+    9. Variable names must be concise, descriptive, use snake_case, and be suitable for application-level identifiers.
+
+    10. Every generated variable must be used in the content of at least one relevant section.
+
+    11. Insert variables directly into section content using exactly this placeholder syntax:
 
     {{variable_name}}
 
-    8. The placeholder name used in section content must exactly match the corresponding variable "name" returned in the variables array.
+    12. The placeholder name used in section content must exactly match the corresponding variable "name" returned in the variables array.
 
-    9. Do not generate variables that are not referenced by at least one section.
+    13. Do not generate variables that are not referenced by at least one section.
 
-    10. Do not reference placeholders in section content unless a corresponding variable exists in the variables array.
+    14. Do not reference placeholders in section content unless a corresponding variable exists in the variables array.
 
-    11. Place each variable placeholder in the section where the value is contextually and operationally relevant.
+    15. Place each variable placeholder in the section where the value is contextually and operationally relevant.
 
-    12. Write section content as an actual reusable document template. Do not merely describe what information the section should contain.
+    16. Write section content as an actual reusable document template. Do not merely describe what information the section should contain.
 
-    13. When appropriate, embed placeholders naturally within sentences, paragraphs, headings, lists, or structured template content.
+    17. When appropriate, embed placeholders naturally within sentences, paragraphs, headings, lists, or structured template content.
 
-    14. A variable may be referenced multiple times when the same value is legitimately required in multiple sections.
+    18. A variable may be referenced multiple times when the same value is legitimately required in multiple sections.
 
-    15. Section order values must represent the intended document sequence.
+    19. Section order values must represent the intended document sequence.
 
-    16. Return the response matching the specified JSON structure.
+    20. Return the response matching the specified JSON structure.
 
     VARIABLE INTEGRITY RULE
 
@@ -320,6 +346,46 @@ final readonly class TemplateGeneratorService implements TemplateGenerator
     }
 
     /**
+     * @param  array<string, mixed>  $formData
+     */
+    private function classificationContext(array $formData): string
+    {
+        $category = is_array($formData['category'] ?? null)
+            ? $formData['category']
+            : [];
+        $documentType = is_array($formData['document_type'] ?? null)
+            ? $formData['document_type']
+            : [];
+
+        $categoryName = $this->classificationValue(
+            $category['name'] ?? $formData['category_name'] ?? null,
+        );
+        $categoryCode = $this->classificationValue(
+            $category['code'] ?? $formData['category_code'] ?? null,
+        );
+        $documentTypeName = $this->classificationValue(
+            $documentType['name'] ?? $formData['document_type_name'] ?? null,
+        );
+        $documentTypeCode = $this->classificationValue(
+            $documentType['code'] ?? $formData['document_type_code'] ?? null,
+        );
+
+        return <<<CONTEXT
+    Category (operational subject): {$categoryName} [{$categoryCode}]
+    Type (document structure): {$documentTypeName} [{$documentTypeCode}]
+
+    The category and type are independent. The category defines what the document is about; the type defines how the document must be structured.
+    CONTEXT;
+    }
+
+    private function classificationValue(mixed $value): string
+    {
+        return is_string($value) && trim($value) !== ''
+            ? trim($value)
+            : 'Not specified';
+    }
+
+    /**
      * @return array<int, string>
      */
     private function authorizedVariableDataTypes(): array
@@ -346,8 +412,7 @@ final readonly class TemplateGeneratorService implements TemplateGenerator
     }
 
     /**
-     * @param array<int, string> $variableDataTypes
-     *
+     * @param  array<int, string>  $variableDataTypes
      * @return array<string, mixed>
      */
     private function jsonSchema(array $variableDataTypes): array

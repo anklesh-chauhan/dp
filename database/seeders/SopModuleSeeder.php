@@ -7,10 +7,10 @@ namespace Database\Seeders;
 use App\Models\ApprovalStepType;
 use App\Models\Department;
 use App\Models\DocumentCategory;
+use App\Models\DocumentTemplate;
+use App\Models\DocumentTemplateVersion;
 use App\Models\DocumentType;
 use App\Models\RegulationTag;
-use App\Models\SopTemplate;
-use App\Models\SopTemplateVersion;
 use App\Models\SopWorkflow;
 use App\Models\TemplateStatus;
 use App\Models\VariableDataType;
@@ -323,22 +323,6 @@ class SopModuleSeeder extends Seeder
 
             $allTagIds = array_unique($allTagIds);
 
-            // 4. Document Types creation and relationship Syncing
-            foreach ($block['documents'] as $doc) {
-                /** @var DocumentType $docType */
-                $docType = DocumentType::query()->firstOrCreate(
-                    ['code' => $doc['code']],
-                    [
-                        'name' => $doc['name'],
-                        'category_id' => $categoryId,
-                        'requires_sop_reference' => false,
-                        'is_issuable' => false,
-                    ]
-                );
-
-                // Sync pivot connections efficiently
-                $docType->regulationTags()->sync($allTagIds);
-            }
         }
         // ///////////  End Document Types  ////////////////////////////////////////////////////////////////
 
@@ -347,20 +331,20 @@ class SopModuleSeeder extends Seeder
 
         $publishedStatusId = TemplateStatus::idFor(TemplateStatus::PUBLISHED);
 
-        $template = SopTemplate::query()->firstOrCreate([
+        $template = DocumentTemplate::query()->firstOrCreate([
             'code' => 'TPL-SOP-GMP',
         ], [
             'name' => 'GMP SOP Template',
             'description' => 'Baseline SOP template for GMP controlled procedures.',
             'department_id' => $qa->id,
             'category_id' => DocumentCategory::query()->firstOrCreate(['code' => 'QMS'], ['name' => 'Quality Management System (QMS) Core'])->id,
-            'document_type_id' => DocumentType::query()->firstOrCreate(['code' => 'QSO'], ['name' => 'QMS Scope & Objectives'])->id,
+            'document_type_id' => DocumentType::query()->where('code', DocumentType::SOP)->valueOrFail('id'),
             'template_status_id' => $publishedStatusId,
             'current_version' => 1,
         ]);
 
-        $version = SopTemplateVersion::query()->firstOrCreate([
-            'sop_template_id' => $template->id,
+        $version = DocumentTemplateVersion::query()->firstOrCreate([
+            'document_template_id' => $template->id,
             'version' => 1,
         ], [
             'content_json' => [],
@@ -472,20 +456,20 @@ class SopModuleSeeder extends Seeder
             ]);
         }
 
-        $logTemplate = SopTemplate::query()->firstOrCreate([
+        $logTemplate = DocumentTemplate::query()->firstOrCreate([
             'code' => 'TPL-LOG-GMP',
         ], [
             'name' => 'GMP Log Document Template',
             'description' => 'Controlled log document template requiring an effective SOP reference.',
             'department_id' => $qa->id,
             'category_id' => DocumentCategory::query()->firstOrCreate(['code' => 'FAC'], ['name' => 'Facility & Equipment'])->id,
-            'document_type_id' => DocumentType::query()->firstOrCreate(['code' => 'PMLOG'], ['name' => 'Preventive Maintenance Log'])->id,
+            'document_type_id' => DocumentType::query()->where('code', DocumentType::LOG)->valueOrFail('id'),
             'template_status_id' => $publishedStatusId,
             'current_version' => 1,
         ]);
 
-        $logVersion = SopTemplateVersion::query()->firstOrCreate([
-            'sop_template_id' => $logTemplate->id,
+        $logVersion = DocumentTemplateVersion::query()->firstOrCreate([
+            'document_template_id' => $logTemplate->id,
             'version' => 1,
         ], [
             'content_json' => [],

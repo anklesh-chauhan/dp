@@ -3,11 +3,11 @@
 declare(strict_types=1);
 
 use App\Domain\Shared\Services\AuditLogService;
+use App\Models\ControlledDocument;
 use App\Models\DocumentStatus;
+use App\Models\DocumentTemplate;
+use App\Models\DocumentTemplateVersion;
 use App\Models\SopAuditLog;
-use App\Models\SopDocument;
-use App\Models\SopTemplate;
-use App\Models\SopTemplateVersion;
 use App\Models\TemplateStatus;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -30,11 +30,11 @@ it('preserves attributable SOP audit persistence', function (): void {
     ]);
 
     $user = User::factory()->create();
-    $template = SopTemplate::factory()->create();
-    $templateVersion = SopTemplateVersion::factory()->create([
-        'sop_template_id' => $template->id,
+    $template = DocumentTemplate::factory()->create();
+    $templateVersion = DocumentTemplateVersion::factory()->create([
+        'document_template_id' => $template->id,
     ]);
-    $document = SopDocument::factory()->create([
+    $document = ControlledDocument::factory()->create([
         'template_id' => $template->id,
         'template_version_id' => $templateVersion->id,
     ]);
@@ -49,7 +49,7 @@ it('preserves attributable SOP audit persistence', function (): void {
     );
 
     expect($auditLog->document_id)->toBe($document->id)
-        ->and($auditLog->sop_template_id)->toBe($document->template_id)
+        ->and($auditLog->document_template_id)->toBe($document->template_id)
         ->and($auditLog->user_id)->toBe($user->id)
         ->and($auditLog->action)->toBe(SopAuditLog::ACTION_UPDATED)
         ->and($auditLog->old_values)->toBe(['title' => 'Old title'])

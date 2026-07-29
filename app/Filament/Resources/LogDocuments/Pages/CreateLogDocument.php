@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\LogDocuments\Pages;
 
-use App\Data\SopDocumentData;
+use App\Data\ControlledDocumentData;
 use App\Domain\DMS\Actions\CreateDocumentFromTemplateAction;
 use App\Exceptions\ServiceException;
 use App\Filament\Resources\LogDocuments\LogDocumentResource;
 use App\Filament\Support\ServiceExceptionHandler;
-use App\Models\SopTemplateVersion;
+use App\Models\DocumentTemplateVersion;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Filament\Resources\Pages\CreateRecord;
@@ -61,7 +61,7 @@ class CreateLogDocument extends CreateRecord
         $templateVersionId = $this->parseTemplateVersionId($data['template_version_id'] ?? null);
         $variables = $this->form->getRawState()['variables'] ?? [];
 
-        return app(CreateDocumentFromTemplateAction::class)->execute(new SopDocumentData(
+        return app(CreateDocumentFromTemplateAction::class)->execute(new ControlledDocumentData(
             templateId: (int) $data['template_id'],
             title: (string) $data['title'],
             ownerId: (int) $data['owner_id'],
@@ -70,7 +70,7 @@ class CreateLogDocument extends CreateRecord
             effectiveDate: $this->parseDate($data['effective_date'] ?? null),
             reviewDate: $this->parseDate($data['review_date'] ?? null),
             templateVersionId: $templateVersionId,
-            referencedSopDocumentId: isset($data['referenced_sop_document_id']) ? (int) $data['referenced_sop_document_id'] : null,
+            referencedControlledDocumentId: isset($data['referenced_controlled_document_id']) ? (int) $data['referenced_controlled_document_id'] : null,
             batchNumber: $data['batch_number'] ?? null,
             productName: $data['product_name'] ?? null,
             purpose: $data['purpose'] ?? null,
@@ -92,7 +92,7 @@ class CreateLogDocument extends CreateRecord
             return $variables;
         }
 
-        $allowedNames = SopTemplateVersion::query()
+        $allowedNames = DocumentTemplateVersion::query()
             ->with('variables')
             ->find($templateVersionId)
             ?->variables

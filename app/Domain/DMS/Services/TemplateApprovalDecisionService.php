@@ -9,8 +9,8 @@ use App\Domain\Shared\Contracts\ElectronicSignatureHasher;
 use App\Domain\Shared\Enums\ApprovalDecisionCode;
 use App\Enums\ProductModule;
 use App\Exceptions\WorkflowException;
+use App\Models\DocumentTemplateApprovalInstance;
 use App\Models\SopRole;
-use App\Models\SopTemplateApprovalInstance;
 use App\Models\User;
 use App\Support\Modules\ModuleManager;
 use Illuminate\Support\Facades\DB;
@@ -24,13 +24,13 @@ class TemplateApprovalDecisionService
     ) {}
 
     public function decide(
-        SopTemplateApprovalInstance $instance,
+        DocumentTemplateApprovalInstance $instance,
         User $actor,
         ApprovalDecisionCode $decision,
         string $comments,
         ?string $ipAddress = null,
         ?string $userAgent = null,
-    ): SopTemplateApprovalInstance {
+    ): DocumentTemplateApprovalInstance {
         $this->moduleManager->ensureEnabled(ProductModule::DMS);
 
         if (! in_array($decision, [
@@ -47,8 +47,8 @@ class TemplateApprovalDecisionService
             throw ValidationException::withMessages(['comments' => 'A decision reason is required.']);
         }
 
-        return DB::transaction(function () use ($instance, $actor, $decision, $comments, $ipAddress, $userAgent): SopTemplateApprovalInstance {
-            $instance = SopTemplateApprovalInstance::query()
+        return DB::transaction(function () use ($instance, $actor, $decision, $comments, $ipAddress, $userAgent): DocumentTemplateApprovalInstance {
+            $instance = DocumentTemplateApprovalInstance::query()
                 ->with(['templateVersion.template', 'workflowStep.role', 'workflowStep.department'])
                 ->lockForUpdate()
                 ->findOrFail($instance->id);
@@ -93,7 +93,7 @@ class TemplateApprovalDecisionService
         });
     }
 
-    public function canDecide(SopTemplateApprovalInstance $instance, User $actor): bool
+    public function canDecide(DocumentTemplateApprovalInstance $instance, User $actor): bool
     {
         try {
             $this->authorize($instance, $actor);
@@ -104,7 +104,7 @@ class TemplateApprovalDecisionService
         }
     }
 
-    private function authorize(SopTemplateApprovalInstance $instance, User $actor): void
+    private function authorize(DocumentTemplateApprovalInstance $instance, User $actor): void
     {
         $instance->loadMissing([
             'templateVersion.template',
@@ -127,7 +127,7 @@ class TemplateApprovalDecisionService
             throw new WorkflowException(message: 'This template approval belongs to an earlier submission cycle.');
         }
 
-        if (! $actor->can('Decide:SopTemplateApproval')) {
+        if (! $actor->can('Decide:DocumentTemplateApproval')) {
             throw new WorkflowException(message: 'You do not have permission to decide template approvals.');
         }
 
@@ -170,9 +170,9 @@ class TemplateApprovalDecisionService
         }
     }
 
-    private function hasPreviousMandatoryStepPending(SopTemplateApprovalInstance $instance): bool
+    private function hasPreviousMandatoryStepPending(DocumentTemplateApprovalInstance $instance): bool
     {
-        return SopTemplateApprovalInstance::query()
+        return DocumentTemplateApprovalInstance::query()
             ->where('submission_uuid', $instance->submission_uuid)
             ->whereHas('workflowStep', fn ($query) => $query
                 ->where('step_no', '<', $instance->workflowStep->step_no)
@@ -181,19 +181,19 @@ class TemplateApprovalDecisionService
             ->exists();
     }
 
-    private function applyApprovedOutcome(SopTemplateApprovalInstance $instance, User $actor): void
+    private function applyApprovedOutcome(DocumentTemplateApprovalInstance $instance, User $actor): void
     {
-        $instances = SopTemplateApprovalInstance::query()
+        $instances = DocumentTemplateApprovalInstance::query()
             ->where('submission_uuid', $instance->submission_uuid)
             ->with('workflowStep')
             ->get();
         $mandatory = $instances->filter(
-            fn (SopTemplateApprovalInstance $approval): bool => $approval->workflowStep->is_mandatory,
+            fn (DocumentTemplateApprovalInstance $approval): bool => $approval->workflowStep->is_mandatory,
         );
         $required = $mandatory->isEmpty() ? $instances : $mandatory;
 
         if (! $required->every(
-            fn (SopTemplateApprovalInstance $approval): bool => $approval->decision_code === ApprovalDecisionCode::APPROVED->value,
+            fn (DocumentTemplateApprovalInstance $approval): bool => $approval->decision_code === ApprovalDecisionCode::APPROVED->value,
         )) {
             return;
         }
@@ -207,7 +207,7 @@ class TemplateApprovalDecisionService
     }
 
     private function applyTerminalOutcome(
-        SopTemplateApprovalInstance $instance,
+        DocumentTemplateApprovalInstance $instance,
         TemplateApprovalStatus $status,
     ): void {
         $this->markRemainingNotRequired($instance);
@@ -218,9 +218,9 @@ class TemplateApprovalDecisionService
         ]);
     }
 
-    private function markRemainingNotRequired(SopTemplateApprovalInstance $instance): void
+    private function markRemainingNotRequired(DocumentTemplateApprovalInstance $instance): void
     {
-        SopTemplateApprovalInstance::query()
+        DocumentTemplateApprovalInstance::query()
             ->where('submission_uuid', $instance->submission_uuid)
             ->whereKeyNot($instance->id)
             ->where('decision_code', ApprovalDecisionCode::PENDING->value)

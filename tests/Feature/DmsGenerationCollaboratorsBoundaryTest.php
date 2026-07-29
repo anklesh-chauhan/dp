@@ -5,7 +5,7 @@ declare(strict_types=1);
 use App\Domain\DMS\Services\DocumentNumberGeneratorService;
 use App\Domain\DMS\Services\SopReferenceService;
 use App\Domain\DMS\Services\VariableResolverService;
-use App\Models\SopDocument;
+use App\Models\ControlledDocument;
 
 it('resolves canonical and legacy generation collaborators through the DMS boundary', function (): void {
     $services = [
@@ -21,7 +21,7 @@ it('resolves canonical and legacy generation collaborators through the DMS bound
 });
 
 it('preserves controlled-copy numbering and watermark behavior', function (): void {
-    $document = new SopDocument([
+    $document = new ControlledDocument([
         'document_number' => 'SOP-QA-00001',
     ]);
 

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\QMS\Models;
 
 use App\Domain\QMS\Enums\DocumentImpactAction;
-use App\Models\SopDocument;
+use App\Models\ControlledDocument;
 use Database\Factories\Domain\QMS\Models\ChangeControlDocumentImpactFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -38,15 +38,15 @@ final class ChangeControlDocumentImpact extends Model
         return $this->belongsTo(ChangeControl::class);
     }
 
-    /** @return BelongsTo<SopDocument, $this> */
+    /** @return BelongsTo<ControlledDocument, $this> */
     public function sourceDocument(): BelongsTo
     {
-        return $this->belongsTo(SopDocument::class, 'source_document_id');
+        return $this->belongsTo(ControlledDocument::class, 'source_document_id');
     }
 
-    /** @return BelongsTo<SopDocument, $this> */
+    /** @return BelongsTo<ControlledDocument, $this> */
     public function resultDocument(): BelongsTo
     {
-        return $this->belongsTo(SopDocument::class, 'result_document_id');
+        return $this->belongsTo(ControlledDocument::class, 'result_document_id');
     }
 }

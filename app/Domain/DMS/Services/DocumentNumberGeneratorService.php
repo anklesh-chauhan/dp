@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Domain\DMS\Services;
 
+use App\Models\ControlledDocument;
 use App\Models\Department;
 use App\Models\DocumentIssuance;
-use App\Models\SopDocument;
 use App\Services\NumberSeries\NumberSeriesService;
 use Illuminate\Support\Str;
 
@@ -21,12 +21,12 @@ class DocumentNumberGeneratorService
         return $this->numberSeriesService->generate($department, $typeCode);
     }
 
-    public function generateIssuanceNumber(SopDocument $document, int $copyNumber): string
+    public function generateIssuanceNumber(ControlledDocument $document, int $copyNumber): string
     {
         return sprintf('%s-C%02d', $document->document_number, $copyNumber);
     }
 
-    public function nextCopyNumber(SopDocument $document): int
+    public function nextCopyNumber(ControlledDocument $document): int
     {
         $latestCopy = DocumentIssuance::query()
             ->where('document_id', $document->id)
@@ -36,7 +36,7 @@ class DocumentNumberGeneratorService
         return ($latestCopy ?? 0) + 1;
     }
 
-    public function generateWatermarkCode(SopDocument $document, int $copyNumber): string
+    public function generateWatermarkCode(ControlledDocument $document, int $copyNumber): string
     {
         return strtoupper(sprintf('CC-%s-%02d', Str::replace('-', '', $document->document_number), $copyNumber));
     }

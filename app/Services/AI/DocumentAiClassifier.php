@@ -6,6 +6,7 @@ namespace App\Services\AI;
 
 use App\Models\DocumentCategory;
 use App\Models\DocumentType;
+use App\Services\AI\Contracts\DocumentClassifier;
 use App\Services\AI\Contracts\LLMManagerContract;
 use App\Services\AI\Data\LLMRequest;
 use App\Services\AI\Enums\AIDataClassification;
@@ -13,7 +14,6 @@ use App\Services\AI\Enums\AIUseCase;
 use App\Services\AI\Enums\LLMCapability;
 use Illuminate\Support\Facades\Log;
 use Throwable;
-use App\Services\AI\Contracts\DocumentClassifier;
 
 final class DocumentAiClassifier implements DocumentClassifier
 {
@@ -195,7 +195,6 @@ PROMPT;
     ): ?DocumentType {
         $documentTypes = DocumentType::query()
             ->with('regulationTags')
-            ->whereBelongsTo($category, 'category')
             ->orderBy('name')
             ->get();
 

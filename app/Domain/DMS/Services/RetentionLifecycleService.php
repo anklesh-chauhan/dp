@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Domain\DMS\Services;
 
 use App\Domain\Shared\Services\AuditLogService;
+use App\Models\ControlledDocument;
 use App\Models\DocumentStatus;
+use App\Models\DocumentTemplate;
 use App\Models\SopAuditLog;
-use App\Models\SopDocument;
-use App\Models\SopTemplate;
 use App\Models\TemplateStatus;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +18,7 @@ class RetentionLifecycleService
 {
     public function __construct(private readonly AuditLogService $auditLogService) {}
 
-    public function markDocumentObsolete(SopDocument $document, User $user, ?string $reason = null): SopDocument
+    public function markDocumentObsolete(ControlledDocument $document, User $user, ?string $reason = null): ControlledDocument
     {
         $this->ensureDocumentStatus(
             $document,
@@ -35,7 +35,7 @@ class RetentionLifecycleService
         );
     }
 
-    public function archiveDocument(SopDocument $document, User $user, ?string $reason = null): SopDocument
+    public function archiveDocument(ControlledDocument $document, User $user, ?string $reason = null): ControlledDocument
     {
         $this->ensureDocumentStatus(
             $document,
@@ -52,7 +52,7 @@ class RetentionLifecycleService
         );
     }
 
-    public function completeDocumentRetention(SopDocument $document, User $user, ?string $reason = null): SopDocument
+    public function completeDocumentRetention(ControlledDocument $document, User $user, ?string $reason = null): ControlledDocument
     {
         $this->ensureDocumentStatus(
             $document,
@@ -69,7 +69,7 @@ class RetentionLifecycleService
         );
     }
 
-    public function destroyDocument(SopDocument $document, User $user, string $reason): SopDocument
+    public function destroyDocument(ControlledDocument $document, User $user, string $reason): ControlledDocument
     {
         $this->ensureDocumentStatus(
             $document,
@@ -86,7 +86,7 @@ class RetentionLifecycleService
         );
     }
 
-    public function markTemplateObsolete(SopTemplate $template, User $user, ?string $reason = null): SopTemplate
+    public function markTemplateObsolete(DocumentTemplate $template, User $user, ?string $reason = null): DocumentTemplate
     {
         $this->ensureTemplateStatus(
             $template,
@@ -103,7 +103,7 @@ class RetentionLifecycleService
         );
     }
 
-    public function archiveTemplate(SopTemplate $template, User $user, ?string $reason = null): SopTemplate
+    public function archiveTemplate(DocumentTemplate $template, User $user, ?string $reason = null): DocumentTemplate
     {
         $this->ensureTemplateStatus(
             $template,
@@ -111,7 +111,7 @@ class RetentionLifecycleService
             'Only obsolete templates can be archived.',
         );
 
-        return DB::transaction(function () use ($template, $user, $reason): SopTemplate {
+        return DB::transaction(function () use ($template, $user, $reason): DocumentTemplate {
             $oldValues = $template->only(['template_status_id']);
 
             $archivedStatusId = TemplateStatus::idFor(TemplateStatus::ARCHIVED);
@@ -137,7 +137,7 @@ class RetentionLifecycleService
         });
     }
 
-    public function completeTemplateRetention(SopTemplate $template, User $user, ?string $reason = null): SopTemplate
+    public function completeTemplateRetention(DocumentTemplate $template, User $user, ?string $reason = null): DocumentTemplate
     {
         $this->ensureTemplateStatus(
             $template,
@@ -154,7 +154,7 @@ class RetentionLifecycleService
         );
     }
 
-    public function destroyTemplate(SopTemplate $template, User $user, string $reason): SopTemplate
+    public function destroyTemplate(DocumentTemplate $template, User $user, string $reason): DocumentTemplate
     {
         $this->ensureTemplateStatus(
             $template,
@@ -174,7 +174,7 @@ class RetentionLifecycleService
     /**
      * @param  list<string>  $allowedCodes
      */
-    private function ensureDocumentStatus(SopDocument $document, array $allowedCodes, string $message): void
+    private function ensureDocumentStatus(ControlledDocument $document, array $allowedCodes, string $message): void
     {
         $currentCode = $document->documentStatus?->code;
 
@@ -186,7 +186,7 @@ class RetentionLifecycleService
     /**
      * @param  list<string>  $allowedCodes
      */
-    private function ensureTemplateStatus(SopTemplate $template, array $allowedCodes, string $message): void
+    private function ensureTemplateStatus(DocumentTemplate $template, array $allowedCodes, string $message): void
     {
         $currentCode = $template->templateStatus?->code;
 
@@ -196,13 +196,13 @@ class RetentionLifecycleService
     }
 
     private function transitionDocument(
-        SopDocument $document,
+        ControlledDocument $document,
         User $user,
         string $statusCode,
         string $auditAction,
         ?string $reason,
-    ): SopDocument {
-        return DB::transaction(function () use ($document, $user, $statusCode, $auditAction, $reason): SopDocument {
+    ): ControlledDocument {
+        return DB::transaction(function () use ($document, $user, $statusCode, $auditAction, $reason): ControlledDocument {
             $oldValues = $document->only(['document_status_id']);
 
             $document->update([
@@ -228,13 +228,13 @@ class RetentionLifecycleService
     }
 
     private function transitionTemplate(
-        SopTemplate $template,
+        DocumentTemplate $template,
         User $user,
         string $statusCode,
         string $auditAction,
         ?string $reason,
-    ): SopTemplate {
-        return DB::transaction(function () use ($template, $user, $statusCode, $auditAction, $reason): SopTemplate {
+    ): DocumentTemplate {
+        return DB::transaction(function () use ($template, $user, $statusCode, $auditAction, $reason): DocumentTemplate {
             $oldValues = $template->only(['template_status_id']);
 
             $template->update(['template_status_id' => TemplateStatus::idFor($statusCode)]);

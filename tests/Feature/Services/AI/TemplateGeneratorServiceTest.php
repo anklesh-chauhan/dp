@@ -76,14 +76,14 @@ it('generates a regulated template using authorized variable data types', functi
                         ->and($request->prompt)
                         ->toContain('Deviation Management Procedure')
                         ->toContain('Procedure for managing quality deviations.')
+                        ->toContain('Quality Management System')
+                        ->toContain('[QMS]')
+                        ->toContain('Standard Operating Procedure')
+                        ->toContain('[SOP]')
+                        ->toContain('category and type are independent')
                         ->toContain('EU GMP, FDA 21 CFR Part 211');
 
-                    $datatypeEnum = $request->jsonSchema['properties']
-                        ['variables']
-                        ['items']
-                        ['properties']
-                        ['datatype']
-                        ['enum'];
+                    $datatypeEnum = $request->jsonSchema['properties']['variables']['items']['properties']['datatype']['enum'];
 
                     expect($datatypeEnum)
                         ->toBe([
@@ -112,6 +112,14 @@ it('generates a regulated template using authorized variable data types', functi
         formData: [
             'name' => 'Deviation Management Procedure',
             'description' => 'Procedure for managing quality deviations.',
+            'category' => [
+                'name' => 'Quality Management System',
+                'code' => 'QMS',
+            ],
+            'document_type' => [
+                'name' => 'Standard Operating Procedure',
+                'code' => 'SOP',
+            ],
         ],
         regulationTags: 'EU GMP, FDA 21 CFR Part 211',
     );
@@ -127,12 +135,7 @@ it('uses fallback variable data types when no authorized data types exist', func
         ->shouldReceive('generate')
         ->once()
         ->withArgs(function (LLMRequest $request): bool {
-            $datatypeEnum = $request->jsonSchema['properties']
-                ['variables']
-                ['items']
-                ['properties']
-                ['datatype']
-                ['enum'];
+            $datatypeEnum = $request->jsonSchema['properties']['variables']['items']['properties']['datatype']['enum'];
 
             expect($datatypeEnum)
                 ->toBe([
@@ -193,12 +196,7 @@ it('excludes invalid variable data type codes from the response schema', functio
         ->shouldReceive('generate')
         ->once()
         ->withArgs(function (LLMRequest $request): bool {
-            $datatypeEnum = $request->jsonSchema['properties']
-                ['variables']
-                ['items']
-                ['properties']
-                ['datatype']
-                ['enum'];
+            $datatypeEnum = $request->jsonSchema['properties']['variables']['items']['properties']['datatype']['enum'];
 
             expect($datatypeEnum)
                 ->toBe([
@@ -372,6 +370,11 @@ it('repairs an invalid regulated template', function (): void {
                     ->and($request->prompt)
                     ->toContain('Deviation Management Procedure')
                     ->toContain('Procedure for managing quality deviations.')
+                    ->toContain('Quality Management System')
+                    ->toContain('[QMS]')
+                    ->toContain('Standard Operating Procedure')
+                    ->toContain('[SOP]')
+                    ->toContain('category and type are independent')
                     ->toContain('EU GMP')
                     ->toContain('VALIDATION FAILURE')
                     ->toContain($validationError)
@@ -406,6 +409,14 @@ it('repairs an invalid regulated template', function (): void {
         formData: [
             'name' => 'Deviation Management Procedure',
             'description' => 'Procedure for managing quality deviations.',
+            'category' => [
+                'name' => 'Quality Management System',
+                'code' => 'QMS',
+            ],
+            'document_type' => [
+                'name' => 'Standard Operating Procedure',
+                'code' => 'SOP',
+            ],
         ],
         regulationTags: 'EU GMP',
         generatedTemplate: $invalidTemplate,
@@ -435,12 +446,7 @@ it('uses authorized variable data types in the repair schema', function (): void
         ->shouldReceive('generate')
         ->once()
         ->withArgs(function (LLMRequest $request): bool {
-            $datatypeEnum = $request->jsonSchema['properties']
-                ['variables']
-                ['items']
-                ['properties']
-                ['datatype']
-                ['enum'];
+            $datatypeEnum = $request->jsonSchema['properties']['variables']['items']['properties']['datatype']['enum'];
 
             expect($request->metadata)
                 ->toBe([

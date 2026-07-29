@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
-use App\Domain\SopTemplate\AI\Services\SopTemplateIntegrityService;
+use App\Domain\DocumentTemplate\AI\Services\DocumentTemplateIntegrityService;
 use App\Enums\ProductModule;
-use App\Models\SopTemplate;
-use App\Models\SopTemplateVersion;
+use App\Models\DocumentTemplate;
+use App\Models\DocumentTemplateVersion;
 use App\Models\TemplateStatus;
 use App\Models\VariableDataType;
 use App\Services\AI\Contracts\TemplateGenerator;
@@ -33,17 +33,22 @@ class GenerateRegulatedTemplateJob implements ShouldQueue
     public int $timeout = 600;
 
     public function __construct(
-        public SopTemplate $template,
+        public DocumentTemplate $template,
         public string $regulationTags,
     ) {}
 
     public function handle(
         TemplateGenerator $aiService,
-        SopTemplateIntegrityService $integrityService,
+        DocumentTemplateIntegrityService $integrityService,
     ): void {
         app(ModuleManager::class)->ensureEnabled(ProductModule::AI);
 
         try {
+            $this->template->loadMissing([
+                'category:id,name,code',
+                'documentType:id,name,code',
+            ]);
+
             $this->updateProgress(
                 status: 'Connecting to AI service...',
                 progress: 15,
@@ -99,7 +104,7 @@ class GenerateRegulatedTemplateJob implements ShouldQueue
                 );
 
                 $this->updateProgress(
-                    status: SopTemplate::GENERATION_STATUS_COMPLETED,
+                    status: DocumentTemplate::GENERATION_STATUS_COMPLETED,
                     progress: 100,
                 );
             });
@@ -128,7 +133,7 @@ class GenerateRegulatedTemplateJob implements ShouldQueue
     private function validateOrRepairResult(
         array $result,
         TemplateGenerator $aiService,
-        SopTemplateIntegrityService $integrityService,
+        DocumentTemplateIntegrityService $integrityService,
     ): array {
         $validation = $integrityService->validate($result);
 
@@ -168,7 +173,7 @@ class GenerateRegulatedTemplateJob implements ShouldQueue
         return $repairedResult;
     }
 
-    private function createOrResetVersion(): SopTemplateVersion
+    private function createOrResetVersion(): DocumentTemplateVersion
     {
         $version = $this->template
             ->versions()
@@ -209,7 +214,7 @@ class GenerateRegulatedTemplateJob implements ShouldQueue
      * @param  array<int, array<string, mixed>>  $sections
      */
     private function persistSections(
-        SopTemplateVersion $version,
+        DocumentTemplateVersion $version,
         array $sections,
     ): void {
         foreach ($sections as $section) {
@@ -227,7 +232,7 @@ class GenerateRegulatedTemplateJob implements ShouldQueue
      * @param  array<int, array<string, mixed>>  $variables
      */
     private function persistVariables(
-        SopTemplateVersion $version,
+        DocumentTemplateVersion $version,
         array $variables,
     ): void {
         $dataTypeMap = VariableDataType::query()
@@ -280,7 +285,7 @@ class GenerateRegulatedTemplateJob implements ShouldQueue
     private function markAsFailed(): void
     {
         $this->template->update([
-            'generation_status' => SopTemplate::GENERATION_STATUS_FAILED,
+            'generation_status' => DocumentTemplate::GENERATION_STATUS_FAILED,
             'generation_progress' => 0,
         ]);
     }

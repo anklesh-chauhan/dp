@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Support\Sop\VariableTypes;
 
-use App\Models\SopTemplateVariable;
+use App\Models\DocumentTemplateVariable;
 use App\Models\VariableDataType;
 use App\Support\Sop\VariableTypes\Contracts\VariableTypeHandler;
 use App\Support\Sop\VariableTypes\Handlers\BooleanVariableTypeHandler;
@@ -56,13 +56,13 @@ class VariableTypeRegistry
             ?? throw new InvalidArgumentException("No variable type handler is registered for code [{$code}].");
     }
 
-    public function makeField(SopTemplateVariable $variable, VariableTypeFieldContext $context): Field
+    public function makeField(DocumentTemplateVariable $variable, VariableTypeFieldContext $context): Field
     {
         return $this->forCode($variable->variableDataType?->code)
             ->makeField($variable, $context);
     }
 
-    public function parseDefaultValue(SopTemplateVariable $variable): mixed
+    public function parseDefaultValue(DocumentTemplateVariable $variable): mixed
     {
         return $this->forCode($variable->variableDataType?->code)
             ->parseDefaultValue($variable->default_value);
@@ -71,19 +71,19 @@ class VariableTypeRegistry
     /**
      * @return array<int, mixed>
      */
-    public function validationRules(SopTemplateVariable $variable): array
+    public function validationRules(DocumentTemplateVariable $variable): array
     {
         return $this->forCode($variable->variableDataType?->code)
             ->validationRules($variable);
     }
 
-    public function formatForStorage(SopTemplateVariable $variable, mixed $value): string
+    public function formatForStorage(DocumentTemplateVariable $variable, mixed $value): string
     {
         return $this->forCode($variable->variableDataType?->code)
             ->formatForStorage($variable, $value);
     }
 
-    public function formatForSubstitution(SopTemplateVariable $variable, mixed $value): string
+    public function formatForSubstitution(DocumentTemplateVariable $variable, mixed $value): string
     {
         return $this->forCode($variable->variableDataType?->code)
             ->formatForSubstitution($variable, $value);

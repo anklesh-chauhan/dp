@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Database\Factories;
 
 use App\Models\ApprovalDecision;
+use App\Models\ControlledDocument;
 use App\Models\SopApproval;
-use App\Models\SopDocument;
 use App\Models\SopWorkflowStep;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -24,7 +24,7 @@ class SopApprovalFactory extends Factory
     public function definition(): array
     {
         return [
-            'document_id' => SopDocument::factory(),
+            'document_id' => ControlledDocument::factory(),
             'workflow_step_id' => SopWorkflowStep::factory(),
             'approved_by' => User::factory(),
             'approval_decision_id' => ApprovalDecision::idFor(ApprovalDecision::PENDING),

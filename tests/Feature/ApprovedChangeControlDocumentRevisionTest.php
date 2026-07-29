@@ -8,10 +8,10 @@ use App\Domain\QMS\Models\ChangeControl;
 use App\Domain\QMS\Models\ChangeControlDocumentImpact;
 use App\Domain\QMS\Services\ApprovedChangeControlDocumentRevisionService;
 use App\Exceptions\ModuleNotEnabledException;
+use App\Models\ControlledDocument;
 use App\Models\DocumentStatus;
-use App\Models\SopDocument;
-use App\Models\SopTemplate;
-use App\Models\SopTemplateVersion;
+use App\Models\DocumentTemplate;
+use App\Models\DocumentTemplateVersion;
 use App\Models\TemplateStatus;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -44,11 +44,11 @@ beforeEach(function (): void {
 
     $this->user = User::factory()->create();
     $this->user->givePermissionTo('Implement:ChangeControl');
-    $template = SopTemplate::factory()->create();
-    $templateVersion = SopTemplateVersion::factory()->published()->create([
-        'sop_template_id' => $template,
+    $template = DocumentTemplate::factory()->create();
+    $templateVersion = DocumentTemplateVersion::factory()->published()->create([
+        'document_template_id' => $template,
     ]);
-    $this->source = SopDocument::factory()->create([
+    $this->source = ControlledDocument::factory()->create([
         'template_id' => $template,
         'template_version_id' => $templateVersion,
         'document_status_id' => DocumentStatus::idFor(DocumentStatus::EFFECTIVE),
@@ -84,7 +84,7 @@ it('creates one traced DMS draft revision from an approved QMS impact', function
             ->where('from_status', ChangeControlStatus::Approved->value)
             ->where('to_status', ChangeControlStatus::Implementing->value)
             ->exists())->toBeTrue()
-        ->and(SopDocument::query()
+        ->and(ControlledDocument::query()
             ->where('supersedes_document_id', $this->source->id)
             ->count())->toBe(1);
 });

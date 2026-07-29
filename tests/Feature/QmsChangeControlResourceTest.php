@@ -14,11 +14,11 @@ use App\Filament\Resources\ChangeControls\Pages\ListChangeControls;
 use App\Filament\Resources\ChangeControls\Pages\ViewChangeControl;
 use App\Filament\Resources\ChangeControls\RelationManagers\AuditEventsRelationManager;
 use App\Filament\Resources\ChangeControls\RelationManagers\DocumentImpactsRelationManager;
+use App\Models\ControlledDocument;
 use App\Models\Department;
 use App\Models\DocumentStatus;
-use App\Models\SopDocument;
-use App\Models\SopTemplate;
-use App\Models\SopTemplateVersion;
+use App\Models\DocumentTemplate;
+use App\Models\DocumentTemplateVersion;
 use App\Models\TemplateStatus;
 use App\Models\User;
 use Filament\Actions\Testing\TestAction;
@@ -168,11 +168,11 @@ it('routes review and approval actions through attributable lifecycle transition
 it('plans document impacts only while the change control is a draft', function (): void {
     DocumentStatus::query()->create(['code' => DocumentStatus::DRAFT, 'name' => 'Draft']);
     TemplateStatus::query()->create(['code' => TemplateStatus::DRAFT, 'name' => 'Draft']);
-    $template = SopTemplate::factory()->create();
-    $templateVersion = SopTemplateVersion::factory()->create([
-        'sop_template_id' => $template,
+    $template = DocumentTemplate::factory()->create();
+    $templateVersion = DocumentTemplateVersion::factory()->create([
+        'document_template_id' => $template,
     ]);
-    $source = SopDocument::factory()->create([
+    $source = ControlledDocument::factory()->create([
         'template_id' => $template,
         'template_version_id' => $templateVersion,
     ]);
@@ -221,11 +221,11 @@ it('executes an approved revise impact through the traced revision service', fun
     }
     Permission::findOrCreate('Implement:ChangeControl', 'web');
     $this->user->givePermissionTo('Implement:ChangeControl');
-    $template = SopTemplate::factory()->create();
-    $templateVersion = SopTemplateVersion::factory()->published()->create([
-        'sop_template_id' => $template,
+    $template = DocumentTemplate::factory()->create();
+    $templateVersion = DocumentTemplateVersion::factory()->published()->create([
+        'document_template_id' => $template,
     ]);
-    $source = SopDocument::factory()->create([
+    $source = ControlledDocument::factory()->create([
         'template_id' => $template,
         'template_version_id' => $templateVersion,
         'document_status_id' => DocumentStatus::idFor(DocumentStatus::EFFECTIVE),
@@ -249,7 +249,7 @@ it('executes an approved revise impact through the traced revision service', fun
 
     expect($impact->fresh()?->result_document_id)->not->toBeNull()
         ->and($changeControl->fresh()?->status)->toBe(ChangeControlStatus::Implementing)
-        ->and(SopDocument::query()
+        ->and(ControlledDocument::query()
             ->where('supersedes_document_id', $source->id)
             ->count())->toBe(1);
 });

@@ -3,10 +3,10 @@
 namespace App\Domain\DMS\Services;
 
 use App\Domain\Shared\Services\AuditLogService;
+use App\Models\ControlledDocument;
 use App\Models\DocumentIssuance;
 use App\Models\IssuanceStatus;
 use App\Models\SopAuditLog;
-use App\Models\SopDocument;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -26,7 +26,7 @@ class DocumentIssuanceService
      *     notes?: string|null
      * }  $data
      */
-    public function issue(SopDocument $document, User $issuer, array $data = []): DocumentIssuance
+    public function issue(ControlledDocument $document, User $issuer, array $data = []): DocumentIssuance
     {
         if (! $document->canBeIssued()) {
             throw ValidationException::withMessages([

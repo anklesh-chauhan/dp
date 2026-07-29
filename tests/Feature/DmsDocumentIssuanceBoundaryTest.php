@@ -6,9 +6,9 @@ use App\Domain\DMS\Actions\DestroyIssuanceAction;
 use App\Domain\DMS\Actions\IssueDocumentAction;
 use App\Domain\DMS\Actions\RecallIssuanceAction;
 use App\Domain\DMS\Services\DocumentIssuanceService;
+use App\Models\ControlledDocument;
 use App\Models\DocumentIssuance;
 use App\Models\IssuanceStatus;
-use App\Models\SopDocument;
 use App\Models\User;
 use Illuminate\Validation\ValidationException;
 
@@ -33,7 +33,7 @@ it('resolves canonical and legacy issuance entry points through the DMS boundary
 
 it('keeps the canonical issuance guard behavior', function (): void {
     expect(fn () => app(IssueDocumentAction::class)->execute(
-        new SopDocument,
+        new ControlledDocument,
         new User,
     ))->toThrow(ValidationException::class, 'Only effective log documents');
 });

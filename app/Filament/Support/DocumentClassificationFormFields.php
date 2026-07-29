@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Filament\Support;
 
-use App\Filament\Resources\SopDocuments\Pages\CreateSopDocument;
-use App\Filament\Resources\SopTemplates\Pages\CreateSopTemplate;
+use App\Filament\Resources\ControlledDocuments\Pages\CreateControlledDocument;
+use App\Filament\Resources\DocumentTemplates\Pages\CreateDocumentTemplate;
 use App\Models\DocumentCategory;
+use App\Models\DocumentTemplate;
 use App\Models\DocumentType;
 use App\Models\RegulationTag;
-use App\Models\SopTemplate;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Infolists\Components\TextEntry;
@@ -34,19 +34,10 @@ final class DocumentClassificationFormFields
                 ->searchable()
                 ->preload()
                 ->required()
-                ->live()
-                ->afterStateUpdated(function (Set $set): void {
-                    $set('document_type_id', null);
-                    $set('regulationTags', []);
-                }),
+                ->live(),
             Select::make('document_type_id')
                 ->label('Document Type')
-                ->options(fn (Get $get): array => DocumentType::query()
-                    ->when(
-                        filled($get('category_id')),
-                        fn (Builder $query): Builder => $query->where('category_id', (int) $get('category_id')),
-                        fn (Builder $query): Builder => $query->whereRaw('1 = 0'),
-                    )
+                ->options(fn (): array => DocumentType::query()
                     ->orderBy('name')
                     ->pluck('name', 'id')
                     ->all())
@@ -54,7 +45,6 @@ final class DocumentClassificationFormFields
                 ->preload()
                 ->required()
                 ->live()
-                ->disabled(fn (Get $get): bool => blank($get('category_id')))
                 ->afterStateUpdated(function (Set $set, ?int $state): void {
                     if ($state === null) {
                         $set('regulationTags', []);
@@ -66,16 +56,12 @@ final class DocumentClassificationFormFields
                 }),
             Select::make('regulationTags')
                 ->label('Regulation Tags')
-                ->options(fn (Get $get): array => self::regulationTagOptionsForDocumentType(
-                    filled($get('document_type_id')) ? (int) $get('document_type_id') : null,
-                ))
+                ->options(fn (): array => self::regulationTagOptions())
                 ->multiple()
                 ->searchable()
                 ->preload()
                 ->required()
-                ->dehydrated(fn ($livewire): bool => $livewire instanceof CreateSopTemplate)
-                ->visible(fn (Get $get): bool => filled($get('document_type_id')))
-                ->disabled(fn (Get $get): bool => blank($get('document_type_id')))
+                ->dehydrated(fn ($livewire): bool => $livewire instanceof CreateDocumentTemplate)
                 ->helperText('Choose the regulatory frameworks this template must comply with.')
                 ->columnSpanFull(),
         ];
@@ -100,25 +86,15 @@ final class DocumentClassificationFormFields
                 ->relationship(
                     name: 'regulationTags',
                     titleAttribute: 'name',
-                    modifyQueryUsing: fn (Builder $query, Get $get): Builder => $query
-                        ->when(
-                            filled($get('template_id')),
-                            fn (Builder $scopedQuery): Builder => $scopedQuery->whereHas(
-                                'documentTypes',
-                                fn (Builder $documentTypeQuery): Builder => $documentTypeQuery->whereKey(
-                                    SopTemplate::query()->whereKey($get('template_id'))->value('document_type_id'),
-                                ),
-                            ),
-                            fn (Builder $scopedQuery): Builder => $scopedQuery->whereRaw('1 = 0'),
-                        )
+                    modifyQueryUsing: fn (Builder $query): Builder => $query
                         ->orderBy('name'),
                 )
                 ->multiple()
                 ->searchable()
                 ->preload()
                 ->required()
-                ->visible(fn ($livewire, Get $get): bool => $livewire instanceof CreateSopDocument && filled($get('template_id')))
-                ->dehydrated(fn ($livewire): bool => $livewire instanceof CreateSopDocument)
+                ->visible(fn ($livewire, Get $get): bool => $livewire instanceof CreateControlledDocument && filled($get('template_id')))
+                ->dehydrated(fn ($livewire): bool => $livewire instanceof CreateControlledDocument)
                 ->helperText('Choose the regulatory frameworks that apply to this document.'),
         ];
     }
@@ -137,35 +113,19 @@ final class DocumentClassificationFormFields
     }
 
     /**
-     * Keep category and regulation tags aligned with the chosen document type.
+     * Apply the default regulation tags associated with the chosen document type.
      */
     public static function syncFieldsFromDocumentType(Set $set, int $documentTypeId): void
     {
-        $categoryId = DocumentType::query()
-            ->whereKey($documentTypeId)
-            ->value('category_id');
-
-        if ($categoryId !== null) {
-            $set('category_id', (int) $categoryId);
-        }
-
         $set('regulationTags', self::regulationTagIdsForDocumentType($documentTypeId));
     }
 
     /**
      * @return array<int, string>
      */
-    public static function regulationTagOptionsForDocumentType(?int $documentTypeId): array
+    public static function regulationTagOptions(): array
     {
-        if ($documentTypeId === null) {
-            return [];
-        }
-
         return RegulationTag::query()
-            ->whereHas(
-                'documentTypes',
-                fn (Builder $documentTypeQuery): Builder => $documentTypeQuery->whereKey($documentTypeId),
-            )
             ->orderBy('name')
             ->pluck('name', 'id')
             ->all();
@@ -197,7 +157,7 @@ final class DocumentClassificationFormFields
             return [];
         }
 
-        return SopTemplate::query()
+        return DocumentTemplate::query()
             ->with('regulationTags')
             ->find((int) $templateId)
             ?->regulationTags
@@ -231,7 +191,7 @@ final class DocumentClassificationFormFields
             return '—';
         }
 
-        $tags = SopTemplate::query()
+        $tags = DocumentTemplate::query()
             ->with('regulationTags')
             ->find((int) $templateId)
             ?->regulationTags
@@ -260,7 +220,7 @@ final class DocumentClassificationFormFields
             return $empty;
         }
 
-        $template = SopTemplate::query()
+        $template = DocumentTemplate::query()
             ->with(['category', 'documentType', 'regulationTags'])
             ->find((int) $templateId);
 

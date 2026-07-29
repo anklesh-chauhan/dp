@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Support\Sop\VariableTypes\Handlers;
 
-use App\Models\SopTemplateVariable;
+use App\Models\DocumentTemplateVariable;
 use App\Support\Sop\VariableTypes\Contracts\VariableTypeHandler;
 use Filament\Forms\Components\Field;
 
@@ -15,7 +15,7 @@ abstract class AbstractVariableTypeHandler implements VariableTypeHandler
         return in_array($code, $this->codes(), true);
     }
 
-    protected function applyCommonConfiguration(Field $field, SopTemplateVariable $variable): Field
+    protected function applyCommonConfiguration(Field $field, DocumentTemplateVariable $variable): Field
     {
         return $field
             ->label($variable->label)
@@ -25,7 +25,7 @@ abstract class AbstractVariableTypeHandler implements VariableTypeHandler
     /**
      * @return array<string, string>
      */
-    protected function choiceOptions(SopTemplateVariable $variable): array
+    protected function choiceOptions(DocumentTemplateVariable $variable): array
     {
         if (is_array($variable->options) && $variable->options !== []) {
             return collect($variable->options)
@@ -53,7 +53,7 @@ abstract class AbstractVariableTypeHandler implements VariableTypeHandler
     /**
      * @return array<int, mixed>
      */
-    protected function normalizedCustomValidationRules(SopTemplateVariable $variable): array
+    protected function normalizedCustomValidationRules(DocumentTemplateVariable $variable): array
     {
         if (! is_array($variable->validation_rules)) {
             return [];
@@ -74,7 +74,7 @@ abstract class AbstractVariableTypeHandler implements VariableTypeHandler
     /**
      * @return array<int, mixed>
      */
-    protected function mergeValidationRules(SopTemplateVariable $variable, array $baseRules): array
+    protected function mergeValidationRules(DocumentTemplateVariable $variable, array $baseRules): array
     {
         return array_values(array_unique(
             array_merge($baseRules, $this->normalizedCustomValidationRules($variable)),

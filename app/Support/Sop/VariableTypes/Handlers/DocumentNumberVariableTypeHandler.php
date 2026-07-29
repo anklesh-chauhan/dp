@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Support\Sop\VariableTypes\Handlers;
 
-use App\Models\SopTemplateVariable;
+use App\Models\DocumentTemplateVariable;
 use App\Models\VariableDataType;
 use App\Support\Sop\VariableTypes\VariableTypeFieldContext;
 use Filament\Forms\Components\Field;
@@ -17,7 +17,7 @@ class DocumentNumberVariableTypeHandler extends AbstractVariableTypeHandler
         return [VariableDataType::DOCUMENT_NUMBER];
     }
 
-    public function makeField(SopTemplateVariable $variable, VariableTypeFieldContext $context): Field
+    public function makeField(DocumentTemplateVariable $variable, VariableTypeFieldContext $context): Field
     {
         return $this->applyCommonConfiguration(
             TextInput::make($context->fieldName)->disabled()->dehydrated(),
@@ -30,17 +30,17 @@ class DocumentNumberVariableTypeHandler extends AbstractVariableTypeHandler
         return $defaultValue;
     }
 
-    public function validationRules(SopTemplateVariable $variable): array
+    public function validationRules(DocumentTemplateVariable $variable): array
     {
         return $this->mergeValidationRules($variable, ['nullable', 'string']);
     }
 
-    public function formatForStorage(SopTemplateVariable $variable, mixed $value): string
+    public function formatForStorage(DocumentTemplateVariable $variable, mixed $value): string
     {
         return $this->stringifyScalar($value);
     }
 
-    public function formatForSubstitution(SopTemplateVariable $variable, mixed $value): string
+    public function formatForSubstitution(DocumentTemplateVariable $variable, mixed $value): string
     {
         return $this->formatForStorage($variable, $value);
     }

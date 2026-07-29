@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Domain\DMS\Services;
 
 use App\Domain\Shared\Services\AuditLogService;
+use App\Models\ControlledDocument;
+use App\Models\DocumentTemplate;
 use App\Models\SopAuditLog;
-use App\Models\SopDocument;
-use App\Models\SopTemplate;
 use App\Models\TemplateStatus;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -17,11 +17,11 @@ class DocumentLockService
 {
     public function __construct(private readonly AuditLogService $auditLogService) {}
 
-    public function lockDocument(SopDocument $document, User $user): SopDocument
+    public function lockDocument(ControlledDocument $document, User $user): ControlledDocument
     {
         $this->ensureDocumentIsLockable($document, $user);
 
-        return DB::transaction(function () use ($document, $user): SopDocument {
+        return DB::transaction(function () use ($document, $user): ControlledDocument {
             $document->update([
                 'locked_by' => $user->id,
                 'locked_at' => now(),
@@ -38,7 +38,7 @@ class DocumentLockService
         });
     }
 
-    public function unlockDocument(SopDocument $document, User $user, bool $force = false): SopDocument
+    public function unlockDocument(ControlledDocument $document, User $user, bool $force = false): ControlledDocument
     {
         if (! $document->isLocked()) {
             return $document;
@@ -50,7 +50,7 @@ class DocumentLockService
             ]);
         }
 
-        return DB::transaction(function () use ($document, $user): SopDocument {
+        return DB::transaction(function () use ($document, $user): ControlledDocument {
             $document->update([
                 'locked_by' => null,
                 'locked_at' => null,
@@ -67,7 +67,7 @@ class DocumentLockService
         });
     }
 
-    public function lockTemplate(SopTemplate $template, User $user): SopTemplate
+    public function lockTemplate(DocumentTemplate $template, User $user): DocumentTemplate
     {
         if (! $template->templateStatus?->hasCode(TemplateStatus::DRAFT)) {
             throw ValidationException::withMessages([
@@ -81,7 +81,7 @@ class DocumentLockService
             ]);
         }
 
-        return DB::transaction(function () use ($template, $user): SopTemplate {
+        return DB::transaction(function () use ($template, $user): DocumentTemplate {
             $template->update([
                 'locked_by' => $user->id,
                 'locked_at' => now(),
@@ -98,7 +98,7 @@ class DocumentLockService
         });
     }
 
-    public function unlockTemplate(SopTemplate $template, User $user, bool $force = false): SopTemplate
+    public function unlockTemplate(DocumentTemplate $template, User $user, bool $force = false): DocumentTemplate
     {
         if (! $template->isLocked()) {
             return $template;
@@ -110,7 +110,7 @@ class DocumentLockService
             ]);
         }
 
-        return DB::transaction(function () use ($template, $user): SopTemplate {
+        return DB::transaction(function () use ($template, $user): DocumentTemplate {
             $template->update([
                 'locked_by' => null,
                 'locked_at' => null,
@@ -127,7 +127,7 @@ class DocumentLockService
         });
     }
 
-    private function ensureDocumentIsLockable(SopDocument $document, User $user): void
+    private function ensureDocumentIsLockable(ControlledDocument $document, User $user): void
     {
         if (! $document->isEditable()) {
             throw ValidationException::withMessages([

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Support\Sop\VariableTypes\Handlers;
 
-use App\Models\SopTemplateVariable;
+use App\Models\DocumentTemplateVariable;
 use App\Models\VariableDataType;
 use App\Support\Sop\VariableTypes\VariableTypeFieldContext;
 use Carbon\CarbonInterface;
@@ -24,7 +24,7 @@ class DateTimeVariableTypeHandler extends AbstractVariableTypeHandler
         ];
     }
 
-    public function makeField(SopTemplateVariable $variable, VariableTypeFieldContext $context): Field
+    public function makeField(DocumentTemplateVariable $variable, VariableTypeFieldContext $context): Field
     {
         $field = match ($variable->variableDataType?->code) {
             VariableDataType::DATETIME => DateTimePicker::make($context->fieldName),
@@ -41,7 +41,7 @@ class DateTimeVariableTypeHandler extends AbstractVariableTypeHandler
         return $defaultValue;
     }
 
-    public function validationRules(SopTemplateVariable $variable): array
+    public function validationRules(DocumentTemplateVariable $variable): array
     {
         $baseRules = match ($variable->variableDataType?->code) {
             VariableDataType::DATETIME => ['nullable', 'date'],
@@ -52,7 +52,7 @@ class DateTimeVariableTypeHandler extends AbstractVariableTypeHandler
         return $this->mergeValidationRules($variable, $baseRules);
     }
 
-    public function formatForStorage(SopTemplateVariable $variable, mixed $value): string
+    public function formatForStorage(DocumentTemplateVariable $variable, mixed $value): string
     {
         if ($value instanceof CarbonInterface) {
             return match ($variable->variableDataType?->code) {
@@ -65,7 +65,7 @@ class DateTimeVariableTypeHandler extends AbstractVariableTypeHandler
         return $this->stringifyScalar($value);
     }
 
-    public function formatForSubstitution(SopTemplateVariable $variable, mixed $value): string
+    public function formatForSubstitution(DocumentTemplateVariable $variable, mixed $value): string
     {
         return $this->formatForStorage($variable, $value);
     }

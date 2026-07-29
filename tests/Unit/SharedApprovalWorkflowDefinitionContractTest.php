@@ -15,8 +15,8 @@ use App\Domain\Shared\Contracts\ApprovalWorkflowStepDefinition;
 use App\Domain\Shared\Enums\ApprovalDecisionCode;
 use App\Domain\Shared\Services\ApprovalWorkflowEngineService;
 use App\Models\ApprovalDecision;
+use App\Models\ControlledDocument;
 use App\Models\SopApproval;
-use App\Models\SopDocument;
 use App\Models\SopWorkflow;
 use App\Models\SopWorkflowStep;
 
@@ -39,7 +39,7 @@ it('adapts the existing SOP workflow step model to the Shared step definition co
 });
 
 it('adapts the existing SOP approval model to the Shared approval instance contract', function (): void {
-    $subject = new SopDocument([
+    $subject = new ControlledDocument([
         'document_number' => 'SOP-QA-00042',
         'title' => 'Shared approval instance',
     ]);

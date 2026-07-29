@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Filament\Support;
 
-use App\Models\SopTemplateVariable;
-use App\Models\SopTemplateVersion;
+use App\Models\DocumentTemplateVariable;
+use App\Models\DocumentTemplateVersion;
 use App\Models\VariableDataType;
 use App\Support\Sop\VariableTypes\VariableTypeFieldContext;
 use App\Support\Sop\VariableTypes\VariableTypeRegistry;
@@ -34,12 +34,12 @@ class TemplateVariableFieldBuilder
 
         $registry = app(VariableTypeRegistry::class);
 
-        return SopTemplateVersion::query()
+        return DocumentTemplateVersion::query()
             ->with(['variables.variableDataType'])
             ->find($templateVersionId)
             ?->variables
-            ->reject(fn (SopTemplateVariable $variable): bool => self::shouldExcludeFromForm($variable, $additionalExcludedNames))
-            ->map(fn (SopTemplateVariable $variable): Field => $registry->makeField(
+            ->reject(fn (DocumentTemplateVariable $variable): bool => self::shouldExcludeFromForm($variable, $additionalExcludedNames))
+            ->map(fn (DocumentTemplateVariable $variable): Field => $registry->makeField(
                 $variable,
                 VariableTypeFieldContext::forDocumentCreation($variable, $templateId),
             ))
@@ -59,12 +59,12 @@ class TemplateVariableFieldBuilder
 
         $registry = app(VariableTypeRegistry::class);
 
-        return SopTemplateVersion::query()
+        return DocumentTemplateVersion::query()
             ->with(['variables.variableDataType'])
             ->find($templateVersionId)
             ?->variables
-            ->reject(fn (SopTemplateVariable $variable): bool => self::shouldExcludeFromForm($variable, $additionalExcludedNames))
-            ->mapWithKeys(fn (SopTemplateVariable $variable): array => [
+            ->reject(fn (DocumentTemplateVariable $variable): bool => self::shouldExcludeFromForm($variable, $additionalExcludedNames))
+            ->mapWithKeys(fn (DocumentTemplateVariable $variable): array => [
                 $variable->name => $registry->parseDefaultValue($variable),
             ])
             ->all() ?? [];
@@ -73,7 +73,7 @@ class TemplateVariableFieldBuilder
     /**
      * @param  list<string>  $additionalExcludedNames
      */
-    public static function shouldExcludeFromForm(SopTemplateVariable $variable, array $additionalExcludedNames = []): bool
+    public static function shouldExcludeFromForm(DocumentTemplateVariable $variable, array $additionalExcludedNames = []): bool
     {
         if (in_array($variable->name, $additionalExcludedNames, true)) {
             return true;
@@ -90,12 +90,12 @@ class TemplateVariableFieldBuilder
         return match ($variable->name) {
             'department' => ! $variable->variableDataType?->hasCode(VariableDataType::DEPARTMENT),
             'referenced_sop' => ! $variable->variableDataType?->hasCode(VariableDataType::SOP_REFERENCE)
-                && ! $variable->variableDataType?->hasCode(VariableDataType::SOP_DOCUMENT),
+                && ! $variable->variableDataType?->hasCode(VariableDataType::CONTROLLED_DOCUMENT),
             default => false,
         };
     }
 
-    public static function editField(SopTemplateVariable $variable, ?int $templateId = null): Field
+    public static function editField(DocumentTemplateVariable $variable, ?int $templateId = null): Field
     {
         return app(VariableTypeRegistry::class)->makeField(
             $variable,

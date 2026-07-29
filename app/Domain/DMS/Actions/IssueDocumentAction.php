@@ -3,8 +3,8 @@
 namespace App\Domain\DMS\Actions;
 
 use App\Domain\DMS\Services\DocumentIssuanceService;
+use App\Models\ControlledDocument;
 use App\Models\DocumentIssuance;
-use App\Models\SopDocument;
 use App\Models\User;
 
 class IssueDocumentAction
@@ -19,7 +19,7 @@ class IssueDocumentAction
      *     notes?: string|null
      * }  $data
      */
-    public function execute(SopDocument $document, User $issuer, array $data = []): DocumentIssuance
+    public function execute(ControlledDocument $document, User $issuer, array $data = []): DocumentIssuance
     {
         return $this->documentIssuanceService->issue($document, $issuer, $data);
     }

@@ -37,7 +37,7 @@ it('seeds only core and DMS permissions for a DMS installation', function (): vo
 
     expect(Role::findByName('sop administrator', 'web')->permissions->pluck('name')->all())
         ->toEqualCanonicalizing($expectedPermissions)
-        ->and(Role::findByName('sop maker', 'web')->hasPermissionTo('Create:SopDocument'))
+        ->and(Role::findByName('sop maker', 'web')->hasPermissionTo('Create:ControlledDocument'))
         ->toBeTrue()
         ->and(Role::findByName('document controller', 'web')->hasPermissionTo('Issue:DocumentIssuance'))
         ->toBeTrue();

@@ -22,7 +22,7 @@ return new class extends Migration
                 ->after('requires_sop_reference');
         });
 
-        Schema::table('sop_templates', function (Blueprint $table): void {
+        Schema::table('document_templates', function (Blueprint $table): void {
             $table->dropIndex(['status']);
             $table->dropColumn('status');
 
@@ -33,7 +33,7 @@ return new class extends Migration
                 ->nullOnDelete();
         });
 
-        Schema::table('sop_template_versions', function (Blueprint $table): void {
+        Schema::table('document_template_versions', function (Blueprint $table): void {
             $table->dropIndex(['status']);
             $table->dropColumn('status');
             $table->foreignId('template_status_id')
@@ -43,7 +43,7 @@ return new class extends Migration
                 ->nullOnDelete();
         });
 
-        Schema::table('sop_template_variables', function (Blueprint $table): void {
+        Schema::table('document_template_variables', function (Blueprint $table): void {
             $table->dropColumn('datatype');
             $table->foreignId('variable_data_type_id')
                 ->nullable()
@@ -52,7 +52,7 @@ return new class extends Migration
                 ->nullOnDelete();
         });
 
-        Schema::table('sop_documents', function (Blueprint $table): void {
+        Schema::table('controlled_documents', function (Blueprint $table): void {
             $table->dropIndex(['status']);
             $table->dropColumn('status');
 
@@ -108,19 +108,19 @@ return new class extends Migration
             $table->dropColumn('is_issuable');
         });
 
-        Schema::table('sop_templates', function (Blueprint $table): void {
+        Schema::table('document_templates', function (Blueprint $table): void {
             $table->dropColumn('template_status_id');
         });
 
-        Schema::table('sop_template_versions', function (Blueprint $table): void {
+        Schema::table('document_template_versions', function (Blueprint $table): void {
             $table->dropColumn('template_status_id');
         });
 
-        Schema::table('sop_template_variables', function (Blueprint $table): void {
+        Schema::table('document_template_variables', function (Blueprint $table): void {
             $table->dropColumn('variable_data_type_id');
         });
 
-        Schema::table('sop_documents', function (Blueprint $table): void {
+        Schema::table('controlled_documents', function (Blueprint $table): void {
             $table->dropColumn('document_status_id');
         });
 

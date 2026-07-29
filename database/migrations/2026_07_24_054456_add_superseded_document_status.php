@@ -30,7 +30,7 @@ return new class extends Migration
         $obsoleteStatusId = DB::table('document_statuses')->where('code', 'obsolete')->value('id');
 
         if ($supersededStatusId !== null && $obsoleteStatusId !== null) {
-            DB::table('sop_documents')
+            DB::table('controlled_documents')
                 ->where('document_status_id', $supersededStatusId)
                 ->update(['document_status_id' => $obsoleteStatusId]);
         }

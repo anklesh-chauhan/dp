@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Domain\DMS\Services;
 
-use App\Data\SopDocumentData;
+use App\Data\ControlledDocumentData;
 use App\Domain\Shared\Services\AuditLogService;
+use App\Models\ControlledDocument;
 use App\Models\DocumentStatus;
+use App\Models\DocumentTemplate;
+use App\Models\DocumentTemplateVersion;
 use App\Models\SopAuditLog;
-use App\Models\SopDocument;
-use App\Models\SopTemplate;
-use App\Models\SopTemplateVersion;
 use App\Models\TemplateStatus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -28,11 +28,11 @@ class SopGeneratorService
     /**
      * @throws ValidationException
      */
-    public function generate(SopDocumentData $data): SopDocument
+    public function generate(ControlledDocumentData $data): ControlledDocument
     {
-        return DB::transaction(function () use ($data): SopDocument {
+        return DB::transaction(function () use ($data): ControlledDocument {
             if ($data->templateVersionId !== null) {
-                $version = SopTemplateVersion::query()
+                $version = DocumentTemplateVersion::query()
                     ->with(['template.department', 'template.documentType', 'templateStatus', 'sections', 'variables'])
                     ->findOrFail($data->templateVersionId);
 
@@ -46,7 +46,7 @@ class SopGeneratorService
 
                 $template = $version->template;
             } else {
-                $template = SopTemplate::query()
+                $template = DocumentTemplate::query()
                     ->with(['department', 'documentType', 'templateStatus', 'publishedVersion.sections', 'publishedVersion.variables'])
                     ->findOrFail($data->templateId);
 
@@ -61,13 +61,13 @@ class SopGeneratorService
             $sopReference = [];
 
             if ($documentType->requiresSopReference()) {
-                if ($data->referencedSopDocumentId === null) {
+                if ($data->referencedControlledDocumentId === null) {
                     throw ValidationException::withMessages([
-                        'referenced_sop_document_id' => 'A referenced effective SOP is required for this document type.',
+                        'referenced_controlled_document_id' => 'A referenced effective SOP is required for this document type.',
                     ]);
                 }
 
-                $sopReference = $this->sopReferenceService->resolve($data->referencedSopDocumentId, $template->department);
+                $sopReference = $this->sopReferenceService->resolve($data->referencedControlledDocumentId, $template->department);
             }
 
             $typeCode = $documentType->code;
@@ -75,7 +75,7 @@ class SopGeneratorService
             $variables = $this->prepareVariables($data->variables, $template, $documentNumber, $data, $sopReference);
             $resolvedVariables = $this->resolveVariables($version, $variables);
 
-            $document = SopDocument::query()->create([
+            $document = ControlledDocument::query()->create([
                 'document_series_id' => (string) Str::uuid(),
                 'template_id' => $template->id,
                 'template_version_id' => $version->id,
@@ -83,6 +83,7 @@ class SopGeneratorService
                 'title' => $data->title,
                 'version' => 1,
                 'department_id' => $template->department_id,
+                'category_id' => $template->category_id,
                 'document_type_id' => $documentType->id,
                 'document_status_id' => DocumentStatus::idFor(DocumentStatus::DRAFT),
                 'effective_date' => $data->effectiveDate,
@@ -120,7 +121,7 @@ class SopGeneratorService
                     'template_version_id' => $version->id,
                     'document_type_id' => $documentType->id,
                     'regulation_tag_ids' => $data->regulationTagIds,
-                    'referenced_sop_document_id' => $sopReference['referenced_sop_document_id'] ?? null,
+                    'referenced_controlled_document_id' => $sopReference['referenced_controlled_document_id'] ?? null,
                 ],
                 userId: $data->createdBy,
                 document: $document,
@@ -141,9 +142,9 @@ class SopGeneratorService
      */
     private function prepareVariables(
         array $variables,
-        SopTemplate $template,
+        DocumentTemplate $template,
         string $documentNumber,
-        SopDocumentData $data,
+        ControlledDocumentData $data,
         array $sopReference,
     ): array {
         $variables = array_merge($variables, [
@@ -156,8 +157,8 @@ class SopGeneratorService
             $variables['department'] = $template->department_id;
         }
 
-        if (! empty($sopReference['referenced_sop_document_id'])) {
-            $variables['referenced_sop'] = $sopReference['referenced_sop_document_id'];
+        if (! empty($sopReference['referenced_controlled_document_id'])) {
+            $variables['referenced_sop'] = $sopReference['referenced_controlled_document_id'];
         }
 
         if (filled($data->batchNumber)) {
@@ -177,7 +178,7 @@ class SopGeneratorService
      *
      * @throws ValidationException
      */
-    private function resolveVariables(SopTemplateVersion $version, array $variables): array
+    private function resolveVariables(DocumentTemplateVersion $version, array $variables): array
     {
         try {
             return $this->variableResolverService->resolveValues($version, $variables);

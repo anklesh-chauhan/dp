@@ -12,9 +12,9 @@ use App\Domain\DMS\Actions\DestroyDocumentAction;
 use App\Domain\DMS\Actions\DestroyTemplateAction;
 use App\Domain\DMS\Actions\MarkDocumentObsoleteAction;
 use App\Domain\DMS\Actions\MarkTemplateObsoleteAction;
+use App\Models\ControlledDocument;
 use App\Models\DocumentStatus;
-use App\Models\SopDocument;
-use App\Models\SopTemplate;
+use App\Models\DocumentTemplate;
 use App\Models\TemplateStatus;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
@@ -27,7 +27,7 @@ trait ProvidesRetentionLifecycleActions
      */
     protected function getDocumentRetentionLifecycleActions(): array
     {
-        /** @var SopDocument $record */
+        /** @var ControlledDocument $record */
         $record = $this->record;
 
         return [
@@ -105,7 +105,7 @@ trait ProvidesRetentionLifecycleActions
      */
     protected function getTemplateRetentionLifecycleActions(): array
     {
-        /** @var SopTemplate $record */
+        /** @var DocumentTemplate $record */
         $record = $this->record;
 
         return [

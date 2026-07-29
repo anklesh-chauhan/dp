@@ -9,7 +9,7 @@ use App\Domain\QMS\Enums\ChangeControlStatus;
 use App\Domain\QMS\Enums\DocumentImpactAction;
 use App\Domain\QMS\Models\ChangeControlDocumentImpact;
 use App\Enums\ProductModule;
-use App\Models\SopDocument;
+use App\Models\ControlledDocument;
 use App\Models\User;
 use App\Support\Modules\ModuleManager;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -31,7 +31,7 @@ final class ApprovedChangeControlDocumentRevisionService
     public function execute(
         ChangeControlDocumentImpact $documentImpact,
         User $user,
-    ): SopDocument {
+    ): ControlledDocument {
         $this->moduleManager->ensureEnabled(ProductModule::QMS);
 
         if (! $user->can('Implement:ChangeControl')) {
@@ -40,7 +40,7 @@ final class ApprovedChangeControlDocumentRevisionService
             );
         }
 
-        return DB::transaction(function () use ($documentImpact, $user): SopDocument {
+        return DB::transaction(function () use ($documentImpact, $user): ControlledDocument {
             $impact = ChangeControlDocumentImpact::query()
                 ->with(['changeControl', 'sourceDocument', 'resultDocument'])
                 ->lockForUpdate()

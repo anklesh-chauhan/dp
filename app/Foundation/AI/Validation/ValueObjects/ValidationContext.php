@@ -13,19 +13,18 @@ namespace App\Foundation\AI\Validation\ValueObjects;
 final readonly class ValidationContext
 {
     /**
-     * @param array<string, mixed> $attributes
+     * @param  array<string, mixed>  $attributes
      */
     public function __construct(
         private string $artifactType,
         private array $attributes = [],
-    ) {
-    }
+    ) {}
 
     /**
      * Returns the logical artifact type.
      *
      * Examples:
-     *  - sop_template
+     *  - document_template
      *  - deviation
      *  - risk_assessment
      */
@@ -54,10 +53,6 @@ final readonly class ValidationContext
 
     /**
      * Returns a context attribute.
-     *
-     * @param mixed $default
-     *
-     * @return mixed
      */
     public function get(string $key, mixed $default = null): mixed
     {

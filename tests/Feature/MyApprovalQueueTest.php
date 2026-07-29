@@ -8,20 +8,20 @@ use App\Domain\QMS\Models\QualityApprovalInstance;
 use App\Domain\QMS\Models\QualityApprovalWorkflow;
 use App\Domain\QMS\Models\QualityApprovalWorkflowStep;
 use App\Filament\Pages\MyApprovalQueue;
+use App\Filament\Resources\DocumentTemplateApprovalInstances\DocumentTemplateApprovalInstanceResource;
 use App\Filament\Resources\SopApprovals\SopApprovalResource;
-use App\Filament\Resources\SopTemplateApprovalInstances\SopTemplateApprovalInstanceResource;
 use App\Filament\Support\MyApprovalQueueService;
 use App\Filament\Widgets\PendingApprovalsTable;
 use App\Models\ApprovalDecision;
+use App\Models\ControlledDocument;
 use App\Models\Department;
 use App\Models\DocumentCategory;
 use App\Models\DocumentStatus;
+use App\Models\DocumentTemplate;
+use App\Models\DocumentTemplateApprovalInstance;
+use App\Models\DocumentTemplateVersion;
 use App\Models\DocumentType;
 use App\Models\SopApproval;
-use App\Models\SopDocument;
-use App\Models\SopTemplate;
-use App\Models\SopTemplateApprovalInstance;
-use App\Models\SopTemplateVersion;
 use App\Models\SopWorkflow;
 use App\Models\SopWorkflowStep;
 use App\Models\TemplateStatus;
@@ -39,8 +39,8 @@ beforeEach(function (): void {
     config()->set('modules.enabled', ['dms', 'qms']);
 
     foreach ([
-        'Approve:SopDocument',
-        'Decide:SopTemplateApproval',
+        'Approve:ControlledDocument',
+        'Decide:DocumentTemplateApproval',
         'Decide:QualityApproval',
         'Investigate:Deviation',
     ] as $permission) {
@@ -54,8 +54,8 @@ beforeEach(function (): void {
     $this->reviewer->assignRole($this->reviewerRole);
     $this->reviewer->assignRole(Role::findOrCreate('panel_user', 'web'));
     $this->reviewer->givePermissionTo([
-        'Approve:SopDocument',
-        'Decide:SopTemplateApproval',
+        'Approve:ControlledDocument',
+        'Decide:DocumentTemplateApproval',
         'Decide:QualityApproval',
         'Investigate:Deviation',
     ]);
@@ -63,15 +63,15 @@ beforeEach(function (): void {
 
 it('combines only actionable document template and QMS approvals for the signed-in user', function (): void {
     $documentType = DocumentType::query()->where('code', DocumentType::SOP)->firstOrFail();
-    $documentType->update(['category_id' => DocumentCategory::factory()->create()->id]);
-    $template = SopTemplate::factory()->create([
+    $template = DocumentTemplate::factory()->create([
+        'category_id' => DocumentCategory::factory(),
         'department_id' => $this->department,
         'created_by' => $this->author,
         'document_type_id' => $documentType,
         'template_status_id' => TemplateStatus::idFor(TemplateStatus::DRAFT),
     ]);
-    $templateVersion = SopTemplateVersion::factory()->create([
-        'sop_template_id' => $template,
+    $templateVersion = DocumentTemplateVersion::factory()->create([
+        'document_template_id' => $template,
         'created_by' => $this->author,
         'submitted_by' => $this->author,
         'submitted_at' => now(),
@@ -84,7 +84,7 @@ it('combines only actionable document template and QMS approvals for the signed-
         'department_id' => $this->department,
         'step_no' => 1,
     ]);
-    $document = SopDocument::factory()->create([
+    $document = ControlledDocument::factory()->create([
         'template_id' => $template,
         'template_version_id' => $templateVersion,
         'department_id' => $this->department,
@@ -100,8 +100,8 @@ it('combines only actionable document template and QMS approvals for the signed-
         'approved_at' => null,
         'signature_hash' => null,
     ]);
-    SopTemplateApprovalInstance::factory()->create([
-        'sop_template_version_id' => $templateVersion,
+    DocumentTemplateApprovalInstance::factory()->create([
+        'document_template_version_id' => $templateVersion,
         'workflow_id' => $workflow,
         'workflow_step_id' => $step,
     ]);
@@ -131,19 +131,19 @@ it('combines only actionable document template and QMS approvals for the signed-
 
     expect($items)->toHaveCount(3)
         ->and($items->pluck('work_type')->sort()->values()->all())
-        ->toBe(['Deviation', 'SOP Document', 'SOP Template'])
+        ->toBe(['Controlled Document', 'Deviation', 'Document Template'])
         ->and($items->every(fn (array $item): bool => filled($item['review_url'])))->toBeTrue()
         ->and(MyApprovalQueue::canAccess())->toBeTrue();
 
     Livewire::test(MyApprovalQueue::class)
         ->assertOk()
-        ->assertSee('SOP Document')
-        ->assertSee('SOP Template')
+        ->assertSee('Controlled Document')
+        ->assertSee('Document Template')
         ->assertSee('Deviation');
 
     Livewire::test(PendingApprovalsTable::class)
-        ->assertSee('SOP Document')
-        ->assertSee('SOP Template')
+        ->assertSee('Controlled Document')
+        ->assertSee('Document Template')
         ->assertSee('Deviation');
 });
 
@@ -154,5 +154,5 @@ it('does not expose unavailable work or duplicate queue navigation', function ()
     expect(app(MyApprovalQueueService::class)->forUser($unauthorizedUser))->toBeEmpty()
         ->and(MyApprovalQueue::canAccess())->toBeFalse()
         ->and(SopApprovalResource::shouldRegisterNavigation())->toBeFalse()
-        ->and(SopTemplateApprovalInstanceResource::shouldRegisterNavigation())->toBeFalse();
+        ->and(DocumentTemplateApprovalInstanceResource::shouldRegisterNavigation())->toBeFalse();
 });

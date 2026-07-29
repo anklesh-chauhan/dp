@@ -7,7 +7,7 @@ namespace Database\Factories\Domain\QMS\Models;
 use App\Domain\QMS\Enums\DocumentImpactAction;
 use App\Domain\QMS\Models\ChangeControl;
 use App\Domain\QMS\Models\ChangeControlDocumentImpact;
-use App\Models\SopDocument;
+use App\Models\ControlledDocument;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -26,7 +26,7 @@ class ChangeControlDocumentImpactFactory extends Factory
     {
         return [
             'change_control_id' => ChangeControl::factory(),
-            'source_document_id' => SopDocument::factory(),
+            'source_document_id' => ControlledDocument::factory(),
             'result_document_id' => null,
             'required_action' => DocumentImpactAction::Revise,
             'rationale' => fake()->sentence(),

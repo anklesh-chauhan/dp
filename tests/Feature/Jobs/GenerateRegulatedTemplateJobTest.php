@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-use App\Domain\SopTemplate\AI\Services\SopTemplateIntegrityService;
+use App\Domain\DocumentTemplate\AI\Services\DocumentTemplateIntegrityService;
 use App\Jobs\GenerateRegulatedTemplateJob;
-use App\Models\SopTemplate;
-use App\Models\SopTemplateSection;
-use App\Models\SopTemplateVariable;
+use App\Models\DocumentTemplate;
+use App\Models\DocumentTemplateSection;
+use App\Models\DocumentTemplateVariable;
 use App\Models\TemplateStatus;
 use App\Models\VariableDataType;
 use App\Services\AI\Contracts\TemplateGenerator;
@@ -28,20 +28,20 @@ function handleGenerateRegulatedTemplateJob(
     $job->handle(
         aiService: $generator,
         integrityService: app(
-            SopTemplateIntegrityService::class,
+            DocumentTemplateIntegrityService::class,
         ),
     );
 }
 
 function createGenerationTemplate(
     array $attributes = [],
-): SopTemplate {
-    return SopTemplate::factory()->create([
+): DocumentTemplate {
+    return DocumentTemplate::factory()->create([
         'template_status_id' => TemplateStatus::idFor(
             TemplateStatus::DRAFT,
         ),
         'current_version' => 0,
-        'generation_status' => SopTemplate::GENERATION_STATUS_PROCESSING,
+        'generation_status' => DocumentTemplate::GENERATION_STATUS_PROCESSING,
         'generation_progress' => 0,
         ...$attributes,
     ]);
@@ -129,6 +129,10 @@ it('generates and persists a regulated template', function (): void {
                     ->toBe($template->getKey())
                     ->and($formData['name'])
                     ->toBe('Deviation Management Procedure')
+                    ->and($formData['category']['id'])
+                    ->toBe($template->category_id)
+                    ->and($formData['document_type']['id'])
+                    ->toBe($template->document_type_id)
                     ->and($regulationTags)
                     ->toBe('EU GMP, FDA 21 CFR Part 211');
 
@@ -152,7 +156,7 @@ it('generates and persists a regulated template', function (): void {
     expect($template->current_version)
         ->toBe(1)
         ->and($template->generation_status)
-        ->toBe(SopTemplate::GENERATION_STATUS_COMPLETED)
+        ->toBe(DocumentTemplate::GENERATION_STATUS_COMPLETED)
         ->and($template->generation_progress)
         ->toBe(100);
 
@@ -226,7 +230,7 @@ it('marks template generation as failed when the generator returns null', functi
     $template->refresh();
 
     expect($template->generation_status)
-        ->toBe(SopTemplate::GENERATION_STATUS_FAILED)
+        ->toBe(DocumentTemplate::GENERATION_STATUS_FAILED)
         ->and($template->generation_progress)
         ->toBe(0)
         ->and($template->current_version)
@@ -265,7 +269,7 @@ it('marks template generation as failed and rethrows when the generator throws a
     $template->refresh();
 
     expect($template->generation_status)
-        ->toBe(SopTemplate::GENERATION_STATUS_FAILED)
+        ->toBe(DocumentTemplate::GENERATION_STATUS_FAILED)
         ->and($template->generation_progress)
         ->toBe(0)
         ->and($template->versions)
@@ -302,7 +306,7 @@ it('fails when generated sections are missing', function (): void {
     $template->refresh();
 
     expect($template->generation_status)
-        ->toBe(SopTemplate::GENERATION_STATUS_FAILED)
+        ->toBe(DocumentTemplate::GENERATION_STATUS_FAILED)
         ->and($template->generation_progress)
         ->toBe(0)
         ->and($template->versions)
@@ -339,7 +343,7 @@ it('fails when generated variables are missing', function (): void {
     $template->refresh();
 
     expect($template->generation_status)
-        ->toBe(SopTemplate::GENERATION_STATUS_FAILED)
+        ->toBe(DocumentTemplate::GENERATION_STATUS_FAILED)
         ->and($template->generation_progress)
         ->toBe(0)
         ->and($template->versions)
@@ -377,7 +381,7 @@ it('fails when generated sections are not an array', function (): void {
     $template->refresh();
 
     expect($template->generation_status)
-        ->toBe(SopTemplate::GENERATION_STATUS_FAILED)
+        ->toBe(DocumentTemplate::GENERATION_STATUS_FAILED)
         ->and($template->generation_progress)
         ->toBe(0);
 });
@@ -413,7 +417,7 @@ it('fails when generated variables are not an array', function (): void {
     $template->refresh();
 
     expect($template->generation_status)
-        ->toBe(SopTemplate::GENERATION_STATUS_FAILED)
+        ->toBe(DocumentTemplate::GENERATION_STATUS_FAILED)
         ->and($template->generation_progress)
         ->toBe(0);
 });
@@ -572,7 +576,7 @@ it('fails and rolls back when no variable data type can be resolved', function (
     $template->refresh();
 
     expect($template->generation_status)
-        ->toBe(SopTemplate::GENERATION_STATUS_FAILED)
+        ->toBe(DocumentTemplate::GENERATION_STATUS_FAILED)
         ->and($template->generation_progress)
         ->toBe(0)
         ->and($template->current_version)
@@ -580,9 +584,9 @@ it('fails and rolls back when no variable data type can be resolved', function (
         ->and($template->versions)
         ->toHaveCount(0);
 
-    expect(SopTemplateSection::query()->count())
+    expect(DocumentTemplateSection::query()->count())
         ->toBe(0)
-        ->and(SopTemplateVariable::query()->count())
+        ->and(DocumentTemplateVariable::query()->count())
         ->toBe(0);
 });
 
@@ -636,7 +640,7 @@ it('replaces generated sections and variables when the job is retried', function
         ->and($template->current_version)
         ->toBe(1)
         ->and($template->generation_status)
-        ->toBe(SopTemplate::GENERATION_STATUS_COMPLETED)
+        ->toBe(DocumentTemplate::GENERATION_STATUS_COMPLETED)
         ->and($template->generation_progress)
         ->toBe(100);
 });
@@ -755,7 +759,7 @@ it('fails before persistence when an unreferenced variable cannot be repaired', 
     $template->refresh();
 
     expect($template->generation_status)
-        ->toBe(SopTemplate::GENERATION_STATUS_FAILED)
+        ->toBe(DocumentTemplate::GENERATION_STATUS_FAILED)
         ->and($template->generation_progress)
         ->toBe(0)
         ->and($template->current_version)
@@ -763,9 +767,9 @@ it('fails before persistence when an unreferenced variable cannot be repaired', 
         ->and($template->versions)
         ->toHaveCount(0);
 
-    expect(SopTemplateSection::query()->count())
+    expect(DocumentTemplateSection::query()->count())
         ->toBe(0)
-        ->and(SopTemplateVariable::query()->count())
+        ->and(DocumentTemplateVariable::query()->count())
         ->toBe(0);
 });
 
@@ -852,7 +856,7 @@ it('fails before persistence when an undefined placeholder cannot be repaired', 
     $template->refresh();
 
     expect($template->generation_status)
-        ->toBe(SopTemplate::GENERATION_STATUS_FAILED)
+        ->toBe(DocumentTemplate::GENERATION_STATUS_FAILED)
         ->and($template->generation_progress)
         ->toBe(0)
         ->and($template->current_version)
@@ -860,9 +864,9 @@ it('fails before persistence when an undefined placeholder cannot be repaired', 
         ->and($template->versions)
         ->toHaveCount(0);
 
-    expect(SopTemplateSection::query()->count())
+    expect(DocumentTemplateSection::query()->count())
         ->toBe(0)
-        ->and(SopTemplateVariable::query()->count())
+        ->and(DocumentTemplateVariable::query()->count())
         ->toBe(0);
 });
 
@@ -961,7 +965,7 @@ it('repairs an invalid generated template and persists the repaired result', fun
     $template->refresh();
 
     expect($template->generation_status)
-        ->toBe(SopTemplate::GENERATION_STATUS_COMPLETED)
+        ->toBe(DocumentTemplate::GENERATION_STATUS_COMPLETED)
         ->and($template->generation_progress)
         ->toBe(100)
         ->and($template->current_version)
@@ -990,9 +994,9 @@ it('repairs an invalid generated template and persists the repaired result', fun
         ->and($variable->variable_data_type_id)
         ->toBe($textDataType->getKey());
 
-    expect(SopTemplateSection::query()->count())
+    expect(DocumentTemplateSection::query()->count())
         ->toBe(1)
-        ->and(SopTemplateVariable::query()->count())
+        ->and(DocumentTemplateVariable::query()->count())
         ->toBe(1);
 });
 
@@ -1075,7 +1079,7 @@ it('fails without another repair attempt when the repaired template is still inv
     $template->refresh();
 
     expect($template->generation_status)
-        ->toBe(SopTemplate::GENERATION_STATUS_FAILED)
+        ->toBe(DocumentTemplate::GENERATION_STATUS_FAILED)
         ->and($template->generation_progress)
         ->toBe(0)
         ->and($template->current_version)
@@ -1083,9 +1087,9 @@ it('fails without another repair attempt when the repaired template is still inv
         ->and($template->versions)
         ->toHaveCount(0);
 
-    expect(SopTemplateSection::query()->count())
+    expect(DocumentTemplateSection::query()->count())
         ->toBe(0)
-        ->and(SopTemplateVariable::query()->count())
+        ->and(DocumentTemplateVariable::query()->count())
         ->toBe(0);
 });
 
@@ -1127,7 +1131,7 @@ it('does not attempt repair when the initial generated template is valid', funct
     $template->refresh();
 
     expect($template->generation_status)
-        ->toBe(SopTemplate::GENERATION_STATUS_COMPLETED)
+        ->toBe(DocumentTemplate::GENERATION_STATUS_COMPLETED)
         ->and($template->generation_progress)
         ->toBe(100)
         ->and($template->current_version)

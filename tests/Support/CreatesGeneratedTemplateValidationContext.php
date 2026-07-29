@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Support;
 
-use App\Domain\SopTemplate\AI\Support\GeneratedTemplateAnalysis;
-use App\Domain\SopTemplate\AI\Support\PlaceholderExtractor;
+use App\Domain\DocumentTemplate\AI\Support\GeneratedTemplateAnalysis;
+use App\Domain\DocumentTemplate\AI\Support\PlaceholderExtractor;
 use App\Foundation\AI\Validation\ValueObjects\ValidationContext;
 
 trait CreatesGeneratedTemplateValidationContext
@@ -15,11 +15,11 @@ trait CreatesGeneratedTemplateValidationContext
     ): ValidationContext {
         $analysis = GeneratedTemplateAnalysis::analyze(
             $template,
-            new PlaceholderExtractor(),
+            new PlaceholderExtractor,
         );
 
         return new ValidationContext(
-            artifactType: 'sop_template',
+            artifactType: 'document_template',
             attributes: [
                 'analysis' => $analysis,
             ],

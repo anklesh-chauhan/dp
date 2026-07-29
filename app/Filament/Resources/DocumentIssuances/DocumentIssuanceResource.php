@@ -83,8 +83,8 @@ class DocumentIssuanceResource extends Resource
                 Action::make('printCopy')
                     ->label('Print')
                     ->icon(Heroicon::Printer)
-                    ->url(fn (DocumentIssuance $record): string => route('sop-documents.print', [
-                        'sopDocument' => $record->document_id,
+                    ->url(fn (DocumentIssuance $record): string => route('controlled-documents.print', [
+                        'controlledDocument' => $record->document_id,
                         'issuance' => $record->id,
                     ]))
                     ->openUrlInNewTab()

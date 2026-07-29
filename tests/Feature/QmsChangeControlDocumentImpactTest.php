@@ -5,10 +5,10 @@ declare(strict_types=1);
 use App\Domain\QMS\Enums\DocumentImpactAction;
 use App\Domain\QMS\Models\ChangeControl;
 use App\Domain\QMS\Models\ChangeControlDocumentImpact;
+use App\Models\ControlledDocument;
 use App\Models\DocumentStatus;
-use App\Models\SopDocument;
-use App\Models\SopTemplate;
-use App\Models\SopTemplateVersion;
+use App\Models\DocumentTemplate;
+use App\Models\DocumentTemplateVersion;
 use App\Models\TemplateStatus;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -39,15 +39,15 @@ it('installs controlled document impact traceability', function (): void {
 
 it('links a required action from a source document to its resulting revision', function (): void {
     $changeControl = ChangeControl::factory()->create();
-    $template = SopTemplate::factory()->create();
-    $templateVersion = SopTemplateVersion::factory()->create([
-        'sop_template_id' => $template,
+    $template = DocumentTemplate::factory()->create();
+    $templateVersion = DocumentTemplateVersion::factory()->create([
+        'document_template_id' => $template,
     ]);
-    $source = SopDocument::factory()->create([
+    $source = ControlledDocument::factory()->create([
         'template_id' => $template,
         'template_version_id' => $templateVersion,
     ]);
-    $result = SopDocument::factory()->create([
+    $result = ControlledDocument::factory()->create([
         'template_id' => $template,
         'template_version_id' => $templateVersion,
         'document_series_id' => $source->document_series_id,
@@ -71,11 +71,11 @@ it('links a required action from a source document to its resulting revision', f
 });
 
 it('prevents duplicate actions for the same change control and source document', function (): void {
-    $template = SopTemplate::factory()->create();
-    $templateVersion = SopTemplateVersion::factory()->create([
-        'sop_template_id' => $template,
+    $template = DocumentTemplate::factory()->create();
+    $templateVersion = DocumentTemplateVersion::factory()->create([
+        'document_template_id' => $template,
     ]);
-    $source = SopDocument::factory()->create([
+    $source = ControlledDocument::factory()->create([
         'template_id' => $template,
         'template_version_id' => $templateVersion,
     ]);

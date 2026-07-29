@@ -6,7 +6,6 @@ use App\Filament\Clusters\Settings\SettingsCluster;
 use App\Filament\Resources\DocumentCategories\Pages\CreateDocumentCategory;
 use App\Filament\Resources\DocumentCategories\Pages\EditDocumentCategory;
 use App\Filament\Resources\DocumentCategories\Pages\ListDocumentCategories;
-use App\Filament\Resources\DocumentCategories\RelationManagers\DocumentTypeRelationManager;
 use App\Filament\Resources\DocumentCategories\Schemas\DocumentCategoryForm;
 use App\Filament\Resources\DocumentCategories\Tables\DocumentCategoriesTable;
 use App\Models\DocumentCategory;
@@ -43,9 +42,7 @@ class DocumentCategoryResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            DocumentTypeRelationManager::class,
-        ];
+        return [];
     }
 
     public static function getPages(): array

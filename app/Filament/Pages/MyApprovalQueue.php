@@ -42,8 +42,8 @@ class MyApprovalQueue extends Page implements HasTable
         $user = auth()->user();
 
         return $user !== null && (
-            $user->can('Approve:SopDocument')
-            || $user->can('Decide:SopTemplateApproval')
+            $user->can('Approve:ControlledDocument')
+            || $user->can('Decide:DocumentTemplateApproval')
             || $user->can('Decide:QualityApproval')
         );
     }
@@ -134,8 +134,8 @@ class MyApprovalQueue extends Page implements HasTable
                     'QMS' => 'QMS',
                 ]),
                 SelectFilter::make('work_type')->label('Approval Type')->options([
-                    'SOP Document' => 'SOP Document',
-                    'SOP Template' => 'SOP Template',
+                    'Controlled Document' => 'Controlled Document',
+                    'Document Template' => 'Document Template',
                     'Deviation' => 'Deviation',
                 ]),
             ])

@@ -18,11 +18,11 @@ return new class extends Migration
                 ->restrictOnDelete();
             $table->foreignId('source_document_id')
                 ->nullable()
-                ->constrained('sop_documents')
+                ->constrained('controlled_documents')
                 ->restrictOnDelete();
             $table->foreignId('result_document_id')
                 ->nullable()
-                ->constrained('sop_documents')
+                ->constrained('controlled_documents')
                 ->restrictOnDelete();
             $table->string('required_action')
                 ->default(DocumentImpactAction::Revise->value)

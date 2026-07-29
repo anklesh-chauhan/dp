@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Support\Sop\VariableTypes\Handlers;
 
-use App\Models\SopTemplateVariable;
+use App\Models\DocumentTemplateVariable;
 use App\Models\VariableDataType;
 use App\Support\Sop\VariableTypes\VariableTypeFieldContext;
 use Filament\Forms\Components\Field;
@@ -21,7 +21,7 @@ class FileVariableTypeHandler extends AbstractVariableTypeHandler
         ];
     }
 
-    public function makeField(SopTemplateVariable $variable, VariableTypeFieldContext $context): Field
+    public function makeField(DocumentTemplateVariable $variable, VariableTypeFieldContext $context): Field
     {
         $field = FileUpload::make($context->fieldName)
             ->directory('sop-variables')
@@ -40,7 +40,7 @@ class FileVariableTypeHandler extends AbstractVariableTypeHandler
         return $defaultValue;
     }
 
-    public function validationRules(SopTemplateVariable $variable): array
+    public function validationRules(DocumentTemplateVariable $variable): array
     {
         $baseRules = $variable->variableDataType?->hasCode(VariableDataType::IMAGE)
             ? ['nullable', 'string']
@@ -49,7 +49,7 @@ class FileVariableTypeHandler extends AbstractVariableTypeHandler
         return $this->mergeValidationRules($variable, $baseRules);
     }
 
-    public function formatForStorage(SopTemplateVariable $variable, mixed $value): string
+    public function formatForStorage(DocumentTemplateVariable $variable, mixed $value): string
     {
         if (is_array($value)) {
             return (string) (array_values($value)[0] ?? '');
@@ -58,7 +58,7 @@ class FileVariableTypeHandler extends AbstractVariableTypeHandler
         return $this->stringifyScalar($value);
     }
 
-    public function formatForSubstitution(SopTemplateVariable $variable, mixed $value): string
+    public function formatForSubstitution(DocumentTemplateVariable $variable, mixed $value): string
     {
         $path = $this->formatForStorage($variable, $value);
 

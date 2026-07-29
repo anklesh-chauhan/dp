@@ -9,7 +9,6 @@ use App\Filament\Resources\DocumentTypes\Pages\CreateDocumentType;
 use App\Filament\Resources\DocumentTypes\Pages\EditDocumentType;
 use App\Filament\Resources\DocumentTypes\Pages\ListDocumentTypes;
 use App\Filament\Resources\LookupResource;
-use App\Models\DocumentCategory;
 use App\Models\DocumentType;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -48,9 +47,6 @@ class DocumentTypeResource extends LookupResource
                 ->unique(ignoreRecord: true),
             Toggle::make('requires_sop_reference'),
             Toggle::make('is_issuable'),
-            Select::make('category_id')
-                ->options(DocumentCategory::query()->pluck('name', 'id'))
-                ->required(),
             Select::make('regulationTags')
                 ->relationship('regulationTags', 'name')
                 ->multiple()
@@ -67,7 +63,6 @@ class DocumentTypeResource extends LookupResource
                 TextColumn::make('code')->searchable()->sortable(),
                 IconColumn::make('requires_sop_reference')->boolean(),
                 IconColumn::make('is_issuable')->boolean(),
-                TextColumn::make('category.name')->searchable()->sortable(),
                 TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()

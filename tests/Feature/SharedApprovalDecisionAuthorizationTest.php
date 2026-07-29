@@ -12,15 +12,15 @@ use App\Domain\Shared\Contracts\ElectronicSignatureHasher;
 use App\Domain\Shared\Contracts\ElectronicSignatureVerifier;
 use App\Exceptions\WorkflowException;
 use App\Models\ApprovalDecision;
+use App\Models\ControlledDocument;
 use App\Models\Department;
 use App\Models\DocumentCategory;
 use App\Models\DocumentStatus;
+use App\Models\DocumentTemplate;
+use App\Models\DocumentTemplateVersion;
 use App\Models\DocumentType;
 use App\Models\SopApproval;
 use App\Models\SopAuditLog;
-use App\Models\SopDocument;
-use App\Models\SopTemplate;
-use App\Models\SopTemplateVersion;
 use App\Models\SopWorkflow;
 use App\Models\SopWorkflowStep;
 use App\Models\TemplateStatus;
@@ -35,39 +35,41 @@ uses(RefreshDatabase::class);
 
 beforeEach(function (): void {
     $this->seed(LookupTableSeeder::class);
-    Permission::findOrCreate('Approve:SopDocument', 'web');
+    Permission::findOrCreate('Approve:ControlledDocument', 'web');
 
     $this->department = Department::factory()->create();
     $this->approverRole = Role::findOrCreate('qa reviewer', 'web');
     $this->creator = User::factory()->create(['department_id' => $this->department->id]);
     $this->approver = User::factory()->create(['department_id' => $this->department->id]);
-    $this->approver->givePermissionTo('Approve:SopDocument');
+    $this->approver->givePermissionTo('Approve:ControlledDocument');
     $this->approver->assignRole($this->approverRole);
 
     $documentType = DocumentType::query()->where('code', DocumentType::SOP)->firstOrFail();
-    $documentType->update(['category_id' => DocumentCategory::factory()->create()->id]);
-    $template = SopTemplate::query()->create([
+    $documentCategory = DocumentCategory::factory()->create();
+    $template = DocumentTemplate::query()->create([
         'name' => 'Authorization Boundary Template',
         'code' => 'TPL-AUTHORIZATION-BOUNDARY',
         'department_id' => $this->department->id,
+        'category_id' => $documentCategory->id,
         'document_type_id' => $documentType->id,
         'template_status_id' => TemplateStatus::idFor(TemplateStatus::DRAFT),
         'current_version' => 1,
         'created_by' => $this->creator->id,
     ]);
-    $templateVersion = SopTemplateVersion::query()->create([
-        'sop_template_id' => $template->id,
+    $templateVersion = DocumentTemplateVersion::query()->create([
+        'document_template_id' => $template->id,
         'version' => 1,
         'content_json' => [],
         'template_status_id' => TemplateStatus::idFor(TemplateStatus::DRAFT),
         'created_by' => $this->creator->id,
     ]);
-    $this->document = SopDocument::query()->create([
+    $this->document = ControlledDocument::query()->create([
         'template_id' => $template->id,
         'template_version_id' => $templateVersion->id,
         'document_number' => 'SOP-AUTH-00001',
         'title' => 'Shared authorization boundary',
         'department_id' => $this->department->id,
+        'category_id' => $documentCategory->id,
         'document_type_id' => $documentType->id,
         'document_status_id' => DocumentStatus::idFor(DocumentStatus::UNDER_REVIEW),
         'created_by' => $this->creator->id,
@@ -120,9 +122,9 @@ it('preserves SOP decision authorization rules', function (Closure $arrange, str
 })->with([
     'permission' => [
         function (): void {
-            $this->approver->revokePermissionTo('Approve:SopDocument');
+            $this->approver->revokePermissionTo('Approve:ControlledDocument');
         },
-        'You do not have permission to approve SOP documents.',
+        'You do not have permission to approve controlled documents.',
     ],
     'role' => [
         function (): void {

@@ -10,20 +10,20 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('sop_documents', function (Blueprint $table): void {
+        Schema::table('controlled_documents', function (Blueprint $table): void {
             $table->foreignId('document_type_id')
                 ->nullable()
                 ->after('department_id')
                 ->constrained('document_types')
                 ->nullOnDelete();
 
-            $table->foreignId('referenced_sop_document_id')
+            $table->foreignId('referenced_controlled_document_id')
                 ->nullable()
                 ->after('document_type_id')
-                ->constrained('sop_documents')
+                ->constrained('controlled_documents')
                 ->nullOnDelete();
 
-            $table->string('referenced_sop_number')->nullable()->after('referenced_sop_document_id');
+            $table->string('referenced_sop_number')->nullable()->after('referenced_controlled_document_id');
             $table->unsignedInteger('referenced_sop_version')->nullable()->after('referenced_sop_number');
             $table->date('referenced_sop_effective_date')->nullable()->after('referenced_sop_version');
             $table->string('batch_number')->nullable()->after('referenced_sop_effective_date');
@@ -31,13 +31,13 @@ return new class extends Migration
             $table->text('purpose')->nullable()->after('product_name');
 
             $table->index(['document_type_id', 'status']);
-            $table->index('referenced_sop_document_id');
+            $table->index('referenced_controlled_document_id');
         });
 
         Schema::create('document_issuances', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('document_id')
-                ->constrained('sop_documents')
+                ->constrained('controlled_documents')
                 ->cascadeOnUpdate()
                 ->restrictOnDelete();
             $table->unsignedInteger('copy_number');
@@ -75,10 +75,10 @@ return new class extends Migration
     {
         Schema::dropIfExists('document_issuances');
 
-        Schema::table('sop_documents', function (Blueprint $table): void {
+        Schema::table('controlled_documents', function (Blueprint $table): void {
             $table->dropIndex(['document_type_id', 'status']);
-            $table->dropIndex(['referenced_sop_document_id']);
-            $table->dropConstrainedForeignId('referenced_sop_document_id');
+            $table->dropIndex(['referenced_controlled_document_id']);
+            $table->dropConstrainedForeignId('referenced_controlled_document_id');
             $table->dropConstrainedForeignId('document_type_id');
             $table->dropColumn([
                 'referenced_sop_number',

@@ -8,8 +8,8 @@ use App\Domain\Shared\Contracts\ApprovableSubject;
 use App\Domain\Shared\Contracts\ApprovalInstancePersistence;
 use App\Domain\Shared\Contracts\ApprovalWorkflowDefinition;
 use App\Models\ApprovalDecision;
+use App\Models\ControlledDocument;
 use App\Models\SopApproval;
-use App\Models\SopDocument;
 use InvalidArgumentException;
 
 class SopApprovalPersistenceAdapter implements ApprovalInstancePersistence
@@ -18,9 +18,9 @@ class SopApprovalPersistenceAdapter implements ApprovalInstancePersistence
         ApprovableSubject $subject,
         ApprovalWorkflowDefinition $workflow,
     ): void {
-        if (! $subject instanceof SopDocument) {
+        if (! $subject instanceof ControlledDocument) {
             throw new InvalidArgumentException(
-                'The SOP approval persistence adapter requires a SopDocument subject.'
+                'The SOP approval persistence adapter requires a ControlledDocument subject.'
             );
         }
 

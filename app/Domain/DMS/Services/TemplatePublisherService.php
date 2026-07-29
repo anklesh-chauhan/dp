@@ -9,10 +9,10 @@ use App\Domain\Shared\Contracts\ElectronicSignatureVerifier;
 use App\Domain\Shared\Enums\ApprovalDecisionCode;
 use App\Domain\Shared\Services\AuditLogService;
 use App\Enums\ProductModule;
+use App\Models\DocumentTemplate;
+use App\Models\DocumentTemplateApprovalInstance;
+use App\Models\DocumentTemplateVersion;
 use App\Models\SopAuditLog;
-use App\Models\SopTemplate;
-use App\Models\SopTemplateApprovalInstance;
-use App\Models\SopTemplateVersion;
 use App\Models\TemplateStatus;
 use App\Models\User;
 use App\Support\Modules\ModuleManager;
@@ -31,12 +31,12 @@ class TemplatePublisherService
     /**
      * @throws ValidationException
      */
-    public function publish(SopTemplate $template, int $userId, ?string $changeReason = null): SopTemplateVersion
+    public function publish(DocumentTemplate $template, int $userId, ?string $changeReason = null): DocumentTemplateVersion
     {
         $this->moduleManager->ensureEnabled(ProductModule::DMS);
 
-        return DB::transaction(function () use ($template, $userId, $changeReason): SopTemplateVersion {
-            $template = SopTemplate::query()->lockForUpdate()->findOrFail($template->id);
+        return DB::transaction(function () use ($template, $userId, $changeReason): DocumentTemplateVersion {
+            $template = DocumentTemplate::query()->lockForUpdate()->findOrFail($template->id);
 
             if ($template->isInRetentionLifecycle()) {
                 throw ValidationException::withMessages(['template' => 'Templates in the retention lifecycle cannot be published.']);
@@ -59,19 +59,19 @@ class TemplatePublisherService
             }
 
             $latestSubmissionUuid = $draftVersion->approvalInstances()->latest('id')->value('submission_uuid');
-            $instances = SopTemplateApprovalInstance::query()
+            $instances = DocumentTemplateApprovalInstance::query()
                 ->where('submission_uuid', $latestSubmissionUuid)
                 ->with('workflowStep')
                 ->get();
             $mandatoryInstances = $instances->filter(
-                fn (SopTemplateApprovalInstance $instance): bool => $instance->workflowStep->is_mandatory,
+                fn (DocumentTemplateApprovalInstance $instance): bool => $instance->workflowStep->is_mandatory,
             );
             $requiredInstances = $mandatoryInstances->isEmpty() ? $instances : $mandatoryInstances;
 
             if (
                 $requiredInstances->isEmpty()
                 || ! $requiredInstances->every(
-                    fn (SopTemplateApprovalInstance $instance): bool => $instance->decision_code === ApprovalDecisionCode::APPROVED->value
+                    fn (DocumentTemplateApprovalInstance $instance): bool => $instance->decision_code === ApprovalDecisionCode::APPROVED->value
                         && $this->electronicSignatureVerifier->isValid($instance),
                 )
             ) {
@@ -82,8 +82,8 @@ class TemplatePublisherService
 
             $publisher = User::query()->find($userId);
 
-            if ($publisher === null || ! $publisher->can('Publish:SopTemplate')) {
-                throw new AuthorizationException('You do not have permission to publish SOP templates.');
+            if ($publisher === null || ! $publisher->can('Publish:DocumentTemplate')) {
+                throw new AuthorizationException('You do not have permission to publish document templates.');
             }
 
             $previousVersion = $template->current_version;

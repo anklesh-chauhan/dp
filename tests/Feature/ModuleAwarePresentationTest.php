@@ -10,10 +10,12 @@ use App\Filament\Resources\AiExecutions\Widgets\AiExecutionOverview;
 use App\Filament\Resources\AiExecutions\Widgets\AiProviderPerformanceTable;
 use App\Filament\Resources\ApprovalDecisions\ApprovalDecisionResource;
 use App\Filament\Resources\ApprovalStepTypes\ApprovalStepTypeResource;
+use App\Filament\Resources\ControlledDocuments\ControlledDocumentResource;
 use App\Filament\Resources\Departments\DepartmentResource;
 use App\Filament\Resources\DocumentCategories\DocumentCategoryResource;
 use App\Filament\Resources\DocumentIssuances\DocumentIssuanceResource;
 use App\Filament\Resources\DocumentStatuses\DocumentStatusResource;
+use App\Filament\Resources\DocumentTemplates\DocumentTemplateResource;
 use App\Filament\Resources\DocumentTypes\DocumentTypeResource;
 use App\Filament\Resources\IssuanceStatuses\IssuanceStatusResource;
 use App\Filament\Resources\KnowledgeGuides\KnowledgeGuideResource;
@@ -22,9 +24,7 @@ use App\Filament\Resources\LookupResource;
 use App\Filament\Resources\NumberSeries\NumberSeriesResource;
 use App\Filament\Resources\RegulationTags\RegulationTagResource;
 use App\Filament\Resources\SopApprovals\SopApprovalResource;
-use App\Filament\Resources\SopDocuments\SopDocumentResource;
 use App\Filament\Resources\SopRoles\SopRoleResource;
-use App\Filament\Resources\SopTemplates\SopTemplateResource;
 use App\Filament\Resources\SopWorkflows\SopWorkflowResource;
 use App\Filament\Resources\TemplateStatuses\TemplateStatusResource;
 use App\Filament\Resources\Users\UserResource;
@@ -37,8 +37,8 @@ use App\Filament\Widgets\RecentAuditActivityTable;
 
 it('assigns DMS presentation surfaces to explicit navigation groups', function (): void {
     expect(Dashboard::getNavigationLabel())->toBe('DMS Dashboard')
-        ->and(SopDocumentResource::getNavigationGroup())->toBe('DMS · Document Control')
-        ->and(SopTemplateResource::getNavigationGroup())->toBe('DMS · Document Control')
+        ->and(ControlledDocumentResource::getNavigationGroup())->toBe('DMS · Document Control')
+        ->and(DocumentTemplateResource::getNavigationGroup())->toBe('DMS · Document Control')
         ->and(SopWorkflowResource::getNavigationGroup())->toBe('DMS · Document Control')
         ->and(SopApprovalResource::getNavigationGroup())->toBe('DMS · Document Control')
         ->and(LookupResource::getNavigationGroup())->toBe('DMS · Document Control')

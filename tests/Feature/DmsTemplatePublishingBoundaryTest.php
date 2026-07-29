@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use App\Domain\DMS\Actions\PublishTemplateAction;
 use App\Domain\DMS\Services\TemplatePublisherService;
-use App\Models\SopTemplate;
+use App\Models\DocumentTemplate;
 use App\Models\TemplateStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
@@ -29,7 +29,7 @@ it('keeps the canonical publishing guard for templates without a draft version',
         'name' => 'Draft',
     ]);
 
-    $template = SopTemplate::factory()->create();
+    $template = DocumentTemplate::factory()->create();
 
     expect(fn () => app(PublishTemplateAction::class)->execute(
         $template,

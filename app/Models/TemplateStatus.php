@@ -63,18 +63,18 @@ class TemplateStatus extends Model
     }
 
     /**
-     * @return HasMany<SopTemplate, $this>
+     * @return HasMany<DocumentTemplate, $this>
      */
     public function templates(): HasMany
     {
-        return $this->hasMany(SopTemplate::class);
+        return $this->hasMany(DocumentTemplate::class);
     }
 
     /**
-     * @return HasMany<SopTemplateVersion, $this>
+     * @return HasMany<DocumentTemplateVersion, $this>
      */
     public function templateVersions(): HasMany
     {
-        return $this->hasMany(SopTemplateVersion::class);
+        return $this->hasMany(DocumentTemplateVersion::class);
     }
 }

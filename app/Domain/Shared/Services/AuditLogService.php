@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Domain\Shared\Services;
 
+use App\Models\ControlledDocument;
+use App\Models\DocumentTemplate;
 use App\Models\SopAuditLog;
-use App\Models\SopDocument;
-use App\Models\SopTemplate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Request;
 
@@ -21,12 +21,12 @@ class AuditLogService
         ?array $oldValues = null,
         ?array $newValues = null,
         ?int $userId = null,
-        ?SopDocument $document = null,
-        ?SopTemplate $template = null,
+        ?ControlledDocument $document = null,
+        ?DocumentTemplate $template = null,
     ): SopAuditLog {
         return SopAuditLog::query()->create([
             'document_id' => $document?->id,
-            'sop_template_id' => $template?->id ?? $document?->template_id,
+            'document_template_id' => $template?->id ?? $document?->template_id,
             'user_id' => $userId ?? Auth::id(),
             'action' => $action,
             'old_values' => $oldValues,

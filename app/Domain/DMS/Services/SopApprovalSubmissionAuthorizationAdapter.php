@@ -13,7 +13,7 @@ class SopApprovalSubmissionAuthorizationAdapter implements ApprovalSubmissionAut
 {
     public function canSubmit(ApprovableSubject $subject, User $user): bool
     {
-        if (! $user->can('Submit:SopDocument') && ! $user->can('Update:SopDocument')) {
+        if (! $user->can('Submit:ControlledDocument') && ! $user->can('Update:ControlledDocument')) {
             return false;
         }
 

@@ -17,18 +17,10 @@ class DocumentCategory extends Model
     protected $fillable = ['name', 'code'];
 
     /**
-     * @return HasMany<SopTemplate, $this>
+     * @return HasMany<DocumentTemplate, $this>
      */
     public function sopTemplates(): HasMany
     {
-        return $this->hasMany(SopTemplate::class, 'category_id');
-    }
-
-    /**
-     * @return HasMany<DocumentType, $this>
-     */
-    public function documentTypes(): HasMany
-    {
-        return $this->hasMany(DocumentType::class, 'category_id');
+        return $this->hasMany(DocumentTemplate::class, 'category_id');
     }
 }

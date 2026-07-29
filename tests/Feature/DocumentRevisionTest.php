@@ -6,11 +6,11 @@ use App\Actions\Sop\CreateDocumentRevisionAction as LegacyCreateDocumentRevision
 use App\Domain\DMS\Actions\CreateDocumentRevisionAction;
 use App\Domain\DMS\Services\DocumentActivationService;
 use App\Domain\DMS\Services\DocumentRevisionService;
+use App\Models\ControlledDocument;
 use App\Models\DocumentStatus;
+use App\Models\DocumentTemplate;
+use App\Models\DocumentTemplateVersion;
 use App\Models\SopAuditLog;
-use App\Models\SopDocument;
-use App\Models\SopTemplate;
-use App\Models\SopTemplateVersion;
 use App\Models\TemplateStatus;
 use App\Models\User;
 use App\Services\Sop\DocumentRevisionService as LegacyDocumentRevisionService;
@@ -46,12 +46,12 @@ it('resolves legacy revision entry points through the DMS domain boundary', func
 
 it('creates an independent draft document version pinned to the same template version', function (): void {
     $user = User::factory()->create();
-    $template = SopTemplate::factory()->create();
-    $templateVersion = SopTemplateVersion::factory()->published()->create([
-        'sop_template_id' => $template->id,
+    $template = DocumentTemplate::factory()->create();
+    $templateVersion = DocumentTemplateVersion::factory()->published()->create([
+        'document_template_id' => $template->id,
         'version' => 3,
     ]);
-    $source = SopDocument::factory()->create([
+    $source = ControlledDocument::factory()->create([
         'template_id' => $template->id,
         'template_version_id' => $templateVersion->id,
         'document_number' => 'SOP-QA-00001',
@@ -94,11 +94,11 @@ it('creates an independent draft document version pinned to the same template ve
 
 it('prevents multiple draft revisions in the same document series', function (): void {
     $user = User::factory()->create();
-    $template = SopTemplate::factory()->create();
-    $templateVersion = SopTemplateVersion::factory()->published()->create([
-        'sop_template_id' => $template->id,
+    $template = DocumentTemplate::factory()->create();
+    $templateVersion = DocumentTemplateVersion::factory()->published()->create([
+        'document_template_id' => $template->id,
     ]);
-    $source = SopDocument::factory()->create([
+    $source = ControlledDocument::factory()->create([
         'template_id' => $template->id,
         'template_version_id' => $templateVersion->id,
         'department_id' => $template->department_id,
@@ -112,11 +112,11 @@ it('prevents multiple draft revisions in the same document series', function ():
 });
 
 it('does not revise a draft document', function (): void {
-    $template = SopTemplate::factory()->create();
-    $templateVersion = SopTemplateVersion::factory()->published()->create([
-        'sop_template_id' => $template->id,
+    $template = DocumentTemplate::factory()->create();
+    $templateVersion = DocumentTemplateVersion::factory()->published()->create([
+        'document_template_id' => $template->id,
     ]);
-    $source = SopDocument::factory()->create([
+    $source = ControlledDocument::factory()->create([
         'template_id' => $template->id,
         'template_version_id' => $templateVersion->id,
         'department_id' => $template->department_id,
@@ -132,11 +132,11 @@ it('does not revise a draft document', function (): void {
 
 it('supersedes the prior effective version only when its revision becomes effective', function (): void {
     $user = User::factory()->create();
-    $template = SopTemplate::factory()->create();
-    $templateVersion = SopTemplateVersion::factory()->published()->create([
-        'sop_template_id' => $template->id,
+    $template = DocumentTemplate::factory()->create();
+    $templateVersion = DocumentTemplateVersion::factory()->published()->create([
+        'document_template_id' => $template->id,
     ]);
-    $source = SopDocument::factory()->create([
+    $source = ControlledDocument::factory()->create([
         'template_id' => $template->id,
         'template_version_id' => $templateVersion->id,
         'department_id' => $template->department_id,

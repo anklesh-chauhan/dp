@@ -1,0 +1,130 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Filament\Resources\CsvValidationProjects\Pages;
+
+use App\Domain\QMS\Enums\CsvValidationProjectStatus;
+use App\Domain\QMS\Services\CsvValidationProjectService;
+use App\Filament\Resources\CsvValidationProjects\CsvValidationProjectResource;
+use App\Models\User;
+use Filament\Actions\Action;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\Textarea;
+use Filament\Notifications\Notification;
+use Filament\Resources\Pages\ViewRecord;
+use Illuminate\Validation\ValidationException;
+
+final class ViewCsvValidationProject extends ViewRecord
+{
+    protected static string $resource = CsvValidationProjectResource::class;
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            EditAction::make()->visible(fn (): bool => CsvValidationProjectResource::canEdit($this->record)),
+            ...collect($this->availableTransitions())
+                ->map(fn (array $transition): Action => $this->transitionAction(...$transition))
+                ->all(),
+        ];
+    }
+
+    /**
+     * @return list<array{string, string, CsvValidationProjectStatus, string, string}>
+     */
+    private function availableTransitions(): array
+    {
+        return match ($this->record->status) {
+            CsvValidationProjectStatus::Draft => [
+                ['assess', 'Complete GxP Assessment', CsvValidationProjectStatus::GxpAssessment, 'Assess:CsvValidationProject', 'primary'],
+            ],
+            CsvValidationProjectStatus::GxpAssessment => [
+                ['plan', 'Begin Validation Planning', CsvValidationProjectStatus::Planning, 'Plan:CsvValidationProject', 'primary'],
+            ],
+            CsvValidationProjectStatus::Planning => [
+                ['specify', 'Begin Specification', CsvValidationProjectStatus::Specification, 'Specify:CsvValidationProject', 'primary'],
+            ],
+            CsvValidationProjectStatus::Specification => [
+                ['test', 'Begin Testing', CsvValidationProjectStatus::Testing, 'Test:CsvValidationProject', 'primary'],
+            ],
+            CsvValidationProjectStatus::Testing => [
+                ['review', 'Begin Validation Review', CsvValidationProjectStatus::ValidationReview, 'Review:CsvValidationProject', 'warning'],
+                ['resolve', 'Resolve Deviations', CsvValidationProjectStatus::DeviationResolution, 'Test:CsvValidationProject', 'warning'],
+            ],
+            CsvValidationProjectStatus::DeviationResolution => [
+                ['resume', 'Resume Testing', CsvValidationProjectStatus::Testing, 'Test:CsvValidationProject', 'primary'],
+                ['review', 'Begin Validation Review', CsvValidationProjectStatus::ValidationReview, 'Review:CsvValidationProject', 'warning'],
+            ],
+            CsvValidationProjectStatus::ValidationReview => [
+                ['release', 'QA Release', CsvValidationProjectStatus::Released, 'Release:CsvValidationProject', 'success'],
+                ['retest', 'Return to Testing', CsvValidationProjectStatus::Testing, 'Test:CsvValidationProject', 'warning'],
+            ],
+            CsvValidationProjectStatus::Released => [
+                ['periodic', 'Begin Periodic Review', CsvValidationProjectStatus::PeriodicReview, 'PeriodicReview:CsvValidationProject', 'primary'],
+                ['retire', 'Retire System', CsvValidationProjectStatus::Retired, 'Manage:CsvValidationProject', 'danger'],
+            ],
+            CsvValidationProjectStatus::PeriodicReview => [
+                ['continue', 'Continue Validated Use', CsvValidationProjectStatus::Released, 'Release:CsvValidationProject', 'success'],
+                ['revalidate', 'Require Revalidation', CsvValidationProjectStatus::Testing, 'Test:CsvValidationProject', 'warning'],
+                ['retire', 'Retire System', CsvValidationProjectStatus::Retired, 'Manage:CsvValidationProject', 'danger'],
+            ],
+            CsvValidationProjectStatus::Retired, CsvValidationProjectStatus::Cancelled => [],
+        };
+    }
+
+    private function transitionAction(
+        string $name,
+        string $label,
+        CsvValidationProjectStatus $toStatus,
+        string $permission,
+        string $color,
+    ): Action {
+        return Action::make($name)
+            ->label($label)
+            ->color($color)
+            ->schema([
+                Textarea::make('reason')
+                    ->label('Decision reason')
+                    ->helperText('This reason is retained with the signed audit event.')
+                    ->required()
+                    ->maxLength(2_000),
+            ])
+            ->visible(fn (): bool => (bool) auth()->user()?->can($permission))
+            ->action(function (array $data, Action $action) use ($toStatus, $label): void {
+                /** @var User $user */
+                $user = auth()->user();
+
+                try {
+                    app(CsvValidationProjectService::class)->transition(
+                        $this->record,
+                        $toStatus,
+                        $user,
+                        $data['reason'],
+                        ipAddress: request()->ip(),
+                        userAgent: request()->userAgent(),
+                    );
+                } catch (ValidationException $exception) {
+                    Notification::make()
+                        ->danger()
+                        ->title($toStatus === CsvValidationProjectStatus::Released
+                            ? 'QA release blocked'
+                            : "{$label} blocked")
+                        ->body(collect($exception->errors())
+                            ->flatten()
+                            ->unique()
+                            ->implode("\n"))
+                        ->persistent()
+                        ->send();
+
+                    $action->halt();
+
+                    return;
+                }
+
+                $this->record->refresh();
+                $this->refreshFormData(['status', 'released_by', 'released_at', 'retired_at']);
+
+                Notification::make()->success()->title($label)->send();
+            });
+    }
+}

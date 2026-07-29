@@ -6,7 +6,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -27,7 +26,6 @@ class DocumentType extends Model
         'code',
         'requires_sop_reference',
         'is_issuable',
-        'category_id',
     ];
 
     protected function casts(): array
@@ -35,32 +33,23 @@ class DocumentType extends Model
         return [
             'requires_sop_reference' => 'boolean',
             'is_issuable' => 'boolean',
-            'category_id' => 'integer',
         ];
     }
 
     /**
-     * @return HasMany<SopTemplate, $this>
+     * @return HasMany<DocumentTemplate, $this>
      */
     public function templates(): HasMany
     {
-        return $this->hasMany(SopTemplate::class);
+        return $this->hasMany(DocumentTemplate::class);
     }
 
     /**
-     * @return HasMany<SopDocument, $this>
+     * @return HasMany<ControlledDocument, $this>
      */
     public function documents(): HasMany
     {
-        return $this->hasMany(SopDocument::class);
-    }
-
-    /**
-     * @return BelongsTo<DocumentCategory, $this>
-     */
-    public function category(): BelongsTo
-    {
-        return $this->belongsTo(DocumentCategory::class);
+        return $this->hasMany(ControlledDocument::class);
     }
 
     /**

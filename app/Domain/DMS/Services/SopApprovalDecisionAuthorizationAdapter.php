@@ -34,9 +34,9 @@ class SopApprovalDecisionAuthorizationAdapter implements ApprovalDecisionAuthori
             'document',
         ]);
 
-        if (! $user->can('Approve:SopDocument')) {
+        if (! $user->can('Approve:ControlledDocument')) {
             throw new WorkflowException(
-                message: 'You do not have permission to approve SOP documents.'
+                message: 'You do not have permission to approve controlled documents.'
             );
         }
 

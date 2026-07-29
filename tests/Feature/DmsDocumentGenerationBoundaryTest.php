@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-use App\Data\SopDocumentData;
+use App\Data\ControlledDocumentData;
 use App\Domain\DMS\Actions\CreateDocumentFromTemplateAction;
 use App\Domain\DMS\Services\SopGeneratorService;
-use App\Models\SopTemplate;
+use App\Models\DocumentTemplate;
 use App\Models\TemplateStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
@@ -30,10 +30,10 @@ it('keeps the canonical generation guard for unpublished templates', function ()
         'name' => 'Draft',
     ]);
 
-    $template = SopTemplate::factory()->create();
+    $template = DocumentTemplate::factory()->create();
 
     expect(fn () => app(CreateDocumentFromTemplateAction::class)->execute(
-        new SopDocumentData(
+        new ControlledDocumentData(
             templateId: $template->id,
             title: 'Draft Controlled Document',
             ownerId: 1,

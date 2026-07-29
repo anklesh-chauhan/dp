@@ -1,9 +1,9 @@
 <?php
 
-use App\Domain\SopTemplate\AI\Providers\SopTemplateRuleProvider;
-use App\Domain\SopTemplate\AI\Services\SopTemplateIntegrityService;
-use App\Domain\SopTemplate\AI\Support\GeneratedTemplateAnalysisResolver;
-use App\Domain\SopTemplate\AI\Support\PlaceholderExtractor;
+use App\Domain\DocumentTemplate\AI\Providers\DocumentTemplateRuleProvider;
+use App\Domain\DocumentTemplate\AI\Services\DocumentTemplateIntegrityService;
+use App\Domain\DocumentTemplate\AI\Support\GeneratedTemplateAnalysisResolver;
+use App\Domain\DocumentTemplate\AI\Support\PlaceholderExtractor;
 use App\Foundation\AI\Validation\DefaultValidationEngine;
 use App\Foundation\AI\Validation\Pipeline\RuleExecutor;
 use App\Foundation\AI\Validation\Pipeline\ValidationPipeline;
@@ -56,17 +56,17 @@ function something()
     // ..
 }
 
-function createIntegrityService(): SopTemplateIntegrityService
+function createIntegrityService(): DocumentTemplateIntegrityService
 {
-    return new SopTemplateIntegrityService(
+    return new DocumentTemplateIntegrityService(
         validationEngine: new DefaultValidationEngine(
             new ValidationPipeline(
-                new RuleExecutor(),
+                new RuleExecutor,
             ),
         ),
-        ruleProvider: new SopTemplateRuleProvider(
-            new GeneratedTemplateAnalysisResolver(),
+        ruleProvider: new DocumentTemplateRuleProvider(
+            new GeneratedTemplateAnalysisResolver,
         ),
-        placeholderExtractor: new PlaceholderExtractor(),
+        placeholderExtractor: new PlaceholderExtractor,
     );
 }

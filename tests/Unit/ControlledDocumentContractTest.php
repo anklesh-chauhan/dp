@@ -3,19 +3,19 @@
 declare(strict_types=1);
 
 use App\Domain\DMS\Actions\CreateDocumentRevisionAction;
-use App\Domain\DMS\Contracts\ControlledDocument;
+use App\Domain\DMS\Contracts\ControlledDocument as ControlledDocumentContract;
 use App\Domain\DMS\Services\DocumentRevisionService;
-use App\Models\SopDocument;
+use App\Models\ControlledDocument;
 
-it('adapts legacy SOP documents to the DMS controlled document contract', function (): void {
-    $document = new SopDocument([
+it('implements the DMS controlled document contract', function (): void {
+    $document = new ControlledDocument([
         'document_number' => 'SOP-QA-00001',
         'title' => 'Deviation Management Procedure',
         'version' => 3,
     ]);
 
     expect($document)
-        ->toBeInstanceOf(ControlledDocument::class)
+        ->toBeInstanceOf(ControlledDocumentContract::class)
         ->and($document->controlledDocumentReference())->toBe('SOP-QA-00001')
         ->and($document->controlledDocumentTitle())->toBe('Deviation Management Procedure')
         ->and($document->controlledDocumentVersion())->toBe(3);

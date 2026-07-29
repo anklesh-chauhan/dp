@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Concerns;
 
-use App\Models\SopTemplate;
+use App\Models\DocumentTemplate;
 use Illuminate\Support\Facades\Auth;
 
 trait ManagesEditableTemplates
@@ -13,7 +13,7 @@ trait ManagesEditableTemplates
     {
         $owner = $this->getOwnerRecord();
 
-        if (! $owner instanceof SopTemplate) {
+        if (! $owner instanceof DocumentTemplate) {
             return true;
         }
 

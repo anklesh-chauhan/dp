@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use App\Models\DocumentCategory;
 use App\Models\DocumentType;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -23,7 +22,6 @@ class DocumentTypeFactory extends Factory
         return [
             'name' => 'Standard Operating Procedure',
             'code' => 'SOP',
-            'category_id' => DocumentCategory::factory(),
             'requires_sop_reference' => false,
             'is_issuable' => false,
         ];

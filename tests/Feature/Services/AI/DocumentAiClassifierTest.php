@@ -66,7 +66,6 @@ function createDocumentType(
     return DocumentType::query()->create([
         'name' => $name,
         'code' => $code,
-        'category_id' => $category->getKey(),
         'requires_sop_reference' => false,
         'is_issuable' => true,
     ]);
@@ -230,7 +229,7 @@ it('derives regulation tags from the selected document type', function (): void 
         ]);
 });
 
-it('skips document type ai selection when the category contains only one document type', function (): void {
+it('skips document type ai selection when only one global document type exists', function (): void {
     $procedureCategory = createDocumentCategory(
         name: 'Procedure',
         code: 'PROCEDURE',

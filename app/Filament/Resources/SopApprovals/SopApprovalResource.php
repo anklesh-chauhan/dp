@@ -7,8 +7,8 @@ namespace App\Filament\Resources\SopApprovals;
 use App\Actions\Sop\ApproveDocumentAction;
 use App\Actions\Sop\RejectDocumentAction;
 use App\Actions\Sop\ReturnDocumentAction;
+use App\Filament\Resources\ControlledDocuments\ControlledDocumentResource;
 use App\Filament\Resources\SopApprovals\Pages\ListSopApprovals;
-use App\Filament\Resources\SopDocuments\SopDocumentResource;
 use App\Filament\Support\ServiceExceptionHandler;
 use App\Models\ApprovalDecision;
 use App\Models\SopApproval;
@@ -123,7 +123,7 @@ class SopApprovalResource extends Resource
                 Action::make('viewDocument')
                     ->label('View Document')
                     ->icon(Heroicon::Eye)
-                    ->url(fn (SopApproval $record): string => SopDocumentResource::getUrl('view', ['record' => $record->document_id])),
+                    ->url(fn (SopApproval $record): string => ControlledDocumentResource::getUrl('view', ['record' => $record->document_id])),
                 Action::make('approve')
                     ->icon(Heroicon::CheckCircle)
                     ->schema([Textarea::make('comments')])

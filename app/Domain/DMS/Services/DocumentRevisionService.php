@@ -3,9 +3,9 @@
 namespace App\Domain\DMS\Services;
 
 use App\Domain\Shared\Services\AuditLogService;
+use App\Models\ControlledDocument;
 use App\Models\DocumentStatus;
 use App\Models\SopAuditLog;
-use App\Models\SopDocument;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -19,7 +19,7 @@ class DocumentRevisionService
     /**
      * @throws ValidationException
      */
-    public function create(SopDocument $sourceDocument, User $user, string $reason): SopDocument
+    public function create(ControlledDocument $sourceDocument, User $user, string $reason): ControlledDocument
     {
         $reason = trim($reason);
 
@@ -27,8 +27,8 @@ class DocumentRevisionService
             throw ValidationException::withMessages(['revision_reason' => 'A revision reason is required.']);
         }
 
-        return DB::transaction(function () use ($sourceDocument, $user, $reason): SopDocument {
-            $source = SopDocument::query()
+        return DB::transaction(function () use ($sourceDocument, $user, $reason): ControlledDocument {
+            $source = ControlledDocument::query()
                 ->with(['documentStatus', 'sections', 'variables', 'regulationTags'])
                 ->lockForUpdate()
                 ->findOrFail($sourceDocument->id);
@@ -49,12 +49,12 @@ class DocumentRevisionService
                 $source->update(['document_series_id' => $documentSeriesId]);
             }
 
-            $latestVersion = SopDocument::query()
+            $latestVersion = ControlledDocument::query()
                 ->where('document_series_id', $documentSeriesId)
                 ->lockForUpdate()
                 ->max('version');
 
-            $existingDraft = SopDocument::query()
+            $existingDraft = ControlledDocument::query()
                 ->where('document_series_id', $documentSeriesId)
                 ->whereHas('documentStatus', fn (Builder $query): Builder => $query->where('code', DocumentStatus::DRAFT))
                 ->exists();

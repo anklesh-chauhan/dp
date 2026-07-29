@@ -6,16 +6,16 @@ namespace App\Filament\Widgets;
 
 use App\Enums\ProductModule;
 use App\Filament\Concerns\RequiresProductModule;
+use App\Filament\Resources\ControlledDocuments\ControlledDocumentResource;
 use App\Filament\Resources\DocumentIssuances\DocumentIssuanceResource;
+use App\Filament\Resources\DocumentTemplates\DocumentTemplateResource;
 use App\Filament\Resources\SopApprovals\SopApprovalResource;
-use App\Filament\Resources\SopDocuments\SopDocumentResource;
-use App\Filament\Resources\SopTemplates\SopTemplateResource;
+use App\Models\ControlledDocument;
 use App\Models\DocumentIssuance;
 use App\Models\DocumentStatus;
+use App\Models\DocumentTemplate;
 use App\Models\DocumentType;
 use App\Models\SopApproval;
-use App\Models\SopDocument;
-use App\Models\SopTemplate;
 use App\Models\TemplateStatus;
 use Filament\Support\Icons\Heroicon;
 use Filament\Widgets\StatsOverviewWidget;
@@ -45,16 +45,16 @@ class DocumentStatsOverview extends StatsOverviewWidget
             ? SopApproval::query()->actionableFor($user)->count()
             : SopApproval::query()->pending()->count();
 
-        $effectiveSops = SopDocument::query()
+        $effectiveSops = ControlledDocument::query()
             ->where('document_status_id', DocumentStatus::idFor(DocumentStatus::EFFECTIVE))
             ->whereHas('documentType', fn ($query) => $query->where('code', DocumentType::SOP))
             ->count();
 
-        $underReview = SopDocument::query()
+        $underReview = ControlledDocument::query()
             ->where('document_status_id', DocumentStatus::idFor(DocumentStatus::UNDER_REVIEW))
             ->count();
 
-        $dueForReview = SopDocument::query()
+        $dueForReview = ControlledDocument::query()
             ->where('document_status_id', DocumentStatus::idFor(DocumentStatus::EFFECTIVE))
             ->whereNotNull('review_date')
             ->whereDate('review_date', '<=', now())
@@ -62,7 +62,7 @@ class DocumentStatsOverview extends StatsOverviewWidget
 
         $activeCopies = DocumentIssuance::query()->active()->count();
 
-        $publishedTemplates = SopTemplate::query()
+        $publishedTemplates = DocumentTemplate::query()
             ->where('template_status_id', TemplateStatus::idFor(TemplateStatus::PUBLISHED))
             ->count();
 
@@ -78,19 +78,19 @@ class DocumentStatsOverview extends StatsOverviewWidget
                 ->descriptionIcon(Heroicon::OutlinedDocumentCheck)
                 ->color('success')
                 ->icon(Heroicon::OutlinedClipboardDocumentList)
-                ->url(SopDocumentResource::getUrl()),
+                ->url(ControlledDocumentResource::getUrl()),
             Stat::make('Under Review', $underReview)
                 ->description('Documents in approval workflow')
                 ->descriptionIcon(Heroicon::OutlinedArrowPath)
                 ->color('info')
                 ->icon(Heroicon::OutlinedDocumentMagnifyingGlass)
-                ->url(SopDocumentResource::getUrl()),
+                ->url(ControlledDocumentResource::getUrl()),
             Stat::make('Due for Review', $dueForReview)
                 ->description('Past scheduled review date')
                 ->descriptionIcon(Heroicon::OutlinedExclamationTriangle)
                 ->color($dueForReview > 0 ? 'danger' : 'gray')
                 ->icon(Heroicon::OutlinedCalendarDays)
-                ->url(SopDocumentResource::getUrl()),
+                ->url(ControlledDocumentResource::getUrl()),
             Stat::make('Active Copies', $activeCopies)
                 ->description('Controlled copies in circulation')
                 ->descriptionIcon(Heroicon::OutlinedClipboardDocumentCheck)
@@ -102,7 +102,7 @@ class DocumentStatsOverview extends StatsOverviewWidget
                 ->descriptionIcon(Heroicon::OutlinedBookOpen)
                 ->color('gray')
                 ->icon(Heroicon::OutlinedDocumentText)
-                ->url(SopTemplateResource::getUrl()),
+                ->url(DocumentTemplateResource::getUrl()),
         ];
     }
 }

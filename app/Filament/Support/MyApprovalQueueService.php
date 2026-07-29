@@ -11,11 +11,11 @@ use App\Domain\QMS\Models\QualityApprovalInstance;
 use App\Domain\QMS\Services\QualityApprovalDecisionAuthorization;
 use App\Enums\ProductModule;
 use App\Exceptions\WorkflowException;
+use App\Filament\Resources\ControlledDocuments\ControlledDocumentResource;
 use App\Filament\Resources\Deviations\DeviationResource;
-use App\Filament\Resources\SopDocuments\SopDocumentResource;
-use App\Filament\Resources\SopTemplateApprovalInstances\SopTemplateApprovalInstanceResource;
+use App\Filament\Resources\DocumentTemplateApprovalInstances\DocumentTemplateApprovalInstanceResource;
+use App\Models\DocumentTemplateApprovalInstance;
 use App\Models\SopApproval;
-use App\Models\SopTemplateApprovalInstance;
 use App\Models\User;
 use App\Support\Modules\ModuleManager;
 use Illuminate\Support\Collection;
@@ -71,9 +71,9 @@ class MyApprovalQueueService
             ->get()
             ->filter(fn (SopApproval $approval): bool => $this->canDecideDocument($approval, $user))
             ->map(fn (SopApproval $approval): array => [
-                'id' => "sop-document:{$approval->getKey()}",
+                'id' => "controlled-document:{$approval->getKey()}",
                 'module' => 'DMS',
-                'work_type' => 'SOP Document',
+                'work_type' => 'Controlled Document',
                 'reference' => (string) $approval->document->document_number,
                 'title' => (string) $approval->document->title,
                 'department' => (string) ($approval->document->department?->name ?? 'Global'),
@@ -81,7 +81,7 @@ class MyApprovalQueueService
                 'step_type' => (string) $approval->workflowStep->approvalStepType->name,
                 'required_role' => (string) $approval->workflowStep->role->name,
                 'submitted_at' => $approval->created_at->toISOString(),
-                'review_url' => SopDocumentResource::getUrl('view', ['record' => $approval->document_id]),
+                'review_url' => ControlledDocumentResource::getUrl('view', ['record' => $approval->document_id]),
             ]);
     }
 
@@ -90,7 +90,7 @@ class MyApprovalQueueService
      */
     private function templateApprovals(User $user): Collection
     {
-        return SopTemplateApprovalInstance::query()
+        return DocumentTemplateApprovalInstance::query()
             ->where('decision_code', 'pending')
             ->with([
                 'templateVersion.template.department',
@@ -98,11 +98,11 @@ class MyApprovalQueueService
                 'workflowStep.role',
             ])
             ->get()
-            ->filter(fn (SopTemplateApprovalInstance $instance): bool => $this->templateDecisions->canDecide($instance, $user))
-            ->map(fn (SopTemplateApprovalInstance $instance): array => [
-                'id' => "sop-template:{$instance->getKey()}",
+            ->filter(fn (DocumentTemplateApprovalInstance $instance): bool => $this->templateDecisions->canDecide($instance, $user))
+            ->map(fn (DocumentTemplateApprovalInstance $instance): array => [
+                'id' => "document-template:{$instance->getKey()}",
                 'module' => 'DMS',
-                'work_type' => 'SOP Template',
+                'work_type' => 'Document Template',
                 'reference' => "{$instance->templateVersion->template->code} v{$instance->templateVersion->version}",
                 'title' => (string) $instance->templateVersion->template->name,
                 'department' => (string) ($instance->templateVersion->template->department?->name ?? 'Global'),
@@ -110,7 +110,7 @@ class MyApprovalQueueService
                 'step_type' => (string) $instance->workflowStep->approvalStepType->name,
                 'required_role' => (string) $instance->workflowStep->role->name,
                 'submitted_at' => ($instance->templateVersion->submitted_at ?? $instance->created_at)->toISOString(),
-                'review_url' => SopTemplateApprovalInstanceResource::getUrl('view', ['record' => $instance]),
+                'review_url' => DocumentTemplateApprovalInstanceResource::getUrl('view', ['record' => $instance]),
             ]);
     }
 

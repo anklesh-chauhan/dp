@@ -5,18 +5,18 @@ declare(strict_types=1);
 namespace App\Filament\Resources\LogDocuments;
 
 use App\Domain\DMS\Services\SopReferenceService;
+use App\Filament\Resources\ControlledDocuments\RelationManagers\ApprovalRelationManager;
+use App\Filament\Resources\ControlledDocuments\RelationManagers\AuditRelationManager;
+use App\Filament\Resources\ControlledDocuments\RelationManagers\DocumentSectionRelationManager;
+use App\Filament\Resources\ControlledDocuments\RelationManagers\DocumentVariableRelationManager;
 use App\Filament\Resources\LogDocuments\Pages\CreateLogDocument;
 use App\Filament\Resources\LogDocuments\Pages\EditLogDocument;
 use App\Filament\Resources\LogDocuments\Pages\ListLogDocuments;
 use App\Filament\Resources\LogDocuments\Pages\ViewLogDocument;
 use App\Filament\Resources\LogDocuments\RelationManagers\IssuanceRelationManager;
-use App\Filament\Resources\SopDocuments\RelationManagers\ApprovalRelationManager;
-use App\Filament\Resources\SopDocuments\RelationManagers\AuditRelationManager;
-use App\Filament\Resources\SopDocuments\RelationManagers\DocumentSectionRelationManager;
-use App\Filament\Resources\SopDocuments\RelationManagers\DocumentVariableRelationManager;
 use App\Filament\Support\TemplateVariableFieldBuilder;
-use App\Models\SopDocument;
-use App\Models\SopTemplateVersion;
+use App\Models\ControlledDocument;
+use App\Models\DocumentTemplateVersion;
 use App\Models\TemplateStatus;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
@@ -50,7 +50,7 @@ class LogDocumentResource extends Resource
         'referenced_sop',
     ];
 
-    protected static ?string $model = SopDocument::class;
+    protected static ?string $model = ControlledDocument::class;
 
     protected static ?string $navigationLabel = 'Log Documents';
 
@@ -106,7 +106,7 @@ class LogDocumentResource extends Resource
                             ->disabled(fn (Get $get): bool => blank($get('template_id')))
                             ->live()
                             ->afterStateUpdated(fn (Set $set, ?int $state): mixed => $set('variables', self::templateVariableDefaultValues($state))),
-                        Select::make('referenced_sop_document_id')
+                        Select::make('referenced_controlled_document_id')
                             ->label('Referenced Effective SOP')
                             ->options(fn (Get $get): array => app(SopReferenceService::class)->effectiveSopOptions((int) $get('template_id')))
                             ->searchable()
@@ -200,21 +200,21 @@ class LogDocumentResource extends Resource
     {
         $user = Auth::user();
 
-        return $user !== null && ($user->can('ViewAny:LogDocument') || $user->can('ViewAny:SopDocument'));
+        return $user !== null && ($user->can('ViewAny:LogDocument') || $user->can('ViewAny:ControlledDocument'));
     }
 
     public static function canCreate(): bool
     {
         $user = Auth::user();
 
-        return $user !== null && ($user->can('Create:LogDocument') || $user->can('Create:SopDocument'));
+        return $user !== null && ($user->can('Create:LogDocument') || $user->can('Create:ControlledDocument'));
     }
 
     public static function canView($record): bool
     {
         $user = Auth::user();
 
-        return $user !== null && ($user->can('View:LogDocument') || $user->can('View:SopDocument'));
+        return $user !== null && ($user->can('View:LogDocument') || $user->can('View:ControlledDocument'));
     }
 
     public static function canEdit($record): bool
@@ -225,11 +225,11 @@ class LogDocumentResource extends Resource
             return false;
         }
 
-        if (! ($user->can('Update:LogDocument') || $user->can('Update:SopDocument'))) {
+        if (! ($user->can('Update:LogDocument') || $user->can('Update:ControlledDocument'))) {
             return false;
         }
 
-        return $record instanceof SopDocument && $record->canBeEditedBy($user);
+        return $record instanceof ControlledDocument && $record->canBeEditedBy($user);
     }
 
     /**
@@ -241,8 +241,8 @@ class LogDocumentResource extends Resource
             return [];
         }
 
-        return SopTemplateVersion::query()
-            ->where('sop_template_id', $templateId)
+        return DocumentTemplateVersion::query()
+            ->where('document_template_id', $templateId)
             ->whereHas('templateStatus', fn (Builder $statusQuery): Builder => $statusQuery->where('code', TemplateStatus::PUBLISHED))
             ->orderByDesc('version')
             ->pluck('version', 'id')
@@ -256,8 +256,8 @@ class LogDocumentResource extends Resource
             return null;
         }
 
-        return SopTemplateVersion::query()
-            ->where('sop_template_id', $templateId)
+        return DocumentTemplateVersion::query()
+            ->where('document_template_id', $templateId)
             ->whereHas('templateStatus', fn (Builder $statusQuery): Builder => $statusQuery->where('code', TemplateStatus::PUBLISHED))
             ->latest('version')
             ->value('id');

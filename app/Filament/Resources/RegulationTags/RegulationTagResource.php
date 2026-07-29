@@ -28,7 +28,7 @@ class RegulationTagResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::Tag;
 
-    protected static ?string $recordTitleAttribute = 'RagulationTag';
+    protected static ?string $recordTitleAttribute = 'name';
 
     protected static ?string $cluster = SettingsCluster::class;
 
@@ -52,17 +52,18 @@ class RegulationTagResource extends Resource
                 TextInput::make('icon')
                     ->maxLength(255),
                 Select::make('documentTypes')
+                    ->label('Default Document Types')
                     ->relationship('documentTypes', 'name')
                     ->multiple()
                     ->preload()
-                    ->required(),
+                    ->helperText('Optional: preselect this tag when one of these document types is chosen.'),
             ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
-            ->recordTitleAttribute('RegulationTag')
+            ->recordTitleAttribute('name')
             ->columns([
                 TextColumn::make('name')
                     ->searchable()
