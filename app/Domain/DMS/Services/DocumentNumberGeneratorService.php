@@ -30,10 +30,17 @@ class DocumentNumberGeneratorService
     {
         $latestCopy = DocumentIssuance::query()
             ->where('document_id', $document->id)
-            ->lockForUpdate()
             ->max('copy_number');
 
-        return ($latestCopy ?? 0) + 1;
+        $copyNumber = ($latestCopy ?? 0) + 1;
+
+        while (DocumentIssuance::query()
+            ->where('issuance_number', $this->generateIssuanceNumber($document, $copyNumber))
+            ->exists()) {
+            $copyNumber++;
+        }
+
+        return $copyNumber;
     }
 
     public function generateWatermarkCode(ControlledDocument $document, int $copyNumber): string

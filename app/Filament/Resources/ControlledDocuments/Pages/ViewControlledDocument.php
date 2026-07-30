@@ -8,12 +8,16 @@ use App\Actions\Sop\SubmitDocumentAction;
 use App\Domain\DMS\Actions\CreateDocumentRevisionAction;
 use App\Domain\DMS\Actions\LockDocumentAction;
 use App\Domain\DMS\Actions\UnlockDocumentAction;
+use App\Domain\Reporting\Enums\ReportFormat;
+use App\Domain\Reporting\Enums\ReportScope;
 use App\Filament\Concerns\HandlesServiceExceptions;
 use App\Filament\Concerns\ProvidesRetentionLifecycleActions;
 use App\Filament\Resources\ControlledDocuments\ControlledDocumentResource;
 use App\Models\DocumentStatus;
+use App\Models\ReportTemplate;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Support\Icons\Heroicon;
@@ -106,8 +110,21 @@ class ViewControlledDocument extends ViewRecord
             Action::make('printPdf')
                 ->label('Print / PDF')
                 ->icon(Heroicon::Printer)
-                ->url(fn (): string => route('controlled-documents.print', $this->record))
-                ->openUrlInNewTab()
+                ->schema([
+                    Select::make('template')
+                        ->label('Print Template')
+                        ->options(fn (): array => ReportTemplate::query()
+                            ->active()
+                            ->where('scope', ReportScope::ControlledDocument)
+                            ->where('format', ReportFormat::Pdf)
+                            ->pluck('name', 'id')
+                            ->all())
+                        ->required(),
+                ])
+                ->action(fn (array $data): mixed => $this->redirect(route('controlled-documents.print', [
+                    'controlledDocument' => $this->record,
+                    'template' => $data['template'],
+                ])))
                 ->visible(fn (): bool => $this->record->canBePrintedDirectly()),
             EditAction::make()
                 ->visible(fn (): bool => Auth::user()?->can('update', $this->record) ?? false),

@@ -261,7 +261,7 @@ class ControlledDocumentResource extends Resource
     {
         return parent::getEloquentQuery()
             ->withoutGlobalScopes([SoftDeletingScope::class])
-            ->with(['department', 'category', 'template.category', 'template.regulationTags', 'templateVersion', 'documentType', 'regulationTags', 'documentStatus', 'lockedByUser']);
+            ->with(['organization', 'department', 'category', 'template.category', 'template.regulationTags', 'templateVersion', 'documentType', 'regulationTags', 'documentStatus', 'lockedByUser']);
     }
 
     private static function publishedTemplateVersionId(?int $templateId): ?int

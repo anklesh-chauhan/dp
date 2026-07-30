@@ -10,6 +10,7 @@ use App\Models\ControlledDocument;
 use App\Models\DocumentStatus;
 use App\Models\DocumentTemplate;
 use App\Models\DocumentTemplateVersion;
+use App\Models\Organization;
 use App\Models\SopAuditLog;
 use App\Models\TemplateStatus;
 use Illuminate\Support\Facades\DB;
@@ -72,13 +73,20 @@ class SopGeneratorService
 
             $typeCode = $documentType->code;
             $documentNumber = $data->documentNumber ?? $this->documentNumberGeneratorService->generate($template->department, $typeCode);
+            $organization = $this->resolveOrganization();
             $variables = $this->prepareVariables($data->variables, $template, $documentNumber, $data, $sopReference);
             $resolvedVariables = $this->resolveVariables($version, $variables);
+            $resolvedVariables['substitution'] = array_merge(
+                $resolvedVariables['substitution'],
+                $organization?->templateVariables() ?? [],
+            );
 
             $document = ControlledDocument::query()->create([
                 'document_series_id' => (string) Str::uuid(),
                 'template_id' => $template->id,
                 'template_version_id' => $version->id,
+                'organization_id' => $organization?->id,
+                'organization_snapshot' => $organization?->identitySnapshot(),
                 'document_number' => $documentNumber,
                 'title' => $data->title,
                 'version' => 1,
@@ -122,6 +130,7 @@ class SopGeneratorService
                     'document_type_id' => $documentType->id,
                     'regulation_tag_ids' => $data->regulationTagIds,
                     'referenced_controlled_document_id' => $sopReference['referenced_controlled_document_id'] ?? null,
+                    'organization_id' => $organization?->id,
                 ],
                 userId: $data->createdBy,
                 document: $document,
@@ -131,8 +140,21 @@ class SopGeneratorService
                 $document->regulationTags()->sync($data->regulationTagIds);
             }
 
-            return $document->refresh()->load(['sections', 'variables', 'documentType', 'referencedSop', 'regulationTags']);
+            return $document->refresh()->load(['organization', 'sections', 'variables', 'documentType', 'referencedSop', 'regulationTags']);
         });
+    }
+
+    private function resolveOrganization(): Organization
+    {
+        $organization = Organization::defaultActive();
+
+        if ($organization === null) {
+            throw ValidationException::withMessages([
+                'organization' => 'Configure the Organization Profile before creating controlled documents.',
+            ]);
+        }
+
+        return $organization;
     }
 
     /**

@@ -56,6 +56,7 @@
 - SOP document approval authorization now requires a unique signer for every workflow step in addition to existing creator separation, role, department, mandatory ordering, and canonical signature enforcement.
 - A central My Approval Queue now combines only currently actionable SOP document, SOP template, and enabled QMS deviation steps through an authorization-aware read model, links each item to its owning review surface, shows a combined dashboard preview and navigation badge, and hides the duplicate DMS queue navigation entries without moving decision or signature ownership out of their modules.
 - Document printing presentation now hides direct Print/PDF actions unless a non-issuable document is approved or effective, keeps issuable controlled copies printable only from active issuance rows, and guides blocked direct URLs to the Log Documents issuance workflow without weakening controller, policy, entitlement, watermark, or audit enforcement.
+- Controlled-copy issuance now serializes number allocation by locking the parent document, skips any already-reserved issuance number, revalidates eligibility inside the transaction, retries deadlocks, and converts residual uniqueness races into a user-facing validation message instead of an exception page.
 - Phase 9 now has a dormant QMS-owned Change Control foundation with explicit lifecycle vocabulary, responsibility and milestone persistence, factories, and QMS-only permissions; no incomplete Filament workflow is exposed.
 - QMS Change Control now implements the Shared approvable-subject boundary, and its unbound QMS submission-authorization adapter enforces permission, attribution, department scope, and explicit manager override without changing DMS workflow persistence.
 - QMS Change Control now stores controlled-document impact actions and rationale with source/result document traceability and duplicate-action prevention, without executing document revisions.
@@ -206,6 +207,14 @@ Always verify these statements against the worktree before relying on them.
    - Slice 5 completed: Added module permissions, migrated the new schema into the unused application database, seeded the administrator role, verified route discovery, and added focused release-gate, separation-of-duties, signature-integrity, and missing-evidence tests.
    - Slice 6 completed: Corrected the Filament lifecycle action boundary so failed CSV transitions halt safely and display a persistent notification containing every unmet validation gate; QA Release no longer appears unresponsive when the signed release package is incomplete.
    - Remaining: Move requirement/specification/test approval and test-execution review into dedicated signed decision services, add immutable evidence uploads to executions, enforce failed-test deviation resolution, generate traceability/validation-summary exports, add standard CSV templates, and perform full regression and empty-database release validation.
+
+13. **Core organization profile — completed**
+    Store the deployment owner's legal-entity identity once and apply it consistently to every controlled document.
+   - Slice 1 completed: Added a Core-owned organization profile with normalized organization code and country, legal/display names, company and tax registration, extensible regulatory identifiers, registered address, contact details, branding, timezone, active/default state, and creator attribution.
+   - Slice 2 completed: Added permission- and policy-gated Filament create/view/edit surfaces under Core Organization, enforced one profile per individual company deployment, disabled deletion and create-another behavior, and labelled the navigation item Organization Profile.
+   - Slice 3 completed: Removed organization selection and filtering from transactional document screens; controlled-document generation now resolves the deployment profile automatically and stores an immutable full identity snapshot on every generated document and revision.
+   - Slice 4 completed: Added reusable `organization.*` template placeholders plus snapshot-based print/PDF identity, logo, registration, address, header, and footer rendering so later organization edits cannot alter historical document output.
+   - Slice 5 completed: Applied the additive migrations and Core/DMS permissions, verified Filament route discovery, and passed focused organization/default/snapshot/placeholder tests plus document-generation and printing regressions.
 
 ## Immediate next task
 

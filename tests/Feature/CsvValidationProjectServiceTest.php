@@ -28,6 +28,7 @@ uses(RefreshDatabase::class);
 beforeEach(function (): void {
     config()->set('modules.enabled', ['dms', 'qms']);
     Permission::findOrCreate('Release:CsvValidationProject', 'web');
+    Permission::findOrCreate('ViewAny:CsvValidationProject', 'web');
     Permission::findOrCreate('View:CsvValidationProject', 'web');
     $this->creator = User::factory()->create();
     $this->executor = User::factory()->create();
@@ -215,7 +216,10 @@ it('locks a reviewed test execution against later alteration', function (): void
 });
 
 it('shows the release-gate errors instead of silently ignoring QA release', function (): void {
-    $this->qualityReleaser->givePermissionTo('View:CsvValidationProject');
+    $this->qualityReleaser->givePermissionTo([
+        'ViewAny:CsvValidationProject',
+        'View:CsvValidationProject',
+    ]);
     $this->actingAs($this->qualityReleaser);
     $project = CsvValidationProject::factory()->create([
         'status' => CsvValidationProjectStatus::ValidationReview,
@@ -229,6 +233,7 @@ it('shows the release-gate errors instead of silently ignoring QA release', func
     ]);
 
     Livewire::test(ViewCsvValidationProject::class, ['record' => $project->getKey()])
+        ->assertSuccessful()
         ->callAction('release', ['reason' => 'QA release review completed.'])
         ->assertActionHalted('release')
         ->assertNotified('QA release blocked');

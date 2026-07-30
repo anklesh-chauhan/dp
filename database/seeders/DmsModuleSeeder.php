@@ -136,6 +136,12 @@ class DmsModuleSeeder extends Seeder
         'RestoreAny:KnowledgeGuide',
         'Replicate:KnowledgeGuide',
         'Reorder:KnowledgeGuide',
+        'ViewAny:ReportTemplate',
+        'View:ReportTemplate',
+        'Create:ReportTemplate',
+        'Update:ReportTemplate',
+        'Delete:ReportTemplate',
+        'DeleteAny:ReportTemplate',
     ];
 
     public function run(): void
@@ -257,5 +263,6 @@ class DmsModuleSeeder extends Seeder
         ]);
 
         $this->call(SopModuleSeeder::class);
+        $this->call(ReportTemplateSeeder::class);
     }
 }

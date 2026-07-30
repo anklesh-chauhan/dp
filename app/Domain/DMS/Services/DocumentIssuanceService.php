@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Domain\DMS\Services;
 
 use App\Domain\Shared\Services\AuditLogService;
@@ -8,6 +10,7 @@ use App\Models\DocumentIssuance;
 use App\Models\IssuanceStatus;
 use App\Models\SopAuditLog;
 use App\Models\User;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -36,41 +39,58 @@ class DocumentIssuanceService
             ]);
         }
 
-        return DB::transaction(function () use ($document, $issuer, $data): DocumentIssuance {
-            $copyNumber = $this->documentNumberGeneratorService->nextCopyNumber($document);
-            $issuanceNumber = $this->documentNumberGeneratorService->generateIssuanceNumber($document, $copyNumber);
-            $watermarkCode = $this->documentNumberGeneratorService->generateWatermarkCode($document, $copyNumber);
+        try {
+            return DB::transaction(function () use ($document, $issuer, $data): DocumentIssuance {
+                $lockedDocument = ControlledDocument::query()
+                    ->with(['documentStatus', 'documentType', 'referencedSop.documentStatus'])
+                    ->lockForUpdate()
+                    ->findOrFail($document->getKey());
 
-            $issuance = DocumentIssuance::query()->create([
-                'document_id' => $document->id,
-                'copy_number' => $copyNumber,
-                'issuance_number' => $issuanceNumber,
-                'issued_to_user_id' => $data['issued_to_user_id'] ?? null,
-                'issued_to_department_id' => $data['issued_to_department_id'] ?? null,
-                'issued_to_location' => $data['issued_to_location'] ?? null,
-                'issued_by' => $issuer->id,
-                'issued_at' => now(),
-                'issuance_status_id' => IssuanceStatus::idFor(IssuanceStatus::ACTIVE),
-                'watermark_code' => $watermarkCode,
-                'notes' => $data['notes'] ?? null,
-            ]);
+                if (! $lockedDocument->canBeIssued()) {
+                    throw ValidationException::withMessages([
+                        'issuance' => 'The document is no longer eligible for controlled-copy issuance.',
+                    ]);
+                }
 
-            $this->auditLogService->log(
-                action: SopAuditLog::ACTION_ISSUED,
-                newValues: [
-                    'issuance_id' => $issuance->id,
-                    'issuance_number' => $issuance->issuance_number,
+                $copyNumber = $this->documentNumberGeneratorService->nextCopyNumber($lockedDocument);
+                $issuanceNumber = $this->documentNumberGeneratorService->generateIssuanceNumber($lockedDocument, $copyNumber);
+                $watermarkCode = $this->documentNumberGeneratorService->generateWatermarkCode($lockedDocument, $copyNumber);
+
+                $issuance = DocumentIssuance::query()->create([
+                    'document_id' => $lockedDocument->id,
                     'copy_number' => $copyNumber,
-                    'issued_to_user_id' => $issuance->issued_to_user_id,
-                    'issued_to_department_id' => $issuance->issued_to_department_id,
-                    'issued_to_location' => $issuance->issued_to_location,
-                ],
-                userId: $issuer->id,
-                document: $document,
-            );
+                    'issuance_number' => $issuanceNumber,
+                    'issued_to_user_id' => $data['issued_to_user_id'] ?? null,
+                    'issued_to_department_id' => $data['issued_to_department_id'] ?? null,
+                    'issued_to_location' => $data['issued_to_location'] ?? null,
+                    'issued_by' => $issuer->id,
+                    'issued_at' => now(),
+                    'issuance_status_id' => IssuanceStatus::idFor(IssuanceStatus::ACTIVE),
+                    'watermark_code' => $watermarkCode,
+                    'notes' => $data['notes'] ?? null,
+                ]);
 
-            return $issuance;
-        });
+                $this->auditLogService->log(
+                    action: SopAuditLog::ACTION_ISSUED,
+                    newValues: [
+                        'issuance_id' => $issuance->id,
+                        'issuance_number' => $issuance->issuance_number,
+                        'copy_number' => $copyNumber,
+                        'issued_to_user_id' => $issuance->issued_to_user_id,
+                        'issued_to_department_id' => $issuance->issued_to_department_id,
+                        'issued_to_location' => $issuance->issued_to_location,
+                    ],
+                    userId: $issuer->id,
+                    document: $lockedDocument,
+                );
+
+                return $issuance;
+            }, attempts: 3);
+        } catch (UniqueConstraintViolationException) {
+            throw ValidationException::withMessages([
+                'issuance' => 'Another controlled copy was issued at the same time. Please submit again to receive the next copy number.',
+            ]);
+        }
     }
 
     public function recall(DocumentIssuance $issuance, User $user, string $reason): DocumentIssuance

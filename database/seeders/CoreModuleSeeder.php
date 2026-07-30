@@ -41,6 +41,12 @@ class CoreModuleSeeder extends Seeder
         'Reorder:User',
         'ViewAny:ProductLicense',
         'View:ProductLicense',
+        'ViewAny:Organization',
+        'View:Organization',
+        'Create:Organization',
+        'Update:Organization',
+        'Delete:Organization',
+        'DeleteAny:Organization',
     ];
 
     public function run(): void

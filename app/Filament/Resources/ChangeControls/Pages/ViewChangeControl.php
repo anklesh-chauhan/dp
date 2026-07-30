@@ -6,10 +6,14 @@ namespace App\Filament\Resources\ChangeControls\Pages;
 
 use App\Domain\QMS\Enums\ChangeControlStatus;
 use App\Domain\QMS\Services\ChangeControlTransitionService;
+use App\Domain\Reporting\Enums\ReportFormat;
+use App\Domain\Reporting\Enums\ReportScope;
 use App\Filament\Resources\ChangeControls\ChangeControlResource;
+use App\Models\ReportTemplate;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
@@ -21,6 +25,23 @@ final class ViewChangeControl extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('report')
+                ->label('Print Investigation')
+                ->schema([
+                    Select::make('template')
+                        ->label('Report Template')
+                        ->options(fn (): array => ReportTemplate::query()
+                            ->active()
+                            ->where('scope', ReportScope::ChangeControl)
+                            ->where('format', ReportFormat::Pdf)
+                            ->pluck('name', 'id')
+                            ->all())
+                        ->required(),
+                ])
+                ->action(fn (array $data): mixed => $this->redirect(route('change-controls.report', [
+                    'changeControl' => $this->record,
+                    'template' => $data['template'],
+                ]))),
             EditAction::make()
                 ->visible(fn (): bool => ChangeControlResource::canEdit($this->record)),
             Action::make('submit')

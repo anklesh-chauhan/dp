@@ -32,6 +32,8 @@ class ControlledDocument extends Model implements ApprovableSubject, ControlledD
     protected $fillable = [
         'template_id',
         'template_version_id',
+        'organization_id',
+        'organization_snapshot',
         'document_series_id',
         'supersedes_document_id',
         'document_number',
@@ -66,6 +68,7 @@ class ControlledDocument extends Model implements ApprovableSubject, ControlledD
             'version' => 'integer',
             'referenced_sop_version' => 'integer',
             'locked_at' => 'datetime',
+            'organization_snapshot' => 'array',
         ];
     }
 
@@ -274,6 +277,14 @@ class ControlledDocument extends Model implements ApprovableSubject, ControlledD
     public function templateVersion(): BelongsTo
     {
         return $this->belongsTo(DocumentTemplateVersion::class, 'template_version_id');
+    }
+
+    /**
+     * @return BelongsTo<Organization, $this>
+     */
+    public function organization(): BelongsTo
+    {
+        return $this->belongsTo(Organization::class);
     }
 
     /**
