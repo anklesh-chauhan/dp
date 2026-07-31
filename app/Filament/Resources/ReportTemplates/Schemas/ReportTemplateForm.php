@@ -107,7 +107,7 @@ final class ReportTemplateForm
                                         ->default('#f1f5f9')
                                         ->required(),
                                 ]),
-                                Grid::make(4)->schema([
+                                Grid::make(5)->schema([
                                     ...collect(['top', 'right', 'bottom', 'left'])
                                         ->map(fn (string $side): TextInput => TextInput::make("page_settings.margin_{$side}_mm")
                                             ->label(str($side)->title().' Margin')
@@ -142,13 +142,13 @@ final class ReportTemplateForm
                                         ->helperText('Repeats this header at the top of every printed or PDF page.')
                                         ->default(true)
                                         ->live(),
-                                    TextInput::make('header_zones.reserved_height_mm')
-                                        ->label('Reserved Header Height')
-                                        ->helperText('Increase this if the repeating header overlaps page content.')
+                                    TextInput::make('header_zones.content_gap_mm')
+                                        ->label('Gap After Header')
+                                        ->helperText('Blank space between the repeated header and page content.')
                                         ->numeric()
-                                        ->minValue(15)
-                                        ->maxValue(60)
-                                        ->default(32)
+                                        ->minValue(0)
+                                        ->maxValue(20)
+                                        ->default(5)
                                         ->suffix('mm')
                                         ->visible(fn (Get $get): bool => (bool) $get('header_zones.repeat_every_page'))
                                         ->required(fn (Get $get): bool => (bool) $get('header_zones.repeat_every_page')),

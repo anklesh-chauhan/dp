@@ -103,7 +103,7 @@ it('normalizes safe variable-column header and footer configuration with legacy 
         ->and($headerZones['rows'][0]['cells'][0]['items'][0]['emphasized'])->toBeTrue()
         ->and($headerZones['rows'][0]['cells'][1]['items'][0]['show_label'])->toBeFalse()
         ->and($headerZones['repeat_every_page'])->toBeTrue()
-        ->and($headerZones['reserved_height_mm'])->toBe(32)
+        ->and($headerZones['content_gap_mm'])->toBe(5)
         ->and($twoColumnZones['gap_mm'])->toBe(3)
         ->and($twoColumnZones['show_borders'])->toBeFalse()
         ->and(array_column($twoColumnZones['columns'], 'width'))->toBe([40, 60]);
@@ -297,9 +297,11 @@ it('repeats configured headers in the reserved print margin', function (): void 
     $view = file_get_contents(resource_path('views/controlled-documents/print.blade.php'));
 
     expect($view)
-        ->toContain('print-header-repeat')
-        ->toContain('position: fixed')
-        ->toContain('top: 0')
-        ->toContain('reserved_height_mm')
-        ->not->toContain("top: -{{ \$configuredHeaderZones['reserved_height_mm'] }}mm");
+        ->toContain('<thead class="print-document-header">')
+        ->toContain("@include('reports.partials.print-header')")
+        ->toContain('display: table-header-group')
+        ->toContain('print-header-flow-hidden')
+        ->toContain('content_gap_mm')
+        ->not->toContain('position: fixed')
+        ->not->toContain('reserved_height_mm');
 });

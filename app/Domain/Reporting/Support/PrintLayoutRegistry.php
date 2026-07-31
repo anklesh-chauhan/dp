@@ -60,7 +60,7 @@ final class PrintLayoutRegistry
             'gap_mm' => 0,
             'show_borders' => true,
             'repeat_every_page' => true,
-            'reserved_height_mm' => 32,
+            'content_gap_mm' => 5,
             'rows' => [
                 $this->row('organization', [
                     $this->column('organization_name', 100, 'center', 'center', [
@@ -242,7 +242,7 @@ final class PrintLayoutRegistry
     /**
      * @param  array<string, mixed>  $zones
      * @param  array<string, string>  $options
-     * @return array{gap_mm: int, show_borders: bool, repeat_every_page: bool, reserved_height_mm: int, rows: list<array{key: string, cells: list<array<string, mixed>>}>}
+     * @return array{gap_mm: int, show_borders: bool, repeat_every_page: bool, content_gap_mm: int, rows: list<array{key: string, cells: list<array<string, mixed>>}>}
      */
     private function normalizeTableRows(array $zones, array $options): array
     {
@@ -317,7 +317,7 @@ final class PrintLayoutRegistry
             'gap_mm' => $this->boundedInteger(Arr::get($zones, 'gap_mm', 0), 0, 10, 'cell gap'),
             'show_borders' => (bool) Arr::get($zones, 'show_borders', true),
             'repeat_every_page' => (bool) Arr::get($zones, 'repeat_every_page', true),
-            'reserved_height_mm' => $this->boundedInteger(Arr::get($zones, 'reserved_height_mm', 32), 15, 60, 'reserved header height'),
+            'content_gap_mm' => $this->boundedInteger(Arr::get($zones, 'content_gap_mm', 5), 0, 20, 'gap after header'),
             'rows' => $normalizedRows->all(),
         ];
     }

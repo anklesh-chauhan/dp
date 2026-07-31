@@ -163,9 +163,11 @@
         }
 
         .print-table {
+            border-bottom: 0;
             display: flex;
             flex-direction: column;
             grid-column: 1 / -1;
+            margin-bottom: 0;
         }
 
         .print-table-row {
@@ -180,6 +182,26 @@
         .print-table-bordered .print-zone {
             border-bottom: 1px solid var(--primary);
             border-right: 1px solid var(--primary);
+        }
+
+        .print-header-flow {
+            grid-column: 1 / -1;
+            order: -3;
+        }
+
+        .print-document-frame,
+        .print-document-frame > tbody,
+        .print-document-frame > tbody > tr,
+        .print-document-frame > tbody > tr > td {
+            border: 0;
+            display: block;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+        }
+
+        .print-document-header {
+            display: none;
         }
 
         .print-zone-center {
@@ -220,7 +242,7 @@
 
         @page {
             size: {{ $pageSettings['paper_size'] }} {{ $pageSettings['orientation'] }};
-            margin: {{ $pageSettings['margin_top_mm'] + ($configuredHeaderZones['repeat_every_page'] ? $configuredHeaderZones['reserved_height_mm'] : 0) }}mm {{ $pageSettings['margin_right_mm'] }}mm {{ $pageSettings['margin_bottom_mm'] }}mm {{ $pageSettings['margin_left_mm'] }}mm;
+            margin: {{ $pageSettings['margin_top_mm'] }}mm {{ $pageSettings['margin_right_mm'] }}mm {{ $pageSettings['margin_bottom_mm'] }}mm {{ $pageSettings['margin_left_mm'] }}mm;
             @if ($pageNumberColumn)
                 @switch($pageNumberColumn['alignment'])
                     @case('left')
@@ -258,13 +280,45 @@
                 padding: 0;
             }
 
-            .print-header-repeat {
-                background: #fff;
-                left: 0;
-                position: fixed;
-                right: 0;
-                top: 0;
-                z-index: 1000;
+            .print-document-frame {
+                border-collapse: collapse;
+                display: table;
+                table-layout: fixed;
+                width: 100%;
+            }
+
+            .print-document-frame > .print-document-header {
+                display: table-header-group;
+            }
+
+            .print-document-frame > .print-document-header > tr {
+                display: table-row;
+            }
+
+            .print-document-frame > .print-document-header > tr > td {
+                border: 0;
+                display: table-cell;
+                padding: 0 0 {{ $configuredHeaderZones['content_gap_mm'] }}mm;
+                vertical-align: top;
+            }
+
+            .print-document-frame > tbody {
+                display: table-row-group;
+            }
+
+            .print-document-frame > tbody > tr {
+                display: table-row;
+            }
+
+            .print-document-frame > tbody > tr > td {
+                border: 0;
+                display: table-cell;
+                padding: 0;
+                vertical-align: top;
+            }
+
+            .print-header-flow-hidden {
+                display: none;
             }
         }
     </style>
@@ -274,21 +328,27 @@
         <button type="button" onclick="window.print()">Print / Save PDF</button>
     </div>
 
+    @php($headerZones = $configuredHeaderZones)
+
+    <table class="print-document-frame">
+        @if ($headerZones['repeat_every_page'])
+            <thead class="print-document-header">
+                <tr>
+                    <td>@include('reports.partials.print-header')</td>
+                </tr>
+            </thead>
+        @endif
+        <tbody>
+            <tr>
+                <td>
     <main class="page">
         @php($fieldOrder = collect($reportTemplate->fields)->pluck('key')->flip())
         @php($fieldConfig = collect($reportTemplate->fields)->keyBy('key'))
-        @php($headerZones = $configuredHeaderZones)
         @php($footerZones = $configuredFooterZones)
 
-        <header class="print-table {{ $headerZones['show_borders'] ? 'print-table-bordered' : '' }} {{ $headerZones['repeat_every_page'] ? 'print-header-repeat' : '' }}" style="gap: {{ $headerZones['gap_mm'] }}mm; order: -3;">
-            @foreach ($headerZones['rows'] as $row)
-                <div class="print-table-row" style="gap: {{ $headerZones['gap_mm'] }}mm; grid-template-columns: {{ collect($row['cells'])->pluck('width')->map(fn ($width) => $width.'fr')->implode(' ') }};">
-                    @foreach ($row['cells'] as $cell)
-                        @include('reports.partials.print-zone', ['items' => $cell['items'], 'alignment' => $cell['alignment'], 'verticalAlignment' => $cell['vertical_alignment'], 'document' => $document, 'organization' => $organization, 'issuance' => $issuance, 'reportTemplate' => $reportTemplate])
-                    @endforeach
-                </div>
-            @endforeach
-        </header>
+        <div class="print-header-flow {{ $headerZones['repeat_every_page'] ? 'print-header-flow-hidden' : '' }}">
+            @include('reports.partials.print-header')
+        </div>
 
         @if ($issuance)
             <div class="watermark" style="grid-column: 1 / -1; order: -2;">
@@ -437,5 +497,9 @@
             @endforeach
         </footer>
     </main>
+                </td>
+            </tr>
+        </tbody>
+    </table>
 </body>
 </html>
