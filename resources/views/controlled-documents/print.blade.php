@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $document->document_number }} - {{ $document->title }}</title>
     @php($pageSettings = $reportTemplate->printPageSettings())
+    @php($configuredHeaderZones = $reportTemplate->printHeaderZones())
     @php($configuredFooterZones = $reportTemplate->printFooterZones())
     @php($pageNumberColumn = collect($configuredFooterZones['columns'])->first(fn (array $column): bool => collect($column['items'])->contains('token', 'page_number')))
     <style>
@@ -153,12 +154,32 @@
             display: flex;
             flex-direction: column;
             gap: 4px;
-            min-height: 56px;
+            /* min-height: 56px;    */
             padding: 8px;
         }
 
         .print-grid-bordered .print-zone + .print-zone {
             border-left: 1px solid var(--primary);
+        }
+
+        .print-table {
+            display: flex;
+            flex-direction: column;
+            grid-column: 1 / -1;
+        }
+
+        .print-table-row {
+            display: grid;
+        }
+
+        .print-table-bordered {
+            border-left: 1px solid var(--primary);
+            border-top: 1px solid var(--primary);
+        }
+
+        .print-table-bordered .print-zone {
+            border-bottom: 1px solid var(--primary);
+            border-right: 1px solid var(--primary);
         }
 
         .print-zone-center {
@@ -183,6 +204,10 @@
             justify-content: flex-end;
         }
 
+        .print-zone-emphasized {
+            font-weight: 700;
+        }
+
         .organization-logo {
             max-height: 58px;
             max-width: 150px;
@@ -195,7 +220,7 @@
 
         @page {
             size: {{ $pageSettings['paper_size'] }} {{ $pageSettings['orientation'] }};
-            margin: {{ $pageSettings['margin_top_mm'] }}mm {{ $pageSettings['margin_right_mm'] }}mm {{ $pageSettings['margin_bottom_mm'] }}mm {{ $pageSettings['margin_left_mm'] }}mm;
+            margin: {{ $pageSettings['margin_top_mm'] + ($configuredHeaderZones['repeat_every_page'] ? $configuredHeaderZones['reserved_height_mm'] : 0) }}mm {{ $pageSettings['margin_right_mm'] }}mm {{ $pageSettings['margin_bottom_mm'] }}mm {{ $pageSettings['margin_left_mm'] }}mm;
             @if ($pageNumberColumn)
                 @switch($pageNumberColumn['alignment'])
                     @case('left')
@@ -232,6 +257,13 @@
                 min-height: auto;
                 padding: 0;
             }
+
+            .print-header-repeat {
+                left: 0;
+                position: fixed;
+                right: 0;
+                top: -{{ $configuredHeaderZones['reserved_height_mm'] }}mm;
+            }
         }
     </style>
 </head>
@@ -243,15 +275,16 @@
     <main class="page">
         @php($fieldOrder = collect($reportTemplate->fields)->pluck('key')->flip())
         @php($fieldConfig = collect($reportTemplate->fields)->keyBy('key'))
-        @php($headerZones = $reportTemplate->printHeaderZones())
+        @php($headerZones = $configuredHeaderZones)
         @php($footerZones = $configuredFooterZones)
 
-        <header
-            class="print-grid {{ $headerZones['show_borders'] ? 'print-grid-bordered' : '' }}"
-            style="gap: {{ $headerZones['gap_mm'] }}mm; grid-template-columns: {{ collect($headerZones['columns'])->pluck('width')->map(fn ($width) => $width.'fr')->implode(' ') }}; order: -3;"
-        >
-            @foreach ($headerZones['columns'] as $column)
-                @include('reports.partials.print-zone', ['items' => $column['items'], 'alignment' => $column['alignment'], 'verticalAlignment' => $column['vertical_alignment'], 'document' => $document, 'organization' => $organization, 'issuance' => $issuance, 'reportTemplate' => $reportTemplate])
+        <header class="print-table {{ $headerZones['show_borders'] ? 'print-table-bordered' : '' }} {{ $headerZones['repeat_every_page'] ? 'print-header-repeat' : '' }}" style="gap: {{ $headerZones['gap_mm'] }}mm; order: -3;">
+            @foreach ($headerZones['rows'] as $row)
+                <div class="print-table-row" style="gap: {{ $headerZones['gap_mm'] }}mm; grid-template-columns: {{ collect($row['cells'])->pluck('width')->map(fn ($width) => $width.'fr')->implode(' ') }};">
+                    @foreach ($row['cells'] as $cell)
+                        @include('reports.partials.print-zone', ['items' => $cell['items'], 'alignment' => $cell['alignment'], 'verticalAlignment' => $cell['vertical_alignment'], 'document' => $document, 'organization' => $organization, 'issuance' => $issuance, 'reportTemplate' => $reportTemplate])
+                    @endforeach
+                </div>
             @endforeach
         </header>
 

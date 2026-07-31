@@ -24,6 +24,9 @@ final class ReportTemplateSeeder extends Seeder
             ['document-distribution-pdf', 'Document Distribution Sheet', ReportScope::DocumentDistribution, ReportFormat::Pdf, 'Printable controlled-document distribution register.'],
             ['document-distribution-csv', 'Document Distribution CSV', ReportScope::DocumentDistribution, ReportFormat::Csv, 'UTF-8 CSV distribution register for validated downstream analysis.'],
             ['document-distribution-excel', 'Document Distribution Excel', ReportScope::DocumentDistribution, ReportFormat::Excel, 'Excel distribution register using the configured field order.'],
+            ['csv-validation-traceability-csv', 'GMP CSV Traceability Matrix', ReportScope::CsvValidationTraceability, ReportFormat::Csv, 'ALCOA+ traceability from approved requirements through risk, testing, evidence, deviations, and independent review.'],
+            ['csv-validation-traceability-excel', 'GMP CSV Traceability Matrix', ReportScope::CsvValidationTraceability, ReportFormat::Excel, 'Excel traceability matrix from approved requirements through risk, testing, evidence, deviations, and independent review.'],
+            ['csv-validation-summary-pdf', 'GMP CSV Validation Summary', ReportScope::CsvValidationSummary, ReportFormat::Pdf, 'Printable validation summary with system identity, GxP scope, traceability totals, release baseline, ownership, and signed lifecycle history.'],
         ];
 
         foreach ($templates as [$layoutKey, $name, $scope, $format, $description]) {

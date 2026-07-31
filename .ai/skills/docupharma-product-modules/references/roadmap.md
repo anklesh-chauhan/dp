@@ -72,6 +72,7 @@
 - Deviation now implements the Shared approvable-subject boundary, and an unbound QMS submission-authorization adapter enforces permission, reporter/owner attribution, department scope, and manager override without changing DMS or Change Control workflow persistence.
 - Deviation lifecycle mutations now run through a QMS entitlement- and permission-enforced transition service with append-only actor/reason history and Shared canonical signatures for investigation completion, rejection, cancellation, effectiveness review, and closure.
 - Focused seeder, entitlement, and document-version tests passed at the checkpoint.
+- CSV Validation reporting now reuses the system report-template registry and export pipeline for ALCOA+ requirement-to-risk/test/execution/evidence traceability in CSV and Excel, plus a printable GMP validation summary with signed lifecycle history; direct exports enforce QMS entitlement and project-view permission.
 
 Always verify these statements against the worktree before relying on them.
 
@@ -206,7 +207,8 @@ Always verify these statements against the worktree before relying on them.
    - Slice 4 completed: Added a QMS-entitled Filament validation workspace with project readiness visibility and project-contained requirements, risks, specifications, trace-linked tests, execution records, periodic reviews, and read-only signed history; deletion is disabled and released/retired records are protected from editing.
    - Slice 5 completed: Added module permissions, migrated the new schema into the unused application database, seeded the administrator role, verified route discovery, and added focused release-gate, separation-of-duties, signature-integrity, and missing-evidence tests.
    - Slice 6 completed: Corrected the Filament lifecycle action boundary so failed CSV transitions halt safely and display a persistent notification containing every unmet validation gate; QA Release no longer appears unresponsive when the signed release package is incomplete.
-   - Remaining: Move requirement/specification/test approval and test-execution review into dedicated signed decision services, add immutable evidence uploads to executions, enforce failed-test deviation resolution, generate traceability/validation-summary exports, add standard CSV templates, and perform full regression and empty-database release validation.
+   - Slice 7 completed: Extended the report-template scopes and field registry with GMP/ALCOA+ CSV Validation traceability and validation-summary definitions; seeded system-standard traceability CSV/Excel and printable-summary templates; added template-selectable, QMS-entitled and permission-gated exports; and verified configured column order, linked risk/test/execution/evidence/review values, spreadsheet response metadata, printable summary fields, and disabled-module direct access.
+   - Remaining: Move requirement/specification/test approval and test-execution review into dedicated signed decision services, add immutable evidence uploads to executions, enforce failed-test deviation resolution, and perform full regression and empty-database release validation.
 
 13. **Core organization profile — completed**
     Store the deployment owner's legal-entity identity once and apply it consistently to every controlled document.
@@ -218,4 +220,4 @@ Always verify these statements against the worktree before relying on them.
 
 ## Immediate next task
 
-Complete the CSV signed sub-record decisions, evidence and deviation gates, exports, standard templates, and full release-validation pass before describing the application as a turnkey CSV solution.
+Complete the CSV signed sub-record decisions, evidence and deviation gates, and full release-validation pass before describing the application as a turnkey CSV solution.

@@ -12,8 +12,13 @@
         .print-grid-bordered { border: 2px solid var(--primary); }
         .print-zone { display: flex; flex-direction: column; gap: 4px; min-height: 58px; padding: 8px; }
         .print-grid-bordered .print-zone + .print-zone { border-left: 1px solid var(--primary); }
+        .print-table { display: flex; flex-direction: column; }
+        .print-table-row { display: grid; }
+        .print-table-bordered { border-left: 1px solid var(--primary); border-top: 1px solid var(--primary); }
+        .print-table-bordered .print-zone { border-bottom: 1px solid var(--primary); border-right: 1px solid var(--primary); }
         .print-zone-center { align-items: center; text-align: center; } .print-zone-right { align-items: flex-end; text-align: right; }
         .print-zone-vertical-top { justify-content: flex-start; } .print-zone-vertical-center { justify-content: center; } .print-zone-vertical-bottom { justify-content: flex-end; }
+        .print-zone-emphasized { font-weight: 700; }
         .sample-logo { align-items: center; border: 1px dashed #64748b; display: flex; font-size: 10px; height: 34px; justify-content: center; width: 82px; }
         .zone-document-title { font-size: 16px; }
         .body-grid { display: grid; gap: 12px; grid-template-columns: repeat(2, 1fr); margin: 20px 0; }
@@ -27,12 +32,13 @@
 <body>
     <div class="notice">SAMPLE PREVIEW · NOT A CONTROLLED DOCUMENT</div>
     <main class="page">
-        <header
-            class="print-grid {{ $headerZones['show_borders'] ? 'print-grid-bordered' : '' }}"
-            style="gap: {{ $headerZones['gap_mm'] }}mm; grid-template-columns: {{ collect($headerZones['columns'])->pluck('width')->map(fn ($width) => $width.'fr')->implode(' ') }};"
-        >
-            @foreach ($headerZones['columns'] as $column)
-                @include('reports.partials.print-zone', ['items' => $column['items'], 'alignment' => $column['alignment'], 'verticalAlignment' => $column['vertical_alignment'], 'preview' => true, 'reportTemplate' => $reportTemplate])
+        <header class="print-table {{ $headerZones['show_borders'] ? 'print-table-bordered' : '' }}" style="gap: {{ $headerZones['gap_mm'] }}mm;">
+            @foreach ($headerZones['rows'] as $row)
+                <div class="print-table-row" style="gap: {{ $headerZones['gap_mm'] }}mm; grid-template-columns: {{ collect($row['cells'])->pluck('width')->map(fn ($width) => $width.'fr')->implode(' ') }};">
+                    @foreach ($row['cells'] as $cell)
+                        @include('reports.partials.print-zone', ['items' => $cell['items'], 'alignment' => $cell['alignment'], 'verticalAlignment' => $cell['vertical_alignment'], 'preview' => true, 'reportTemplate' => $reportTemplate])
+                    @endforeach
+                </div>
             @endforeach
         </header>
         <section class="body-grid">

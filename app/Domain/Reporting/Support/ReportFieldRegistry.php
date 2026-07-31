@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Domain\Reporting\Support;
 
 use App\Domain\QMS\Models\ChangeControl;
+use App\Domain\QMS\Models\CsvRequirement;
+use App\Domain\QMS\Models\CsvValidationProject;
 use App\Domain\Reporting\Enums\ReportScope;
 use App\Models\ControlledDocument;
 use Illuminate\Database\Eloquent\Model;
@@ -55,6 +57,36 @@ final class ReportFieldRegistry
                 'effective_date' => ['label' => 'Effective Date', 'group' => 'Lifecycle'],
                 'review_date' => ['label' => 'Review Date', 'group' => 'Lifecycle'],
                 'active_copy_count' => ['label' => 'Active Controlled Copies', 'group' => 'Distribution'],
+            ],
+            ReportScope::CsvValidationTraceability => [
+                'requirement_identifier' => ['label' => 'Requirement ID', 'group' => 'Requirement'],
+                'requirement_statement' => ['label' => 'Requirement', 'group' => 'Requirement'],
+                'requirement_status' => ['label' => 'Requirement Status', 'group' => 'Requirement'],
+                'criticality' => ['label' => 'Criticality', 'group' => 'Risk'],
+                'gxp_relevant' => ['label' => 'GxP Relevant', 'group' => 'Data Integrity'],
+                'data_integrity_relevant' => ['label' => 'Data Integrity Relevant', 'group' => 'Data Integrity'],
+                'risk_identifiers' => ['label' => 'Linked Risks', 'group' => 'Risk'],
+                'test_identifiers' => ['label' => 'Linked Test Cases', 'group' => 'Verification'],
+                'execution_results' => ['label' => 'Execution Results', 'group' => 'Verification'],
+                'evidence_references' => ['label' => 'Evidence References', 'group' => 'ALCOA+ Traceability'],
+                'deviation_references' => ['label' => 'Deviation References', 'group' => 'ALCOA+ Traceability'],
+                'independent_review' => ['label' => 'Independent Review', 'group' => 'ALCOA+ Traceability'],
+            ],
+            ReportScope::CsvValidationSummary => [
+                'project_number' => ['label' => 'Project Number', 'group' => 'System'],
+                'system_identity' => ['label' => 'System / Version', 'group' => 'System'],
+                'status' => ['label' => 'Validation Status', 'group' => 'System'],
+                'intended_use' => ['label' => 'Intended Use', 'group' => 'Validation'],
+                'gxp_classification' => ['label' => 'GxP Classification', 'group' => 'GMP'],
+                'regulatory_scope' => ['label' => 'Regulatory Scope', 'group' => 'GMP'],
+                'validation_strategy' => ['label' => 'Validation Strategy', 'group' => 'Validation'],
+                'validation_summary' => ['label' => 'Validation Summary', 'group' => 'Validation'],
+                'traceability_totals' => ['label' => 'Traceability Totals', 'group' => 'ALCOA+ Traceability'],
+                'test_outcomes' => ['label' => 'Test Outcomes', 'group' => 'Verification'],
+                'release_baseline' => ['label' => 'Release Baseline', 'group' => 'Configuration'],
+                'ownership' => ['label' => 'Business / System / Quality Owners', 'group' => 'Governance'],
+                'release_decision' => ['label' => 'Release Decision', 'group' => 'Governance'],
+                'audit_events' => ['label' => 'Signed Lifecycle Audit Trail', 'group' => 'ALCOA+ Traceability'],
             ],
         };
     }
@@ -128,6 +160,8 @@ final class ReportFieldRegistry
         return match (true) {
             $record instanceof ControlledDocument => $this->controlledDocumentValue($record, $key),
             $record instanceof ChangeControl => $this->changeControlValue($record, $key),
+            $record instanceof CsvRequirement => $this->csvRequirementValue($record, $key),
+            $record instanceof CsvValidationProject => $this->csvValidationProjectValue($record, $key),
             default => '',
         };
     }
@@ -159,6 +193,60 @@ final class ReportFieldRegistry
             'owner' => (string) $changeControl->owner?->name,
             'description' => (string) $changeControl->description,
             'rationale' => (string) $changeControl->rationale,
+            default => '',
+        };
+    }
+
+    private function csvRequirementValue(CsvRequirement $requirement, string $key): string
+    {
+        $testCases = $requirement->testCases;
+        $executions = $testCases->flatMap->executions;
+
+        return match ($key) {
+            'requirement_identifier' => (string) $requirement->requirement_identifier,
+            'requirement_statement' => (string) $requirement->statement,
+            'requirement_status' => str((string) $requirement->status?->value)->replace('_', ' ')->title()->toString(),
+            'criticality' => str((string) $requirement->criticality?->value)->title()->toString(),
+            'gxp_relevant' => $requirement->gxp_relevant ? 'Yes' : 'No',
+            'data_integrity_relevant' => $requirement->data_integrity_relevant ? 'Yes' : 'No',
+            'risk_identifiers' => $requirement->risks->pluck('risk_identifier')->filter()->implode('; '),
+            'test_identifiers' => $testCases->pluck('test_identifier')->filter()->implode('; '),
+            'execution_results' => $executions->map(fn ($execution): string => sprintf(
+                '%s: %s',
+                $execution->testCase?->test_identifier ?? $execution->execution_no,
+                str((string) $execution->result?->value)->title(),
+            ))->implode('; '),
+            'evidence_references' => $executions->pluck('evidence_summary')->filter()->implode('; '),
+            'deviation_references' => $executions->pluck('deviation.deviation_number')->filter()->implode('; '),
+            'independent_review' => $executions->isNotEmpty() && $executions->every(
+                fn ($execution): bool => $execution->reviewed_at !== null && $execution->reviewed_by !== $execution->executed_by,
+            ) ? 'Complete' : 'Pending',
+            default => '',
+        };
+    }
+
+    private function csvValidationProjectValue(CsvValidationProject $project, string $key): string|int
+    {
+        return match ($key) {
+            'project_number' => (string) $project->project_number,
+            'system_identity' => trim("{$project->system_name} {$project->system_version}"),
+            'status' => str($project->status->value)->replace('_', ' ')->title()->toString(),
+            'intended_use' => (string) $project->intended_use,
+            'gxp_classification' => $project->is_gxp ? 'GxP - '.str((string) $project->gxp_criticality?->value)->title() : 'Non-GxP',
+            'regulatory_scope' => collect($project->regulatory_scope)->implode(', '),
+            'validation_strategy' => (string) $project->validation_strategy,
+            'validation_summary' => (string) $project->validation_summary,
+            'traceability_totals' => "{$project->requirements_count} requirements; {$project->test_cases_count} tests",
+            'test_outcomes' => $project->testExecutions->groupBy(
+                fn ($execution): string => $execution->result?->value ?? 'not_run',
+            )->map(fn ($executions, string $result): string => str($result)->title().': '.$executions->count())->implode('; '),
+            'release_baseline' => collect($project->release_baseline)->map(
+                fn (mixed $value, string $name): string => "{$name}: {$value}",
+            )->implode('; '),
+            'ownership' => collect([$project->businessOwner?->name, $project->systemOwner?->name, $project->qualityOwner?->name])->filter()->implode(' / '),
+            'release_decision' => $project->released_at === null
+                ? 'Not released'
+                : "Released {$project->released_at->toDateString()} by ".($project->releaser?->name ?? 'Unknown'),
             default => '',
         };
     }

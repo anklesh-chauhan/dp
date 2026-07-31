@@ -125,9 +125,9 @@ final class ReportTemplateForm
                             ]),
                         Tab::make('Header')
                             ->schema([
-                                Grid::make(2)->schema([
+                                Grid::make(4)->schema([
                                     TextInput::make('header_zones.gap_mm')
-                                        ->label('Column Gap')
+                                        ->label('Cell Gap')
                                         ->numeric()
                                         ->minValue(0)
                                         ->maxValue(10)
@@ -135,10 +135,25 @@ final class ReportTemplateForm
                                         ->suffix('mm')
                                         ->required(),
                                     Toggle::make('header_zones.show_borders')
-                                        ->label('Show Column Borders')
+                                        ->label('Show Table Borders')
                                         ->default(true),
+                                    Toggle::make('header_zones.repeat_every_page')
+                                        ->label('Repeat on Every Page')
+                                        ->helperText('Repeats this header at the top of every printed or PDF page.')
+                                        ->default(true)
+                                        ->live(),
+                                    TextInput::make('header_zones.reserved_height_mm')
+                                        ->label('Reserved Header Height')
+                                        ->helperText('Increase this if the repeating header overlaps page content.')
+                                        ->numeric()
+                                        ->minValue(15)
+                                        ->maxValue(60)
+                                        ->default(32)
+                                        ->suffix('mm')
+                                        ->visible(fn (Get $get): bool => (bool) $get('header_zones.repeat_every_page'))
+                                        ->required(fn (Get $get): bool => (bool) $get('header_zones.repeat_every_page')),
                                 ]),
-                                self::columnRepeater('header_zones.columns', footer: false),
+                                self::rowRepeater(),
                             ]),
                         Tab::make('Body Blocks')
                             ->schema([
@@ -248,6 +263,66 @@ final class ReportTemplateForm
             ]);
     }
 
+    private static function rowRepeater(): Repeater
+    {
+        $defaults = app(PrintLayoutRegistry::class)->defaultHeaderZones();
+
+        return Repeater::make('header_zones.rows')
+            ->label('Table Rows')
+            ->schema([
+                Hidden::make('key')
+                    ->default(fn (): string => 'row_'.Str::lower(Str::random(8)))
+                    ->required(),
+                Repeater::make('cells')
+                    ->label('Cells')
+                    ->schema([
+                        Hidden::make('key')
+                            ->default(fn (): string => 'cell_'.Str::lower(Str::random(8)))
+                            ->required(),
+                        TextInput::make('width')
+                            ->label('Width')
+                            ->numeric()
+                            ->minValue(10)
+                            ->maxValue(100)
+                            ->suffix('%')
+                            ->live(onBlur: true)
+                            ->required(),
+                        Select::make('alignment')
+                            ->options(['left' => 'Left', 'center' => 'Center', 'right' => 'Right'])
+                            ->default('left')
+                            ->required(),
+                        Select::make('vertical_alignment')
+                            ->options(['top' => 'Top', 'center' => 'Center', 'bottom' => 'Bottom'])
+                            ->default('center')
+                            ->required(),
+                        self::tokenRepeater('items'),
+                    ])
+                    ->columns(3)
+                    ->itemLabel(fn (array $state): string => ($state['width'] ?? '?').'% cell')
+                    ->reorderable()
+                    ->reorderableWithButtons()
+                    ->collapsible()
+                    ->minItems(1)
+                    ->maxItems(6)
+                    ->addActionLabel('Add Cell')
+                    ->rules([
+                        fn (): Closure => function (string $attribute, mixed $value, Closure $fail): void {
+                            if (! is_array($value) || collect($value)->sum(fn (mixed $cell): int => (int) data_get($cell, 'width', 0)) !== 100) {
+                                $fail('Cell widths in this row must total exactly 100%.');
+                            }
+                        },
+                    ]),
+            ])
+            ->default($defaults['rows'])
+            ->itemLabel(fn (array $state): string => count($state['cells'] ?? []).' cell row')
+            ->reorderable()
+            ->reorderableWithButtons()
+            ->collapsible()
+            ->minItems(1)
+            ->maxItems(8)
+            ->addActionLabel('Add Row');
+    }
+
     private static function tokenRepeater(string $name): Repeater
     {
         return Repeater::make($name)
@@ -263,6 +338,14 @@ final class ReportTemplateForm
                     ->visible(fn (Get $get): bool => $get('token') === 'custom_text')
                     ->required(fn (Get $get): bool => $get('token') === 'custom_text')
                     ->maxLength(200),
+                Toggle::make('show_label')
+                    ->label('Show Label')
+                    ->helperText('Turn off to print only the value.')
+                    ->default(true)
+                    ->visible(fn (Get $get): bool => ! in_array($get('token'), ['custom_text', 'logo', 'organization_name', 'document_title', 'copy_status', 'controlled_notice'], true)),
+                Toggle::make('emphasized')
+                    ->label('Bold')
+                    ->default(false),
             ])
             ->itemLabel(fn (array $state): string => app(PrintLayoutRegistry::class)->tokenOptions()[$state['token'] ?? ''] ?? 'Header / footer item')
             ->reorderable()

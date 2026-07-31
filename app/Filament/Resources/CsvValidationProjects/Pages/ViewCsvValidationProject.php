@@ -6,13 +6,17 @@ namespace App\Filament\Resources\CsvValidationProjects\Pages;
 
 use App\Domain\QMS\Enums\CsvValidationProjectStatus;
 use App\Domain\QMS\Services\CsvValidationProjectService;
+use App\Domain\Reporting\Enums\ReportScope;
 use App\Filament\Resources\CsvValidationProjects\CsvValidationProjectResource;
+use App\Models\ReportTemplate;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
+use Filament\Support\Icons\Heroicon;
 use Illuminate\Validation\ValidationException;
 
 final class ViewCsvValidationProject extends ViewRecord
@@ -23,6 +27,29 @@ final class ViewCsvValidationProject extends ViewRecord
     {
         return [
             EditAction::make()->visible(fn (): bool => CsvValidationProjectResource::canEdit($this->record)),
+            Action::make('exportValidationReport')
+                ->label('Export')
+                ->icon(Heroicon::ArrowDownTray)
+                ->schema([
+                    Select::make('template')
+                        ->label('Report Template & Format')
+                        ->options(fn (): array => ReportTemplate::query()
+                            ->active()
+                            ->whereIn('scope', [
+                                ReportScope::CsvValidationTraceability,
+                                ReportScope::CsvValidationSummary,
+                            ])
+                            ->get()
+                            ->mapWithKeys(fn (ReportTemplate $template): array => [
+                                $template->id => "{$template->name} ({$template->format->label()})",
+                            ])
+                            ->all())
+                        ->required(),
+                ])
+                ->action(fn (array $data): mixed => $this->redirect(route('csv-validation-projects.report', [
+                    'csvValidationProject' => $this->record,
+                    'template' => $data['template'],
+                ]))),
             ...collect($this->availableTransitions())
                 ->map(fn (array $transition): Action => $this->transitionAction(...$transition))
                 ->all(),
