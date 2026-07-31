@@ -259,10 +259,12 @@
             }
 
             .print-header-repeat {
+                background: #fff;
                 left: 0;
                 position: fixed;
                 right: 0;
-                top: -{{ $configuredHeaderZones['reserved_height_mm'] }}mm;
+                top: 0;
+                z-index: 1000;
             }
         }
     </style>

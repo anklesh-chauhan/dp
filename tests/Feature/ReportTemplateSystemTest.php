@@ -299,5 +299,7 @@ it('repeats configured headers in the reserved print margin', function (): void 
     expect($view)
         ->toContain('print-header-repeat')
         ->toContain('position: fixed')
-        ->toContain('reserved_height_mm');
+        ->toContain('top: 0')
+        ->toContain('reserved_height_mm')
+        ->not->toContain("top: -{{ \$configuredHeaderZones['reserved_height_mm'] }}mm");
 });
