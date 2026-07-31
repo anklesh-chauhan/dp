@@ -110,6 +110,8 @@ final class PrintLayoutRegistry
         return [
             'gap_mm' => 0,
             'show_borders' => true,
+            'repeat_every_page' => true,
+            'content_gap_mm' => 5,
             'columns' => [
                 $this->column('footer_left', 35, 'left', 'center', [
                     ['token' => 'printed_by', 'label' => 'Printed By', 'custom_text' => null],
@@ -150,7 +152,7 @@ final class PrintLayoutRegistry
 
     /**
      * @param  array<string, mixed>  $zones
-     * @return array{gap_mm: int, show_borders: bool, columns: list<array{key: string, width: int, alignment: string, vertical_alignment: string, items: list<array{token: string, label: string, custom_text: string|null}>}>}
+     * @return array{gap_mm: int, show_borders: bool, repeat_every_page?: bool, content_gap_mm?: int, columns: list<array{key: string, width: int, alignment: string, vertical_alignment: string, items: list<array{token: string, label: string, custom_text: string|null}>}>}
      */
     public function normalizeZones(array $zones, bool $footer = false): array
     {
@@ -235,6 +237,8 @@ final class PrintLayoutRegistry
         return [
             'gap_mm' => $this->boundedInteger(Arr::get($zones, 'gap_mm', 0), 0, 10, 'column gap'),
             'show_borders' => (bool) Arr::get($zones, 'show_borders', true),
+            'repeat_every_page' => (bool) Arr::get($zones, 'repeat_every_page', true),
+            'content_gap_mm' => $this->boundedInteger(Arr::get($zones, 'content_gap_mm', 5), 0, 20, 'gap before footer'),
             'columns' => $normalizedColumns->all(),
         ];
     }

@@ -189,6 +189,11 @@
             order: -3;
         }
 
+        .print-footer-flow {
+            grid-column: 1 / -1;
+            order: 9999;
+        }
+
         .print-document-frame,
         .print-document-frame > tbody,
         .print-document-frame > tbody > tr,
@@ -201,6 +206,10 @@
         }
 
         .print-document-header {
+            display: none;
+        }
+
+        .print-document-footer {
             display: none;
         }
 
@@ -302,6 +311,21 @@
                 vertical-align: top;
             }
 
+            .print-document-frame > .print-document-footer {
+                display: table-footer-group;
+            }
+
+            .print-document-frame > .print-document-footer > tr {
+                display: table-row;
+            }
+
+            .print-document-frame > .print-document-footer > tr > td {
+                border: 0;
+                display: table-cell;
+                padding: {{ $configuredFooterZones['content_gap_mm'] }}mm 0 0;
+                vertical-align: bottom;
+            }
+
             .print-document-frame > tbody {
                 display: table-row-group;
             }
@@ -320,6 +344,10 @@
             .print-header-flow-hidden {
                 display: none;
             }
+
+            .print-footer-flow-hidden {
+                display: none;
+            }
         }
     </style>
 </head>
@@ -329,6 +357,7 @@
     </div>
 
     @php($headerZones = $configuredHeaderZones)
+    @php($footerZones = $configuredFooterZones)
 
     <table class="print-document-frame">
         @if ($headerZones['repeat_every_page'])
@@ -344,8 +373,6 @@
     <main class="page">
         @php($fieldOrder = collect($reportTemplate->fields)->pluck('key')->flip())
         @php($fieldConfig = collect($reportTemplate->fields)->keyBy('key'))
-        @php($footerZones = $configuredFooterZones)
-
         <div class="print-header-flow {{ $headerZones['repeat_every_page'] ? 'print-header-flow-hidden' : '' }}">
             @include('reports.partials.print-header')
         </div>
@@ -488,18 +515,20 @@
             </footer>
         @endif
 
-        <footer
-            class="print-grid {{ $footerZones['show_borders'] ? 'print-grid-bordered' : '' }}"
-            style="gap: {{ $footerZones['gap_mm'] }}mm; grid-template-columns: {{ collect($footerZones['columns'])->pluck('width')->map(fn ($width) => $width.'fr')->implode(' ') }}; order: 9999;"
-        >
-            @foreach ($footerZones['columns'] as $column)
-                @include('reports.partials.print-zone', ['items' => $column['items'], 'alignment' => $column['alignment'], 'verticalAlignment' => $column['vertical_alignment'], 'document' => $document, 'organization' => $organization, 'issuance' => $issuance, 'reportTemplate' => $reportTemplate])
-            @endforeach
-        </footer>
+        <div class="print-footer-flow {{ $footerZones['repeat_every_page'] ? 'print-footer-flow-hidden' : '' }}">
+            @include('reports.partials.print-footer')
+        </div>
     </main>
                 </td>
             </tr>
         </tbody>
+        @if ($footerZones['repeat_every_page'])
+            <tfoot class="print-document-footer">
+                <tr>
+                    <td>@include('reports.partials.print-footer')</td>
+                </tr>
+            </tfoot>
+        @endif
     </table>
 </body>
 </html>

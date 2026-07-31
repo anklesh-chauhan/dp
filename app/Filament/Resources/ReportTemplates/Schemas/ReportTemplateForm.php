@@ -192,7 +192,7 @@ final class ReportTemplateForm
                             ]),
                         Tab::make('Footer')
                             ->schema([
-                                Grid::make(2)->schema([
+                                Grid::make(4)->schema([
                                     TextInput::make('footer_zones.gap_mm')
                                         ->label('Column Gap')
                                         ->numeric()
@@ -204,6 +204,21 @@ final class ReportTemplateForm
                                     Toggle::make('footer_zones.show_borders')
                                         ->label('Show Column Borders')
                                         ->default(true),
+                                    Toggle::make('footer_zones.repeat_every_page')
+                                        ->label('Repeat on Every Page')
+                                        ->helperText('Repeats this footer at the bottom of every printed or PDF page.')
+                                        ->default(true)
+                                        ->live(),
+                                    TextInput::make('footer_zones.content_gap_mm')
+                                        ->label('Gap Before Footer')
+                                        ->helperText('Blank space between page content and the repeated footer.')
+                                        ->numeric()
+                                        ->minValue(0)
+                                        ->maxValue(20)
+                                        ->default(5)
+                                        ->suffix('mm')
+                                        ->visible(fn (Get $get): bool => (bool) $get('footer_zones.repeat_every_page'))
+                                        ->required(fn (Get $get): bool => (bool) $get('footer_zones.repeat_every_page')),
                                 ]),
                                 self::columnRepeater('footer_zones.columns', footer: true),
                             ]),

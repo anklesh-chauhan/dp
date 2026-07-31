@@ -106,6 +106,8 @@ it('normalizes safe variable-column header and footer configuration with legacy 
         ->and($headerZones['content_gap_mm'])->toBe(5)
         ->and($twoColumnZones['gap_mm'])->toBe(3)
         ->and($twoColumnZones['show_borders'])->toBeFalse()
+        ->and($twoColumnZones['repeat_every_page'])->toBeTrue()
+        ->and($twoColumnZones['content_gap_mm'])->toBe(5)
         ->and(array_column($twoColumnZones['columns'], 'width'))->toBe([40, 60]);
 
     expect(fn () => $registry->normalizeZones([
@@ -304,4 +306,15 @@ it('repeats configured headers in the reserved print margin', function (): void 
         ->toContain('content_gap_mm')
         ->not->toContain('position: fixed')
         ->not->toContain('reserved_height_mm');
+});
+
+it('repeats configured footers with a configurable content gap', function (): void {
+    $view = file_get_contents(resource_path('views/controlled-documents/print.blade.php'));
+
+    expect($view)
+        ->toContain('<tfoot class="print-document-footer">')
+        ->toContain("@include('reports.partials.print-footer')")
+        ->toContain('display: table-footer-group')
+        ->toContain('print-footer-flow-hidden')
+        ->toContain("configuredFooterZones['content_gap_mm']");
 });
