@@ -1,0 +1,32 @@
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
+
+@layer components {
+    .fi-ta-table {
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .fi-ta-cell:has(> .fi-ta-actions),
+    .fi-ta-actions-header-cell {
+        position: sticky;
+        inset-inline-end: 0;
+        z-index: 10;
+        background-color: var(--color-white);
+        box-shadow: -0.5rem 0 0.75rem -0.75rem rgb(0 0 0 / 0.35);
+    }
+
+    .fi-ta-cell:has(> .fi-ta-actions) {
+        padding-inline: 0.75rem;
+    }
+
+    .dark .fi-ta-cell:has(> .fi-ta-actions),
+    .dark .fi-ta-actions-header-cell {
+        background-color: var(--color-gray-900);
+        box-shadow: -0.5rem 0 0.75rem -0.75rem rgb(0 0 0 / 0.65);
+    }
+
+    .fi-ta-record-content > .fi-ta-actions {
+        position: sticky;
+        inset-inline-end: 0;
+    }
+}
