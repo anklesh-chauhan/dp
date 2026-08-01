@@ -55,6 +55,18 @@ class SopAuditLog extends Model
 
     public const ACTION_DOWNLOADED = 'downloaded';
 
+    public const ACTION_VIEWED = 'viewed';
+
+    public const ACTION_PDF_ACCESS_UPDATED = 'pdf_access_updated';
+
+    public const ACTION_PDF_ACCESS_DENIED = 'pdf_access_denied';
+
+    public const ACTION_PDF_POLICY_CREATED = 'pdf_policy_created';
+
+    public const ACTION_PDF_POLICY_UPDATED = 'pdf_policy_updated';
+
+    public const ACTION_PDF_POLICY_DELETED = 'pdf_policy_deleted';
+
     public const ACTION_PRINTED = 'printed';
 
     public $timestamps = true;

@@ -35,9 +35,9 @@ class EditControlledDocument extends EditRecord
     {
         return [
             Action::make('printPdf')
-                ->label('Print / PDF')
-                ->icon(Heroicon::Printer)
-                ->url(fn (): string => route('controlled-documents.print', $this->record))
+                ->label('View PDF')
+                ->icon(Heroicon::Eye)
+                ->url(fn (): string => route('controlled-documents.viewer', $this->record))
                 ->openUrlInNewTab()
                 ->visible(fn (): bool => $this->record->canBePrintedDirectly()),
             DeleteAction::make(),

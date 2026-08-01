@@ -56,9 +56,9 @@ class IssuanceRelationManager extends RelationManager
             ->defaultSort('issued_at', 'desc')
             ->recordActions([
                 Action::make('printCopy')
-                    ->label('Print Copy')
-                    ->icon(Heroicon::Printer)
-                    ->url(fn (DocumentIssuance $record): string => route('controlled-documents.print', [
+                    ->label('View Controlled Copy')
+                    ->icon(Heroicon::Eye)
+                    ->url(fn (DocumentIssuance $record): string => route('controlled-documents.viewer', [
                         'controlledDocument' => $record->document_id,
                         'issuance' => $record->id,
                     ]))

@@ -21,6 +21,7 @@ use App\Models\DocumentTemplateVersion;
 use App\Models\DocumentType;
 use App\Models\TemplateStatus;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -218,17 +219,19 @@ class ControlledDocumentResource extends Resource
                 TrashedFilter::make(),
             ])
             ->recordActions([
-                ViewAction::make(),
-                Action::make('printPdf')
-                    ->label('Print / PDF')
-                    ->icon(Heroicon::Printer)
-                    ->url(fn (ControlledDocument $record): string => route('controlled-documents.print', $record))
-                    ->openUrlInNewTab()
-                    ->visible(fn (ControlledDocument $record): bool => $record->canBePrintedDirectly()),
-                EditAction::make(),
-                DeleteAction::make(),
-                RestoreAction::make(),
-                ForceDeleteAction::make(),
+                ActionGroup::make([
+                    ViewAction::make(),
+                    Action::make('printPdf')
+                        ->label('View PDF')
+                        ->icon(Heroicon::Eye)
+                        ->url(fn (ControlledDocument $record): string => route('controlled-documents.viewer', $record))
+                        ->openUrlInNewTab()
+                        ->visible(fn (ControlledDocument $record): bool => $record->canBePrintedDirectly()),
+                    EditAction::make(),
+                    DeleteAction::make(),
+                    RestoreAction::make(),
+                    ForceDeleteAction::make(),
+                ])->icon('heroicon-o-ellipsis-vertical'),
             ])
             ->toolbarActions([
                 DeleteBulkAction::make(),

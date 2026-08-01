@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ChangeControlReportController;
 use App\Http\Controllers\ControlledDocumentPrintController;
+use App\Http\Controllers\ControlledDocumentViewerController;
 use App\Http\Controllers\CsvValidationReportController;
 use App\Http\Controllers\DocumentDistributionReportController;
 use App\Http\Controllers\ReportTemplatePreviewController;
@@ -13,7 +14,22 @@ Route::get('/', function () {
 
 Route::get('/controlled-documents/{controlledDocument}/print', ControlledDocumentPrintController::class)
     ->middleware(['auth', 'module:dms', 'can:view,controlledDocument'])
+    ->defaults('access_mode', 'print')
     ->name('controlled-documents.print');
+
+Route::get('/controlled-documents/{controlledDocument}/viewer', ControlledDocumentViewerController::class)
+    ->middleware(['auth', 'module:dms', 'can:view,controlledDocument'])
+    ->name('controlled-documents.viewer');
+
+Route::get('/controlled-documents/{controlledDocument}/pdf-content', ControlledDocumentPrintController::class)
+    ->middleware(['auth', 'module:dms', 'can:view,controlledDocument'])
+    ->defaults('access_mode', 'view')
+    ->name('controlled-documents.pdf-content');
+
+Route::get('/controlled-documents/{controlledDocument}/download', ControlledDocumentPrintController::class)
+    ->middleware(['auth', 'module:dms', 'can:view,controlledDocument'])
+    ->defaults('access_mode', 'download')
+    ->name('controlled-documents.download');
 
 Route::get('/change-controls/{changeControl}/report', ChangeControlReportController::class)
     ->middleware(['auth', 'module:qms', 'can:View:ChangeControl'])

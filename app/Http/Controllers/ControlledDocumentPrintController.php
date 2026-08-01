@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Domain\DMS\Services\ControlledDocumentAccessService;
 use App\Domain\DMS\Services\ControlledDocumentPdfService;
 use App\Domain\Reporting\Enums\ReportFormat;
 use App\Domain\Reporting\Enums\ReportScope;
@@ -25,10 +26,12 @@ class ControlledDocumentPrintController extends Controller
     public function __construct(
         private readonly AuditLogService $auditLogService,
         private readonly ControlledDocumentPdfService $pdfService,
+        private readonly ControlledDocumentAccessService $accessService,
     ) {}
 
     public function __invoke(Request $request, ControlledDocument $controlledDocument): StreamedResponse
     {
+        $accessMode = (string) $request->route('access_mode', 'print');
         $issuance = null;
 
         if ($request->filled('issuance')) {
@@ -44,6 +47,22 @@ class ControlledDocumentPrintController extends Controller
                 : 'Only approved or effective documents can be printed.';
 
             throw new AccessDeniedHttpException($message);
+        }
+
+        $isAuthorized = match ($accessMode) {
+            'view' => $this->accessService->canView($request->user(), $controlledDocument),
+            'download' => $this->accessService->canDownload($request->user(), $controlledDocument),
+            default => $this->accessService->canPrint($request->user(), $controlledDocument),
+        };
+
+        if (! $isAuthorized) {
+            $this->auditLogService->log(
+                action: SopAuditLog::ACTION_PDF_ACCESS_DENIED,
+                newValues: ['requested_action' => $accessMode],
+                document: $controlledDocument,
+            );
+
+            throw new AccessDeniedHttpException('You do not have permission to '.$accessMode.' this controlled PDF.');
         }
 
         $controlledDocument->load([
@@ -99,8 +118,14 @@ class ControlledDocumentPrintController extends Controller
             generatedBy: $request->user(),
         );
 
+        $auditAction = match ($accessMode) {
+            'view' => SopAuditLog::ACTION_VIEWED,
+            'download' => SopAuditLog::ACTION_DOWNLOADED,
+            default => SopAuditLog::ACTION_PRINTED,
+        };
+
         $this->auditLogService->log(
-            action: SopAuditLog::ACTION_PRINTED,
+            action: $auditAction,
             newValues: [
                 'issuance_id' => $issuance?->id,
                 'issuance_number' => $issuance?->issuance_number,
@@ -113,12 +138,16 @@ class ControlledDocumentPrintController extends Controller
             document: $controlledDocument,
         );
 
+        $disposition = $accessMode === 'download' ? 'attachment' : 'inline';
+
         return Storage::disk($artifact->disk)->response(
             $artifact->path,
             $artifact->filename,
             [
                 'Content-Type' => $artifact->mime_type,
-                'Content-Disposition' => 'inline; filename="'.$artifact->filename.'"',
+                'Content-Disposition' => $disposition.'; filename="'.$artifact->filename.'"',
+                'Cache-Control' => 'private, no-store, max-age=0',
+                'Pragma' => 'no-cache',
                 'X-Document-SHA256' => $artifact->sha256,
             ],
         );

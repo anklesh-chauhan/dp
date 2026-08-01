@@ -6,6 +6,7 @@ namespace App\Filament\Resources\Capas\Tables;
 
 use App\Domain\QMS\Enums\CapaStatus;
 use App\Domain\QMS\Enums\CapaType;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
@@ -31,6 +32,11 @@ final class CapasTable
                 SelectFilter::make('type')->options(CapaType::class),
             ])
             ->defaultSort('created_at', 'desc')
-            ->recordActions([ViewAction::make(), EditAction::make()]);
+            ->recordActions([
+                ActionGroup::make([
+                    ViewAction::make(),
+                    EditAction::make(),
+                ])->icon('heroicon-o-ellipsis-vertical'),
+            ]);
     }
 }

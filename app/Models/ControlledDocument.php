@@ -426,6 +426,12 @@ class ControlledDocument extends Model implements ApprovableSubject, ControlledD
         return $this->hasMany(DocumentIssuance::class, 'document_id')->orderByDesc('issued_at');
     }
 
+    /** @return HasMany<ControlledDocumentAccessGrant, $this> */
+    public function accessGrants(): HasMany
+    {
+        return $this->hasMany(ControlledDocumentAccessGrant::class);
+    }
+
     /**
      * @return HasMany<DocumentIssuance, $this>
      */

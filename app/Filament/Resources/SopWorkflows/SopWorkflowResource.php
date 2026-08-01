@@ -10,6 +10,7 @@ use App\Filament\Resources\SopWorkflows\Pages\ListSopWorkflows;
 use App\Filament\Resources\SopWorkflows\Pages\ViewSopWorkflow;
 use App\Filament\Resources\SopWorkflows\RelationManagers\WorkflowRelationManager;
 use App\Models\SopWorkflow;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -70,7 +71,7 @@ class SopWorkflowResource extends Resource
                 TextColumn::make('steps_count')->counts('steps')->label('Steps'),
                 TextColumn::make('updated_at')->dateTime()->sortable(),
             ])
-            ->recordActions([EditAction::make(), DeleteAction::make()])
+            ->recordActions([ActionGroup::make([EditAction::make(), DeleteAction::make()])->icon('heroicon-o-ellipsis-vertical')])
             ->toolbarActions([DeleteBulkAction::make()]);
     }
 

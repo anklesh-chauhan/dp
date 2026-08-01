@@ -81,9 +81,9 @@ class DocumentIssuanceResource extends Resource
                     ->icon(Heroicon::Eye)
                     ->url(fn (DocumentIssuance $record): string => LogDocumentResource::getUrl('view', ['record' => $record->document_id])),
                 Action::make('printCopy')
-                    ->label('Print')
-                    ->icon(Heroicon::Printer)
-                    ->url(fn (DocumentIssuance $record): string => route('controlled-documents.print', [
+                    ->label('View Controlled Copy')
+                    ->icon(Heroicon::Eye)
+                    ->url(fn (DocumentIssuance $record): string => route('controlled-documents.viewer', [
                         'controlledDocument' => $record->document_id,
                         'issuance' => $record->id,
                     ]))

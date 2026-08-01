@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\SopWorkflows\RelationManagers;
 
+use Filament\Actions\ActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -59,6 +60,6 @@ class WorkflowRelationManager extends RelationManager
                 IconColumn::make('is_mandatory')->boolean(),
             ])
             ->headerActions([CreateAction::make()])
-            ->recordActions([EditAction::make(), DeleteAction::make()]);
+            ->recordActions([ActionGroup::make([EditAction::make(), DeleteAction::make()])->icon('heroicon-o-ellipsis-vertical')]);
     }
 }

@@ -8,20 +8,28 @@ use App\Actions\Sop\SubmitDocumentAction;
 use App\Domain\DMS\Actions\CreateDocumentRevisionAction;
 use App\Domain\DMS\Actions\LockDocumentAction;
 use App\Domain\DMS\Actions\UnlockDocumentAction;
+use App\Domain\DMS\Services\ControlledDocumentAccessService;
 use App\Domain\Reporting\Enums\ReportFormat;
 use App\Domain\Reporting\Enums\ReportScope;
+use App\Domain\Shared\Services\AuditLogService;
 use App\Filament\Concerns\HandlesServiceExceptions;
 use App\Filament\Concerns\ProvidesRetentionLifecycleActions;
 use App\Filament\Resources\ControlledDocuments\ControlledDocumentResource;
 use App\Models\DocumentStatus;
 use App\Models\ReportTemplate;
+use App\Models\SopAuditLog;
+use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Toggle;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class ViewControlledDocument extends ViewRecord
 {
@@ -108,8 +116,8 @@ class ViewControlledDocument extends ViewRecord
                     );
                 }),
             Action::make('printPdf')
-                ->label('Print / PDF')
-                ->icon(Heroicon::Printer)
+                ->label('View Controlled PDF')
+                ->icon(Heroicon::Eye)
                 ->schema([
                     Select::make('template')
                         ->label('Print Template')
@@ -121,11 +129,77 @@ class ViewControlledDocument extends ViewRecord
                             ->all())
                         ->required(),
                 ])
-                ->action(fn (array $data): mixed => $this->redirect(route('controlled-documents.print', [
+                ->action(fn (array $data): mixed => $this->redirect(route('controlled-documents.viewer', [
                     'controlledDocument' => $this->record,
                     'template' => $data['template'],
                 ])))
-                ->visible(fn (): bool => $this->record->canBePrintedDirectly()),
+                ->visible(fn (): bool => $this->record->canBePrintedDirectly()
+                    && app(ControlledDocumentAccessService::class)->canView(Auth::user(), $this->record)),
+            Action::make('managePdfAccess')
+                ->label('Manage PDF Access')
+                ->icon(Heroicon::Users)
+                ->color('gray')
+                ->schema([
+                    Repeater::make('grants')
+                        ->label('Shared With')
+                        ->helperText('When this list is empty, normal role permissions apply. Once users are added, only active grants, document owners, and access managers can use the controlled viewer.')
+                        ->schema([
+                            Select::make('user_id')
+                                ->label('User')
+                                ->options(fn (): array => User::query()->orderBy('name')->pluck('name', 'id')->all())
+                                ->searchable()
+                                ->disableOptionsWhenSelectedInSiblingRepeaterItems()
+                                ->required(),
+                            Toggle::make('can_view')->label('View')->default(true),
+                            Toggle::make('can_print')->label('Print'),
+                            Toggle::make('can_download')->label('Download'),
+                            DateTimePicker::make('expires_at')->label('Expires At')->seconds(false),
+                        ])
+                        ->columns(5)
+                        ->defaultItems(0),
+                ])
+                ->fillForm(fn (): array => [
+                    'grants' => $this->record->accessGrants()
+                        ->get(['user_id', 'can_view', 'can_print', 'can_download', 'expires_at'])
+                        ->map(fn ($grant): array => $grant->toArray())
+                        ->all(),
+                ])
+                ->action(function (array $data): void {
+                    DB::transaction(function () use ($data): void {
+                        $grants = collect($data['grants'] ?? []);
+                        $userIds = $grants->pluck('user_id')->filter()->map(fn ($id): int => (int) $id);
+
+                        $this->record->accessGrants()->whereNotIn('user_id', $userIds)->delete();
+
+                        foreach ($grants as $grant) {
+                            $this->record->accessGrants()->updateOrCreate(
+                                ['user_id' => (int) $grant['user_id']],
+                                [
+                                    'can_view' => (bool) ($grant['can_view'] ?? false),
+                                    'can_print' => (bool) ($grant['can_print'] ?? false),
+                                    'can_download' => (bool) ($grant['can_download'] ?? false),
+                                    'expires_at' => $grant['expires_at'] ?? null,
+                                    'granted_by' => Auth::id(),
+                                ],
+                            );
+                        }
+                    });
+
+                    app(AuditLogService::class)->log(
+                        action: SopAuditLog::ACTION_PDF_ACCESS_UPDATED,
+                        newValues: [
+                            'grants' => collect($data['grants'] ?? [])->map(fn (array $grant): array => [
+                                'user_id' => (int) $grant['user_id'],
+                                'can_view' => (bool) ($grant['can_view'] ?? false),
+                                'can_print' => (bool) ($grant['can_print'] ?? false),
+                                'can_download' => (bool) ($grant['can_download'] ?? false),
+                                'expires_at' => $grant['expires_at'] ?? null,
+                            ])->all(),
+                        ],
+                        document: $this->record,
+                    );
+                })
+                ->visible(fn (): bool => app(ControlledDocumentAccessService::class)->canManage(Auth::user(), $this->record)),
             EditAction::make()
                 ->visible(fn (): bool => Auth::user()?->can('update', $this->record) ?? false),
         ];

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\ChangeControls\Tables;
 
 use App\Domain\QMS\Enums\ChangeControlStatus;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
@@ -46,8 +47,10 @@ final class ChangeControlsTable
             ])
             ->defaultSort('created_at', 'desc')
             ->recordActions([
-                ViewAction::make(),
-                EditAction::make(),
+                ActionGroup::make([
+                    ViewAction::make(),
+                    EditAction::make(),
+                ])->icon('heroicon-o-ellipsis-vertical'),
             ]);
     }
 }

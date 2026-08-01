@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\KnowledgeGuides\Tables;
 
 use App\Filament\Resources\KnowledgeGuides\KnowledgeGuideResource;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -46,8 +47,10 @@ class KnowledgeGuidesTable
                     ->options(fn (): array => KnowledgeGuideResource::enabledModuleOptions()),
             ])
             ->recordActions([
-                ViewAction::make(),
-                EditAction::make(),
+                ActionGroup::make([
+                    ViewAction::make(),
+                    EditAction::make(),
+                ])->icon('heroicon-o-ellipsis-vertical'),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

@@ -18,6 +18,7 @@ use App\Filament\Support\TemplateVariableFieldBuilder;
 use App\Models\ControlledDocument;
 use App\Models\DocumentTemplateVersion;
 use App\Models\TemplateStatus;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
@@ -163,8 +164,10 @@ class LogDocumentResource extends Resource
                 SelectFilter::make('document_type_id')->relationship('documentType', 'name')->label('Type'),
             ])
             ->recordActions([
-                ViewAction::make(),
-                EditAction::make(),
+                ActionGroup::make([
+                    ViewAction::make(),
+                    EditAction::make(),
+                ])->icon('heroicon-o-ellipsis-vertical'),
             ]);
     }
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Investigations\Tables;
 
 use App\Domain\QMS\Enums\InvestigationStatus;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
@@ -26,6 +27,6 @@ final class InvestigationsTable
             ])
             ->filters([SelectFilter::make('status')->options(InvestigationStatus::class)])
             ->defaultSort('created_at', 'desc')
-            ->recordActions([ViewAction::make(), EditAction::make()]);
+            ->recordActions([ActionGroup::make([ViewAction::make(), EditAction::make()])->icon('heroicon-o-ellipsis-vertical')]);
     }
 }

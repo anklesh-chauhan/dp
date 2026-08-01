@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Data\ControlledDocumentData;
 use App\Domain\DMS\Actions\CreateDocumentFromTemplateAction;
+use App\Domain\DMS\Contracts\ControlledDocumentPdfRenderer;
 use App\Domain\DMS\Services\VariableResolverService;
 use App\Filament\Resources\Organizations\OrganizationResource;
 use App\Filament\Resources\Organizations\Pages\CreateOrganization;
@@ -18,6 +19,7 @@ use App\Models\Organization;
 use App\Models\TemplateStatus;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
@@ -33,6 +35,8 @@ beforeEach(function (): void {
         'Create:Organization',
         'Update:Organization',
         'View:ControlledDocument',
+        'ViewPdf:ControlledDocument',
+        'PrintPdf:ControlledDocument',
     ] as $permission) {
         Permission::findOrCreate($permission, 'web');
     }
@@ -44,6 +48,8 @@ beforeEach(function (): void {
         'Create:Organization',
         'Update:Organization',
         'View:ControlledDocument',
+        'ViewPdf:ControlledDocument',
+        'PrintPdf:ControlledDocument',
     ]);
     $this->actingAs($this->user);
 });
@@ -89,6 +95,7 @@ it('enforces one organization profile per deployment', function (): void {
 });
 
 it('renders documents from their immutable organization snapshot', function (): void {
+    Storage::fake('local');
     $organization = Organization::factory()->create([
         'legal_name' => 'Snapshot Pharma Limited',
         'display_name' => 'Snapshot Pharma',
@@ -127,17 +134,30 @@ it('renders documents from their immutable organization snapshot', function (): 
         'address_line_1' => 'New Address',
     ]);
 
+    $renderer = Mockery::mock(ControlledDocumentPdfRenderer::class);
+    $renderer->shouldReceive('render')
+        ->once()
+        ->with(
+            Mockery::on(fn (ControlledDocument $renderedDocument): bool => $renderedDocument->is($document)),
+            Mockery::any(),
+            null,
+            Mockery::on(fn (array $identity): bool => $identity['legal_name'] === 'Snapshot Pharma Limited'
+                && $identity['address_line_1'] === 'Original Registered Address'
+                && $identity['registration_number'] === 'REG-ORIGINAL'
+                && $identity['document_header'] === 'Controlled quality document'
+                && $identity['document_footer'] === 'Confidential'),
+        )
+        ->andReturn('%PDF-1.4 snapshot-organization');
+    app()->instance(ControlledDocumentPdfRenderer::class, $renderer);
+
     $this->get(route('controlled-documents.print', $document))
         ->assertOk()
-        ->assertSee('Snapshot Pharma Limited')
-        ->assertSee('Original Registered Address')
-        ->assertSee('REG-ORIGINAL')
-        ->assertSee('Controlled quality document')
-        ->assertSee('Confidential')
-        ->assertDontSee('Renamed Pharma Limited');
+        ->assertStreamed()
+        ->assertHeader('content-type', 'application/pdf');
 });
 
 it('falls back to the linked organization when an older document has no snapshot', function (): void {
+    Storage::fake('local');
     $organization = Organization::factory()->create([
         'legal_name' => 'Legacy Document Pharma Limited',
         'registration_number' => 'REG-LEGACY',
@@ -167,11 +187,24 @@ it('falls back to the linked organization when an older document has no snapshot
         'document_status_id' => $approvedStatus,
     ]);
 
+    $renderer = Mockery::mock(ControlledDocumentPdfRenderer::class);
+    $renderer->shouldReceive('render')
+        ->once()
+        ->with(
+            Mockery::on(fn (ControlledDocument $renderedDocument): bool => $renderedDocument->is($document)),
+            Mockery::any(),
+            null,
+            Mockery::on(fn (array $identity): bool => $identity['legal_name'] === 'Legacy Document Pharma Limited'
+                && $identity['registration_number'] === 'REG-LEGACY'
+                && $identity['logo_path'] === 'organization-logos/legacy-logo.png'),
+        )
+        ->andReturn('%PDF-1.4 linked-organization');
+    app()->instance(ControlledDocumentPdfRenderer::class, $renderer);
+
     $this->get(route('controlled-documents.print', $document))
         ->assertOk()
-        ->assertSee('Legacy Document Pharma Limited')
-        ->assertSee('REG-LEGACY')
-        ->assertSee('/storage/organization-logos/legacy-logo.png', escape: false);
+        ->assertStreamed()
+        ->assertHeader('content-type', 'application/pdf');
 });
 
 it('resolves organization placeholders without duplicating details in every template', function (): void {
