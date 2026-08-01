@@ -13,6 +13,8 @@ use Spatie\LaravelPdf\Facades\Pdf;
 
 class GotenbergControlledDocumentPdfRenderer implements ControlledDocumentPdfRenderer
 {
+    private const float HEADER_TEMPLATE_INSET_MM = 5;
+
     public function render(
         ControlledDocument $document,
         ReportTemplate $reportTemplate,
@@ -23,7 +25,7 @@ class GotenbergControlledDocumentPdfRenderer implements ControlledDocumentPdfRen
         $pageSettings = $reportTemplate->printPageSettings();
         $headerZones = $reportTemplate->printHeaderZones();
         $footerZones = $reportTemplate->printFooterZones();
-        $topMargin = (float) $pageSettings['margin_top_mm'] + ($headerZones['repeat_every_page'] ? $this->estimatedHeaderHeight($headerZones, (float) $pageSettings['font_size']) + (float) $headerZones['content_gap_mm'] : 0);
+        $topMargin = (float) $pageSettings['margin_top_mm'] + ($headerZones['repeat_every_page'] ? self::HEADER_TEMPLATE_INSET_MM + $this->estimatedHeaderHeight($headerZones, (float) $pageSettings['font_size']) + (float) $headerZones['content_gap_mm'] : 0);
         $bottomMargin = (float) $pageSettings['margin_bottom_mm'] + ($footerZones['repeat_every_page'] ? $this->estimatedFooterHeight($footerZones, (float) $pageSettings['font_size']) + (float) $footerZones['content_gap_mm'] : 0);
         $data = [
             'document' => $document,

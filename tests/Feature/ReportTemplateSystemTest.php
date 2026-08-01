@@ -312,11 +312,14 @@ it('reserves generated pdf margins and shares configured typography with headers
         ->and($headerView)
         ->toContain("printPageSettings()['font_family']")
         ->toContain("printPageSettings()['font_size']")
+        ->toContain("printPageSettings()['margin_top_mm']")
+        ->toContain('pdf-header-offset')
         ->and($footerView)
         ->toContain("printPageSettings()['font_family']")
         ->toContain("printPageSettings()['font_size']")
         ->and($renderer)
         ->toContain("'serverPdfMargins'")
+        ->toContain('HEADER_TEMPLATE_INSET_MM')
         ->toContain('estimatedHeaderHeight')
         ->toContain('estimatedFooterHeight');
 });
