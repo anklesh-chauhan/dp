@@ -19,11 +19,11 @@ class VariableDataTypeResource extends LookupResource
 
     protected static ?string $cluster = SettingsCluster::class;
 
-    protected static string|UnitEnum|null $navigationGroup = 'DMS Configuration';
+    protected static string|UnitEnum|null $navigationGroup = 'System & Security Configuration';
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::CheckCircle;
 
-    protected static ?int $navigationSort = 1010;
+    protected static ?int $navigationSort = 2010;
 
     public static function getPages(): array
     {

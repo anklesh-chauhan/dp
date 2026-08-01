@@ -17,7 +17,7 @@ class SettingsCluster extends Cluster
 
     protected static string|UnitEnum|null $navigationGroup = 'DMS · Settings';
 
-    protected static ?int $navigationSort = 1000;
+    protected static ?int $navigationSort = 10000;
 
     public static function canAccess(): bool
     {

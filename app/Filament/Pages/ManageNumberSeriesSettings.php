@@ -26,9 +26,9 @@ class ManageNumberSeriesSettings extends Page implements HasForms
 
     protected static ?string $cluster = SettingsCluster::class;
 
-    protected static string|UnitEnum|null $navigationGroup = 'DMS Configuration';
+    protected static string|UnitEnum|null $navigationGroup = 'Numbering & Identification';
 
-    protected static ?int $navigationSort = 1008;
+    protected static ?int $navigationSort = 2008;
 
     protected static ?string $navigationLabel = 'Number Series Defaults';
 

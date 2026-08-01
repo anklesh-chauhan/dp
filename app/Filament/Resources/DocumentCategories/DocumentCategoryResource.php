@@ -26,9 +26,9 @@ class DocumentCategoryResource extends Resource
 
     protected static ?string $cluster = SettingsCluster::class;
 
-    protected static string|UnitEnum|null $navigationGroup = 'DMS Configuration';
+    protected static string|UnitEnum|null $navigationGroup = 'Document & Template Management';
 
-    protected static ?int $navigationSort = 1004;
+    protected static ?int $navigationSort = 2004;
 
     public static function form(Schema $schema): Schema
     {

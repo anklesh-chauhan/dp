@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\PdfAccessPolicies;
 
+use App\Filament\Clusters\Settings\SettingsCluster;
 use App\Filament\Resources\PdfAccessPolicies\Pages\CreatePdfAccessPolicy;
 use App\Filament\Resources\PdfAccessPolicies\Pages\EditPdfAccessPolicy;
 use App\Filament\Resources\PdfAccessPolicies\Pages\ListPdfAccessPolicies;
@@ -33,11 +34,13 @@ class PdfAccessPolicyResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::ShieldCheck;
 
-    protected static string|UnitEnum|null $navigationGroup = 'DMS Configuration';
+    protected static ?string $cluster = SettingsCluster::class;
+
+    protected static string|UnitEnum|null $navigationGroup = 'System & Security Configuration';
 
     protected static ?string $navigationLabel = 'PDF Access Policies';
 
-    protected static ?int $navigationSort = 1010;
+    protected static ?int $navigationSort = 2010;
 
     public static function form(Schema $schema): Schema
     {

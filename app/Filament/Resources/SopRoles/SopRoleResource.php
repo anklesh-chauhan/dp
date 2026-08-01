@@ -19,11 +19,11 @@ class SopRoleResource extends LookupResource
 
     protected static ?string $cluster = SettingsCluster::class;
 
-    protected static string|UnitEnum|null $navigationGroup = 'DMS Configuration';
+    protected static string|UnitEnum|null $navigationGroup = 'Issuance & Workflow Approvals';
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::UserGroup;
 
-    protected static ?int $navigationSort = 1008;
+    protected static ?int $navigationSort = 2008;
 
     public static function getPages(): array
     {

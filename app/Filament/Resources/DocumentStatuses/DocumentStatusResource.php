@@ -19,11 +19,11 @@ class DocumentStatusResource extends LookupResource
 
     protected static ?string $cluster = SettingsCluster::class;
 
-    protected static string|UnitEnum|null $navigationGroup = 'DMS Configuration';
+    protected static string|UnitEnum|null $navigationGroup = 'Document & Template Management';
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::DocumentText;
 
-    protected static ?int $navigationSort = 1005;
+    protected static ?int $navigationSort = 2005;
 
     public static function getPages(): array
     {

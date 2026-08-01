@@ -19,9 +19,9 @@ class ApprovalStepTypeResource extends LookupResource
 
     protected static ?string $cluster = SettingsCluster::class;
 
-    protected static string|UnitEnum|null $navigationGroup = 'DMS Configuration';
+    protected static string|UnitEnum|null $navigationGroup = 'Issuance & Workflow Approvals';
 
-    protected static ?int $navigationSort = 1002;
+    protected static ?int $navigationSort = 2002;
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::CheckCircle;
 

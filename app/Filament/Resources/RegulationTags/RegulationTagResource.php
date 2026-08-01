@@ -32,9 +32,9 @@ class RegulationTagResource extends Resource
 
     protected static ?string $cluster = SettingsCluster::class;
 
-    protected static string|UnitEnum|null $navigationGroup = 'DMS Configuration';
+    protected static string|UnitEnum|null $navigationGroup = 'System & Security Configuration';
 
-    protected static ?int $navigationSort = 1009;
+    protected static ?int $navigationSort = 2009;
 
     public static function form(Schema $schema): Schema
     {

@@ -24,9 +24,9 @@ class NumberSeriesResource extends Resource
 
     protected static ?string $cluster = SettingsCluster::class;
 
-    protected static string|UnitEnum|null $navigationGroup = 'DMS Configuration';
+    protected static string|UnitEnum|null $navigationGroup = 'Numbering & Identification';
 
-    protected static ?int $navigationSort = 1007;
+    protected static ?int $navigationSort = 2007;
 
     protected static ?string $navigationLabel = 'Number Series';
 

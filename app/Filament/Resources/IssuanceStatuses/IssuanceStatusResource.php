@@ -19,11 +19,11 @@ class IssuanceStatusResource extends LookupResource
 
     protected static ?string $cluster = SettingsCluster::class;
 
-    protected static string|UnitEnum|null $navigationGroup = 'DMS Configuration';
+    protected static string|UnitEnum|null $navigationGroup = 'Issuance & Workflow Approvals';
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::ArrowPath;
 
-    protected static ?int $navigationSort = 1007;
+    protected static ?int $navigationSort = 2007;
 
     public static function getPages(): array
     {

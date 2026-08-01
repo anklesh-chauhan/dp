@@ -29,9 +29,9 @@ class DocumentTypeResource extends LookupResource
 
     protected static ?string $cluster = SettingsCluster::class;
 
-    protected static string|UnitEnum|null $navigationGroup = 'DMS Configuration';
+    protected static string|UnitEnum|null $navigationGroup = 'Document & Template Management';
 
-    protected static ?int $navigationSort = 1006;
+    protected static ?int $navigationSort = 2006;
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::DocumentText;
 

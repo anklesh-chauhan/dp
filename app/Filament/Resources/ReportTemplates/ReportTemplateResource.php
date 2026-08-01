@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\ReportTemplates;
 
+use App\Filament\Clusters\Settings\SettingsCluster;
 use App\Filament\Resources\ReportTemplates\Pages\CreateReportTemplate;
 use App\Filament\Resources\ReportTemplates\Pages\EditReportTemplate;
 use App\Filament\Resources\ReportTemplates\Pages\ListReportTemplates;
@@ -23,13 +24,15 @@ final class ReportTemplateResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
-    protected static string|UnitEnum|null $navigationGroup = 'DMS · Configuration';
+    protected static ?string $cluster = SettingsCluster::class;
+
+    protected static string|UnitEnum|null $navigationGroup = 'Document & Template Management';
 
     protected static ?string $navigationLabel = 'Print & Report Templates';
 
     protected static ?string $modelLabel = 'print and report template';
 
-    protected static ?int $navigationSort = 40;
+    protected static ?int $navigationSort = 2040;
 
     public static function form(Schema $schema): Schema
     {
