@@ -20,27 +20,27 @@ final class CapaForm
         return $schema->components([
             Section::make('Corrective and Preventive Action')
                 ->schema([
-                    TextInput::make('title')->required()->maxLength(255)->columnSpanFull(),
+                    TextInput::make('title')->required()->maxLength(255)->live(onBlur: true)->columnSpanFull(),
                     Grid::make(3)->schema([
                         Select::make('deviation_id')
                             ->relationship('deviation', 'deviation_number')
                             ->searchable()
                             ->preload()
-                            ->required(),
+                            ->required()->live(),
                         Select::make('investigation_id')
                             ->relationship('investigation', 'investigation_number')
                             ->searchable()
-                            ->preload(),
-                        Select::make('type')->options(CapaType::class)->required(),
+                            ->preload()->live(),
+                        Select::make('type')->options(CapaType::class)->required()->live(),
                         Select::make('owner_id')
                             ->relationship('owner', 'name')
                             ->searchable()
-                            ->preload(),
-                        DatePicker::make('due_at')->required(),
-                        DatePicker::make('effectiveness_due_at'),
+                            ->preload()->live(),
+                        DatePicker::make('due_at')->required()->live(),
+                        DatePicker::make('effectiveness_due_at')->live(),
                     ]),
-                    Textarea::make('action_plan')->required()->rows(6)->columnSpanFull(),
-                    Textarea::make('effectiveness_result')->rows(5)->columnSpanFull(),
+                    Textarea::make('action_plan')->required()->rows(6)->live(onBlur: true)->columnSpanFull(),
+                    Textarea::make('effectiveness_result')->rows(5)->live(onBlur: true)->columnSpanFull(),
                 ])
                 ->columnSpanFull(),
         ]);

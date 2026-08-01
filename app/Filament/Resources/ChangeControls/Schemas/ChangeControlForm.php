@@ -20,9 +20,9 @@ final class ChangeControlForm
             ->components([
                 Section::make('Proposed Change')
                     ->schema([
-                        TextInput::make('title')->required()->maxLength(255)->columnSpanFull(),
-                        Textarea::make('description')->required()->rows(5)->columnSpanFull(),
-                        Textarea::make('rationale')->required()->rows(4)->columnSpanFull(),
+                        TextInput::make('title')->required()->maxLength(255)->live(onBlur: true)->columnSpanFull(),
+                        Textarea::make('description')->required()->rows(5)->live(onBlur: true)->columnSpanFull(),
+                        Textarea::make('rationale')->required()->rows(4)->live(onBlur: true)->columnSpanFull(),
                     ])
                     ->columnSpanFull(),
                 Section::make('Responsibility and Planning')
@@ -32,13 +32,13 @@ final class ChangeControlForm
                                 ->relationship('department', 'name')
                                 ->searchable()
                                 ->preload()
-                                ->required(),
+                                ->required()->live(),
                             Select::make('owner_id')
                                 ->relationship('owner', 'name')
                                 ->searchable()
-                                ->preload(),
-                            DatePicker::make('implementation_due_at'),
-                            DatePicker::make('effectiveness_due_at'),
+                                ->preload()->live(),
+                            DatePicker::make('implementation_due_at')->live(),
+                            DatePicker::make('effectiveness_due_at')->live(),
                         ]),
                     ])
                     ->columnSpanFull(),

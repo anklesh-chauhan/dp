@@ -9,7 +9,9 @@ use App\Models\DocumentTemplateVariable;
 use App\Models\DocumentTemplateVersion;
 use App\Models\TemplateStatus;
 use App\Models\User;
+use App\Models\VariableDataType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Gate;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\get;
@@ -20,9 +22,16 @@ it('renders the latest draft template version in the draft preview', function ()
     $user = User::factory()->create();
     actingAs($user);
 
-    $draftStatus = TemplateStatus::factory()->create([
+    Gate::before(static fn (): bool => true);
+
+    $draftStatus = TemplateStatus::query()->create([
         'name' => 'Draft',
         'code' => TemplateStatus::DRAFT,
+    ]);
+    VariableDataType::query()->create([
+        'code' => VariableDataType::TEXT,
+        'name' => 'Text',
+        'sort_order' => 1,
     ]);
     $template = DocumentTemplate::factory()->create([
         'created_by' => $user->getKey(),

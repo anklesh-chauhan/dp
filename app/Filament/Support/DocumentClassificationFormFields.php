@@ -61,6 +61,17 @@ final class DocumentClassificationFormFields
                 ->searchable()
                 ->preload()
                 ->required()
+                ->afterStateHydrated(function (Select $component, ?DocumentTemplate $record): void {
+                    if ($record === null || filled($component->getState())) {
+                        return;
+                    }
+
+                    $component->state(
+                        $record->regulationTags()
+                            ->pluck('regulation_tags.id')
+                            ->all(),
+                    );
+                })
                 ->dehydrated(fn ($livewire): bool => $livewire instanceof CreateDocumentTemplate)
                 ->helperText('Choose the regulatory frameworks this template must comply with.')
                 ->columnSpanFull(),

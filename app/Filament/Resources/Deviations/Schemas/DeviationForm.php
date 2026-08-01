@@ -21,15 +21,15 @@ final class DeviationForm
         return $schema->components([
             Section::make('Quality Event')
                 ->schema([
-                    TextInput::make('title')->required()->maxLength(255)->columnSpanFull(),
-                    Textarea::make('description')->required()->rows(5)->columnSpanFull(),
-                    Textarea::make('immediate_actions')->rows(4)->columnSpanFull(),
+                    TextInput::make('title')->required()->maxLength(255)->live(onBlur: true)->columnSpanFull(),
+                    Textarea::make('description')->required()->rows(5)->live(onBlur: true)->columnSpanFull(),
+                    Textarea::make('immediate_actions')->rows(4)->live(onBlur: true)->columnSpanFull(),
                     Grid::make(3)->schema([
                         Select::make('severity')
                             ->options(DeviationSeverity::class)
-                            ->required(),
-                        DateTimePicker::make('occurred_at')->required(),
-                        DateTimePicker::make('discovered_at')->required(),
+                            ->required()->live(),
+                        DateTimePicker::make('occurred_at')->required()->live(),
+                        DateTimePicker::make('discovered_at')->required()->live(),
                     ]),
                 ])
                 ->columnSpanFull(),
@@ -40,12 +40,12 @@ final class DeviationForm
                             ->relationship('department', 'name')
                             ->searchable()
                             ->preload()
-                            ->required(),
+                            ->required()->live(),
                         Select::make('owner_id')
                             ->relationship('owner', 'name')
                             ->searchable()
-                            ->preload(),
-                        DatePicker::make('investigation_due_at'),
+                            ->preload()->live(),
+                        DatePicker::make('investigation_due_at')->live(),
                     ]),
                 ])
                 ->columnSpanFull(),

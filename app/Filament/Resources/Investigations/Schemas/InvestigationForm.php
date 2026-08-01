@@ -23,16 +23,16 @@ final class InvestigationForm
                             ->relationship('deviation', 'deviation_number')
                             ->searchable()
                             ->preload()
-                            ->required(),
+                            ->required()->live(),
                         Select::make('lead_id')
                             ->relationship('lead', 'name')
                             ->searchable()
-                            ->preload(),
-                        DatePicker::make('due_at'),
+                            ->preload()->live(),
+                        DatePicker::make('due_at')->live(),
                     ]),
-                    Textarea::make('methodology')->required()->rows(4)->columnSpanFull(),
-                    Textarea::make('root_cause')->rows(5)->columnSpanFull(),
-                    Textarea::make('conclusion')->rows(5)->columnSpanFull(),
+                    Textarea::make('methodology')->required()->rows(4)->live(onBlur: true)->columnSpanFull(),
+                    Textarea::make('root_cause')->rows(5)->live(onBlur: true)->columnSpanFull(),
+                    Textarea::make('conclusion')->rows(5)->live(onBlur: true)->columnSpanFull(),
                 ])
                 ->columnSpanFull(),
         ]);

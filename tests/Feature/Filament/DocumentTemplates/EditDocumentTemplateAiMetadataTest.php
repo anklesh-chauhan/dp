@@ -58,6 +58,22 @@ it('can mount the edit sop template page', function (): void {
         ]);
 });
 
+it('loads the template regulation tags in the edit form', function (): void {
+    $template = DocumentTemplate::factory()->create();
+    $tag = RegulationTag::query()->create([
+        'name' => 'Good Manufacturing Practice',
+        'code' => 'GMP-EDIT',
+    ]);
+
+    $template->regulationTags()->attach($tag);
+
+    Livewire::test(EditDocumentTemplate::class, [
+        'record' => $template->getKey(),
+    ])->assertFormSet([
+        'regulationTags' => [$tag->getKey()],
+    ]);
+});
+
 it('creates an ai task using the currently edited form metadata', function (): void {
     Bus::fake();
 

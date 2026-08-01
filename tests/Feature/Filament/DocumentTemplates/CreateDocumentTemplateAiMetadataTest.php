@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Filament\Resources\DocumentTemplates\Pages\CreateDocumentTemplate;
 use App\Filament\Support\DocumentClassificationFormFields;
 use App\Jobs\ProcessDocumentTemplateMetadataAiJob;
+use App\Jobs\GenerateRegulatedTemplateJob;
 use App\Models\AiTask;
 use App\Models\Department;
 use App\Models\DocumentCategory;
@@ -103,6 +104,64 @@ it('persists a regulation tag that is not assigned to the selected document type
 
     expect($template->regulationTags()->pluck('regulation_tags.id')->all())
         ->toBe([$regulationTag->getKey()]);
+});
+
+it('does not generate the template with ai when using the regular create action', function (): void {
+    $department = Department::factory()->create();
+    $category = DocumentCategory::factory()->create();
+    $documentType = DocumentType::factory()->create();
+    $regulationTag = RegulationTag::query()->create([
+        'name' => 'Good Manufacturing Practice',
+        'code' => 'GMP-MANUAL',
+    ]);
+
+    Livewire::test(CreateDocumentTemplate::class)
+        ->fillForm([
+            'name' => 'Manual Template',
+            'code' => 'TPL-MANUAL',
+            'department_id' => $department->getKey(),
+            'category_id' => $category->getKey(),
+            'document_type_id' => $documentType->getKey(),
+            'regulationTags' => [$regulationTag->getKey()],
+            'template_status_id' => TemplateStatus::idFor(TemplateStatus::DRAFT),
+            'current_version' => 0,
+        ])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    $template = DocumentTemplate::query()->where('code', 'TPL-MANUAL')->firstOrFail();
+
+    expect($template->generation_status)->toBe('pending');
+    Bus::assertNotDispatched(GenerateRegulatedTemplateJob::class);
+});
+
+it('generates the template with ai only when using the ai create action', function (): void {
+    $department = Department::factory()->create();
+    $category = DocumentCategory::factory()->create();
+    $documentType = DocumentType::factory()->create();
+    $regulationTag = RegulationTag::query()->create([
+        'name' => 'Good Manufacturing Practice',
+        'code' => 'GMP-AI',
+    ]);
+
+    Livewire::test(CreateDocumentTemplate::class)
+        ->fillForm([
+            'name' => 'AI Template',
+            'code' => 'TPL-AI',
+            'department_id' => $department->getKey(),
+            'category_id' => $category->getKey(),
+            'document_type_id' => $documentType->getKey(),
+            'regulationTags' => [$regulationTag->getKey()],
+            'template_status_id' => TemplateStatus::idFor(TemplateStatus::DRAFT),
+            'current_version' => 0,
+        ])
+        ->call('createWithAi')
+        ->assertHasNoFormErrors();
+
+    $template = DocumentTemplate::query()->where('code', 'TPL-AI')->firstOrFail();
+
+    expect($template->generation_status)->toBe(DocumentTemplate::GENERATION_STATUS_PROCESSING);
+    Bus::assertDispatched(GenerateRegulatedTemplateJob::class);
 });
 
 it('creates an ai task and dispatches the metadata processing job', function (): void {

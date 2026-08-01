@@ -10,6 +10,7 @@ use App\Filament\Resources\DocumentTemplates\DocumentTemplateResource;
 use App\Jobs\GenerateRegulatedTemplateJob;
 use App\Models\TemplateStatus;
 use App\Support\Modules\ModuleManager;
+use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Auth;
@@ -19,6 +20,30 @@ class CreateDocumentTemplate extends CreateRecord
     use ProcessesDocumentTemplateMetadataAi;
 
     protected static string $resource = DocumentTemplateResource::class;
+
+    public bool $createWithAi = false;
+
+    /**
+     * @return array<int, Action>
+     */
+    protected function getFormActions(): array
+    {
+        return [
+            parent::getCreateFormAction(),
+            Action::make('createWithAi')
+                ->label('Create with AI')
+                ->icon('heroicon-m-sparkles')
+                ->color('gray')
+                ->action('createWithAi'),
+            parent::getCancelFormAction(),
+        ];
+    }
+
+    public function createWithAi(): void
+    {
+        $this->createWithAi = true;
+        $this->create();
+    }
 
     protected function getRedirectUrl(): string
     {
@@ -66,7 +91,10 @@ class CreateDocumentTemplate extends CreateRecord
 
         $template->load('regulationTags');
 
-        if (! app(ModuleManager::class)->enabled(ProductModule::AI)) {
+        if (
+            ! $this->createWithAi
+            || ! app(ModuleManager::class)->enabled(ProductModule::AI)
+        ) {
             Notification::make()
                 ->title('Template created')
                 ->body('Add a draft version, sections, and variables to complete the template.')
