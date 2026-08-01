@@ -324,6 +324,25 @@ it('reserves generated pdf margins and shares configured typography with headers
         ->toContain('estimatedFooterHeight');
 });
 
+it('uses the generated pdf measurements and shared partials in the template preview', function (): void {
+    $preview = file_get_contents(resource_path('views/reports/template-preview.blade.php'));
+    $header = file_get_contents(resource_path('views/reports/partials/print-header.blade.php'));
+    $footer = file_get_contents(resource_path('views/reports/partials/print-footer.blade.php'));
+
+    expect($preview)
+        ->toContain("\$pageSettings['margin_top_mm']")
+        ->toContain("\$headerZones['content_gap_mm']")
+        ->toContain("\$footerZones['content_gap_mm']")
+        ->toContain("@include('reports.partials.print-header', ['preview' => true])")
+        ->toContain("@include('reports.partials.print-footer', ['preview' => true])")
+        ->toContain('height: {{ $pageHeight }}mm')
+        ->toContain('width: {{ $pageWidth }}mm')
+        ->and($header)
+        ->toContain("'preview' => \$preview ?? false")
+        ->and($footer)
+        ->toContain("'preview' => \$preview ?? false");
+});
+
 it('repeats configured headers in the reserved print margin', function (): void {
     $view = file_get_contents(resource_path('views/controlled-documents/print.blade.php'));
 
