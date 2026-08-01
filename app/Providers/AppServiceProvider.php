@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Domain\DMS\Contracts\ControlledDocumentPdfRenderer;
+use App\Domain\DMS\Services\GotenbergControlledDocumentPdfRenderer;
 use App\Domain\DMS\Services\SopApprovalDecisionAuthorizationAdapter;
 use App\Domain\DMS\Services\SopApprovalDecisionOutcomeAdapter;
 use App\Domain\DMS\Services\SopApprovalDecisionPersistenceAdapter;
@@ -55,6 +57,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->bind(ControlledDocumentPdfRenderer::class, GotenbergControlledDocumentPdfRenderer::class);
         $this->app->bind(ApprovalDecisionAuthorization::class, SopApprovalDecisionAuthorizationAdapter::class);
         $this->app->bind(ApprovalDecisionOutcome::class, SopApprovalDecisionOutcomeAdapter::class);
         $this->app->bind(ApprovalDecisionPersistence::class, SopApprovalDecisionPersistenceAdapter::class);

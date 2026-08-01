@@ -6,6 +6,7 @@
     'organization' => [],
     'issuance' => null,
     'preview' => false,
+    'serverPdf' => false,
 ])
 
 <div class="print-zone print-zone-{{ $alignment }} print-zone-vertical-{{ $verticalAlignment }}">
@@ -15,10 +16,10 @@
             @case('logo')
                 @if ($preview)
                     <div class="sample-logo">LOGO</div>
-                @elseif (filled($organization['logo_path'] ?? null))
+                @elseif (filled($organization['logo_data_uri'] ?? null) || filled($organization['logo_path'] ?? null))
                     <img
                         class="organization-logo"
-                        src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($organization['logo_path']) }}"
+                        src="{{ $organization['logo_data_uri'] ?? \Illuminate\Support\Facades\Storage::disk('public')->url($organization['logo_path']) }}"
                         alt="{{ $organization['legal_name'] ?? 'Organization' }} logo"
                     >
                 @endif
@@ -76,7 +77,11 @@
                 <strong>{{ $issuance || $preview ? 'CONTROLLED COPY' : 'UNCONTROLLED WHEN PRINTED' }}</strong>
                 @break
             @case('page_number')
-                <span class="page-number">{{ ($item['show_label'] ?? true) ? $item['label'].': ' : '' }}Page 1 of 1 <small>(print preview shows the actual total)</small></span>
+                @if ($serverPdf)
+                    <span class="page-number">{{ ($item['show_label'] ?? true) ? $item['label'].': ' : '' }}Page @pageNumber of @totalPages</span>
+                @elseif ($preview)
+                    <span class="page-number">{{ ($item['show_label'] ?? true) ? $item['label'].': ' : '' }}Page 1 of 1</span>
+                @endif
                 @break
             @case('custom_text')
                 <span>{{ $item['custom_text'] }}</span>

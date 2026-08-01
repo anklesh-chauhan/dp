@@ -1,0 +1,6 @@
+services:
+  gotenberg:
+    image: gotenberg/gotenberg:8.34.0-chromium
+    restart: unless-stopped
+    ports:
+      - "3000:3000"

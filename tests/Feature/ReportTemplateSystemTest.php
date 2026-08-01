@@ -286,13 +286,39 @@ it('protects direct CSV validation summary exports with permission and QMS entit
     $this->actingAs($user)->get($url)->assertNotFound();
 });
 
-it('renders page counters in the printed page margin', function (): void {
+it('renders real page counters for browser previews and generated pdf artifacts', function (): void {
     $view = file_get_contents(resource_path('views/controlled-documents/print.blade.php'));
+    $zone = file_get_contents(resource_path('views/reports/partials/print-zone.blade.php'));
 
     expect($view)
         ->toContain('@bottom-right')
         ->toContain('counter(page)')
-        ->toContain('counter(pages)');
+        ->toContain('counter(pages)')
+        ->and($zone)
+        ->toContain('@pageNumber')
+        ->toContain('@totalPages')
+        ->not->toContain('print preview shows the actual total');
+});
+
+it('reserves generated pdf margins and shares configured typography with headers and footers', function (): void {
+    $documentView = file_get_contents(resource_path('views/controlled-documents/print.blade.php'));
+    $headerView = file_get_contents(resource_path('views/controlled-documents/pdf-header.blade.php'));
+    $footerView = file_get_contents(resource_path('views/controlled-documents/pdf-footer.blade.php'));
+    $renderer = file_get_contents(app_path('Domain/DMS/Services/GotenbergControlledDocumentPdfRenderer.php'));
+
+    expect($documentView)
+        ->toContain("serverPdfMargins['top']")
+        ->toContain('! ($serverPdf ?? false)')
+        ->and($headerView)
+        ->toContain("printPageSettings()['font_family']")
+        ->toContain("printPageSettings()['font_size']")
+        ->and($footerView)
+        ->toContain("printPageSettings()['font_family']")
+        ->toContain("printPageSettings()['font_size']")
+        ->and($renderer)
+        ->toContain("'serverPdfMargins'")
+        ->toContain('estimatedHeaderHeight')
+        ->toContain('estimatedFooterHeight');
 });
 
 it('repeats configured headers in the reserved print margin', function (): void {

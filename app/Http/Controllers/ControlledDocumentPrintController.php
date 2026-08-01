@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Domain\DMS\Services\ControlledDocumentPdfService;
 use App\Domain\Reporting\Enums\ReportFormat;
 use App\Domain\Reporting\Enums\ReportScope;
 use App\Domain\Reporting\Support\PrintLayoutRegistry;
@@ -14,15 +15,19 @@ use App\Models\DocumentIssuance;
 use App\Models\Organization;
 use App\Models\ReportTemplate;
 use App\Models\SopAuditLog;
-use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class ControlledDocumentPrintController extends Controller
 {
-    public function __construct(private readonly AuditLogService $auditLogService) {}
+    public function __construct(
+        private readonly AuditLogService $auditLogService,
+        private readonly ControlledDocumentPdfService $pdfService,
+    ) {}
 
-    public function __invoke(Request $request, ControlledDocument $controlledDocument): View
+    public function __invoke(Request $request, ControlledDocument $controlledDocument): StreamedResponse
     {
         $issuance = null;
 
@@ -86,6 +91,14 @@ class ControlledDocumentPrintController extends Controller
             'is_system' => true,
         ]);
 
+        $artifact = $this->pdfService->getOrGenerate(
+            document: $controlledDocument,
+            reportTemplate: $reportTemplate,
+            issuance: $issuance,
+            organization: $this->organizationIdentity($controlledDocument),
+            generatedBy: $request->user(),
+        );
+
         $this->auditLogService->log(
             action: SopAuditLog::ACTION_PRINTED,
             newValues: [
@@ -94,17 +107,21 @@ class ControlledDocumentPrintController extends Controller
                 'watermark_code' => $issuance?->watermark_code,
                 'report_template_id' => $reportTemplate->id,
                 'report_template_key' => $reportTemplate->layout_key,
+                'pdf_artifact_id' => $artifact->id,
+                'pdf_sha256' => $artifact->sha256,
             ],
             document: $controlledDocument,
         );
 
-        return view('controlled-documents.print', [
-            'document' => $controlledDocument,
-            'issuance' => $issuance,
-            'reportTemplate' => $reportTemplate,
-            'enabledFields' => $reportTemplate->enabledFieldKeys(),
-            'organization' => $this->organizationIdentity($controlledDocument),
-        ]);
+        return Storage::disk($artifact->disk)->response(
+            $artifact->path,
+            $artifact->filename,
+            [
+                'Content-Type' => $artifact->mime_type,
+                'Content-Disposition' => 'inline; filename="'.$artifact->filename.'"',
+                'X-Document-SHA256' => $artifact->sha256,
+            ],
+        );
     }
 
     /** @return array<string, mixed> */

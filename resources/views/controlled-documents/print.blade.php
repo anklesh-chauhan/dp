@@ -251,8 +251,12 @@
 
         @page {
             size: {{ $pageSettings['paper_size'] }} {{ $pageSettings['orientation'] }};
-            margin: {{ $pageSettings['margin_top_mm'] }}mm {{ $pageSettings['margin_right_mm'] }}mm {{ $pageSettings['margin_bottom_mm'] }}mm {{ $pageSettings['margin_left_mm'] }}mm;
-            @if ($pageNumberColumn)
+            @if (($serverPdf ?? false) && isset($serverPdfMargins))
+                margin: {{ $serverPdfMargins['top'] }}mm {{ $serverPdfMargins['right'] }}mm {{ $serverPdfMargins['bottom'] }}mm {{ $serverPdfMargins['left'] }}mm;
+            @else
+                margin: {{ $pageSettings['margin_top_mm'] }}mm {{ $pageSettings['margin_right_mm'] }}mm {{ $pageSettings['margin_bottom_mm'] }}mm {{ $pageSettings['margin_left_mm'] }}mm;
+            @endif
+            @if ($pageNumberColumn && ! ($serverPdf ?? false))
                 @switch($pageNumberColumn['alignment'])
                     @case('left')
                 @bottom-left {
@@ -352,15 +356,17 @@
     </style>
 </head>
 <body>
+    @unless ($serverPdf ?? false)
     <div class="toolbar">
         <button type="button" onclick="window.print()">Print / Save PDF</button>
     </div>
+    @endunless
 
     @php($headerZones = $configuredHeaderZones)
     @php($footerZones = $configuredFooterZones)
 
     <table class="print-document-frame">
-        @if ($headerZones['repeat_every_page'])
+        @if ($headerZones['repeat_every_page'] && ! ($serverPdf ?? false))
             <thead class="print-document-header">
                 <tr>
                     <td>@include('reports.partials.print-header')</td>
@@ -373,7 +379,7 @@
     <main class="page">
         @php($fieldOrder = collect($reportTemplate->fields)->pluck('key')->flip())
         @php($fieldConfig = collect($reportTemplate->fields)->keyBy('key'))
-        <div class="print-header-flow {{ $headerZones['repeat_every_page'] ? 'print-header-flow-hidden' : '' }}">
+        <div class="print-header-flow {{ ($serverPdf ?? false) || $headerZones['repeat_every_page'] ? 'print-header-flow-hidden' : '' }}">
             @include('reports.partials.print-header')
         </div>
 
@@ -515,14 +521,14 @@
             </footer>
         @endif
 
-        <div class="print-footer-flow {{ $footerZones['repeat_every_page'] ? 'print-footer-flow-hidden' : '' }}">
+        <div class="print-footer-flow {{ ($serverPdf ?? false) || $footerZones['repeat_every_page'] ? 'print-footer-flow-hidden' : '' }}">
             @include('reports.partials.print-footer')
         </div>
     </main>
                 </td>
             </tr>
         </tbody>
-        @if ($footerZones['repeat_every_page'])
+        @if ($footerZones['repeat_every_page'] && ! ($serverPdf ?? false))
             <tfoot class="print-document-footer">
                 <tr>
                     <td>@include('reports.partials.print-footer')</td>
