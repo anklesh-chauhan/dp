@@ -31,6 +31,7 @@ use Filament\Schemas\Components\Utilities\Set;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 
 class SectionRelationManager extends RelationManager
@@ -41,40 +42,48 @@ class SectionRelationManager extends RelationManager
 
     public function form(Schema $schema): Schema
     {
+        $aiEnabled = app(ModuleManager::class)->enabled(ProductModule::AI);
+
         return $schema->columns(1)->components([
 
-            Grid::make(2)->schema([
+            Grid::make(4)->schema([
                 Select::make('template_version_id')
-                    ->relationship('templateVersion', 'version')
+                    ->relationship(
+                        name: 'templateVersion',
+                        titleAttribute: 'version',
+                        modifyQueryUsing: fn (Builder $query): Builder => $query
+                            ->where('document_template_id', $this->getOwnerRecord()->getKey())
+                            ->orderByDesc('version'),
+                    )
                     ->required(),
-                TextInput::make('title')->required()->maxLength(255),
                 TextInput::make('section_order')->numeric()->required()->minValue(1),
                 TextInput::make('section_type')->default('rich_text')->required(),
-                Toggle::make('is_required')->default(true),
-                Actions::make([
-                    ActionGroup::make([
-                        Action::make('aiContentAssistant')
-                            ->label('Create content')
-                            ->action(function (Get $get, Set $set): void {
-                                $this->applyAiContent('generate', $get, $set);
-                            }),
-                        Action::make('polishContentWithAi')
-                            ->label('Polish and formalize')
-                            ->action(function (Get $get, Set $set): void {
-                                $this->applyAiContent('polish', $get, $set);
-                            }),
-                        Action::make('shortenContentWithAi')
-                            ->label('Shorten text')
-                            ->action(function (Get $get, Set $set): void {
-                                $this->applyAiContent('shorten', $get, $set);
-                            }),
-                    ])
-                        ->label('AI Assist')
-                        ->icon('heroicon-m-sparkles')
-                        ->visible(fn (): bool => app(ModuleManager::class)->enabled(ProductModule::AI)),
-                ])->columnSpanFull(),
+                Toggle::make('is_required')->default(true)->inline(false),
+            ]),
+
+            Grid::make(1)->schema([
+                TextInput::make('title')->required()->maxLength(255),
+
                 RichEditor::make('content')
-                    ->columnSpanFull(),
+                    ->columnSpanFull()
+                    ->hintActions(
+                        $aiEnabled ? [
+                            Action::make('aiContentAssistant')
+                                ->label('Create')
+                                ->icon('heroicon-m-sparkles')
+                                ->action(fn (Get $get, Set $set) => $this->applyAiContent('generate', $get, $set)),
+
+                            Action::make('polishContentWithAi')
+                                ->label('Polish')
+                                ->icon('heroicon-m-document-text')
+                                ->action(fn (Get $get, Set $set) => $this->applyAiContent('polish', $get, $set)),
+
+                            Action::make('shortenContentWithAi')
+                                ->label('Shorten')
+                                ->icon('heroicon-m-scissors')
+                                ->action(fn (Get $get, Set $set) => $this->applyAiContent('shorten', $get, $set)),
+                        ] : []
+                    ),
             ]),
         ]);
     }
