@@ -25,7 +25,7 @@
                 @endif
                 @break
             @case('organization_name')
-                <strong>{{ $preview ? 'Acme Pharmaceuticals Ltd.' : ($organization['legal_name'] ?? '-') }}</strong>
+                <strong>{{ $preview ? 'DocuPharma Ltd.' : ($organization['legal_name'] ?? '-') }}</strong>
                 @break
             @case('organization_address')
                 <span>{{ $preview ? 'Validated Manufacturing Site, India' : collect([

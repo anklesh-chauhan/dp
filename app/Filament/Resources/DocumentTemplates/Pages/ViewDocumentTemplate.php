@@ -17,6 +17,7 @@ use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Textarea;
 use Filament\Resources\Pages\ViewRecord;
+use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Auth;
 
 class ViewDocumentTemplate extends ViewRecord
@@ -30,6 +31,12 @@ class ViewDocumentTemplate extends ViewRecord
     protected function getActions(): array
     {
         return [
+            Action::make('previewDraft')
+                ->label('Preview Draft')
+                ->icon(Heroicon::Eye)
+                ->url(fn (): string => route('document-templates.draft-preview', $this->record))
+                ->openUrlInNewTab()
+                ->visible(fn (): bool => $this->draftVersion() !== null),
             ...$this->getTemplateRetentionLifecycleActions(),
             $this->approvalAction(
                 name: 'submitApproval',

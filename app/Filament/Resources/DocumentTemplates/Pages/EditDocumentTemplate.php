@@ -8,10 +8,13 @@ use App\Filament\Concerns\HandlesServiceExceptions;
 use App\Filament\Concerns\HasGenerationPolling;
 use App\Filament\Concerns\ProcessesDocumentTemplateMetadataAi;
 use App\Filament\Resources\DocumentTemplates\DocumentTemplateResource;
+use App\Models\DocumentTemplateVersion;
 use App\Models\TemplateStatus;
+use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
+use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Auth;
 
 class EditDocumentTemplate extends EditRecord
@@ -43,6 +46,12 @@ class EditDocumentTemplate extends EditRecord
     protected function getActions(): array
     {
         return [
+            Action::make('previewDraft')
+                ->label('Preview Draft')
+                ->icon(Heroicon::Eye)
+                ->url(fn (): string => route('document-templates.draft-preview', $this->record))
+                ->openUrlInNewTab()
+                ->visible(fn (): bool => $this->draftVersion() !== null),
             DeleteAction::make(),
         ];
     }
@@ -90,5 +99,10 @@ class EditDocumentTemplate extends EditRecord
         $this->record
             ->regulationTags()
             ->sync($this->regulationTagIds);
+    }
+
+    private function draftVersion(): ?DocumentTemplateVersion
+    {
+        return $this->record->latestDraftVersion()->first();
     }
 }

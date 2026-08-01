@@ -5,6 +5,7 @@ use App\Http\Controllers\ControlledDocumentPrintController;
 use App\Http\Controllers\ControlledDocumentViewerController;
 use App\Http\Controllers\CsvValidationReportController;
 use App\Http\Controllers\DocumentDistributionReportController;
+use App\Http\Controllers\DocumentTemplateDraftPreviewController;
 use App\Http\Controllers\ReportTemplatePreviewController;
 use Illuminate\Support\Facades\Route;
 
@@ -46,3 +47,7 @@ Route::get('/reports/document-distribution', DocumentDistributionReportControlle
 Route::get('/report-templates/{reportTemplate}/preview', ReportTemplatePreviewController::class)
     ->middleware(['auth', 'module:dms', 'can:view,reportTemplate'])
     ->name('report-templates.preview');
+
+Route::get('/document-templates/{documentTemplate}/draft-preview', DocumentTemplateDraftPreviewController::class)
+    ->middleware(['auth', 'module:dms', 'can:view,documentTemplate'])
+    ->name('document-templates.draft-preview');

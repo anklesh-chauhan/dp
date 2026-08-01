@@ -20,6 +20,13 @@ class CreateDocumentTemplate extends CreateRecord
 
     protected static string $resource = DocumentTemplateResource::class;
 
+    protected function getRedirectUrl(): string
+    {
+        return DocumentTemplateResource::getUrl('view', [
+            'record' => $this->record,
+        ]);
+    }
+
     /**
      * @var array<int>
      */
