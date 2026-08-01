@@ -642,7 +642,49 @@ When AI is enabled:
 
 AI output is assistance, not an approval decision or a replacement for qualified review.
 
-## 9. Audit and Data-Integrity Practices
+## 9. Table Actions and Pinned Action Menus
+
+DocuPharma tables use a compact row-action layout to keep records readable and make actions easier to find.
+
+### 9.1 Three-dot action menu
+
+When a row has more than one available action, the actions are grouped into a three-dot menu. Select the vertical three-dot icon at the end of the row to open the menu, then select the required action.
+
+The menu may contain actions such as:
+
+- View
+- Edit
+- Delete, restore, or permanently delete
+- Approve, reject, or return
+- Review or open a controlled copy
+- Record-specific workflow actions
+
+Actions are still governed by the user's permissions, the enabled module, the record status, and separation-of-duties rules. If only one action is available for a row, it may appear as a direct action instead of inside a menu. A hidden action is not evidence of a system error; first check the record state and the user's role.
+
+### 9.2 Pinned action column
+
+The final action column is pinned to the right side of horizontally scrollable tables. This keeps the three-dot menu available while reviewing wide tables with many columns.
+
+To use it:
+
+1. Open a table with multiple columns and row actions.
+2. Scroll the table horizontally using the bottom scrollbar or a trackpad.
+3. Use the three-dot menu at the right edge of the table; it remains visible while the data columns move underneath it.
+4. Open the menu and select the action. Close the menu by selecting an action or clicking outside it.
+
+The pinned column has a contrasting background and shadow so it can be distinguished from the scrolling data area. The same behavior applies in dark mode and in responsive table layouts.
+
+### 9.3 Browser and frontend refresh
+
+After a frontend or table-layout update in a local development environment, rebuild the assets and perform a hard refresh:
+
+```powershell
+npm.cmd run build
+```
+
+Then press `Ctrl + F5` in the browser. If the application is being developed continuously, `npm.cmd run dev` can be used instead. If the page appears as unstyled HTML, confirm that the Filament panel theme has loaded and that the Vite build completed successfully.
+
+## 10. Audit and Data-Integrity Practices
 
 - Enter clear reasons for every lifecycle decision.
 - Never share user accounts for approval activities.
@@ -656,7 +698,7 @@ AI output is assistance, not an approval decision or a replacement for qualified
 - Preserve failed validation runs and resolve them through linked deviations.
 - Use separate accounts for test execution, test review, and QA release.
 
-## 10. Troubleshooting
+## 11. Troubleshooting
 
 ### QMS menus are missing
 
@@ -722,7 +764,7 @@ npm run build
 
 Then refresh the browser.
 
-## 11. Quick Daily Checklist
+## 12. Quick Daily Checklist
 
 For document authors:
 
