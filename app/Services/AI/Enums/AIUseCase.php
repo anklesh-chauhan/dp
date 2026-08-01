@@ -29,4 +29,8 @@ enum AIUseCase: string
     case DOCUMENT_DESCRIPTION_GENERATION = 'document_description_generation';
 
     case REGULATED_TEMPLATE_GENERATION = 'regulated_template_generation';
+
+    case TEMPLATE_SECTION_GENERATION = 'template_section_generation';
+
+    case TEMPLATE_SECTION_COMPLETION = 'template_section_completion';
 }

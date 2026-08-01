@@ -28,4 +28,11 @@ interface TemplateGenerator
         array $generatedTemplate,
         string $validationError,
     ): ?array;
+
+    /** @return array<int, string>|null */
+    public function generateSectionTitles(array $templateData, int $count): ?array;
+
+    public function completeSection(array $templateData, string $sectionTitle): ?string;
+
+    public function transformSectionContent(string $content, string $operation, string $sectionTitle): ?string;
 }

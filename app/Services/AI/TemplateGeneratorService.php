@@ -115,6 +115,57 @@ final readonly class TemplateGeneratorService implements TemplateGenerator
         }
     }
 
+    public function generateSectionTitles(array $templateData, int $count): ?array
+    {
+        $response = $this->llmManager->generate(new LLMRequest(
+            prompt: "Generate exactly {$count} concise QMS document section titles for this template:\n".json_encode($templateData, JSON_PRETTY_PRINT),
+            useCase: AIUseCase::TEMPLATE_SECTION_GENERATION,
+            capability: LLMCapability::STRUCTURED_OUTPUT,
+            dataClassification: AIDataClassification::INTERNAL,
+            jsonSchema: ['type' => 'object', 'properties' => ['titles' => ['type' => 'array', 'items' => ['type' => 'string']]], 'required' => ['titles']],
+            temperature: 0.2,
+            metadata: ['feature' => 'template_section_generation'],
+        ));
+
+        $titles = $response->structured()['titles'] ?? null;
+
+        return is_array($titles) ? array_values(array_filter($titles, 'is_string')) : null;
+    }
+
+    public function completeSection(array $templateData, string $sectionTitle): ?string
+    {
+        $response = $this->llmManager->generate(new LLMRequest(
+            prompt: "Write the complete reusable QMS section content for '{$sectionTitle}'. Return only the content. Template context:\n".json_encode($templateData, JSON_PRETTY_PRINT),
+            useCase: AIUseCase::TEMPLATE_SECTION_COMPLETION,
+            capability: LLMCapability::TEXT_GENERATION,
+            dataClassification: AIDataClassification::INTERNAL,
+            temperature: 0.2,
+            metadata: ['feature' => 'template_section_completion'],
+        ));
+
+        return filled($response->content) ? trim($response->content) : null;
+    }
+
+    public function transformSectionContent(string $content, string $operation, string $sectionTitle): ?string
+    {
+        $instruction = match ($operation) {
+            'polish' => 'Polish and formalize the text using clear, professional pharmaceutical QMS language.',
+            'shorten' => 'Shorten the text while preserving all important meaning, requirements, and controls.',
+            default => "Create complete reusable content for the section titled '{$sectionTitle}'.",
+        };
+
+        $response = $this->llmManager->generate(new LLMRequest(
+            prompt: "{$instruction}\nReturn only the revised section content.\n\nExisting content:\n{$content}",
+            useCase: AIUseCase::TEMPLATE_SECTION_COMPLETION,
+            capability: LLMCapability::TEXT_GENERATION,
+            dataClassification: AIDataClassification::INTERNAL,
+            temperature: 0.2,
+            metadata: ['feature' => 'template_section_content_assistance', 'operation' => $operation],
+        ));
+
+        return filled($response->content) ? trim((string) $response->content) : null;
+    }
+
     /**
      * @param  array<string, mixed>  $formData
      * @param  array<string, mixed>  $generatedTemplate

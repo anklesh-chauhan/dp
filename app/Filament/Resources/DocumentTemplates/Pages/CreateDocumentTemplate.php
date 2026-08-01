@@ -21,7 +21,7 @@ class CreateDocumentTemplate extends CreateRecord
 
     protected static string $resource = DocumentTemplateResource::class;
 
-    public bool $createWithAi = false;
+    public bool $shouldGenerateWithAi = false;
 
     /**
      * @return array<int, Action>
@@ -41,7 +41,17 @@ class CreateDocumentTemplate extends CreateRecord
 
     public function createWithAi(): void
     {
-        $this->createWithAi = true;
+        if (! app(ModuleManager::class)->enabled(ProductModule::AI)) {
+            Notification::make()
+                ->danger()
+                ->title('AI generation unavailable')
+                ->body('Enable the AI module before creating a template with AI.')
+                ->send();
+
+            return;
+        }
+
+        $this->shouldGenerateWithAi = true;
         $this->create();
     }
 
@@ -92,7 +102,7 @@ class CreateDocumentTemplate extends CreateRecord
         $template->load('regulationTags');
 
         if (
-            ! $this->createWithAi
+            ! $this->shouldGenerateWithAi
             || ! app(ModuleManager::class)->enabled(ProductModule::AI)
         ) {
             Notification::make()

@@ -5,6 +5,14 @@ declare(strict_types=1);
 namespace App\Filament\Resources\DocumentTemplates\RelationManagers;
 
 use App\Filament\Concerns\ManagesEditableTemplates;
+use App\Enums\ProductModule;
+use App\Jobs\CompleteTemplateSectionWithAiJob;
+use App\Jobs\GenerateTemplateSectionTitlesJob;
+use App\Models\DocumentTemplateVersion;
+use App\Models\TemplateStatus;
+use App\Support\Modules\ModuleManager;
+use App\Services\AI\Contracts\TemplateGenerator;
+use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -12,12 +20,18 @@ use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Actions\ActionGroup;
+use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Auth;
 
 class SectionRelationManager extends RelationManager
 {
@@ -37,9 +51,48 @@ class SectionRelationManager extends RelationManager
                 TextInput::make('section_order')->numeric()->required()->minValue(1),
                 TextInput::make('section_type')->default('rich_text')->required(),
                 Toggle::make('is_required')->default(true),
-                RichEditor::make('content')->columnSpanFull(),
+                Actions::make([
+                    ActionGroup::make([
+                        Action::make('aiContentAssistant')
+                            ->label('Create content')
+                            ->action(function (Get $get, Set $set): void {
+                                $this->applyAiContent('generate', $get, $set);
+                            }),
+                        Action::make('polishContentWithAi')
+                            ->label('Polish and formalize')
+                            ->action(function (Get $get, Set $set): void {
+                                $this->applyAiContent('polish', $get, $set);
+                            }),
+                        Action::make('shortenContentWithAi')
+                            ->label('Shorten text')
+                            ->action(function (Get $get, Set $set): void {
+                                $this->applyAiContent('shorten', $get, $set);
+                            }),
+                    ])
+                        ->label('AI Assist')
+                        ->icon('heroicon-m-sparkles')
+                        ->visible(fn (): bool => app(ModuleManager::class)->enabled(ProductModule::AI)),
+                ])->columnSpanFull(),
+                RichEditor::make('content')
+                    ->columnSpanFull(),
             ]),
         ]);
+    }
+
+    private function applyAiContent(string $operation, Get $get, Set $set): void
+    {
+        $content = trim((string) ($get('content') ?? ''));
+        $title = trim((string) ($get('title') ?? 'Untitled section'));
+        $result = app(TemplateGenerator::class)->transformSectionContent($content, $operation, $title);
+
+        if ($result === null) {
+            Notification::make()->danger()->title('AI content generation failed')->send();
+
+            return;
+        }
+
+        $set('content', $result);
+        Notification::make()->success()->title('AI content updated')->send();
     }
 
     public function table(Table $table): Table
@@ -56,10 +109,46 @@ class SectionRelationManager extends RelationManager
             ->headerActions([
                 CreateAction::make()
                     ->visible(fn (): bool => $this->canManageTemplateRecord()),
+                Action::make('generateSectionTitlesWithAi')
+                    ->label('Generate Section Names with AI')
+                    ->icon('heroicon-m-sparkles')
+                    ->visible(fn (): bool => $this->canManageTemplateRecord() && app(ModuleManager::class)->enabled(ProductModule::AI))
+                    ->action(function (): void {
+                        $version = $this->getOwnerRecord()->versions()->latest('version')->first();
+                        if (! $version instanceof DocumentTemplateVersion) {
+                            $version = $this->getOwnerRecord()->versions()->create([
+                                'version' => 1,
+                                'template_status_id' => TemplateStatus::idFor(TemplateStatus::DRAFT),
+                                'change_reason' => 'Draft version created for AI section generation.',
+                                'created_by' => Auth::id(),
+                            ]);
+                        }
+
+                        GenerateTemplateSectionTitlesJob::dispatch($version);
+
+                        Notification::make()
+                            ->success()
+                            ->title('Section names generation started')
+                            ->body('AI will replace existing section names or create sections in the background.')
+                            ->send();
+                    }),
             ])
             ->recordActions([
                 EditAction::make()
                     ->visible(fn (): bool => $this->canManageTemplateRecord()),
+                Action::make('completeWithAi')
+                    ->label('Complete with AI')
+                    ->icon('heroicon-m-sparkles')
+                    ->visible(fn (): bool => $this->canManageTemplateRecord() && app(ModuleManager::class)->enabled(ProductModule::AI))
+                    ->action(function (\App\Models\DocumentTemplateSection $record): void {
+                        CompleteTemplateSectionWithAiJob::dispatch($record);
+
+                        Notification::make()
+                            ->success()
+                            ->title('Section completion started')
+                            ->body('AI will replace the existing section content in the background.')
+                            ->send();
+                    }),
                 DeleteAction::make()
                     ->visible(fn (): bool => $this->canManageTemplateRecord()),
             ]);

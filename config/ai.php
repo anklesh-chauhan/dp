@@ -83,6 +83,18 @@ return [
             'ollama',
         ],
 
+        'template_section_generation' => [
+            'openai',
+            'gemini',
+            'ollama',
+        ],
+
+        'template_section_completion' => [
+            'openai',
+            'gemini',
+            'ollama',
+        ],
+
     ],
 
 ];
