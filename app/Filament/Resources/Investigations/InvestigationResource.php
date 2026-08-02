@@ -31,7 +31,7 @@ final class InvestigationResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedMagnifyingGlass;
 
-    protected static string|UnitEnum|null $navigationGroup = 'QMS · Quality Events';
+    protected static string|UnitEnum|null $navigationGroup = 'QMS';
 
     protected static ?int $navigationSort = 2;
 

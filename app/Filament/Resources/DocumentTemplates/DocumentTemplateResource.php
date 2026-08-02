@@ -57,7 +57,7 @@ class DocumentTemplateResource extends Resource
 
     protected static ?string $model = DocumentTemplate::class;
 
-    protected static string|UnitEnum|null $navigationGroup = 'DMS · Document Control';
+    protected static string|UnitEnum|null $navigationGroup = 'DMS';
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentText;
 

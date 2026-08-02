@@ -25,7 +25,7 @@ class DocumentTemplateApprovalInstanceResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
-    protected static string|UnitEnum|null $navigationGroup = 'DMS · Document Control';
+    protected static string|UnitEnum|null $navigationGroup = 'DMS';
 
     protected static ?string $navigationLabel = 'Template Approval Queue';
 

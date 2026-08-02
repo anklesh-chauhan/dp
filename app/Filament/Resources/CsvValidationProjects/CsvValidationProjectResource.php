@@ -35,7 +35,7 @@ final class CsvValidationProjectResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedShieldCheck;
 
-    protected static string|UnitEnum|null $navigationGroup = 'QMS · Validation';
+    protected static string|UnitEnum|null $navigationGroup = 'QMS';
 
     protected static ?int $navigationSort = 1;
 

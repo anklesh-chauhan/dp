@@ -23,7 +23,7 @@ final class ProductLicenseResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedKey;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Core · Administration';
+    protected static string|UnitEnum|null $navigationGroup = 'Core · Identity & Access';
 
     protected static ?int $navigationSort = 1;
 

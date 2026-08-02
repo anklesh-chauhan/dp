@@ -25,7 +25,7 @@ class MyApprovalQueue extends Page implements HasTable
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedInboxStack;
 
-    protected static string|UnitEnum|null $navigationGroup = 'DMS · Document Control';
+    protected static string|UnitEnum|null $navigationGroup = 'DMS';
 
     protected static ?string $navigationLabel = 'My Approval Queue';
 

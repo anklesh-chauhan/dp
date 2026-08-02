@@ -30,7 +30,7 @@ final class ChangeControlResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedArrowPathRoundedSquare;
 
-    protected static string|UnitEnum|null $navigationGroup = 'QMS · Change Control';
+    protected static string|UnitEnum|null $navigationGroup = 'QMS';
 
     protected static ?int $navigationSort = 1;
 

@@ -34,11 +34,11 @@ class AdminPanelProvider extends PanelProvider
                 'primary' => Color::Amber,
             ])
             ->navigationGroups([
-                NavigationGroup::make('DMS · Document Control')->icon(Heroicon::DocumentText),
-                NavigationGroup::make('DMS · Issuance')->icon(Heroicon::OutlinedClipboardDocumentCheck),
+                NavigationGroup::make('AI Management')->icon(Heroicon::Sparkles),
+                NavigationGroup::make('DMS')->icon(Heroicon::DocumentText),
+                NavigationGroup::make('QMS')->icon(Heroicon::OutlinedClipboardDocumentCheck),
                 NavigationGroup::make('DMS · Help & Knowledge')->icon(Heroicon::OutlinedBookOpen),
                 NavigationGroup::make('DMS · Settings')->icon(Heroicon::OutlinedSquares2x2),
-                NavigationGroup::make('Core · Organization')->icon(Heroicon::BuildingOffice),
                 NavigationGroup::make('Core · Identity & Access')->icon(Heroicon::UserGroup),
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')

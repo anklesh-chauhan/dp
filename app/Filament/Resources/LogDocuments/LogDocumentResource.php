@@ -61,7 +61,7 @@ class LogDocumentResource extends Resource
 
     protected static ?int $navigationSort = 1;
 
-    protected static string|UnitEnum|null $navigationGroup = 'DMS · Issuance';
+    protected static string|UnitEnum|null $navigationGroup = 'DMS';
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentDuplicate;
 
