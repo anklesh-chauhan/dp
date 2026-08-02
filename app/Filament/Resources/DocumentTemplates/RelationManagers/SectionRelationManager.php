@@ -10,6 +10,7 @@ use App\Jobs\CompleteTemplateSectionWithAiJob;
 use App\Jobs\GenerateTemplateSectionTitlesJob;
 use App\Models\DocumentTemplateVersion;
 use App\Models\TemplateStatus;
+use App\Models\VariableDataType;
 use App\Support\Modules\ModuleManager;
 use App\Services\AI\Contracts\TemplateGenerator;
 use Filament\Actions\Action;
@@ -92,7 +93,26 @@ class SectionRelationManager extends RelationManager
     {
         $content = trim((string) ($get('content') ?? ''));
         $title = trim((string) ($get('title') ?? 'Untitled section'));
-        $result = app(TemplateGenerator::class)->transformSectionContent($content, $operation, $title);
+        $template = $this->getOwnerRecord()->loadMissing(['department', 'regulationTags']);
+        $versionId = (int) ($get('template_version_id') ?? 0);
+        $version = $template->versions()->with('variables')->find($versionId);
+        $existingVariables = $version?->variables->map(fn ($variable): array => [
+            'name' => $variable->name,
+            'label' => $variable->label,
+            'datatype' => $variable->variableDataType?->code ?? 'text',
+        ])->all() ?? [];
+
+        $result = app(TemplateGenerator::class)->transformSectionContent(
+            content: $content,
+            operation: $operation,
+            sectionTitle: $title,
+            templateContext: [
+                'description' => $template->description,
+                'department' => $template->department?->name,
+                'regulatory_tags' => $template->regulationTags->pluck('name')->all(),
+                'existing_variables' => $existingVariables,
+            ],
+        );
 
         if ($result === null) {
             Notification::make()->danger()->title('AI content generation failed')->send();
@@ -100,7 +120,32 @@ class SectionRelationManager extends RelationManager
             return;
         }
 
-        $set('content', $result);
+        $set('content', $result['content']);
+
+        if ($version !== null) {
+            $dataTypes = VariableDataType::query()
+                ->pluck('id', 'code')
+                ->mapWithKeys(fn (mixed $id, mixed $code): array => [strtolower((string) $code) => $id])
+                ->all();
+            $fallbackDataTypeId = $dataTypes['text'] ?? collect($dataTypes)->first();
+
+            foreach ($result['variables'] as $variable) {
+                $name = trim((string) ($variable['name'] ?? ''));
+
+                if ($name === '' || $version->variables()->where('name', $name)->exists()) {
+                    continue;
+                }
+
+                $version->variables()->create([
+                    'name' => $name,
+                    'label' => trim((string) ($variable['label'] ?? $name)),
+                    'variable_data_type_id' => $dataTypes[strtolower((string) ($variable['datatype'] ?? 'text'))]
+                        ?? $fallbackDataTypeId,
+                    'default_value' => (string) ($variable['default_value'] ?? ''),
+                    'required' => (bool) ($variable['required'] ?? false),
+                ]);
+            }
+        }
         Notification::make()->success()->title('AI content updated')->send();
     }
 
@@ -140,7 +185,7 @@ class SectionRelationManager extends RelationManager
                             ->title('Section names generation started')
                             ->body('AI will replace existing section names or create sections in the background.')
                             ->send();
-                    }),
+                    })->visible(fn (): bool => $this->canManageTemplateRecord()),
             ])
             ->recordActions([
                 EditAction::make()
@@ -157,7 +202,8 @@ class SectionRelationManager extends RelationManager
                             ->title('Section completion started')
                             ->body('AI will replace the existing section content in the background.')
                             ->send();
-                    }),
+                    })
+                    ->visible(fn (): bool => $this->canManageTemplateRecord()),
                 DeleteAction::make()
                     ->visible(fn (): bool => $this->canManageTemplateRecord()),
             ]);

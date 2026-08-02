@@ -34,5 +34,11 @@ interface TemplateGenerator
 
     public function completeSection(array $templateData, string $sectionTitle): ?string;
 
-    public function transformSectionContent(string $content, string $operation, string $sectionTitle): ?string;
+    /** @return array{content: string, variables: array<int, array<string, mixed>>}|null */
+    public function transformSectionContent(
+        string $content,
+        string $operation,
+        string $sectionTitle,
+        array $templateContext = [],
+    ): ?array;
 }

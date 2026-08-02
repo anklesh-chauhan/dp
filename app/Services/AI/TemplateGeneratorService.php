@@ -146,7 +146,12 @@ final readonly class TemplateGeneratorService implements TemplateGenerator
         return filled($response->content) ? trim($response->content) : null;
     }
 
-    public function transformSectionContent(string $content, string $operation, string $sectionTitle): ?string
+    public function transformSectionContent(
+        string $content,
+        string $operation,
+        string $sectionTitle,
+        array $templateContext = [],
+    ): ?array
     {
         $instruction = match ($operation) {
             'polish' => 'Polish and formalize the text using clear, professional pharmaceutical QMS language.',
@@ -154,16 +159,88 @@ final readonly class TemplateGeneratorService implements TemplateGenerator
             default => "Create complete reusable content for the section titled '{$sectionTitle}'.",
         };
 
+        $description = (string) ($templateContext['description'] ?? 'Not provided');
+        $department = (string) ($templateContext['department'] ?? 'Not provided');
+        $regulatoryTags = is_array($templateContext['regulatory_tags'] ?? null)
+            ? implode(', ', $templateContext['regulatory_tags'])
+            : (string) ($templateContext['regulatory_tags'] ?? 'Not provided');
+        $existingVariables = json_encode(
+            $templateContext['existing_variables'] ?? [],
+            JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES,
+        ) ?: '[]';
+
+        $prompt = <<<PROMPT
+You are an expert pharmaceutical Quality Management System technical writer.
+
+{$instruction}
+
+Use the following document context to make the result specific, accurate, and consistent:
+
+TEMPLATE DESCRIPTION:
+{$description}
+
+DEPARTMENT:
+{$department}
+
+REGULATORY TAGS:
+{$regulatoryTags}
+
+SECTION TITLE:
+{$sectionTitle}
+
+EXISTING SECTION CONTENT:
+{$content}
+
+EXISTING TEMPLATE VARIABLES:
+{$existingVariables}
+
+Requirements:
+1. Preserve the intent and compliance meaning of the section.
+2. Use formal, clear, audit-ready pharmaceutical QMS language.
+3. Do not invent regulatory requirements that are not supported by the provided context.
+4. Keep terminology consistent with the department and regulatory tags.
+5. Return only the section content, without commentary or quotation marks.
+
+6. Identify every variable placeholder needed in the content using {{variable_name}} syntax.
+7. Reuse the existing variables listed in the context whenever they match.
+8. Define only genuinely new variables, using concise snake_case names.
+PROMPT;
+
         $response = $this->llmManager->generate(new LLMRequest(
-            prompt: "{$instruction}\nReturn only the revised section content.\n\nExisting content:\n{$content}",
+            prompt: $prompt,
             useCase: AIUseCase::TEMPLATE_SECTION_COMPLETION,
-            capability: LLMCapability::TEXT_GENERATION,
+            capability: LLMCapability::STRUCTURED_OUTPUT,
             dataClassification: AIDataClassification::INTERNAL,
+            jsonSchema: [
+                'type' => 'object',
+                'properties' => [
+                    'content' => ['type' => 'string'],
+                    'variables' => [
+                        'type' => 'array',
+                        'items' => [
+                            'type' => 'object',
+                            'properties' => [
+                                'name' => ['type' => 'string'],
+                                'label' => ['type' => 'string'],
+                                'datatype' => ['type' => 'string'],
+                                'default_value' => ['type' => 'string'],
+                                'required' => ['type' => 'boolean'],
+                            ],
+                            'required' => ['name', 'label', 'datatype', 'default_value', 'required'],
+                        ],
+                    ],
+                ],
+                'required' => ['content', 'variables'],
+            ],
             temperature: 0.2,
             metadata: ['feature' => 'template_section_content_assistance', 'operation' => $operation],
         ));
 
-        return filled($response->content) ? trim((string) $response->content) : null;
+        $result = $response->structured();
+
+        return filled($result['content'] ?? null) && is_array($result['variables'] ?? null)
+            ? ['content' => trim((string) $result['content']), 'variables' => $result['variables']]
+            : null;
     }
 
     /**
