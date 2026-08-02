@@ -45,7 +45,7 @@ beforeEach(function (): void {
 it('enforces QMS entitlement and permissions for resource access', function (): void {
     expect(DeviationResource::canAccess())->toBeTrue()
         ->and(DeviationResource::shouldRegisterNavigation())->toBeTrue()
-        ->and(DeviationResource::getNavigationGroup())->toBe('QMS · Quality Events');
+        ->and(DeviationResource::getNavigationGroup())->toBe('QMS');
 
     config()->set('modules.enabled', ['dms']);
 

@@ -439,4 +439,10 @@ class ControlledDocument extends Model implements ApprovableSubject, ControlledD
     {
         return $this->issuances()->whereHas('issuanceStatus', fn (Builder $query): Builder => $query->where('code', IssuanceStatus::ACTIVE));
     }
+
+    /** @return HasMany<DocumentOriginalArtifact, $this> */
+    public function originalArtifacts(): HasMany
+    {
+        return $this->hasMany(DocumentOriginalArtifact::class);
+    }
 }

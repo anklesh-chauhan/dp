@@ -51,8 +51,8 @@ beforeEach(function (): void {
 it('enforces entitlement and direct-access permissions for both linked resources', function (): void {
     expect(InvestigationResource::canAccess())->toBeTrue()
         ->and(CapaResource::canAccess())->toBeTrue()
-        ->and(InvestigationResource::getNavigationGroup())->toBe('QMS · Quality Events')
-        ->and(CapaResource::getNavigationGroup())->toBe('QMS · Quality Events');
+        ->and(InvestigationResource::getNavigationGroup())->toBe('QMS')
+        ->and(CapaResource::getNavigationGroup())->toBe('QMS');
 
     config()->set('modules.enabled', ['dms']);
 

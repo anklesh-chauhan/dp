@@ -51,7 +51,7 @@ beforeEach(function (): void {
 it('registers the QMS resource only when entitled', function (): void {
     expect(ChangeControlResource::canAccess())->toBeTrue()
         ->and(ChangeControlResource::shouldRegisterNavigation())->toBeTrue()
-        ->and(ChangeControlResource::getNavigationGroup())->toBe('QMS · Change Control');
+        ->and(ChangeControlResource::getNavigationGroup())->toBe('QMS');
 
     config()->set('modules.enabled', ['dms']);
 
