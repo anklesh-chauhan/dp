@@ -4,11 +4,11 @@
 
 DocuPharma is a pharmaceutical document and quality management application. It is divided into three licensed modules:
 
-| Module | Purpose | Dependency |
-| --- | --- | --- |
-| DMS | Controlled documents, templates, approvals, issuance, audit history, and retention | Required core |
-| QMS | Change controls, quality events, CAPA, risk management, and computer system validation | Requires DMS |
-| AI | Assisted template generation and AI execution monitoring | Requires DMS |
+| Module | Purpose 											| Dependency 	|
+| --- 	 | ---------------------------------------------------------------------------------------------| -------------	|
+| DMS 	 | Controlled documents, templates, approvals, issuance, audit history, and retention 		| Required core |
+| QMS    | Change controls, quality events, CAPA, risk management, and computer system validation 	| Requires DMS 	|
+| AI     | Assisted template generation and AI execution monitoring 					| Requires DMS 	|
 
 The menus visible to a user depend on both the enabled modules and the permissions assigned to the user's role.
 
@@ -107,18 +107,18 @@ The module seeders grant their permissions to `sop administrator`.
 
 Examples:
 
-| Permission | Capability |
-| --- | --- |
-| `ViewAny:SopDocument` | See the controlled-document list |
-| `Submit:SopDocument` | Submit a draft document for approval |
-| `ViewAny:Deviation` | See QMS deviations |
-| `Investigate:Deviation` | Progress a deviation investigation |
-| `Approve:ChangeControl` | Approve a change control |
-| `VerifyEffectiveness:Capa` | Record whether a CAPA was effective |
-| `ViewAny:CsvValidationProject` | See computer system validation projects |
-| `Test:CsvValidationProject` | Progress validation testing and deviation resolution |
-| `Release:CsvValidationProject` | Make the independent, signed QA release decision |
-| `PeriodicReview:CsvValidationProject` | Start or complete a periodic validation review |
+| Permission 				| Capability 						|
+| --------------------------------------| ------------------------------------------------------|
+| `ViewAny:SopDocument` 		| See the controlled-document list 			|
+| `Submit:SopDocument` 			| Submit a draft document for approval 			|
+| `ViewAny:Deviation` 			| See QMS deviations 					|
+| `Investigate:Deviation` 		| Progress a deviation investigation 			|
+| `Approve:ChangeControl` 		| Approve a change control 				|
+| `VerifyEffectiveness:Capa` 		| Record whether a CAPA was effective 			|
+| `ViewAny:CsvValidationProject` 	| See computer system validation projects 		|
+| `Test:CsvValidationProject` 		| Progress validation testing and deviation resolution	|
+| `Release:CsvValidationProject` 	| Make the independent, signed QA release decision 	|
+| `PeriodicReview:CsvValidationProject`	| Start or complete a periodic validation review 	|
 
 Grant only the permissions required for each job function. Use different accounts for maker, reviewer, and approver activities when separation of duties applies.
 
