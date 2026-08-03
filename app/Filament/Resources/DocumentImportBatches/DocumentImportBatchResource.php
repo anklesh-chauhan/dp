@@ -24,6 +24,13 @@ class DocumentImportBatchResource extends Resource
 
     protected static ?string $navigationLabel = 'Import Batches';
 
+    protected static ?int $navigationSort = 100;
+
+    public static function getNavigationBadge(): ?string
+    {
+        return strval(static::getModel()::count());
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema->components([]);
