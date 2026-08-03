@@ -128,12 +128,15 @@ final class DocumentImportService
         fwrite($stream, $csv);
         rewind($stream);
         $headers = fgetcsv($stream);
+        $headers = is_array($headers)
+            ? array_map(fn (mixed $header): string => trim(ltrim((string) $header, "\xEF\xBB\xBF")), $headers)
+            : null;
         while (is_array($headers) && ($row = fgetcsv($stream)) !== false) {
-            $values = array_combine($headers, $row);
-            if (($values['filename'] ?? null) === $filename) {
+            $values = array_combine($headers, array_map(fn (mixed $value): string => trim((string) $value), $row));
+            if (is_array($values) && ($values['filename'] ?? null) === $filename) {
                 fclose($stream);
 
-                return array_filter($values, fn ($value): bool => is_string($value) && $value !== '');
+                return array_filter($values, fn (mixed $value): bool => is_string($value) && $value !== '');
             }
         }
         fclose($stream);

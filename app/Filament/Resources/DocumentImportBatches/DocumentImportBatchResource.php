@@ -8,6 +8,8 @@ use App\Filament\Resources\DocumentImportBatches\Pages\ListDocumentImportBatches
 use App\Filament\Resources\DocumentImportBatches\Pages\ViewDocumentImportBatch;
 use App\Filament\Resources\DocumentImportBatches\RelationManagers\ImportItemsRelationManager;
 use App\Models\DocumentImportBatch;
+use Filament\Actions\Action;
+use Filament\Actions\ViewAction;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
@@ -38,7 +40,11 @@ class DocumentImportBatchResource extends Resource
             TextColumn::make('failed_items')->label('Failed')->numeric(),
             TextColumn::make('creator.name')->label('Imported By')->placeholder('System'),
             TextColumn::make('created_at')->dateTime()->sortable(),
-        ])->defaultSort('created_at', 'desc');
+        ])
+        ->defaultSort('created_at', 'desc')
+        ->recordActions([
+            ViewAction::make(),
+        ]);
     }
 
     public static function getPages(): array
