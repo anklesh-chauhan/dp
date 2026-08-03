@@ -12,6 +12,7 @@ use App\Filament\Resources\ControlledDocuments\RelationManagers\ApprovalRelation
 use App\Filament\Resources\ControlledDocuments\RelationManagers\AuditRelationManager;
 use App\Filament\Resources\ControlledDocuments\RelationManagers\DocumentSectionRelationManager;
 use App\Filament\Resources\ControlledDocuments\RelationManagers\DocumentVariableRelationManager;
+use App\Filament\Resources\ControlledDocuments\RelationManagers\OriginalArtifactRelationManager;
 use App\Filament\Support\DocumentClassificationFormFields;
 use App\Filament\Support\TemplateVariableFieldBuilder;
 use App\Models\ControlledDocument;
@@ -245,6 +246,7 @@ class ControlledDocumentResource extends Resource
         return [
             DocumentSectionRelationManager::class,
             DocumentVariableRelationManager::class,
+            OriginalArtifactRelationManager::class,
             ApprovalRelationManager::class,
             AuditRelationManager::class,
         ];

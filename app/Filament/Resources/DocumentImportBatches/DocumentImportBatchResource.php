@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Filament\Resources\DocumentImportBatches;
 
 use App\Filament\Resources\DocumentImportBatches\Pages\ListDocumentImportBatches;
+use App\Filament\Resources\DocumentImportBatches\Pages\ViewDocumentImportBatch;
+use App\Filament\Resources\DocumentImportBatches\RelationManagers\ImportItemsRelationManager;
 use App\Models\DocumentImportBatch;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -41,6 +43,14 @@ class DocumentImportBatchResource extends Resource
 
     public static function getPages(): array
     {
-        return ['index' => ListDocumentImportBatches::route('/')];
+        return [
+            'index' => ListDocumentImportBatches::route('/'),
+            'view' => ViewDocumentImportBatch::route('/{record}'),
+        ];
+    }
+
+    public static function getRelations(): array
+    {
+        return [ImportItemsRelationManager::class];
     }
 }

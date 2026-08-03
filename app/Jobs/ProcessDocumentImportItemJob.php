@@ -33,7 +33,7 @@ class ProcessDocumentImportItemJob implements ShouldQueue
 
         try {
             if (! $item->source_path || ! $disk->exists($item->source_path)) {
-                throw new \RuntimeException('The uploaded source file is no longer available.');
+                throw new \RuntimeException('The staged source file is no longer available. Please re-upload this file and retry the import.');
             }
 
             $artifactPath = 'document-originals/'.$item->batch->batch_uuid.'/'.$item->original_name;
@@ -46,6 +46,10 @@ class ProcessDocumentImportItemJob implements ShouldQueue
                 'original_name' => $item->original_name,
                 'uploaded_by' => $item->created_by,
             ]);
+            $artifact = $item->fresh()->originalArtifact;
+            if ($artifact !== null && strtolower((string) $artifact->mime_type) !== 'application/pdf') {
+                GenerateDocumentOriginalPreviewJob::dispatch($artifact->getKey());
+            }
             $item->update(['status' => 'completed']);
         } catch (Throwable $exception) {
             $item->update(['status' => 'failed', 'error_message' => $exception->getMessage()]);

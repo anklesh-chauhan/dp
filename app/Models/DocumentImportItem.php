@@ -13,7 +13,7 @@ class DocumentImportItem extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['batch_id', 'original_name', 'status', 'mode', 'metadata', 'error_message', 'controlled_document_id', 'created_by'];
+    protected $fillable = ['batch_id', 'original_name', 'source_path', 'status', 'mode', 'metadata', 'error_message', 'controlled_document_id', 'created_by'];
 
     protected function casts(): array
     {
@@ -30,5 +30,11 @@ class DocumentImportItem extends Model
     public function originalArtifact(): HasOne
     {
         return $this->hasOne(DocumentOriginalArtifact::class, 'import_item_id');
+    }
+
+    /** @return BelongsTo<ControlledDocument, $this> */
+    public function controlledDocument(): BelongsTo
+    {
+        return $this->belongsTo(ControlledDocument::class);
     }
 }

@@ -16,7 +16,7 @@ class DocumentOriginalArtifact extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['artifact_uuid', 'import_item_id', 'controlled_document_id', 'disk', 'path', 'original_name', 'mime_type', 'size_bytes', 'sha256', 'uploaded_at', 'uploaded_by'];
+    protected $fillable = ['artifact_uuid', 'import_item_id', 'controlled_document_id', 'disk', 'path', 'original_name', 'mime_type', 'size_bytes', 'sha256', 'preview_path', 'preview_mime_type', 'preview_sha256', 'preview_generated_at', 'preview_error', 'uploaded_at', 'uploaded_by'];
 
     protected static function booted(): void
     {
@@ -43,5 +43,11 @@ class DocumentOriginalArtifact extends Model
     public function controlledDocument(): BelongsTo
     {
         return $this->belongsTo(ControlledDocument::class);
+    }
+
+    public function linkToControlledDocument(ControlledDocument $document): void
+    {
+        self::query()->whereKey($this->getKey())->update(['controlled_document_id' => $document->getKey()]);
+        $this->setAttribute('controlled_document_id', $document->getKey());
     }
 }

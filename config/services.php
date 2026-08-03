@@ -20,6 +20,11 @@ return [
         'timeout' => (int) env('OLLAMA_TIMEOUT', 600),
     ],
 
+    'gotenberg' => [
+        'url' => env('GOTENBERG_URL', 'http://127.0.0.1:3000'),
+        'timeout' => (int) env('GOTENBERG_TIMEOUT', 120),
+    ],
+
     'gemini' => [
         'key' => env('GEMINI_API_KEY'),
         'model' => env('GEMINI_MODEL', 'gemini-3.5-flash'),

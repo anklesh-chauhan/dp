@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ChangeControlReportController;
+use App\Http\Controllers\ControlledDocumentOriginalArtifactController;
 use App\Http\Controllers\ControlledDocumentPrintController;
 use App\Http\Controllers\ControlledDocumentViewerController;
 use App\Http\Controllers\CsvValidationReportController;
@@ -22,6 +23,10 @@ Route::get('/controlled-documents/{controlledDocument}/viewer', ControlledDocume
     ->middleware(['auth', 'module:dms', 'can:view,controlledDocument'])
     ->name('controlled-documents.viewer');
 
+Route::get('/controlled-documents/{controlledDocument}/original-artifacts/{artifact}/viewer', ControlledDocumentViewerController::class)
+    ->middleware(['auth', 'module:dms', 'can:view,controlledDocument'])
+    ->name('controlled-documents.original-artifacts.viewer');
+
 Route::get('/controlled-documents/{controlledDocument}/pdf-content', ControlledDocumentPrintController::class)
     ->middleware(['auth', 'module:dms', 'can:view,controlledDocument'])
     ->defaults('access_mode', 'view')
@@ -31,6 +36,21 @@ Route::get('/controlled-documents/{controlledDocument}/download', ControlledDocu
     ->middleware(['auth', 'module:dms', 'can:view,controlledDocument'])
     ->defaults('access_mode', 'download')
     ->name('controlled-documents.download');
+
+Route::get('/controlled-documents/{controlledDocument}/original-artifacts/{artifact}/download', ControlledDocumentOriginalArtifactController::class)
+    ->middleware(['auth', 'module:dms', 'can:view,controlledDocument'])
+    ->defaults('artifact_access_mode', 'download')
+    ->name('controlled-documents.original-artifacts.download');
+
+Route::get('/controlled-documents/{controlledDocument}/original-artifacts/{artifact}/view', ControlledDocumentOriginalArtifactController::class)
+    ->middleware(['auth', 'module:dms', 'can:view,controlledDocument'])
+    ->defaults('artifact_access_mode', 'view')
+    ->name('controlled-documents.original-artifacts.view');
+
+Route::get('/controlled-documents/{controlledDocument}/original-artifacts/{artifact}/print', ControlledDocumentOriginalArtifactController::class)
+    ->middleware(['auth', 'module:dms', 'can:view,controlledDocument'])
+    ->defaults('artifact_access_mode', 'print')
+    ->name('controlled-documents.original-artifacts.print');
 
 Route::get('/change-controls/{changeControl}/report', ChangeControlReportController::class)
     ->middleware(['auth', 'module:qms', 'can:View:ChangeControl'])

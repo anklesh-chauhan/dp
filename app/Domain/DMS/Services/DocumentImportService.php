@@ -152,9 +152,18 @@ final class DocumentImportService
             return;
         }
 
+        if (! $disk->exists($path)) {
+            $this->recordFailure($batch, $filename, 'The uploaded source file could not be found.');
+
+            return;
+        }
+
+        $stagedPath = 'import-sources/'.$batch->batch_uuid.'/'.Str::uuid().'-'.$filename;
+        $disk->put($stagedPath, $disk->get($path));
+
         $item = $batch->items()->create([
             'original_name' => $filename,
-            'source_path' => $path,
+            'source_path' => $stagedPath,
             'status' => 'pending',
             'mode' => 'archive',
             'metadata' => $metadata,

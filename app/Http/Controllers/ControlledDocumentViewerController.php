@@ -8,6 +8,7 @@ use App\Domain\DMS\Services\ControlledDocumentAccessService;
 use App\Domain\Shared\Services\AuditLogService;
 use App\Models\ControlledDocument;
 use App\Models\DocumentIssuance;
+use App\Models\DocumentOriginalArtifact;
 use App\Models\SopAuditLog;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
@@ -20,8 +21,28 @@ class ControlledDocumentViewerController extends Controller
         private readonly AuditLogService $auditLogService,
     ) {}
 
-    public function __invoke(Request $request, ControlledDocument $controlledDocument): View
+    public function __invoke(Request $request, ControlledDocument $controlledDocument, ?DocumentOriginalArtifact $artifact = null): View
     {
+        if ($artifact !== null) {
+            abort_unless($artifact->controlled_document_id === $controlledDocument->getKey(), 404);
+            abort_unless(strtolower((string) $artifact->mime_type) === 'application/pdf' || $artifact->preview_path !== null, 425, 'The PDF preview is still being generated.');
+            if (! $this->accessService->canView($request->user(), $controlledDocument)) {
+                throw new AccessDeniedHttpException('You do not have access to view this original PDF.');
+            }
+
+            return view('controlled-documents.viewer', [
+                'document' => $controlledDocument,
+                'contentUrl' => route('controlled-documents.original-artifacts.view', [$controlledDocument, $artifact]),
+                'printUrl' => $this->accessService->canPrint($request->user(), $controlledDocument)
+                    ? route('controlled-documents.original-artifacts.print', [$controlledDocument, $artifact])
+                    : null,
+                'downloadUrl' => $this->accessService->canDownload($request->user(), $controlledDocument)
+                    ? route('controlled-documents.original-artifacts.download', [$controlledDocument, $artifact])
+                    : null,
+                'watermark' => $request->user()->name.' | '.$request->user()->email.' | '.now()->format('Y-m-d H:i:s T'),
+            ]);
+        }
+
         $issuance = $this->issuance($request, $controlledDocument);
 
         if (! $controlledDocument->canBePrinted($issuance)) {
