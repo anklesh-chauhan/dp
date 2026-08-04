@@ -28,7 +28,7 @@ return [
             'pages' => true,
             'widgets' => true,
             'resources' => true,
-            'custom_permissions' => false,
+            'custom_permissions' => true,
         ],
     ],
 
@@ -236,6 +236,11 @@ return [
     */
 
     'custom_permissions' => [
+        'view_pdf:controlled_document' => 'View PDF: Controlled Document',
+        'print_pdf:controlled_document' => 'Print PDF: Controlled Document',
+        'download_pdf:controlled_document' => 'Download PDF: Controlled Document',
+        'manage_pdf_access:controlled_document' => 'Manage PDF Access: Controlled Document',
+        'manage_pdf_policies:controlled_document' => 'Manage PDF Policies: Controlled Document',
         'approve',
         'submit',
         'review',

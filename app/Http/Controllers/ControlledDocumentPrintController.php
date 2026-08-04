@@ -17,9 +17,11 @@ use App\Models\Organization;
 use App\Models\ReportTemplate;
 use App\Models\SopAuditLog;
 use Illuminate\Http\Request;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class ControlledDocumentPrintController extends Controller
 {
@@ -110,13 +112,21 @@ class ControlledDocumentPrintController extends Controller
             'is_system' => true,
         ]);
 
-        $artifact = $this->pdfService->getOrGenerate(
-            document: $controlledDocument,
-            reportTemplate: $reportTemplate,
-            issuance: $issuance,
-            organization: $this->organizationIdentity($controlledDocument),
-            generatedBy: $request->user(),
-        );
+        try {
+            $artifact = $this->pdfService->getOrGenerate(
+                document: $controlledDocument,
+                reportTemplate: $reportTemplate,
+                issuance: $issuance,
+                organization: $this->organizationIdentity($controlledDocument),
+                generatedBy: $request->user(),
+            );
+        } catch (ConnectionException $exception) {
+            throw new HttpException(
+                503,
+                'The PDF generation service is not running. Please start Gotenberg and try again.',
+                $exception,
+            );
+        }
 
         $auditAction = match ($accessMode) {
             'view' => SopAuditLog::ACTION_VIEWED,

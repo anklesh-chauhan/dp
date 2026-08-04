@@ -9,6 +9,7 @@ use App\Models\VariableDataType;
 use App\Support\Sop\VariableTypes\VariableTypeFieldContext;
 use Filament\Forms\Components\Field;
 use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\RichEditor\RichContentRenderer;
 
 class RichTextVariableTypeHandler extends AbstractVariableTypeHandler
 {
@@ -32,11 +33,15 @@ class RichTextVariableTypeHandler extends AbstractVariableTypeHandler
 
     public function validationRules(DocumentTemplateVariable $variable): array
     {
-        return $this->mergeValidationRules($variable, ['nullable', 'string']);
+        return $this->mergeValidationRules($variable, ['nullable']);
     }
 
     public function formatForStorage(DocumentTemplateVariable $variable, mixed $value): string
     {
+        if (is_array($value)) {
+            return RichContentRenderer::make($value)->toHtml();
+        }
+
         return $this->stringifyScalar($value);
     }
 

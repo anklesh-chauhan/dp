@@ -18,6 +18,7 @@ use App\Models\DocumentTemplate;
 use App\Models\TemplateStatus;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
+use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Auth;
 
 trait ProvidesRetentionLifecycleActions
@@ -33,6 +34,7 @@ trait ProvidesRetentionLifecycleActions
         return [
             Action::make('markObsolete')
                 ->label('Mark Obsolete')
+                ->icon(Heroicon::ArchiveBox)
                 ->color('warning')
                 ->requiresConfirmation()
                 ->schema([
@@ -50,6 +52,7 @@ trait ProvidesRetentionLifecycleActions
                 }),
             Action::make('archiveDocument')
                 ->label('Archive')
+                ->icon(Heroicon::ArchiveBox)
                 ->color('warning')
                 ->requiresConfirmation()
                 ->schema([
@@ -67,6 +70,7 @@ trait ProvidesRetentionLifecycleActions
                 }),
             Action::make('completeDocumentRetention')
                 ->label('Complete Retention')
+                ->icon(Heroicon::CheckCircle)
                 ->color('gray')
                 ->requiresConfirmation()
                 ->schema([
@@ -83,6 +87,7 @@ trait ProvidesRetentionLifecycleActions
                 }),
             Action::make('destroyDocument')
                 ->label('Destroy')
+                ->icon(Heroicon::Trash)
                 ->color('danger')
                 ->requiresConfirmation()
                 ->schema([
@@ -111,6 +116,7 @@ trait ProvidesRetentionLifecycleActions
         return [
             Action::make('markTemplateObsolete')
                 ->label('Mark Obsolete')
+                ->icon(Heroicon::ArchiveBox)
                 ->color('warning')
                 ->requiresConfirmation()
                 ->schema([
@@ -127,6 +133,7 @@ trait ProvidesRetentionLifecycleActions
                 }),
             Action::make('archiveTemplate')
                 ->label('Archive')
+                ->icon(Heroicon::ArchiveBox)
                 ->color('warning')
                 ->requiresConfirmation()
                 ->schema([
@@ -143,6 +150,7 @@ trait ProvidesRetentionLifecycleActions
                 }),
             Action::make('completeTemplateRetention')
                 ->label('Complete Retention')
+                ->icon(Heroicon::CheckCircle)
                 ->color('gray')
                 ->requiresConfirmation()
                 ->schema([
@@ -159,6 +167,7 @@ trait ProvidesRetentionLifecycleActions
                 }),
             Action::make('destroyTemplate')
                 ->label('Destroy')
+                ->icon(Heroicon::Trash)
                 ->color('danger')
                 ->requiresConfirmation()
                 ->schema([

@@ -14,6 +14,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\RelationManagers\RelationManager;
+use Illuminate\Database\Eloquent\Builder;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
@@ -32,7 +33,13 @@ class VariableRelationManager extends RelationManager
         return $schema->columns(1)->components([
             Grid::make(2)->schema([
                 Select::make('template_version_id')
-                    ->relationship('templateVersion', 'version')
+                    ->relationship(
+                        name: 'templateVersion',
+                        titleAttribute: 'version',
+                        modifyQueryUsing: fn (Builder $query): Builder => $query
+                            ->where('document_template_id', $this->getOwnerRecord()->getKey())
+                            ->orderByDesc('version'),
+                    )
                     ->required(),
                 TextInput::make('name')->required()->maxLength(255),
                 TextInput::make('label')->required()->maxLength(255),

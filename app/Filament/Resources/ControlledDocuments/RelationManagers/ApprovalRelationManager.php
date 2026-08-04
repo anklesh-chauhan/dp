@@ -8,6 +8,9 @@ use App\Actions\Sop\ApproveDocumentAction;
 use App\Actions\Sop\RejectDocumentAction;
 use App\Actions\Sop\ReturnDocumentAction;
 use App\Filament\Concerns\HandlesServiceExceptions;
+use App\Models\ApprovalDecision;
+use App\Models\ApprovalStepType;
+use App\Models\SopApproval;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -49,7 +52,9 @@ class ApprovalRelationManager extends RelationManager
             ->recordActions([
                 Action::make('approve')
                     ->schema([Textarea::make('comments')])
-                    ->visible(fn ($record): bool => Auth::user()?->can('approve', $record) ?? false)
+                    ->visible(fn (SopApproval $record): bool => Auth::user()?->can('approve', $record) ?? false
+                        && $record->workflowStep->approvalStepType->code === ApprovalStepType::APPROVE
+                        && $record->approvalDecision?->hasCode(ApprovalDecision::PENDING))
                     ->action(function ($record, array $data): void {
                         $this->runServiceAction(
                             fn () => app(ApproveDocumentAction::class)->execute(
@@ -66,7 +71,8 @@ class ApprovalRelationManager extends RelationManager
                     ->color('warning')
                     ->icon('heroicon-o-arrow-uturn-left')
                     ->schema([Textarea::make('comments')->required()])
-                    ->visible(fn ($record): bool => Auth::user()?->can('approve', $record) ?? false)
+                    ->visible(fn (SopApproval $record): bool => Auth::user()?->can('approve', $record) ?? false
+                        && $record->approvalDecision?->hasCode(ApprovalDecision::PENDING))
                     ->action(function ($record, array $data): void {
                         $this->runServiceAction(
                             fn () => app(ReturnDocumentAction::class)->execute(
@@ -81,7 +87,8 @@ class ApprovalRelationManager extends RelationManager
                 Action::make('reject')
                     ->color('danger')
                     ->schema([Textarea::make('comments')->required()])
-                    ->visible(fn ($record): bool => Auth::user()?->can('approve', $record) ?? false)
+                    ->visible(fn (SopApproval $record): bool => Auth::user()?->can('approve', $record) ?? false
+                        && $record->approvalDecision?->hasCode(ApprovalDecision::PENDING))
                     ->action(function ($record, array $data): void {
                         $this->runServiceAction(
                             fn () => app(RejectDocumentAction::class)->execute(

@@ -33,6 +33,9 @@ After signing in, use the navigation menu to open the DMS, QMS, AI, and administ
 
 ## 3. First-Time Local Setup
 
+For Mamaging the pdf
+start the : docker run --rm -p 3000:3000 gotenberg/gotenberg:8
+
 Run the following commands from the project directory after installing the application or pulling new migrations:
 
 ```powershell

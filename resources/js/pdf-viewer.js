@@ -46,11 +46,28 @@ if (viewer) {
 
     const showError = (error) => {
         loading.className = 'viewer-error';
-        loading.textContent = 'The controlled PDF could not be displayed. Your access may have expired.';
+        loading.textContent = error?.message?.includes('PDF generation service is not running')
+            ? error.message
+            : 'The controlled PDF could not be displayed. Your access may have expired.';
         console.error(error);
     };
 
-    pdfjsLib.getDocument({ url: viewer.dataset.pdfUrl, withCredentials: true }).promise
+    const loadPdf = async () => {
+        const response = await fetch(viewer.dataset.pdfUrl, {
+            credentials: 'include',
+            headers: { Accept: 'application/pdf' },
+        });
+
+        if (!response.ok) {
+            const message = (await response.text()).trim();
+
+            throw new Error(message || `PDF request failed with status ${response.status}.`);
+        }
+
+        return pdfjsLib.getDocument({ data: await response.arrayBuffer() }).promise;
+    };
+
+    loadPdf()
         .then((document) => {
             pdfDocument = document;
             return renderDocument();
