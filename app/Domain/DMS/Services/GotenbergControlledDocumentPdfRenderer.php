@@ -42,14 +42,45 @@ class GotenbergControlledDocumentPdfRenderer implements ControlledDocumentPdfRen
             ],
         ];
 
+        $toc = $reportTemplate->tocConfiguration();
+
+        if ($toc['enabled'] && $document->sections->contains(fn ($section): bool => $section->include_in_toc)) {
+            $markerData = [...$data, 'tocMarkerMode' => true, 'tocPageNumbers' => []];
+            $markerPdf = $this->generate($markerData, $pageSettings, $headerZones, $footerZones);
+            $resolver = app(DocumentTocPageResolver::class);
+            $pageNumbers = $resolver->resolve($markerPdf, $document);
+
+            for ($attempt = 0; $attempt < 3; $attempt++) {
+                $data['tocMarkerMode'] = true;
+                $data['tocPageNumbers'] = $pageNumbers;
+                $finalPdf = $this->generate($data, $pageSettings, $headerZones, $footerZones);
+                $verifiedPageNumbers = $resolver->resolve($finalPdf, $document);
+
+                if ($verifiedPageNumbers === $pageNumbers) {
+                    return $finalPdf;
+                }
+
+                $pageNumbers = $verifiedPageNumbers;
+            }
+
+            return $finalPdf;
+        }
+
+        return $this->generate($data, $pageSettings, $headerZones, $footerZones);
+    }
+
+    /** @param array<string, mixed> $data */
+    private function generate(array $data, array $pageSettings, array $headerZones, array $footerZones): string
+    {
+
         $builder = Pdf::view('controlled-documents.print', $data)
             ->driver('gotenberg')
             ->format($pageSettings['paper_size'])
             ->orientation($pageSettings['orientation'])
             ->margins(
-                top: $topMargin,
+                top: (float) $data['serverPdfMargins']['top'],
                 right: (float) $pageSettings['margin_right_mm'],
-                bottom: $bottomMargin,
+                bottom: (float) $data['serverPdfMargins']['bottom'],
                 left: (float) $pageSettings['margin_left_mm'],
             );
 

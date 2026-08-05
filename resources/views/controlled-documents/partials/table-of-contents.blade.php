@@ -6,6 +6,9 @@
                 <a href="#section-{{ $section->getKey() }}">
                     {{ $toc['show_section_numbers'] ? $section->section_order.'. ' : '' }}{{ $section->toc_title ?: $section->title }}
                 </a>
+                @if (isset($tocPageNumbers[$section->getKey()]))
+                    <span>{{ $tocPageNumbers[$section->getKey()] }}</span>
+                @endif
             </div>
         @endif
     @endforeach

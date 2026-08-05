@@ -142,13 +142,15 @@
         }
 
         .table-of-contents { break-inside: avoid; grid-column: 1 / -1; }
-        .toc-entry { border-bottom: 1px dotted #94a3b8; padding: 4px 0; }
+        .toc-entry { align-items: baseline; border-bottom: 1px dotted #94a3b8; display: flex; justify-content: space-between; padding: 4px 0; }
         .toc-entry.level-2 { padding-left: 16px; }
         .toc-entry.level-3 { padding-left: 32px; }
         .toc-entry.level-4 { padding-left: 48px; }
         .toc-entry.level-5 { padding-left: 64px; }
         .toc-entry.level-6 { padding-left: 80px; }
         .toc-entry a { color: inherit; text-decoration: none; }
+        .toc-entry > span { margin-left: auto; padding-left: 12px; text-align: right; }
+        .toc-marker { color: transparent; font-size: 1px; }
 
         .print-grid {
             display: grid;
@@ -486,7 +488,12 @@
         <h2>{{ $fieldConfig['sections']['label'] ?? 'Sections' }}</h2>
         @forelse ($document->sections as $section)
             <article id="section-{{ $section->getKey() }}" class="section">
-                <h3>{{ $section->section_order }}. {{ $section->title }}</h3>
+                <h3>
+                    @if ($tocMarkerMode ?? false)
+                        <span class="toc-marker">{{ app(\App\Domain\DMS\Services\DocumentTocPageResolver::class)->marker($section->getKey()) }}</span>
+                    @endif
+                    {{ $section->section_order }}. {{ $section->title }}
+                </h3>
                 <div class="content">
                     {!! filled($section->content) ? $section->content : '<p>-</p>' !!}
                 </div>
