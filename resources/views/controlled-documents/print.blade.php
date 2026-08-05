@@ -141,6 +141,15 @@
             padding: 12px 14px;
         }
 
+        .table-of-contents { break-inside: avoid; grid-column: 1 / -1; }
+        .toc-entry { border-bottom: 1px dotted #94a3b8; padding: 4px 0; }
+        .toc-entry.level-2 { padding-left: 16px; }
+        .toc-entry.level-3 { padding-left: 32px; }
+        .toc-entry.level-4 { padding-left: 48px; }
+        .toc-entry.level-5 { padding-left: 64px; }
+        .toc-entry.level-6 { padding-left: 80px; }
+        .toc-entry a { color: inherit; text-decoration: none; }
+
         .print-grid {
             display: grid;
             grid-column: 1 / -1;
@@ -364,6 +373,8 @@
 
     @php($headerZones = $configuredHeaderZones)
     @php($footerZones = $configuredFooterZones)
+    @php($toc = $reportTemplate->tocConfiguration())
+    @php($showToc = $toc['enabled'])
 
     <table class="print-document-frame">
         @if ($headerZones['repeat_every_page'] && ! ($serverPdf ?? false))
@@ -444,6 +455,10 @@
         </header>
         @endif
 
+        @if ($showToc && $toc['position'] === 'after_identity')
+            @include('controlled-documents.partials.table-of-contents')
+        @endif
+
 
         @if (in_array('variables', $enabledFields, true) && (! ($fieldConfig['variables']['hide_when_empty'] ?? false) || $document->variables->isNotEmpty()))
             <section style="grid-column: {{ ($fieldConfig['variables']['width'] ?? 'full') === 'full' ? '1 / -1' : 'span 1' }}; order: {{ $fieldOrder['variables'] ?? 0 }}; {{ ($fieldConfig['variables']['page_break_before'] ?? false) ? 'break-before: page;' : '' }}">
@@ -464,10 +479,13 @@
         @endif
 
         @if (in_array('sections', $enabledFields, true))
+        @if ($showToc && $toc['position'] === 'before_sections')
+            @include('controlled-documents.partials.table-of-contents')
+        @endif
         <section style="grid-column: {{ ($fieldConfig['sections']['width'] ?? 'full') === 'full' ? '1 / -1' : 'span 1' }}; order: {{ $fieldOrder['sections'] ?? 0 }}; {{ ($fieldConfig['sections']['page_break_before'] ?? false) ? 'break-before: page;' : '' }}">
         <h2>{{ $fieldConfig['sections']['label'] ?? 'Sections' }}</h2>
         @forelse ($document->sections as $section)
-            <article class="section">
+            <article id="section-{{ $section->getKey() }}" class="section">
                 <h3>{{ $section->section_order }}. {{ $section->title }}</h3>
                 <div class="content">
                     {!! filled($section->content) ? $section->content : '<p>-</p>' !!}

@@ -87,7 +87,14 @@ class DocumentRevisionService
             $revision->save();
 
             foreach ($source->sections as $section) {
-                $revision->sections()->create($section->only(['title', 'section_order', 'content']));
+                $revision->sections()->create($section->only([
+                    'title',
+                    'section_order',
+                    'heading_level',
+                    'content',
+                    'include_in_toc',
+                    'toc_title',
+                ]));
             }
 
             foreach ($source->variables as $variable) {

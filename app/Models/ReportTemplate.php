@@ -29,6 +29,7 @@ class ReportTemplate extends Model
         'page_settings',
         'header_zones',
         'footer_zones',
+        'toc_configuration',
         'is_active',
         'is_system',
         'created_by',
@@ -49,6 +50,7 @@ class ReportTemplate extends Model
             'page_settings' => 'array',
             'header_zones' => 'array',
             'footer_zones' => 'array',
+            'toc_configuration' => 'array',
             'is_active' => 'boolean',
             'is_system' => 'boolean',
         ];
@@ -76,6 +78,9 @@ class ReportTemplate extends Model
             $template->footer_zones = $layoutRegistry->normalizeZones(
                 is_array($template->footer_zones) ? $template->footer_zones : [],
                 footer: true,
+            );
+            $template->toc_configuration = $layoutRegistry->normalizeTocConfiguration(
+                is_array($template->toc_configuration) ? $template->toc_configuration : [],
             );
 
             if (auth()->check()) {
@@ -136,6 +141,14 @@ class ReportTemplate extends Model
         return app(PrintLayoutRegistry::class)->normalizeZones(
             is_array($this->footer_zones) ? $this->footer_zones : [],
             footer: true,
+        );
+    }
+
+    /** @return array<string, mixed> */
+    public function tocConfiguration(): array
+    {
+        return app(PrintLayoutRegistry::class)->normalizeTocConfiguration(
+            is_array($this->toc_configuration) ? $this->toc_configuration : [],
         );
     }
 }

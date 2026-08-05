@@ -135,7 +135,7 @@ final readonly class TemplateGeneratorService implements TemplateGenerator
     public function completeSection(array $templateData, string $sectionTitle): ?string
     {
         $response = $this->llmManager->generate(new LLMRequest(
-            prompt: "Write the complete reusable QMS section content for '{$sectionTitle}'. Return only the content. Template context:\n".json_encode($templateData, JSON_PRETTY_PRINT),
+            prompt: "Write the complete reusable QMS section content for '{$sectionTitle}'. Return rich-editor-compatible HTML only, not Markdown. Use semantic tags such as <p>, <h3>, <ul>, <ol>, <li>, <strong>, and <em>; do not include <html>, <head>, or <body>. Return only the content. Template context:\n".json_encode($templateData, JSON_PRETTY_PRINT),
             useCase: AIUseCase::TEMPLATE_SECTION_COMPLETION,
             capability: LLMCapability::TEXT_GENERATION,
             dataClassification: AIDataClassification::INTERNAL,
@@ -151,8 +151,7 @@ final readonly class TemplateGeneratorService implements TemplateGenerator
         string $operation,
         string $sectionTitle,
         array $templateContext = [],
-    ): ?array
-    {
+    ): ?array {
         $instruction = match ($operation) {
             'polish' => 'Polish and formalize the text using clear, professional pharmaceutical QMS language.',
             'shorten' => 'Shorten the text while preserving all important meaning, requirements, and controls.',
@@ -200,10 +199,12 @@ Requirements:
 3. Do not invent regulatory requirements that are not supported by the provided context.
 4. Keep terminology consistent with the department and regulatory tags.
 5. Return only the section content, without commentary or quotation marks.
+6. The content is stored in a RichEditor. Return valid rich-editor-compatible HTML, not Markdown.
+7. Use semantic HTML such as <p>, <h3>, <ul>, <ol>, <li>, <strong>, and <em>. Do not return Markdown markers, HTML document wrappers, or code fences.
 
-6. Identify every variable placeholder needed in the content using {{variable_name}} syntax.
-7. Reuse the existing variables listed in the context whenever they match.
-8. Define only genuinely new variables, using concise snake_case names.
+8. Identify every variable placeholder needed in the content using {{variable_name}} syntax.
+9. Reuse the existing variables listed in the context whenever they match.
+10. Define only genuinely new variables, using concise snake_case names.
 PROMPT;
 
         $response = $this->llmManager->generate(new LLMRequest(
@@ -427,7 +428,13 @@ PROMPT;
 
     19. Section order values must represent the intended document sequence.
 
-    20. Return the response matching the specified JSON structure.
+    20. Organize sections into a clear hierarchy for document navigation. Use heading_level 1 for major sections and heading_level 2 (or higher only when genuinely needed) for subsections.
+
+    21. Set include_in_toc to true for substantive sections that should appear in a table of contents. Exclude purely administrative or helper sections only when appropriate.
+
+    22. Provide toc_title only when the title shown in the table of contents should differ from the section title; otherwise return an empty string.
+
+    23. Return the response matching the specified JSON structure.
 
     VARIABLE INTEGRITY RULE
 
@@ -573,9 +580,21 @@ PROMPT;
 
                                 'enum' => [
                                     'rich_text',
-                                    'markdown',
-                                    'text',
                                 ],
+                            ],
+
+                            'heading_level' => [
+                                'type' => 'integer',
+                                'minimum' => 1,
+                                'maximum' => 6,
+                            ],
+
+                            'include_in_toc' => [
+                                'type' => 'boolean',
+                            ],
+
+                            'toc_title' => [
+                                'type' => 'string',
                             ],
                         ],
 

@@ -108,6 +108,9 @@ class SopGeneratorService
                 $document->sections()->create([
                     'title' => $section->title,
                     'section_order' => $section->section_order,
+                    'heading_level' => $section->heading_level,
+                    'include_in_toc' => $section->include_in_toc,
+                    'toc_title' => $section->toc_title,
                     'content' => $this->variableResolverService->replace(
                         $section->content ?? '',
                         $resolvedVariables['substitution'],

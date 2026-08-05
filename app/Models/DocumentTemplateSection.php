@@ -18,16 +18,21 @@ class DocumentTemplateSection extends Model
         'template_version_id',
         'title',
         'section_order',
+        'heading_level',
         'section_type',
         'content',
         'is_required',
+        'include_in_toc',
+        'toc_title',
     ];
 
     protected function casts(): array
     {
         return [
             'section_order' => 'integer',
+            'heading_level' => 'integer',
             'is_required' => 'boolean',
+            'include_in_toc' => 'boolean',
         ];
     }
 

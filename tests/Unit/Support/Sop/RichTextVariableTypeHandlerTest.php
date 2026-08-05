@@ -5,6 +5,9 @@ declare(strict_types=1);
 use App\Models\DocumentTemplateVariable;
 use App\Models\VariableDataType;
 use App\Support\Sop\VariableTypes\Handlers\RichTextVariableTypeHandler;
+use Tests\TestCase;
+
+uses(TestCase::class);
 
 it('accepts tiptap document state and formats it as html', function (): void {
     $variable = new DocumentTemplateVariable([

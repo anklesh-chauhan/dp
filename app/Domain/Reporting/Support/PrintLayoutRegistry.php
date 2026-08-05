@@ -53,6 +53,35 @@ final class PrintLayoutRegistry
         ];
     }
 
+    /** @return array{enabled: bool, title: string, position: string, show_section_numbers: bool, page_break_before: bool, page_break_after: bool, max_level: int} */
+    public function defaultTocConfiguration(): array
+    {
+        return [
+            'enabled' => false,
+            'title' => 'Table of Contents',
+            'position' => 'before_sections',
+            'show_section_numbers' => true,
+            'page_break_before' => false,
+            'page_break_after' => false,
+            'max_level' => 3,
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    public function normalizeTocConfiguration(array $configuration): array
+    {
+        $configuration = [...$this->defaultTocConfiguration(), ...Arr::only($configuration, array_keys($this->defaultTocConfiguration()))];
+        $configuration['enabled'] = (bool) $configuration['enabled'];
+        $configuration['title'] = trim((string) $configuration['title']) ?: 'Table of Contents';
+        $configuration['position'] = $this->allowed($configuration['position'], ['before_sections', 'after_identity'], 'TOC position');
+        $configuration['show_section_numbers'] = (bool) $configuration['show_section_numbers'];
+        $configuration['page_break_before'] = (bool) $configuration['page_break_before'];
+        $configuration['page_break_after'] = (bool) $configuration['page_break_after'];
+        $configuration['max_level'] = $this->boundedInteger($configuration['max_level'], 1, 6, 'TOC heading level');
+
+        return $configuration;
+    }
+
     /** @return array<string, mixed> */
     public function defaultHeaderZones(): array
     {

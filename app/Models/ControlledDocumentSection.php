@@ -14,12 +14,14 @@ class ControlledDocumentSection extends Model
     /** @use HasFactory<ControlledDocumentSectionFactory> */
     use HasFactory;
 
-    protected $fillable = ['document_id', 'title', 'section_order', 'content'];
+    protected $fillable = ['document_id', 'title', 'section_order', 'heading_level', 'content', 'include_in_toc', 'toc_title'];
 
     protected function casts(): array
     {
         return [
             'section_order' => 'integer',
+            'heading_level' => 'integer',
+            'include_in_toc' => 'boolean',
         ];
     }
 

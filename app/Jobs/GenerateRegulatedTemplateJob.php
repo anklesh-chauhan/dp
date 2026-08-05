@@ -221,7 +221,10 @@ class GenerateRegulatedTemplateJob implements ShouldQueue
             $version->sections()->create([
                 'title' => trim($section['title']),
                 'section_order' => $section['section_order'],
-                'section_type' => trim($section['section_type']),
+                'heading_level' => max(1, min(6, (int) ($section['heading_level'] ?? 1))),
+                'section_type' => 'rich_text',
+                'include_in_toc' => (bool) ($section['include_in_toc'] ?? true),
+                'toc_title' => trim((string) ($section['toc_title'] ?? '')) ?: null,
                 'content' => $section['content'],
                 'is_required' => true,
             ]);

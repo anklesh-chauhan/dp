@@ -4,15 +4,16 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\DocumentTemplates\RelationManagers;
 
-use App\Filament\Concerns\ManagesEditableTemplates;
 use App\Enums\ProductModule;
+use App\Filament\Concerns\ManagesEditableTemplates;
 use App\Jobs\CompleteTemplateSectionWithAiJob;
 use App\Jobs\GenerateTemplateSectionTitlesJob;
+use App\Models\DocumentTemplateSection;
 use App\Models\DocumentTemplateVersion;
 use App\Models\TemplateStatus;
 use App\Models\VariableDataType;
-use App\Support\Modules\ModuleManager;
 use App\Services\AI\Contracts\TemplateGenerator;
+use App\Support\Modules\ModuleManager;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
@@ -23,12 +24,10 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Actions\ActionGroup;
-use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\Grid;
-use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -58,12 +57,15 @@ class SectionRelationManager extends RelationManager
                     )
                     ->required(),
                 TextInput::make('section_order')->numeric()->required()->minValue(1),
+                TextInput::make('heading_level')->numeric()->minValue(1)->maxValue(6)->default(1)->required(),
                 TextInput::make('section_type')->default('rich_text')->required(),
                 Toggle::make('is_required')->default(true)->inline(false),
+                Toggle::make('include_in_toc')->label('Include in TOC')->default(true)->inline(false),
             ]),
 
             Grid::make(1)->schema([
                 TextInput::make('title')->required()->maxLength(255),
+                TextInput::make('toc_title')->label('TOC title override')->maxLength(255),
 
                 RichEditor::make('content')
                     ->columnSpanFull()
@@ -194,7 +196,7 @@ class SectionRelationManager extends RelationManager
                     ->label('Complete with AI')
                     ->icon('heroicon-m-sparkles')
                     ->visible(fn (): bool => $this->canManageTemplateRecord() && app(ModuleManager::class)->enabled(ProductModule::AI))
-                    ->action(function (\App\Models\DocumentTemplateSection $record): void {
+                    ->action(function (DocumentTemplateSection $record): void {
                         CompleteTemplateSectionWithAiJob::dispatch($record);
 
                         Notification::make()

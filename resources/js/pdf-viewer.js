@@ -55,6 +55,7 @@ if (viewer) {
     const loadPdf = async () => {
         const response = await fetch(viewer.dataset.pdfUrl, {
             credentials: 'include',
+            withCredentials: true,
             headers: { Accept: 'application/pdf' },
         });
 

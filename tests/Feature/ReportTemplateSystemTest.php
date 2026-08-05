@@ -139,6 +139,35 @@ it('normalizes safe variable-column header and footer configuration with legacy 
         ->and($legacyTemplate->printHeaderZones()['rows'])->toHaveCount(4);
 });
 
+it('normalizes configurable table of contents settings', function (): void {
+    $registry = app(PrintLayoutRegistry::class);
+
+    expect($registry->normalizeTocConfiguration([]))
+        ->enabled->toBeFalse()
+        ->title->toBe('Table of Contents')
+        ->position->toBe('before_sections')
+        ->max_level->toBe(3)
+        ->show_section_numbers->toBeTrue();
+
+    expect($registry->normalizeTocConfiguration([
+        'enabled' => true,
+        'title' => ' SOP Contents ',
+        'position' => 'after_identity',
+        'max_level' => 2,
+        'show_section_numbers' => false,
+        'page_break_before' => true,
+        'page_break_after' => true,
+    ]))->toBe([
+        'enabled' => true,
+        'title' => 'SOP Contents',
+        'position' => 'after_identity',
+        'show_section_numbers' => false,
+        'page_break_before' => true,
+        'page_break_after' => true,
+        'max_level' => 2,
+    ]);
+});
+
 it('exports only enabled columns in the configured CSV order', function (): void {
     $template = ReportTemplate::factory()->create([
         'scope' => ReportScope::DocumentDistribution,

@@ -9,6 +9,7 @@ use Filament\Actions\CreateAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
@@ -30,6 +31,9 @@ class DocumentSectionRelationManager extends RelationManager
                 ->label('Section order')
                 ->numeric()
                 ->required(),
+            TextInput::make('heading_level')->label('Heading level')->numeric()->minValue(1)->maxValue(6)->default(1)->required(),
+            Toggle::make('include_in_toc')->label('Include in table of contents')->default(true),
+            TextInput::make('toc_title')->label('TOC title override')->maxLength(255),
             RichEditor::make('content')
                 ->label('Content')
                 ->required()
