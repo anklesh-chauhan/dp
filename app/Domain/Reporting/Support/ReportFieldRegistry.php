@@ -91,7 +91,7 @@ final class ReportFieldRegistry
         };
     }
 
-    /** @return list<array{key: string, label: string, group: string, enabled: bool, width: string, hide_when_empty: bool, page_break_before: bool}> */
+    /** @return list<array{key: string, label: string, group: string, enabled: bool, width: string, hide_when_empty: bool, show_label: bool, show_section_titles: bool, page_break_before: bool}> */
     public function defaultFields(ReportScope $scope): array
     {
         return collect($this->definitions($scope))
@@ -102,6 +102,8 @@ final class ReportFieldRegistry
                 'enabled' => true,
                 'width' => 'full',
                 'hide_when_empty' => false,
+                'show_label' => true,
+                'show_section_titles' => true,
                 'page_break_before' => false,
             ])
             ->values()
@@ -109,7 +111,7 @@ final class ReportFieldRegistry
     }
 
     /** @param array<int, mixed> $fields
-     * @return list<array{key: string, label: string, group: string, enabled: bool, width: string, hide_when_empty: bool, page_break_before: bool}>
+     * @return list<array{key: string, label: string, group: string, enabled: bool, width: string, hide_when_empty: bool, show_label: bool, show_section_titles: bool, page_break_before: bool}>
      */
     public function normalize(ReportScope $scope, array $fields): array
     {
@@ -136,6 +138,8 @@ final class ReportFieldRegistry
                         ? Arr::get($field, 'width')
                         : 'full',
                     'hide_when_empty' => (bool) Arr::get($field, 'hide_when_empty', false),
+                    'show_label' => (bool) Arr::get($field, 'show_label', true),
+                    'show_section_titles' => (bool) Arr::get($field, 'show_section_titles', true),
                     'page_break_before' => (bool) Arr::get($field, 'page_break_before', false),
                 ];
             });
@@ -149,6 +153,8 @@ final class ReportFieldRegistry
                 'enabled' => false,
                 'width' => 'full',
                 'hide_when_empty' => false,
+                'show_label' => true,
+                'show_section_titles' => true,
                 'page_break_before' => false,
             ]);
 

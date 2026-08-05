@@ -179,6 +179,13 @@ final class ReportTemplateForm
                                             ->default(true),
                                         Toggle::make('hide_when_empty')
                                             ->label('Hide When Empty'),
+                                        Toggle::make('show_label')
+                                            ->label('Show Print Label')
+                                            ->default(true),
+                                        Toggle::make('show_section_titles')
+                                            ->label('Show Controlled Section Titles / Names')
+                                            ->default(true)
+                                            ->visible(fn (Get $get): bool => $get('key') === 'sections'),
                                         Toggle::make('page_break_before')
                                             ->label('Page Break Before'),
                                     ])

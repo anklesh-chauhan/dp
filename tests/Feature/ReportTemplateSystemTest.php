@@ -55,6 +55,26 @@ it('preserves configured field order and rejects unsupported system fields', fun
     ]))->toThrow(ValidationException::class);
 });
 
+it('normalizes body block label and controlled section title visibility', function (): void {
+    $registry = app(ReportFieldRegistry::class);
+
+    $fields = $registry->normalize(ReportScope::ControlledDocument, [[
+        'key' => 'sections',
+        'enabled' => true,
+        'show_label' => false,
+        'show_section_titles' => false,
+    ]]);
+
+    expect($fields[0])
+        ->toMatchArray([
+            'key' => 'sections',
+            'show_label' => false,
+            'show_section_titles' => false,
+        ])
+        ->and($fields[1]['show_label'])->toBeTrue()
+        ->and($fields[1]['show_section_titles'])->toBeTrue();
+});
+
 it('normalizes safe variable-column header and footer configuration with legacy conversion', function (): void {
     $registry = app(PrintLayoutRegistry::class);
 

@@ -410,17 +410,6 @@
             @include('controlled-documents.partials.title-page')
         @endif
 
-        @if ($document->referenced_sop_number)
-            <section class="reference-box" style="grid-column: 1 / -1;">
-                <strong>Referenced SOP:</strong>
-                {{ $document->referenced_sop_number }}
-                v{{ $document->referenced_sop_version }}
-                @if ($document->referenced_sop_effective_date)
-                    (Effective {{ $document->referenced_sop_effective_date->toFormattedDateString() }})
-                @endif
-            </section>
-        @endif
-
         @if (in_array('organization', $enabledFields, true) && (! ($fieldConfig['organization']['hide_when_empty'] ?? false) || $organization !== []))
             <section class="reference-box" style="grid-column: {{ ($fieldConfig['organization']['width'] ?? 'full') === 'full' ? '1 / -1' : 'span 1' }}; order: {{ $fieldOrder['organization'] ?? 0 }}; {{ ($fieldConfig['organization']['page_break_before'] ?? false) ? 'break-before: page;' : '' }}">
                 @if (filled($organization['logo_path'] ?? null))
@@ -472,7 +461,7 @@
 
         @if (in_array('variables', $enabledFields, true) && (! ($fieldConfig['variables']['hide_when_empty'] ?? false) || $document->variables->isNotEmpty()))
             <section style="grid-column: {{ ($fieldConfig['variables']['width'] ?? 'full') === 'full' ? '1 / -1' : 'span 1' }}; order: {{ $fieldOrder['variables'] ?? 0 }}; {{ ($fieldConfig['variables']['page_break_before'] ?? false) ? 'break-before: page;' : '' }}">
-            <h2>{{ $fieldConfig['variables']['label'] ?? 'Variables' }}</h2>
+        @if ($fieldConfig['variables']['show_label'] ?? true)<h2>{{ $fieldConfig['variables']['label'] ?? 'Variables' }}</h2>@endif
             <table>
                 <tbody>
                     @forelse ($document->variables as $variable)
@@ -493,15 +482,15 @@
             @include('controlled-documents.partials.table-of-contents')
         @endif
         <section style="grid-column: {{ ($fieldConfig['sections']['width'] ?? 'full') === 'full' ? '1 / -1' : 'span 1' }}; order: {{ $fieldOrder['sections'] ?? 0 }}; {{ ($fieldConfig['sections']['page_break_before'] ?? false) ? 'break-before: page;' : '' }}">
-        <h2>{{ $fieldConfig['sections']['label'] ?? 'Sections' }}</h2>
+        @if ($fieldConfig['sections']['show_label'] ?? true)<h2>{{ $fieldConfig['sections']['label'] ?? 'Sections' }}</h2>@endif
         @forelse ($document->sections as $section)
             <article id="section-{{ $section->getKey() }}" class="section">
-                <h3>
+                @if ($fieldConfig['sections']['show_section_titles'] ?? true)<h3>
                     @if ($tocMarkerMode ?? false)
                         <span class="toc-marker">{{ app(\App\Domain\DMS\Services\DocumentTocPageResolver::class)->marker($section->getKey()) }}</span>
                     @endif
                     {{ $section->section_order }}. {{ $section->title }}
-                </h3>
+                </h3>@endif
                 <div class="content">
                     {!! filled($section->content) ? $section->content : '<p>-</p>' !!}
                 </div>
@@ -514,7 +503,7 @@
 
         @if (in_array('approvals', $enabledFields, true) && (! ($fieldConfig['approvals']['hide_when_empty'] ?? false) || $document->approvals->isNotEmpty()))
             <section style="grid-column: {{ ($fieldConfig['approvals']['width'] ?? 'full') === 'full' ? '1 / -1' : 'span 1' }}; order: {{ $fieldOrder['approvals'] ?? 0 }}; {{ ($fieldConfig['approvals']['page_break_before'] ?? false) ? 'break-before: page;' : '' }}">
-            <h2>{{ $fieldConfig['approvals']['label'] ?? 'Approvals' }}</h2>
+            @if ($fieldConfig['approvals']['show_label'] ?? true)<h2>{{ $fieldConfig['approvals']['label'] ?? 'Approvals' }}</h2>@endif
             <table>
                 <thead>
                     <tr>

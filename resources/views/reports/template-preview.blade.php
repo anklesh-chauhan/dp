@@ -128,7 +128,7 @@
                 @foreach ($reportTemplate->fields as $field)
                     @if ($field['enabled'])
                         <article class="block {{ ($field['width'] ?? 'full') === 'full' ? 'block-full' : '' }}">
-                            <h2>{{ $field['label'] }}</h2>
+                            @if ($field['show_label'] ?? true)<h2>{{ $field['label'] }}</h2>@endif
                             <div class="sample-lines"></div>
                         </article>
                     @endif
