@@ -16,8 +16,8 @@ use App\Models\DocumentIssuance;
 use App\Models\Organization;
 use App\Models\ReportTemplate;
 use App\Models\SopAuditLog;
-use Illuminate\Http\Request;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -87,9 +87,13 @@ class ControlledDocumentPrintController extends Controller
             ->active()
             ->where('scope', ReportScope::ControlledDocument)
             ->where('format', ReportFormat::Pdf)
+            ->when($request->filled('template'), fn ($query) => $query->whereKey($request->integer('template')))
             ->when(
-                $request->filled('template'),
-                fn ($query) => $query->whereKey($request->integer('template')),
+                ! $request->filled('template') && $controlledDocument->template?->report_template_id,
+                fn ($query) => $query->whereKey($controlledDocument->template->report_template_id),
+            )
+            ->when(
+                ! $request->filled('template') && ! $controlledDocument->template?->report_template_id,
                 fn ($query) => $query->where('is_system', true)->oldest(),
             )
             ->first();

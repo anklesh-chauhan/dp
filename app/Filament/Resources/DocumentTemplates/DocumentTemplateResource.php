@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\DocumentTemplates;
 
+use App\Domain\Reporting\Enums\ReportFormat;
+use App\Domain\Reporting\Enums\ReportScope;
 use App\Enums\ProductModule;
 use App\Filament\Concerns\HasGenerationPolling;
 use App\Filament\Resources\DocumentTemplates\Pages\CreateDocumentTemplate;
@@ -18,6 +20,7 @@ use App\Filament\Resources\DocumentTemplates\RelationManagers\VariableRelationMa
 use App\Filament\Resources\DocumentTemplates\RelationManagers\VersionRelationManager;
 use App\Filament\Support\DocumentClassificationFormFields;
 use App\Models\DocumentTemplate;
+use App\Models\ReportTemplate;
 use App\Models\TemplateStatus;
 use App\Support\Modules\ModuleManager;
 use Filament\Actions\Action;
@@ -155,6 +158,20 @@ class DocumentTemplateResource extends Resource
                             ->relationship('templateStatus', 'name')
                             ->default(fn (): int => TemplateStatus::idFor(TemplateStatus::DRAFT))
                             ->required(),
+
+                        Select::make('report_template_id')
+                            ->label('Print & Report Template')
+                            ->options(fn (): array => ReportTemplate::query()
+                                ->active()
+                                ->where('scope', ReportScope::ControlledDocument)
+                                ->where('format', ReportFormat::Pdf)
+                                ->orderBy('name')
+                                ->pluck('name', 'id')
+                                ->all())
+                            ->searchable()
+                            ->preload()
+                            ->helperText('Default template used when printing or generating PDFs from this document template.')
+                            ->nullable(),
 
                         TextInput::make('current_version')
                             ->numeric()

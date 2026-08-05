@@ -36,6 +36,7 @@ class DocumentTemplate extends Model
         'department_id',
         'category_id',
         'document_type_id',
+        'report_template_id',
         'template_status_id',
         'current_version',
         'created_by',
@@ -132,6 +133,12 @@ class DocumentTemplate extends Model
     public function documentType(): BelongsTo
     {
         return $this->belongsTo(DocumentType::class);
+    }
+
+    /** @return BelongsTo<ReportTemplate, $this> */
+    public function reportTemplate(): BelongsTo
+    {
+        return $this->belongsTo(ReportTemplate::class);
     }
 
     /**

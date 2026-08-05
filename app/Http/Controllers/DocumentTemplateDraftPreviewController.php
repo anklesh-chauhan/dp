@@ -26,8 +26,11 @@ class DocumentTemplateDraftPreviewController extends Controller
             ->active()
             ->where('scope', ReportScope::ControlledDocument)
             ->where('format', ReportFormat::Pdf)
-            ->where('is_system', true)
-            ->oldest()
+            ->when(
+                $documentTemplate->report_template_id,
+                fn ($query) => $query->whereKey($documentTemplate->report_template_id),
+                fn ($query) => $query->where('is_system', true)->oldest(),
+            )
             ->first();
 
         if ($reportTemplate === null) {
