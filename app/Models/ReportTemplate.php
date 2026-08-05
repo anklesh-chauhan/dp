@@ -30,6 +30,7 @@ class ReportTemplate extends Model
         'header_zones',
         'footer_zones',
         'toc_configuration',
+        'title_page_configuration',
         'is_active',
         'is_system',
         'created_by',
@@ -51,6 +52,7 @@ class ReportTemplate extends Model
             'header_zones' => 'array',
             'footer_zones' => 'array',
             'toc_configuration' => 'array',
+            'title_page_configuration' => 'array',
             'is_active' => 'boolean',
             'is_system' => 'boolean',
         ];
@@ -81,6 +83,9 @@ class ReportTemplate extends Model
             );
             $template->toc_configuration = $layoutRegistry->normalizeTocConfiguration(
                 is_array($template->toc_configuration) ? $template->toc_configuration : [],
+            );
+            $template->title_page_configuration = $layoutRegistry->normalizeTitlePageConfiguration(
+                is_array($template->title_page_configuration) ? $template->title_page_configuration : [],
             );
 
             if (auth()->check()) {
@@ -149,6 +154,14 @@ class ReportTemplate extends Model
     {
         return app(PrintLayoutRegistry::class)->normalizeTocConfiguration(
             is_array($this->toc_configuration) ? $this->toc_configuration : [],
+        );
+    }
+
+    /** @return array<string, mixed> */
+    public function titlePageConfiguration(): array
+    {
+        return app(PrintLayoutRegistry::class)->normalizeTitlePageConfiguration(
+            is_array($this->title_page_configuration) ? $this->title_page_configuration : [],
         );
     }
 }

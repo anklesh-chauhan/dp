@@ -199,6 +199,21 @@ final class ReportTemplateForm
                             Toggle::make('toc_configuration.page_break_before')->label('Page Break Before TOC'),
                             Toggle::make('toc_configuration.page_break_after')->label('Page Break After TOC'),
                         ]),
+                        Tab::make('Title Page')->schema([
+                            Toggle::make('title_page_configuration.enabled')
+                                ->label('Show Title Page')
+                                ->helperText('Adds a dedicated first page before the table of contents and document content.'),
+                            TextInput::make('title_page_configuration.subtitle')
+                                ->label('Subtitle')
+                                ->maxLength(255),
+                            Toggle::make('title_page_configuration.show_logo')->label('Show Organization Logo')->default(true),
+                            Toggle::make('title_page_configuration.show_organization')->label('Show Organization')->default(true),
+                            Toggle::make('title_page_configuration.show_identity')->label('Show Document Identity')->default(true),
+                            Toggle::make('title_page_configuration.show_controlled_notice')->label('Show Controlled Copy Notice')->default(true),
+                            Toggle::make('title_page_configuration.show_header')->label('Show Header')->default(true),
+                            Toggle::make('title_page_configuration.show_footer')->label('Show Footer')->default(true),
+                            Toggle::make('title_page_configuration.page_break_after')->label('Page Break After Title Page')->default(true),
+                        ]),
                         Tab::make('Footer')
                             ->schema([
                                 Grid::make(4)->schema([

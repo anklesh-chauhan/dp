@@ -67,6 +67,37 @@ final class PrintLayoutRegistry
         ];
     }
 
+    /** @return array{enabled: bool, subtitle: string, show_logo: bool, show_organization: bool, show_identity: bool, show_controlled_notice: bool, show_header: bool, show_footer: bool, page_break_after: bool} */
+    public function defaultTitlePageConfiguration(): array
+    {
+        return [
+            'enabled' => false,
+            'subtitle' => '',
+            'show_logo' => true,
+            'show_organization' => true,
+            'show_identity' => true,
+            'show_controlled_notice' => true,
+            'show_header' => true,
+            'show_footer' => true,
+            'page_break_after' => true,
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    public function normalizeTitlePageConfiguration(array $configuration): array
+    {
+        $defaults = $this->defaultTitlePageConfiguration();
+        $configuration = [...$defaults, ...Arr::only($configuration, array_keys($defaults))];
+        $configuration['enabled'] = (bool) $configuration['enabled'];
+        $configuration['subtitle'] = trim((string) $configuration['subtitle']);
+
+        foreach (['show_logo', 'show_organization', 'show_identity', 'show_controlled_notice', 'show_header', 'show_footer', 'page_break_after'] as $key) {
+            $configuration[$key] = (bool) $configuration[$key];
+        }
+
+        return $configuration;
+    }
+
     /** @return array<string, mixed> */
     public function normalizeTocConfiguration(array $configuration): array
     {

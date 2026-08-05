@@ -124,12 +124,12 @@
         }
 
         .watermark {
-            border: 2px dashed #b45309;
+            border: 1px dashed #b45309;
             color: #92400e;
-            font-weight: 700;
-            letter-spacing: .08em;
+            font-weight: 350;
+            letter-spacing: .06em;
             margin: 0 0 18px;
-            padding: 10px 14px;
+            padding: 8px 10px;
             text-align: center;
             text-transform: uppercase;
         }
@@ -150,6 +150,15 @@
         .toc-entry.level-6 { padding-left: 80px; }
         .toc-entry a { color: inherit; text-decoration: none; }
         .toc-entry > span { margin-left: auto; padding-left: 12px; text-align: right; }
+        .title-page { align-items: center; break-inside: avoid; display: flex; flex-direction: column; grid-column: 1 / -1; height: 200mm; justify-content: center; overflow: hidden; padding: 10mm 14mm; text-align: center; }
+        .title-page-logo { max-height: 28mm; max-width: 60mm; object-fit: contain; }
+        .title-page-organization { font-size: 1.25em; font-weight: 700; letter-spacing: .04em; margin-top: 7mm; text-transform: uppercase; }
+        .title-page h1 { border: 0; font-size: 1.9em; line-height: 1.2; margin: 16mm 0 5mm; max-width: 155mm; }
+        .title-page-subtitle { color: #617182; font-size: 1.1em; font-style: italic; max-width: 140mm; }
+        .title-page-identity { border: 1px solid #cbd5e1; display: grid; gap: 0; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 10mm; max-width: 145mm; text-align: left; width: 100%; }
+        .title-page-identity span { border-bottom: 1px solid #cbd5e1; padding: 8px 12px; }
+        .title-page-identity span:nth-child(odd) { background: #f8fafc; font-weight: 700; }
+        .title-page-notice { border: 1px solid var(--primary); font-size: .9em; font-weight: 700; letter-spacing: .12em; margin-top: 12mm; padding: 8px 20px; }
         .toc-marker { color: transparent; font-size: 1px; }
 
         .print-grid {
@@ -377,6 +386,7 @@
     @php($footerZones = $configuredFooterZones)
     @php($toc = $reportTemplate->tocConfiguration())
     @php($showToc = $toc['enabled'])
+    @php($titlePage = $reportTemplate->titlePageConfiguration())
 
     <table class="print-document-frame">
         @if ($headerZones['repeat_every_page'] && ! ($serverPdf ?? false))
@@ -396,10 +406,8 @@
             @include('reports.partials.print-header')
         </div>
 
-        @if ($issuance)
-            <div class="watermark" style="grid-column: 1 / -1; order: -2;">
-                Controlled Copy {{ $issuance->copy_number }} | {{ $issuance->watermark_code }} | Issued {{ $issuance->issued_at->toDayDateTimeString() }}
-            </div>
+        @if ($titlePage['enabled'])
+            @include('controlled-documents.partials.title-page')
         @endif
 
         @if ($document->referenced_sop_number)
