@@ -84,7 +84,7 @@
         th,
         td {
             border: {{ $pageSettings['show_table_borders'] ? '1px solid #d5dbe3' : '0' }};
-            padding: 8px 10px;
+            padding: 2px 2px;
             text-align: left;
             vertical-align: top;
         }
@@ -107,8 +107,8 @@
         }
 
         .content {
-            border: 1px solid #d5dbe3;
-            padding: 12px 14px;
+            border: {{ $pageSettings['show_table_borders'] ? '1px solid #d5dbe3' : '0' }};
+            padding: 2px 14px;
         }
 
         .content :first-child {
