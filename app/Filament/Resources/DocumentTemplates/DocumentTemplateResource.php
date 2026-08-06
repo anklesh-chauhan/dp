@@ -20,6 +20,7 @@ use App\Filament\Resources\DocumentTemplates\RelationManagers\VariableRelationMa
 use App\Filament\Resources\DocumentTemplates\RelationManagers\VersionRelationManager;
 use App\Filament\Support\DocumentClassificationFormFields;
 use App\Models\DocumentTemplate;
+use App\Models\DocumentType;
 use App\Models\ReportTemplate;
 use App\Models\TemplateStatus;
 use App\Support\Modules\ModuleManager;
@@ -201,6 +202,10 @@ class DocumentTemplateResource extends Resource
                     ->label('Document Type')
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('documentType.format_profile')
+                    ->label('Format')
+                    ->badge()
+                    ->formatStateUsing(fn (?string $state): string => DocumentType::formatProfileOptions()[$state] ?? 'Text document'),
                 TextColumn::make('regulationTags.name')
                     ->label('Regulation Tags')
                     ->badge()

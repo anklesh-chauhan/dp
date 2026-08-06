@@ -11,8 +11,44 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DocumentTemplateSection extends Model
 {
+    public const TYPE_TEXT = 'rich_text';
+
+    public const TYPE_TABLE = 'structured_table';
+
+    public const TYPE_CHECKLIST = 'checklist';
+
+    public const TYPE_REPEATING_LOG = 'repeating_log';
+
+    public const TYPE_SIGNATURES = 'signatures';
+
+    public const TYPE_ANNEXURES = 'annexures';
+
     /** @use HasFactory<DocumentTemplateSectionFactory> */
     use HasFactory;
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $section): void {
+            $configuration = is_array($section->configuration) ? $section->configuration : [];
+
+            $defaults = match ($section->section_type) {
+                self::TYPE_TABLE => [
+                    'columns' => 'Parameter, Specification, Result, Unit, Acceptance criteria',
+                ],
+                self::TYPE_CHECKLIST => [
+                    'response_options' => 'Pass, Fail, N/A',
+                    'columns' => 'Item, Response, Comments, Initials',
+                ],
+                self::TYPE_REPEATING_LOG => [
+                    'frequency' => 'Daily',
+                    'columns' => 'Date/Time, Reading, Initials, Remarks, Verified by',
+                ],
+                default => [],
+            };
+
+            $section->configuration = [...$defaults, ...$configuration];
+        });
+    }
 
     protected $fillable = [
         'template_version_id',
@@ -21,6 +57,7 @@ class DocumentTemplateSection extends Model
         'heading_level',
         'section_type',
         'content',
+        'configuration',
         'is_required',
         'include_in_toc',
         'toc_title',
@@ -33,6 +70,22 @@ class DocumentTemplateSection extends Model
             'heading_level' => 'integer',
             'is_required' => 'boolean',
             'include_in_toc' => 'boolean',
+            'configuration' => 'array',
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function typeOptions(): array
+    {
+        return [
+            self::TYPE_TEXT => 'Text section',
+            self::TYPE_TABLE => 'Structured table',
+            self::TYPE_CHECKLIST => 'Checklist',
+            self::TYPE_REPEATING_LOG => 'Repeating log',
+            self::TYPE_SIGNATURES => 'Signature block',
+            self::TYPE_ANNEXURES => 'Attachments / annexures',
         ];
     }
 

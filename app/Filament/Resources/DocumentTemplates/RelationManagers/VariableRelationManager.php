@@ -14,13 +14,13 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\RelationManagers\RelationManager;
-use Illuminate\Database\Eloquent\Builder;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class VariableRelationManager extends RelationManager
 {
@@ -46,7 +46,8 @@ class VariableRelationManager extends RelationManager
                 Select::make('variable_data_type_id')
                     ->relationship('variableDataType', 'name')
                     ->required()
-                    ->live(),
+                    ->live()
+                    ->helperText(fn (Get $get): string => self::dataTypeGuidance($get('variable_data_type_id'))),
                 TextInput::make('default_value'),
                 Toggle::make('required'),
                 KeyValue::make('options')
@@ -95,5 +96,21 @@ class VariableRelationManager extends RelationManager
             VariableDataType::MULTI_SELECT,
             VariableDataType::RADIO,
         ], true);
+    }
+
+    private static function dataTypeGuidance(mixed $variableDataTypeId): string
+    {
+        if (! is_numeric($variableDataTypeId)) {
+            return 'Choose the field type that matches the value users will record.';
+        }
+
+        return match (VariableDataType::query()->whereKey((int) $variableDataTypeId)->value('code')) {
+            VariableDataType::CHECKBOX => 'Useful for checklist completion, line clearance, and verification fields.',
+            VariableDataType::BOOLEAN => 'Useful for Yes/No or Pass/Fail responses.',
+            VariableDataType::DATE, VariableDataType::DATETIME, VariableDataType::TIME => 'Useful for log entry timing and review dates.',
+            VariableDataType::DECIMAL, VariableDataType::INTEGER, VariableDataType::PERCENTAGE => 'Use validation rules to control units, range, and decimal precision.',
+            VariableDataType::FILE, VariableDataType::IMAGE => 'Useful for certificates, photographs, and supporting evidence.',
+            default => 'Choose the field type that matches the value users will record.',
+        };
     }
 }

@@ -11,6 +11,7 @@ use App\Domain\Shared\Services\AuditLogService;
 use App\Exceptions\WorkflowException;
 use App\Models\ControlledDocument;
 use App\Models\DocumentStatus;
+use App\Models\DocumentType;
 use App\Models\SopAuditLog;
 use App\Models\User;
 use InvalidArgumentException;
@@ -31,6 +32,30 @@ class SopApprovalSubmissionLifecycleAdapter implements ApprovalSubmissionLifecyc
                 message: 'Only draft documents can be submitted for approval.'
             );
         }
+
+        if ($this->requiresCompletedExecution($document)) {
+            $document->loadMissing('sections');
+
+            if ($document->sections->isEmpty()
+                || $document->sections->contains(fn ($section): bool => ! $section->isCompleted())
+                || $document->sections->contains(fn ($section): bool => ! $section->isIndependentlyVerified())
+                || $document->sections->contains(fn ($section): bool => ! $section->hasValidStructuredConfiguration())
+                || $document->sections->contains(function ($section): bool {
+                    $section->loadMissing('items');
+
+                    return $section->items->contains(fn ($item): bool => ! $item->responseIsValidFor((string) $section->section_type)
+                        || ($item->is_required && ! $item->isIndependentlyVerified()));
+                })) {
+                throw new WorkflowException(
+                    message: 'Complete and independently verify every execution section before submitting this controlled record for approval.'
+                );
+            }
+        }
+    }
+
+    private function requiresCompletedExecution(ControlledDocument $document): bool
+    {
+        return in_array($document->documentType?->code, [DocumentType::BATCH_RECORD, 'BPR', 'CHECKLIST'], true);
     }
 
     public function prepareSubmission(ApprovableSubject $subject, User $submitter): void

@@ -106,6 +106,30 @@
             margin-top: 18px;
         }
 
+        .section-format-structured-table .content thead,
+        .section-format-checklist .content thead,
+        .section-format-repeating-log .content thead {
+            display: table-header-group;
+        }
+
+        .section-format-structured-table .content table,
+        .section-format-checklist .content table,
+        .section-format-repeating-log .content table,
+        .section-format-signatures .content table,
+        .section-format-annexures .content table {
+            width: 100%;
+            break-inside: auto;
+        }
+
+        .section-format-checklist .content input[type='checkbox'] {
+            width: 4mm;
+            height: 4mm;
+        }
+
+        .section-format-annexures {
+            break-before: page;
+        }
+
         .content {
             border: {{ $pageSettings['show_table_borders'] ? '1px solid #d5dbe3' : '0' }};
             padding: 2px 14px;
@@ -451,6 +475,19 @@
                     | {{ $document->documentStatus->name }}
                 @endif
             </div>
+            @if (filled($document->batch_number) || filled($document->product_name))
+                <div class="meta" style="margin-top: 8px;">
+                    @if (filled($document->product_name))
+                        <div><strong>Product:</strong> {{ $document->product_name }}</div>
+                    @endif
+                    @if (filled($document->batch_number))
+                        <div><strong>Batch:</strong> {{ $document->batch_number }}</div>
+                    @endif
+                </div>
+            @endif
+            @if (filled($document->purpose))
+                <div style="margin-top: 8px;"><strong>Purpose:</strong> {{ $document->purpose }}</div>
+            @endif
         </header>
         @endif
 
@@ -484,13 +521,49 @@
         <section style="grid-column: {{ ($fieldConfig['sections']['width'] ?? 'full') === 'full' ? '1 / -1' : 'span 1' }}; order: {{ $fieldOrder['sections'] ?? 0 }}; {{ ($fieldConfig['sections']['page_break_before'] ?? false) ? 'break-before: page;' : '' }}">
         @if ($fieldConfig['sections']['show_label'] ?? true)<h2>{{ $fieldConfig['sections']['label'] ?? 'Sections' }}</h2>@endif
         @forelse ($document->sections as $section)
-            <article id="section-{{ $section->getKey() }}" class="section">
+            <article id="section-{{ $section->getKey() }}" class="section section-format-{{ str($section->section_type ?? 'rich_text')->replace('_', '-')->lower() }}">
                 @if ($fieldConfig['sections']['show_section_titles'] ?? true)<h3>
                     @if ($tocMarkerMode ?? false)
                         <span class="toc-marker">{{ app(\App\Domain\DMS\Services\DocumentTocPageResolver::class)->marker($section->getKey()) }}</span>
                     @endif
                     {{ $section->section_order }}. {{ $section->title }}
                 </h3>@endif
+                @if (in_array($section->section_type ?? 'rich_text', ['structured_table', 'checklist', 'repeating_log'], true) && filled($section->configuration ?? null))
+                    <table class="section-configuration">
+                        <tbody>
+                            @foreach ($section->configuration as $configurationKey => $configurationValue)
+                                <tr>
+                                    <th>{{ str($configurationKey)->replace('_', ' ')->title() }}</th>
+                                    <td>{{ is_array($configurationValue) ? collect($configurationValue)->join(', ') : $configurationValue }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                @endif
+                @if (filled($section->execution_status ?? null) && ($section->section_type ?? 'rich_text') !== 'rich_text')
+                    <table class="section-execution-meta">
+                        <tbody>
+                            <tr>
+                                <th>Execution status</th>
+                                <td>{{ str($section->execution_status)->replace('_', ' ')->title() }}</td>
+                                <th>Completed by</th>
+                                <td>{{ $section->completedBy?->name ?? '-' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Completed at</th>
+                                <td>{{ $section->completed_at?->toDayDateTimeString() ?? '-' }}</td>
+                                <th>Verified by</th>
+                                <td>{{ $section->verifiedBy?->name ?? '-' }}</td>
+                            </tr>
+                            @if (filled($section->execution_notes))
+                                <tr>
+                                    <th>Notes</th>
+                                    <td colspan="3">{{ $section->execution_notes }}</td>
+                                </tr>
+                            @endif
+                        </tbody>
+                    </table>
+                @endif
                 <div class="content">
                     {!! filled($section->content) ? $section->content : '<p>-</p>' !!}
                 </div>
@@ -528,6 +601,36 @@
                     @endforelse
                 </tbody>
             </table>
+            </section>
+        @endif
+
+        @if ($document->attachments->isNotEmpty())
+            <section style="grid-column: 1 / -1; order: {{ ($fieldOrder['sections'] ?? 0) + 1 }}; break-before: page;">
+                <h2>Annexure Index</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Annexure</th>
+                            <th>File</th>
+                            <th>Role</th>
+                            <th>Required</th>
+                            <th>Included in Print</th>
+                            <th>Integrity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($document->attachments as $attachment)
+                            <tr>
+                                <td>{{ $attachment->annexure_number ?? '-' }}</td>
+                                <td>{{ $attachment->original_name }}</td>
+                                <td>{{ str($attachment->attachment_role)->replace('_', ' ')->title() }}</td>
+                                <td>{{ $attachment->is_required ? 'Yes' : 'No' }}</td>
+                                <td>{{ $attachment->include_in_print ? 'Yes' : 'No' }}</td>
+                                <td>{{ app(\App\Domain\QMS\Services\QualityAttachmentIntegrityService::class)->status($attachment)->value }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
             </section>
         @endif
 

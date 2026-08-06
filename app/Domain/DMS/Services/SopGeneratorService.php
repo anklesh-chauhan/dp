@@ -115,6 +115,8 @@ class SopGeneratorService
                         $section->content ?? '',
                         $resolvedVariables['substitution'],
                     ),
+                    'section_type' => $section->section_type,
+                    'configuration' => $section->configuration,
                 ]);
             }
 
@@ -124,6 +126,8 @@ class SopGeneratorService
                     'value' => $value,
                 ]);
             }
+
+            $document->generateExpectedLogEntries();
 
             $this->auditLogService->log(
                 action: SopAuditLog::ACTION_GENERATED_SOP,

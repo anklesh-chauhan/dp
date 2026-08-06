@@ -10,7 +10,10 @@ use App\Enums\ProductModule;
 use App\Support\Modules\ModuleManager;
 use Filament\Actions\CreateAction;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
@@ -43,6 +46,24 @@ final class QualityAttachmentsRelationManager extends RelationManager
                 ->storeFileNamesIn('original_name')
                 ->maxSize(10_240)
                 ->required(),
+            TextInput::make('annexure_number')
+                ->label('Annexure number')
+                ->placeholder('Annexure A, B, or 1.1')
+                ->maxLength(50),
+            Select::make('attachment_role')
+                ->label('Attachment role')
+                ->options([
+                    'supporting_evidence' => 'Supporting evidence',
+                    'drawing' => 'Drawing / layout',
+                    'certificate' => 'Certificate',
+                    'photograph' => 'Photograph',
+                    'calculation' => 'Calculation',
+                    'sample' => 'Sample / label',
+                ])
+                ->default('supporting_evidence')
+                ->required(),
+            Toggle::make('is_required')->label('Required annexure'),
+            Toggle::make('include_in_print')->label('Include in print package')->default(true),
             Textarea::make('description')
                 ->maxLength(2_000),
         ]);

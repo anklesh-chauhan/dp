@@ -25,6 +25,10 @@ final class QualityAttachment extends Model
         'disk',
         'path',
         'original_name',
+        'annexure_number',
+        'attachment_role',
+        'is_required',
+        'include_in_print',
         'mime_type',
         'size_bytes',
         'content_hash',
@@ -60,6 +64,8 @@ final class QualityAttachment extends Model
         return [
             'size_bytes' => 'integer',
             'uploaded_at' => 'immutable_datetime',
+            'is_required' => 'boolean',
+            'include_in_print' => 'boolean',
         ];
     }
 

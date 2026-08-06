@@ -79,6 +79,7 @@ class ControlledDocumentPrintController extends Controller
             'organization',
             'referencedSop',
             'sections',
+            'attachments',
             'template',
             'variables',
         ]);

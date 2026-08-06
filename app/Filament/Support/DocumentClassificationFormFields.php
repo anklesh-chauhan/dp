@@ -54,6 +54,11 @@ final class DocumentClassificationFormFields
 
                     self::syncFieldsFromDocumentType($set, $state);
                 }),
+            Placeholder::make('format_profile')
+                ->label('Suggested document format')
+                ->content(fn (Get $get): string => self::formatProfileLabel($get('document_type_id')))
+                ->visible(fn (Get $get): bool => filled($get('document_type_id')))
+                ->helperText('The selected document type determines the recommended editing and print layout.'),
             Select::make('regulationTags')
                 ->label('Regulation Tags')
                 ->options(fn (): array => self::regulationTagOptions())
@@ -129,6 +134,17 @@ final class DocumentClassificationFormFields
     public static function syncFieldsFromDocumentType(Set $set, int $documentTypeId): void
     {
         $set('regulationTags', self::regulationTagIdsForDocumentType($documentTypeId));
+    }
+
+    public static function formatProfileLabel(?int $documentTypeId): string
+    {
+        if ($documentTypeId === null) {
+            return 'Not selected';
+        }
+
+        $profile = DocumentType::query()->find($documentTypeId)?->format_profile;
+
+        return DocumentType::formatProfileOptions()[$profile] ?? 'Text document';
     }
 
     /**

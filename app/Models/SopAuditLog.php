@@ -69,6 +69,8 @@ class SopAuditLog extends Model
 
     public const ACTION_PRINTED = 'printed';
 
+    public const ACTION_SECTION_EXECUTION_UPDATED = 'section_execution_updated';
+
     public $timestamps = true;
 
     protected $fillable = [

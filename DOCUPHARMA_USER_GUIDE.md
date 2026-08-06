@@ -240,6 +240,31 @@ The previous version remains traceable.
 - Each controlled copy is rendered with its issuance number and watermark. Recalled or destroyed copies cannot be printed.
 - Recall or destroy issued copies only through the available lifecycle actions so the audit history is preserved.
 
+### 6.7 GMP document formats and execution controls
+
+DocuPharma supports the following controlled document formats through the existing template, approval, revision, issuance, and audit lifecycle:
+
+| Document type | Format profile | Typical use |
+|---|---|---|
+| SOP, Policy, Manual | Text document | Procedures, policies, and manuals |
+| Specification, Protocol, Report, Validation | Structured table | Acceptance criteria, validation, testing, and reports |
+| Form, BMR, BPR | Controlled form | Batch and controlled data-entry records |
+| Log | Repeating log | Hourly, shift, or daily recurring entries |
+| Checklist | Checklist | Line clearance, cleaning, and inspection checks |
+| Annexure | Attachment package | Certificates, drawings, photos, and evidence |
+
+Template sections support text, structured tables, checklists, repeating logs, signatures, and attachments. Structured sections can define columns, units, frequency, response options, decimal precision, and acceptance criteria.
+
+For checklist, BMR, and BPR records, required sections and items must be completed and independently verified before submission. The verifier must be different from the person who completed the item. `N/A` responses require an explanation.
+
+Repeating logs support hourly, shift, and daily schedules. The log period and supervisor are recorded, expected entries are generated automatically, missing required responses are detected, and supervisor review is tracked.
+
+BMR/BPR records support batch number, product, material name, material code, lot number, planned and actual quantities, units, planned and actual yield, reconciliation status, deviation links, step-level completion, independent verification, and final batch review.
+
+### 6.8 Annexures and evidence packages
+
+Controlled documents support immutable private attachments with annexure number, attachment role, required status, and print-package status. The controlled PDF includes an Annexure Index showing file metadata and SHA-256 integrity status. Missing or tampered attachments must be resolved before relying on the evidence package.
+
 ## 7. QMS Workflow
 
 The currently exposed QMS workspaces are:

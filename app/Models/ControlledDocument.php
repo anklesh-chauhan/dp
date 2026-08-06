@@ -6,7 +6,10 @@ namespace App\Models;
 
 use App\Concerns\Lockable;
 use App\Domain\DMS\Contracts\ControlledDocument as ControlledDocumentContract;
+use App\Domain\QMS\Models\Deviation;
+use App\Domain\QMS\Models\QualityAttachment;
 use App\Domain\Shared\Contracts\ApprovableSubject;
+use Carbon\CarbonPeriod;
 use Database\Factories\ControlledDocumentFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,6 +17,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
@@ -49,7 +53,20 @@ class ControlledDocument extends Model implements ApprovableSubject, ControlledD
         'referenced_sop_effective_date',
         'batch_number',
         'product_name',
+        'planned_yield',
+        'actual_yield',
+        'yield_unit',
+        'reconciliation_status',
+        'final_review_status',
+        'final_reviewed_by',
+        'final_reviewed_at',
+        'final_review_notes',
         'purpose',
+        'log_frequency',
+        'log_period_start',
+        'log_period_end',
+        'supervisor_id',
+        'log_review_status',
         'document_status_id',
         'effective_date',
         'review_date',
@@ -68,6 +85,11 @@ class ControlledDocument extends Model implements ApprovableSubject, ControlledD
             'version' => 'integer',
             'referenced_sop_version' => 'integer',
             'locked_at' => 'datetime',
+            'log_period_start' => 'date',
+            'log_period_end' => 'date',
+            'planned_yield' => 'decimal:8',
+            'actual_yield' => 'decimal:8',
+            'final_reviewed_at' => 'datetime',
             'organization_snapshot' => 'array',
         ];
     }
@@ -245,6 +267,75 @@ class ControlledDocument extends Model implements ApprovableSubject, ControlledD
         return ! $this->isIssuableType() && $this->canBePrinted();
     }
 
+    public function isLogDocument(): bool
+    {
+        return $this->documentType?->code === DocumentType::LOG;
+    }
+
+    public function generateExpectedLogEntries(): int
+    {
+        if (! $this->isLogDocument() || $this->log_period_start === null || $this->log_period_end === null) {
+            return 0;
+        }
+
+        $interval = match ($this->log_frequency) {
+            'hourly' => '1 hour',
+            'shift' => '8 hours',
+            'daily' => '1 day',
+            default => null,
+        };
+
+        if ($interval === null) {
+            return 0;
+        }
+
+        $created = 0;
+        foreach ($this->sections()->where('section_type', ControlledDocumentSection::TYPE_REPEATING_LOG)->get() as $section) {
+            if ($section->items()->exists()) {
+                continue;
+            }
+
+            foreach (CarbonPeriod::create($this->log_period_start, $interval, $this->log_period_end) as $scheduledAt) {
+                $section->items()->create([
+                    'item_order' => ++$created,
+                    'label' => 'Scheduled log entry',
+                    'value_type' => ControlledDocumentSectionItem::VALUE_TEXT,
+                    'scheduled_at' => $scheduledAt,
+                    'is_required' => true,
+                ]);
+            }
+        }
+
+        return $created;
+    }
+
+    public function missingLogEntryCount(): int
+    {
+        return $this->sections()
+            ->where('section_type', ControlledDocumentSection::TYPE_REPEATING_LOG)
+            ->with('items')
+            ->get()
+            ->sum(fn (ControlledDocumentSection $section): int => $section->items->filter(fn (ControlledDocumentSectionItem $item): bool => $item->is_required && blank($item->response))->count());
+    }
+
+    /**
+     * @return array{total: int, completed: int, verified: int, pending: int}
+     */
+    public function executionSummary(): array
+    {
+        $sections = $this->relationLoaded('sections') ? $this->sections : $this->sections()->get();
+        $total = $sections->count();
+        $completed = $sections->filter(fn (ControlledDocumentSection $section): bool => $section->isCompleted())->count();
+        $verified = $sections->filter(fn (ControlledDocumentSection $section): bool => $section->isIndependentlyVerified())->count();
+
+        return [
+            'total' => $total,
+            'completed' => $completed,
+            'verified' => $verified,
+            'pending' => max(0, $total - $completed),
+        ];
+    }
+
     /**
      * @param  Builder<ControlledDocument>  $query
      * @return Builder<ControlledDocument>
@@ -378,6 +469,37 @@ class ControlledDocument extends Model implements ApprovableSubject, ControlledD
         return $this->belongsTo(User::class, 'owner_id');
     }
 
+    /** @return BelongsTo<User, $this> */
+    public function supervisor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'supervisor_id');
+    }
+
+    /** @return HasMany<ControlledDocumentMaterial, $this> */
+    public function materials(): HasMany
+    {
+        return $this->hasMany(ControlledDocumentMaterial::class, 'document_id')->orderBy('material_order');
+    }
+
+    /** @return BelongsTo<User, $this> */
+    public function finalReviewedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'final_reviewed_by');
+    }
+
+    /** @return BelongsToMany<Deviation, $this> */
+    public function deviations(): BelongsToMany
+    {
+        return $this->belongsToMany(Deviation::class, 'controlled_document_deviations');
+    }
+
+    public function materialsAreReconciled(): bool
+    {
+        $materials = $this->relationLoaded('materials') ? $this->materials : $this->materials()->get();
+
+        return $materials->isNotEmpty() && $materials->every(fn (ControlledDocumentMaterial $material): bool => $material->isReconciled());
+    }
+
     /**
      * @return BelongsTo<User, $this>
      */
@@ -444,5 +566,13 @@ class ControlledDocument extends Model implements ApprovableSubject, ControlledD
     public function originalArtifacts(): HasMany
     {
         return $this->hasMany(DocumentOriginalArtifact::class);
+    }
+
+    /**
+     * @return MorphMany<QualityAttachment, $this>
+     */
+    public function attachments(): MorphMany
+    {
+        return $this->morphMany(QualityAttachment::class, 'attachable');
     }
 }

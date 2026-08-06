@@ -14,6 +14,7 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
@@ -45,6 +46,13 @@ class DocumentTypeResource extends LookupResource
                 ->required()
                 ->maxLength(50)
                 ->unique(ignoreRecord: true),
+            Textarea::make('description')
+                ->rows(2)
+                ->columnSpanFull(),
+            Select::make('format_profile')
+                ->label('Default format profile')
+                ->options(DocumentType::formatProfileOptions())
+                ->required(),
             Toggle::make('requires_sop_reference'),
             Toggle::make('is_issuable'),
             Select::make('regulationTags')
@@ -61,6 +69,7 @@ class DocumentTypeResource extends LookupResource
             ->columns([
                 TextColumn::make('name')->searchable()->sortable(),
                 TextColumn::make('code')->searchable()->sortable(),
+                TextColumn::make('format_profile')->label('Format')->badge(),
                 IconColumn::make('requires_sop_reference')->boolean(),
                 IconColumn::make('is_issuable')->boolean(),
                 TextColumn::make('updated_at')

@@ -51,8 +51,9 @@ class DocumentRevisionService
 
             $latestVersion = ControlledDocument::query()
                 ->where('document_series_id', $documentSeriesId)
+                ->orderByDesc('version')
                 ->lockForUpdate()
-                ->max('version');
+                ->value('version');
 
             $existingDraft = ControlledDocument::query()
                 ->where('document_series_id', $documentSeriesId)
@@ -94,6 +95,8 @@ class DocumentRevisionService
                     'content',
                     'include_in_toc',
                     'toc_title',
+                    'section_type',
+                    'configuration',
                 ]));
             }
 

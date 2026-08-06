@@ -13,6 +13,7 @@ use App\Filament\Resources\ControlledDocuments\RelationManagers\AuditRelationMan
 use App\Filament\Resources\ControlledDocuments\RelationManagers\DocumentSectionRelationManager;
 use App\Filament\Resources\ControlledDocuments\RelationManagers\DocumentVariableRelationManager;
 use App\Filament\Resources\ControlledDocuments\RelationManagers\OriginalArtifactRelationManager;
+use App\Filament\Resources\Shared\RelationManagers\QualityAttachmentsRelationManager;
 use App\Filament\Support\DocumentClassificationFormFields;
 use App\Filament\Support\TemplateVariableFieldBuilder;
 use App\Models\ControlledDocument;
@@ -121,6 +122,42 @@ class ControlledDocumentResource extends Resource
 
                         TextInput::make('title')->required()->maxLength(255),
 
+                        TextInput::make('batch_number')
+                            ->label('Batch number')
+                            ->maxLength(100)
+                            ->visible(fn (Get $get): bool => self::isBatchRecord($get('template_id')))
+                            ->required(fn (Get $get): bool => self::isBatchRecord($get('template_id')))
+                            ->helperText('Required for BMR and BPR records.'),
+
+                        TextInput::make('product_name')
+                            ->label('Product name')
+                            ->maxLength(255)
+                            ->visible(fn (Get $get): bool => self::isBatchRecord($get('template_id')))
+                            ->required(fn (Get $get): bool => self::isBatchRecord($get('template_id'))),
+
+                        Select::make('log_frequency')
+                            ->label('Log frequency')
+                            ->options([
+                                'hourly' => 'Hourly',
+                                'shift' => 'Every shift',
+                                'daily' => 'Daily',
+                            ])
+                            ->visible(fn (Get $get): bool => self::isLogDocument($get('template_id')))
+                            ->required(fn (Get $get): bool => self::isLogDocument($get('template_id'))),
+                        DatePicker::make('log_period_start')
+                            ->label('Log period start')
+                            ->visible(fn (Get $get): bool => self::isLogDocument($get('template_id'))),
+                        DatePicker::make('log_period_end')
+                            ->label('Log period end')
+                            ->visible(fn (Get $get): bool => self::isLogDocument($get('template_id'))),
+                        Select::make('supervisor_id')
+                            ->label('Supervisor reviewer')
+                            ->relationship('supervisor', 'name')
+                            ->searchable()
+                            ->preload()
+                            ->visible(fn (Get $get): bool => self::isLogDocument($get('template_id')))
+                            ->required(fn (Get $get): bool => self::isLogDocument($get('template_id'))),
+
                         TextInput::make('version')
                             ->numeric()
                             ->minValue(1)
@@ -180,6 +217,16 @@ class ControlledDocumentResource extends Resource
                     ->label('Document Type')
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('execution_progress')
+                    ->label('Execution')
+                    ->state(function (ControlledDocument $record): string {
+                        $summary = $record->executionSummary();
+
+                        return $summary['total'] === 0
+                            ? '—'
+                            : "{$summary['completed']}/{$summary['total']} complete · {$summary['verified']} verified";
+                    })
+                    ->badge(),
                 TextColumn::make('regulationTags.name')
                     ->label('Regulation Tags')
                     ->badge()
@@ -247,6 +294,7 @@ class ControlledDocumentResource extends Resource
             DocumentSectionRelationManager::class,
             DocumentVariableRelationManager::class,
             OriginalArtifactRelationManager::class,
+            QualityAttachmentsRelationManager::class,
             ApprovalRelationManager::class,
             AuditRelationManager::class,
         ];
@@ -321,5 +369,27 @@ class ControlledDocumentResource extends Resource
             ->find($templateId)
             ?->documentType
             ?->requiresSopReference() ?? false;
+    }
+
+    protected static function isBatchRecord(?int $templateId): bool
+    {
+        if ($templateId === null) {
+            return false;
+        }
+
+        return in_array(
+            DocumentTemplate::query()->whereKey($templateId)->with('documentType')->first()?->documentType?->code,
+            [DocumentType::BATCH_RECORD, 'BPR'],
+            true,
+        );
+    }
+
+    protected static function isLogDocument(?int $templateId): bool
+    {
+        if ($templateId === null) {
+            return false;
+        }
+
+        return DocumentTemplate::query()->whereKey($templateId)->with('documentType')->first()?->documentType?->code === DocumentType::LOG;
     }
 }
