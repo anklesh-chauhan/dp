@@ -16,6 +16,7 @@ use App\Models\DocumentStatus;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -64,6 +65,17 @@ class ViewLogDocument extends ViewRecord
                         ->options(fn (): array => Department::query()->orderBy('name')->pluck('name', 'id')->all())
                         ->searchable(),
                     TextInput::make('issued_to_location')->label('Issue To Location')->maxLength(255),
+                    Select::make('log_frequency')
+                        ->label('Execution frequency')
+                        ->options(['hourly' => 'Hourly', 'shift' => 'Every shift', 'daily' => 'Daily'])
+                        ->required(),
+                    DatePicker::make('log_period_start')->required(),
+                    DatePicker::make('log_period_end')->required()->afterOrEqual('log_period_start'),
+                    Select::make('supervisor_id')
+                        ->label('Supervisor reviewer')
+                        ->options(fn (): array => User::query()->orderBy('name')->pluck('name', 'id')->all())
+                        ->searchable()
+                        ->required(),
                     Textarea::make('notes')->rows(2),
                 ])
                 ->visible(fn (): bool => $this->record->canBeIssued()

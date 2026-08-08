@@ -38,6 +38,11 @@ class ControlledDocumentPrintController extends Controller
 
         if ($request->filled('issuance')) {
             $issuance = DocumentIssuance::query()
+                ->with([
+                    'execution.attachments',
+                    'execution.sections.items.completedBy',
+                    'execution.sections.items.verifiedBy',
+                ])
                 ->whereKey($request->integer('issuance'))
                 ->where('document_id', $controlledDocument->id)
                 ->firstOrFail();
@@ -78,7 +83,7 @@ class ControlledDocumentPrintController extends Controller
             'owner',
             'organization',
             'referencedSop',
-            'sections',
+            'sections.items',
             'attachments',
             'template',
             'variables',

@@ -8,11 +8,14 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
-        Schema::create('controlled_document_materials', function (Blueprint $table): void {
+        Schema::create('document_execution_materials', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('document_id')->constrained('controlled_documents')->cascadeOnDelete();
+            $table->foreignId('document_execution_id')->constrained()->cascadeOnDelete();
             $table->unsignedInteger('material_order')->default(1);
             $table->string('material_name');
             $table->string('material_code', 100)->nullable();
@@ -24,12 +27,15 @@ return new class extends Migration
             $table->foreignId('verified_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('verified_at')->nullable();
             $table->timestamps();
-            $table->index(['document_id', 'material_order']);
+            $table->index(['document_execution_id', 'material_order']);
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
-        Schema::dropIfExists('controlled_document_materials');
+        Schema::dropIfExists('document_execution_materials');
     }
 };

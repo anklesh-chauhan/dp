@@ -475,13 +475,13 @@
                     | {{ $document->documentStatus->name }}
                 @endif
             </div>
-            @if (filled($document->batch_number) || filled($document->product_name))
+            @if (filled($issuance?->execution?->batch_number) || filled($issuance?->execution?->product_name))
                 <div class="meta" style="margin-top: 8px;">
-                    @if (filled($document->product_name))
-                        <div><strong>Product:</strong> {{ $document->product_name }}</div>
+                    @if (filled($issuance?->execution?->product_name))
+                        <div><strong>Product:</strong> {{ $issuance->execution->product_name }}</div>
                     @endif
-                    @if (filled($document->batch_number))
-                        <div><strong>Batch:</strong> {{ $document->batch_number }}</div>
+                    @if (filled($issuance?->execution?->batch_number))
+                        <div><strong>Batch:</strong> {{ $issuance->execution->batch_number }}</div>
                     @endif
                 </div>
             @endif
@@ -520,7 +520,8 @@
         @endif
         <section style="grid-column: {{ ($fieldConfig['sections']['width'] ?? 'full') === 'full' ? '1 / -1' : 'span 1' }}; order: {{ $fieldOrder['sections'] ?? 0 }}; {{ ($fieldConfig['sections']['page_break_before'] ?? false) ? 'break-before: page;' : '' }}">
         @if ($fieldConfig['sections']['show_label'] ?? true)<h2>{{ $fieldConfig['sections']['label'] ?? 'Sections' }}</h2>@endif
-        @forelse ($document->sections as $section)
+        @php($printSections = $issuance?->execution?->sections ?? $document->sections)
+        @forelse ($printSections as $section)
             <article id="section-{{ $section->getKey() }}" class="section section-format-{{ str($section->section_type ?? 'rich_text')->replace('_', '-')->lower() }}">
                 @if ($fieldConfig['sections']['show_section_titles'] ?? true)<h3>
                     @if ($tocMarkerMode ?? false)
@@ -540,33 +541,35 @@
                         </tbody>
                     </table>
                 @endif
-                @if (filled($section->execution_status ?? null) && ($section->section_type ?? 'rich_text') !== 'rich_text')
-                    <table class="section-execution-meta">
-                        <tbody>
-                            <tr>
-                                <th>Execution status</th>
-                                <td>{{ str($section->execution_status)->replace('_', ' ')->title() }}</td>
-                                <th>Completed by</th>
-                                <td>{{ $section->completedBy?->name ?? '-' }}</td>
-                            </tr>
-                            <tr>
-                                <th>Completed at</th>
-                                <td>{{ $section->completed_at?->toDayDateTimeString() ?? '-' }}</td>
-                                <th>Verified by</th>
-                                <td>{{ $section->verifiedBy?->name ?? '-' }}</td>
-                            </tr>
-                            @if (filled($section->execution_notes))
-                                <tr>
-                                    <th>Notes</th>
-                                    <td colspan="3">{{ $section->execution_notes }}</td>
-                                </tr>
-                            @endif
-                        </tbody>
-                    </table>
-                @endif
                 <div class="content">
                     {!! filled($section->content) ? $section->content : '<p>-</p>' !!}
                 </div>
+                @if ($issuance?->isExecution() && $section->items->isNotEmpty())
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date / Time</th>
+                                <th>Item</th>
+                                <th>Response</th>
+                                <th>Result</th>
+                                <th>Comments</th>
+                                <th>Completed / Verified</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($section->items as $item)
+                                <tr>
+                                    <td>{{ $item->scheduled_at?->toDayDateTimeString() ?? '-' }}</td>
+                                    <td>{{ $item->label }}</td>
+                                    <td>{{ $item->response ?? '________________' }} {{ $item->unit }}</td>
+                                    <td>{{ $item->result_status ? str($item->result_status)->title() : '-' }}</td>
+                                    <td>{{ $item->comments ?? '-' }}</td>
+                                    <td>{{ $item->completedBy?->name ?? '-' }} / {{ $item->verifiedBy?->name ?? '-' }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                @endif
             </article>
         @empty
             <p class="muted">No sections have been added to this SOP document.</p>
@@ -604,7 +607,8 @@
             </section>
         @endif
 
-        @if ($document->attachments->isNotEmpty())
+        @php($printAttachments = $issuance?->execution?->attachments ?? $document->attachments)
+        @if ($printAttachments->isNotEmpty())
             <section style="grid-column: 1 / -1; order: {{ ($fieldOrder['sections'] ?? 0) + 1 }}; break-before: page;">
                 <h2>Annexure Index</h2>
                 <table>
@@ -619,7 +623,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($document->attachments as $attachment)
+                        @foreach ($printAttachments as $attachment)
                             <tr>
                                 <td>{{ $attachment->annexure_number ?? '-' }}</td>
                                 <td>{{ $attachment->original_name }}</td>

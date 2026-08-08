@@ -120,9 +120,9 @@ class LookupTableSeeder extends Seeder
     private function seedDocumentTypes(): void
     {
         $types = [
-            ['code' => 'SOP', 'name' => 'Standard Operating Procedure', 'description' => 'Controlled procedure with managed revisions and approvals.', 'format_profile' => 'text_document', 'requires_sop_reference' => false, 'is_issuable' => false],
-            ['code' => 'POLICY', 'name' => 'Policy', 'description' => 'Quality or operational policy.', 'format_profile' => 'text_document', 'requires_sop_reference' => false, 'is_issuable' => false],
-            ['code' => 'MANUAL', 'name' => 'Manual', 'description' => 'Controlled manual containing multiple related topics.', 'format_profile' => 'text_document', 'requires_sop_reference' => false, 'is_issuable' => false],
+            ['code' => 'SOP', 'name' => 'Standard Operating Procedure', 'description' => 'Controlled procedure with managed revisions and approvals.', 'format_profile' => 'text_document', 'requires_sop_reference' => false, 'is_issuable' => true],
+            ['code' => 'POLICY', 'name' => 'Policy', 'description' => 'Quality or operational policy.', 'format_profile' => 'text_document', 'requires_sop_reference' => false, 'is_issuable' => true],
+            ['code' => 'MANUAL', 'name' => 'Manual', 'description' => 'Controlled manual containing multiple related topics.', 'format_profile' => 'text_document', 'requires_sop_reference' => false, 'is_issuable' => true],
             ['code' => 'LOG', 'name' => 'Log Document', 'description' => 'Repeated-entry record such as a temperature or equipment log.', 'format_profile' => 'repeating_log', 'requires_sop_reference' => true, 'is_issuable' => true],
             ['code' => 'BMR', 'name' => 'Batch Manufacturing Record', 'description' => 'Controlled batch manufacturing execution record.', 'format_profile' => 'controlled_form', 'requires_sop_reference' => true, 'is_issuable' => true],
             ['code' => 'BPR', 'name' => 'Batch Packaging Record', 'description' => 'Controlled batch packaging execution record.', 'format_profile' => 'controlled_form', 'requires_sop_reference' => true, 'is_issuable' => true],
@@ -151,10 +151,43 @@ class LookupTableSeeder extends Seeder
                     'name' => $type['name'],
                     'description' => $type['description'] ?? null,
                     'format_profile' => $type['format_profile'] ?? 'text_document',
+                    'execution_workflow' => $this->executionWorkflowFor($type['code']),
                     'requires_sop_reference' => $type['requires_sop_reference'],
                     'is_issuable' => $type['is_issuable'],
                 ],
             );
         }
+    }
+
+    /** @return array<string, bool>|null */
+    private function executionWorkflowFor(string $code): ?array
+    {
+        return match ($code) {
+            'BMR', 'BPR' => [
+                'requires_item_verification' => true,
+                'requires_supervisor_review' => true,
+                'requires_qa_approval' => true,
+                'requires_disposition' => true,
+            ],
+            'CHECKLIST' => [
+                'requires_item_verification' => true,
+                'requires_supervisor_review' => true,
+                'requires_qa_approval' => false,
+                'requires_disposition' => false,
+            ],
+            'LOG' => [
+                'requires_item_verification' => false,
+                'requires_supervisor_review' => true,
+                'requires_qa_approval' => false,
+                'requires_disposition' => false,
+            ],
+            'FORM' => [
+                'requires_item_verification' => false,
+                'requires_supervisor_review' => false,
+                'requires_qa_approval' => false,
+                'requires_disposition' => false,
+            ],
+            default => null,
+        };
     }
 }

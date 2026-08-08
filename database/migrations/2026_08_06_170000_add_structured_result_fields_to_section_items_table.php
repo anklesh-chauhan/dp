@@ -17,7 +17,6 @@ return new class extends Migration
             $table->string('acceptance_operator', 20)->nullable()->after('decimal_precision');
             $table->decimal('acceptance_min', 20, 8)->nullable()->after('acceptance_operator');
             $table->decimal('acceptance_max', 20, 8)->nullable()->after('acceptance_min');
-            $table->string('result_status', 20)->nullable()->after('response');
         });
     }
 
@@ -31,7 +30,6 @@ return new class extends Migration
                 'acceptance_operator',
                 'acceptance_min',
                 'acceptance_max',
-                'result_status',
             ]);
         });
     }

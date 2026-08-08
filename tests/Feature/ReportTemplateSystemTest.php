@@ -28,7 +28,7 @@ uses(RefreshDatabase::class);
 it('seeds the GMP and ALCOA plus standard template library', function (): void {
     $this->seed(ReportTemplateSeeder::class);
 
-    expect(ReportTemplate::query()->count())->toBe(8)
+    expect(ReportTemplate::query()->count())->toBe(14)
         ->and(ReportTemplate::query()->where('layout_key', 'sop-gmp-standard')->value('is_system'))->toBeTrue()
         ->and(ReportTemplate::query()->where('scope', ReportScope::DocumentDistribution)->count())->toBe(3)
         ->and(ReportTemplate::query()->where('scope', ReportScope::CsvValidationTraceability)->count())->toBe(2)

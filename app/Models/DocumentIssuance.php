@@ -9,16 +9,22 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class DocumentIssuance extends Model
 {
     /** @use HasFactory<DocumentIssuanceFactory> */
     use HasFactory;
 
+    public const TYPE_REFERENCE = 'reference';
+
+    public const TYPE_EXECUTION = 'execution';
+
     protected $fillable = [
         'document_id',
         'copy_number',
         'issuance_number',
+        'issuance_type',
         'issued_to_user_id',
         'issued_to_department_id',
         'issued_to_location',
@@ -113,5 +119,20 @@ class DocumentIssuance extends Model
     public function scopeActive(Builder $query): Builder
     {
         return $query->whereHas('issuanceStatus', fn (Builder $statusQuery): Builder => $statusQuery->where('code', IssuanceStatus::ACTIVE));
+    }
+
+    public function execution(): HasOne
+    {
+        return $this->hasOne(DocumentExecution::class);
+    }
+
+    public function isReference(): bool
+    {
+        return $this->issuance_type === self::TYPE_REFERENCE;
+    }
+
+    public function isExecution(): bool
+    {
+        return $this->issuance_type === self::TYPE_EXECUTION;
     }
 }

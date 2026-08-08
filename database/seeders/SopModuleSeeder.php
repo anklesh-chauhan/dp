@@ -8,11 +8,13 @@ use App\Models\ApprovalStepType;
 use App\Models\Department;
 use App\Models\DocumentCategory;
 use App\Models\DocumentTemplate;
+use App\Models\DocumentTemplateSection;
 use App\Models\DocumentTemplateVersion;
 use App\Models\DocumentType;
 use App\Models\RegulationTag;
 use App\Models\SopWorkflow;
 use App\Models\TemplateStatus;
+use App\Models\User;
 use App\Models\VariableDataType;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
@@ -329,6 +331,12 @@ class SopModuleSeeder extends Seeder
         $checkerRole = Role::findOrCreate('sop checker', 'web');
         $approverRole = Role::findOrCreate('sop approver', 'web');
 
+        $checker = User::query()->firstOrCreate(
+            ['email' => 'Checker@example.com'],
+            ['name' => 'SOP Checker', 'password' => 'password', 'department_id' => $qa->id],
+        );
+        $checker->assignRole($checkerRole);
+
         $publishedStatusId = TemplateStatus::idFor(TemplateStatus::PUBLISHED);
 
         $template = DocumentTemplate::query()->firstOrCreate([
@@ -509,6 +517,71 @@ class SopModuleSeeder extends Seeder
                 'options' => $options,
                 'required' => $required,
             ]);
+        }
+
+        $standardTemplates = [
+            ['code' => 'TPL-STRUCTURED-GMP', 'name' => 'GMP Structured Table Template', 'description' => 'Controlled specification, protocol, report, and validation template with acceptance criteria and traceable results.', 'type' => 'SPEC', 'category' => 'QMS', 'sections' => [
+                ['title' => 'Objective and Scope', 'type' => DocumentTemplateSection::TYPE_TEXT, 'content' => '<p>Define the objective, scope, applicable product or process, and governing references.</p>'],
+                ['title' => 'Requirements and Acceptance Criteria', 'type' => DocumentTemplateSection::TYPE_TABLE, 'content' => '<p>Record each requirement, method, result, unit, and acceptance decision.</p>', 'configuration' => ['columns' => 'No., Parameter / Requirement, Method, Result, Unit, Acceptance criteria, Pass/Fail, Verified by']],
+                ['title' => 'Results and Evaluation', 'type' => DocumentTemplateSection::TYPE_TEXT, 'content' => '<p>Summarize results, exceptions, deviations, and scientific or quality conclusions.</p>'],
+                ['title' => 'Approval and References', 'type' => DocumentTemplateSection::TYPE_SIGNATURES, 'content' => '<p>Prepared, reviewed, and approved in accordance with the applicable workflow.</p>'],
+            ]],
+            ['code' => 'TPL-CONTROLLED-FORM-GMP', 'name' => 'GMP Controlled Form Template', 'description' => 'Blank controlled form for contemporaneous GMP data capture, review, and record retention.', 'type' => DocumentType::FORM, 'category' => 'QMS', 'sections' => [
+                ['title' => 'Record Identification', 'type' => DocumentTemplateSection::TYPE_TABLE, 'content' => '<p>Complete before execution.</p>', 'configuration' => ['columns' => 'Field, Value, Initials, Date']],
+                ['title' => 'Data Entry', 'type' => DocumentTemplateSection::TYPE_TABLE, 'content' => '<p>Enter data at the time of performance. Do not leave required fields blank.</p>', 'configuration' => ['columns' => 'No., Activity / Field, Entry, Unit, Initials, Date, Verified by']],
+                ['title' => 'Review and Disposition', 'type' => DocumentTemplateSection::TYPE_TEXT, 'content' => '<p>Record review outcome, discrepancies, corrections, and disposition.</p>'],
+                ['title' => 'Signatures', 'type' => DocumentTemplateSection::TYPE_SIGNATURES, 'content' => '<p>Completed by, independently verified by, and approved by.</p>'],
+            ]],
+            ['code' => 'TPL-BMR-BPR-GMP', 'name' => 'GMP Batch Manufacturing / Packaging Record Template', 'description' => 'Controlled batch record template for manufacturing or packaging execution with reconciliation and independent verification.', 'type' => 'BMR', 'category' => 'PRD', 'sections' => [
+                ['title' => 'Batch and Product Details', 'type' => DocumentTemplateSection::TYPE_TABLE, 'content' => '<p>Complete batch number, product, material, lot, planned quantity, and unit details before execution.</p>', 'configuration' => ['columns' => 'Field, Planned, Actual, Unit, Initials, Date']],
+                ['title' => 'Materials and Reconciliation', 'type' => DocumentTemplateSection::TYPE_TABLE, 'content' => '<p>Record issued, used, returned, rejected, and reconciled quantities.</p>', 'configuration' => ['columns' => 'Material / Component, Code, Lot No., Planned Qty, Actual Qty, Unit, Reconciled, Verified by']],
+                ['title' => 'Process / Packaging Steps', 'type' => DocumentTemplateSection::TYPE_CHECKLIST, 'content' => '<p>Complete every step in sequence. Each critical entry requires independent verification.</p>', 'configuration' => ['response_options' => 'Complete, Not complete, N/A', 'columns' => 'Step, Instruction / Check, Response, Entry, Initials, Verified by, Date']],
+                ['title' => 'Yield, Deviations, and Batch Review', 'type' => DocumentTemplateSection::TYPE_TEXT, 'content' => '<p>Record actual yield, reconciliation status, deviation references, and final QA disposition.</p>'],
+                ['title' => 'Approval Signatures', 'type' => DocumentTemplateSection::TYPE_SIGNATURES, 'content' => '<p>Production completion, independent verification, and final batch review.</p>'],
+            ]],
+            ['code' => 'TPL-CHECKLIST-GMP', 'name' => 'GMP Execution Checklist Template', 'description' => 'Controlled checklist for line clearance, cleaning, inspection, and other GMP verification activities.', 'type' => 'CHECKLIST', 'category' => 'FAC', 'sections' => [
+                ['title' => 'Checklist Identification', 'type' => DocumentTemplateSection::TYPE_TABLE, 'content' => '<p>Identify the area, equipment, batch or activity, and applicable SOP.</p>', 'configuration' => ['columns' => 'Field, Value, Initials, Date']],
+                ['title' => 'Checks', 'type' => DocumentTemplateSection::TYPE_CHECKLIST, 'content' => '<p>Mark Pass, Fail, or N/A for every item. Explain all N/A responses and record deviations for failures.</p>', 'configuration' => ['response_options' => 'Pass, Fail, N/A', 'columns' => 'No., Check Item, Response, Comments / N/A Justification, Completed by, Verified by']],
+                ['title' => 'Disposition and Signatures', 'type' => DocumentTemplateSection::TYPE_SIGNATURES, 'content' => '<p>Independent verification and QA disposition are required before submission.</p>'],
+            ]],
+            ['code' => 'TPL-ANNEXURE-GMP', 'name' => 'GMP Annexure and Evidence Package Template', 'description' => 'Controlled attachment package for certificates, drawings, photographs, raw data, and supporting evidence.', 'type' => 'ANNEXURE', 'category' => 'QMS', 'sections' => [
+                ['title' => 'Evidence Package Index', 'type' => DocumentTemplateSection::TYPE_TABLE, 'content' => '<p>List every attachment and its relationship to the parent controlled document.</p>', 'configuration' => ['columns' => 'Annexure No., File Name, Attachment Role, Required, SHA-256, Status, Reviewed by']],
+                ['title' => 'Evidence Description', 'type' => DocumentTemplateSection::TYPE_TEXT, 'content' => '<p>Describe the evidence, source, date generated, and any limitations or superseded material.</p>'],
+                ['title' => 'Attachment Review and Approval', 'type' => DocumentTemplateSection::TYPE_SIGNATURES, 'content' => '<p>Confirm that required attachments are present, readable, immutable, and integrity-checked.</p>'],
+            ]],
+        ];
+
+        foreach ($standardTemplates as $definition) {
+            $this->seedStandardTemplate($definition, $qa, $publishedStatusId);
+        }
+    }
+
+    /** @param array<string, mixed> $definition */
+    private function seedStandardTemplate(array $definition, Department $qa, int $publishedStatusId): void
+    {
+        $template = DocumentTemplate::query()->updateOrCreate(
+            ['code' => $definition['code']],
+            [
+                'name' => $definition['name'],
+                'description' => $definition['description'],
+                'department_id' => $qa->id,
+                'category_id' => DocumentCategory::query()->where('code', $definition['category'])->valueOrFail('id'),
+                'document_type_id' => DocumentType::query()->where('code', $definition['type'])->valueOrFail('id'),
+                'template_status_id' => $publishedStatusId,
+                'current_version' => 1,
+            ],
+        );
+
+        $version = DocumentTemplateVersion::query()->updateOrCreate(
+            ['document_template_id' => $template->id, 'version' => 1],
+            ['content_json' => [], 'effective_date' => now()->toDateString(), 'change_reason' => 'Initial standard GMP template', 'template_status_id' => $publishedStatusId],
+        );
+
+        foreach ($definition['sections'] as $order => $section) {
+            $version->sections()->updateOrCreate(
+                ['section_order' => $order + 1],
+                ['title' => $section['title'], 'section_type' => $section['type'], 'content' => $section['content'], 'configuration' => $section['configuration'] ?? [], 'is_required' => true, 'include_in_toc' => true],
+            );
         }
     }
 }

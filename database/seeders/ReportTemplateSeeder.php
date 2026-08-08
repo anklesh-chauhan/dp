@@ -20,6 +20,12 @@ final class ReportTemplateSeeder extends Seeder
 
         $templates = [
             ['sop-gmp-standard', 'GMP SOP Header / Footer', ReportScope::ControlledDocument, ReportFormat::Pdf, 'Controlled SOP layout with document identity, traceable approvals, print attribution, and organization branding.'],
+            ['structured-table-gmp-print', 'GMP Structured Table Print', ReportScope::ControlledDocument, ReportFormat::Pdf, 'A4 controlled print layout for specifications, protocols, reports, and validation records.'],
+            ['controlled-form-gmp-print', 'GMP Controlled Form Print', ReportScope::ControlledDocument, ReportFormat::Pdf, 'A4 controlled form layout with clear entry fields, review traceability, and controlled-copy footer.'],
+            ['batch-record-gmp-print', 'GMP Batch Record Print', ReportScope::ControlledDocument, ReportFormat::Pdf, 'Landscape-friendly controlled layout for batch manufacturing and packaging execution records.'],
+            ['checklist-gmp-print', 'GMP Checklist Print', ReportScope::ControlledDocument, ReportFormat::Pdf, 'Controlled checklist layout for completion, N/A justification, independent verification, and disposition.'],
+            ['repeating-log-gmp-print', 'GMP Repeating Log Print', ReportScope::ControlledDocument, ReportFormat::Pdf, 'Controlled repeating-log layout for hourly, shift, and daily entries with supervisor review.'],
+            ['annexure-gmp-print', 'GMP Annexure Evidence Package Print', ReportScope::ControlledDocument, ReportFormat::Pdf, 'Controlled evidence-package layout with annexure index, attachment metadata, and integrity status.'],
             ['change-control-investigation', 'Change Control Investigation', ReportScope::ChangeControl, ReportFormat::Pdf, 'Investigation layout with rationale, impacted documents, lifecycle milestones, and decision trail.'],
             ['document-distribution-pdf', 'Document Distribution Sheet', ReportScope::DocumentDistribution, ReportFormat::Pdf, 'Printable controlled-document distribution register.'],
             ['document-distribution-csv', 'Document Distribution CSV', ReportScope::DocumentDistribution, ReportFormat::Csv, 'UTF-8 CSV distribution register for validated downstream analysis.'],

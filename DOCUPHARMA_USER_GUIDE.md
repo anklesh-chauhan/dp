@@ -127,6 +127,8 @@ Grant only the permissions required for each job function. Use different account
 
 ## 6. DMS Workflow
 
+This chapter provides the everyday DMS workflow. For the complete document-type matrix, role responsibilities, lifecycle diagrams, detailed BMR/BPR execution path, validation resolutions, and operational checklists, see the [DMS Process Workflow Guide](./DMS_PROCESS_WORKFLOW_GUIDE.md).
+
 ### 6.1 Configure master data
 
 Before creating controlled documents, an administrator should configure:
@@ -244,26 +246,68 @@ The previous version remains traceable.
 
 DocuPharma supports the following controlled document formats through the existing template, approval, revision, issuance, and audit lifecycle:
 
-| Document type | Format profile | Typical use |
-|---|---|---|
-| SOP, Policy, Manual | Text document | Procedures, policies, and manuals |
-| Specification, Protocol, Report, Validation | Structured table | Acceptance criteria, validation, testing, and reports |
-| Form, BMR, BPR | Controlled form | Batch and controlled data-entry records |
-| Log | Repeating log | Hourly, shift, or daily recurring entries |
-| Checklist | Checklist | Line clearance, cleaning, and inspection checks |
-| Annexure | Attachment package | Certificates, drawings, photos, and evidence |
+| Document type                                 | Format profile        | Typical use                                           |
+|---                                            |---                    |---                                                    |
+| SOP, Policy, Manual                           | Text document         | Procedures, policies, and manuals                     |
+| Specification, Protocol, Report, Validation   | Structured table      | Acceptance criteria, validation, testing, and reports |
+| Form, BMR, BPR                                | Controlled form       | Batch and controlled data-entry records               |
+| Log                                           | Repeating log         | Hourly, shift, or daily recurring entries             |
+| Checklist                                     | Checklist             | Line clearance, cleaning, and inspection checks       |
+| Annexure                                      | Attachment package    | Certificates, drawings, photos, and evidence          |
 
-Template sections support text, structured tables, checklists, repeating logs, signatures, and attachments. Structured sections can define columns, units, frequency, response options, decimal precision, and acceptance criteria.
+The approved controlled document is the reusable master. Its template sections define blank text, structured tables, checklists, repeating logs, signatures, attachment requirements, columns, units, response options, decimal precision, and acceptance criteria. Execution data is never entered on the approved master.
 
-For checklist, BMR, and BPR records, required sections and items must be completed and independently verified before submission. The verifier must be different from the person who completed the item. `N/A` responses require an explanation.
+The Document Controller selects one of two copy types. A **Reference Copy** is read-only and is controlled through issuance, recall, return, or destruction. A **Writable GMP Execution Record** creates a separate `DocumentExecution` and snapshots the approved master version. Form values, checklist responses, batch data, readings, completion details, and verification belong only to that execution record. A later master revision cannot alter it.
 
-Repeating logs support hourly, shift, and daily schedules. The log period and supervisor are recorded, expected entries are generated automatically, missing required responses are detected, and supervisor review is tracked.
+For checklist, BMR, and BPR issued records, required sections and items must be completed and independently verified before submission. The verifier must be different from the person who completed the item. `N/A` responses require an explanation.
 
-BMR/BPR records support batch number, product, material name, material code, lot number, planned and actual quantities, units, planned and actual yield, reconciliation status, deviation links, step-level completion, independent verification, and final batch review.
+Repeating-log execution settings are selected when the writable copy is issued. The execution record owns the hourly, shift, or daily schedule, log period, supervisor, generated entries, responses, and review status. Ordinary forms may close after completion, logs and configured checklists proceed through supervisor review, and BMR/BPR records proceed through production review and independent QA disposition before being closed as released or rejected.
 
 ### 6.8 Annexures and evidence packages
 
-Controlled documents support immutable private attachments with annexure number, attachment role, required status, and print-package status. The controlled PDF includes an Annexure Index showing file metadata and SHA-256 integrity status. Missing or tampered attachments must be resolved before relying on the evidence package.
+An approved master may define annexure requirements or include controlled reference attachments. Actual certificates, drawings, photographs, calculations, and other execution evidence are uploaded against the `DocumentExecution`, not the issuance register or approved master. These files are immutable and private and record annexure number, role, required status, print-package status, and SHA-256 integrity. The execution-record PDF includes its own Annexure Index; missing or tampered evidence must be resolved before the record is relied upon.
+
+### 6.9 Workflow summary by document type
+
+All document types use the common controlled-master lifecycle:
+
+```text
+Draft → Under review → Effective → Revision/Superseded or Obsolete → Archived → Retention completed → Destroyed
+```
+
+The issued-copy workflow depends on the document type:
+
+| Document type | Normal issued-copy workflow |
+|---|---|
+| SOP, Policy, Manual | Controlled read-only reference copy. |
+| Report, Protocol, Specification, Validation | Controlled read-only reference copy. |
+| Annexure | Controlled read-only evidence/reference package. |
+| Form | Writable execution record; complete required fields and sections, then close. |
+| Log | Writable execution record; complete scheduled entries, submit, and complete independent supervisor review. |
+| Checklist | Writable execution record; complete responses, independently verify required items, submit, and complete supervisor review. |
+| BMR / BPR | Writable execution record; complete and verify required items, complete production supervisor review, reconcile materials, and record independent QA release/reject disposition. |
+
+Except for SOP, Policy, and Manual, the standard configured document types require an effective referenced SOP before an effective controlled copy can be issued.
+
+### 6.10 DMS completion and independence checks
+
+Before submitting a writable master for approval:
+
+- add at least one master section;
+- complete the configuration of structured sections;
+- add blank **Issued-copy field definitions** to every required table/checklist section;
+- keep responses and actual execution data out of the master.
+
+Before selecting **Complete and submit** on an execution record:
+
+- enter every required response;
+- mark every section Completed or validly Not applicable;
+- explain every N/A response;
+- complete independent item verification where required.
+
+For BMR/BPR, the production reviewer must be different from the executor, all material planned/actual quantities must reconcile, and the QA approver must be different from both the executor and production reviewer. A blocked action now identifies the incomplete or unverified field in its notification.
+
+For detailed troubleshooting and readiness checklists, use the [DMS Process Workflow Guide](./DMS_PROCESS_WORKFLOW_GUIDE.md#11-common-validation-messages-and-resolutions).
 
 ## 7. QMS Workflow
 

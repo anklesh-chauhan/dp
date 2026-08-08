@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -51,6 +52,8 @@ class DmsModuleSeeder extends Seeder
         'Reorder:ControlledDocument',
         'Approve:ControlledDocument',
         'Submit:ControlledDocument',
+        'Review:ControlledDocument',
+        'Revise:ControlledDocument',
         'Archive:ControlledDocument',
         'MarkObsolete:ControlledDocument',
         'CompleteRetention:ControlledDocument',
@@ -85,6 +88,35 @@ class DmsModuleSeeder extends Seeder
         'Issue:DocumentIssuance',
         'Recall:DocumentIssuance',
         'Destroy:DocumentIssuance',
+        'ViewAny:DocumentExecution',
+        'View:DocumentExecution',
+        'Update:DocumentExecution',
+        'Submit:DocumentExecution',
+        'Review:DocumentExecution',
+        'Approve:DocumentExecution',
+        'ViewAny:DocumentImportBatch',
+        'View:DocumentImportBatch',
+        'Create:DocumentImportBatch',
+        'ViewAny:DocumentCategory',
+        'View:DocumentCategory',
+        'Create:DocumentCategory',
+        'Update:DocumentCategory',
+        'Delete:DocumentCategory',
+        'DeleteAny:DocumentCategory',
+        'ViewAny:Department',
+        'View:Department',
+        'ViewAny:RegulationTag',
+        'View:RegulationTag',
+        'Create:RegulationTag',
+        'Update:RegulationTag',
+        'Delete:RegulationTag',
+        'DeleteAny:RegulationTag',
+        'ViewAny:PdfAccessPolicy',
+        'View:PdfAccessPolicy',
+        'Create:PdfAccessPolicy',
+        'Update:PdfAccessPolicy',
+        'Delete:PdfAccessPolicy',
+        'DeleteAny:PdfAccessPolicy',
         'ViewAny:DocumentStatus',
         'View:DocumentStatus',
         'Create:DocumentStatus',
@@ -158,13 +190,13 @@ class DmsModuleSeeder extends Seeder
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         $adminRole = Role::findOrCreate('sop administrator', 'web');
-        $adminRole->syncPermissions([
+        $adminRole->givePermissionTo([
             ...CoreModuleSeeder::PERMISSIONS,
             ...self::PERMISSIONS,
         ]);
 
         $makerRole = Role::findOrCreate('sop maker', 'web');
-        $makerRole->givePermissionTo([
+        $makerRole->syncPermissions([
             'ViewAny:DocumentTemplate',
             'View:DocumentTemplate',
             'Create:DocumentTemplate',
@@ -176,12 +208,13 @@ class DmsModuleSeeder extends Seeder
             'Create:ControlledDocument',
             'Update:ControlledDocument',
             'Submit:ControlledDocument',
+            'Revise:ControlledDocument',
             'ViewAny:KnowledgeGuide',
             'View:KnowledgeGuide',
         ]);
 
         $checkerRole = Role::findOrCreate('sop checker', 'web');
-        $checkerRole->givePermissionTo([
+        $checkerRole->syncPermissions([
             'ViewAny:DocumentTemplate',
             'View:DocumentTemplate',
             'Decide:DocumentTemplateApproval',
@@ -194,12 +227,14 @@ class DmsModuleSeeder extends Seeder
             'ViewAny:SopApproval',
             'View:SopApproval',
             'Approve:SopApproval',
+            'ViewAny:DocumentExecution',
+            'View:DocumentExecution',
             'ViewAny:KnowledgeGuide',
             'View:KnowledgeGuide',
         ]);
 
         $approverRole = Role::findOrCreate('sop approver', 'web');
-        $approverRole->givePermissionTo([
+        $approverRole->syncPermissions([
             'ViewAny:DocumentTemplate',
             'View:DocumentTemplate',
             'Approve:DocumentTemplate',
@@ -213,12 +248,14 @@ class DmsModuleSeeder extends Seeder
             'ViewAny:SopApproval',
             'View:SopApproval',
             'Approve:SopApproval',
+            'ViewAny:DocumentExecution',
+            'View:DocumentExecution',
             'ViewAny:KnowledgeGuide',
             'View:KnowledgeGuide',
         ]);
 
         $logMakerRole = Role::findOrCreate('log maker', 'web');
-        $logMakerRole->givePermissionTo([
+        $logMakerRole->syncPermissions([
             'ViewAny:LogDocument',
             'View:LogDocument',
             'Create:LogDocument',
@@ -227,12 +264,18 @@ class DmsModuleSeeder extends Seeder
             'ViewAny:ControlledDocument',
             'View:ControlledDocument',
             'ViewPdf:ControlledDocument',
+            'ViewAny:DocumentIssuance',
+            'View:DocumentIssuance',
+            'ViewAny:DocumentExecution',
+            'View:DocumentExecution',
+            'Update:DocumentExecution',
+            'Submit:DocumentExecution',
             'ViewAny:KnowledgeGuide',
             'View:KnowledgeGuide',
         ]);
 
         $documentControllerRole = Role::findOrCreate('document controller', 'web');
-        $documentControllerRole->givePermissionTo([
+        $documentControllerRole->syncPermissions([
             'ViewAny:DocumentTemplate',
             'View:DocumentTemplate',
             'Publish:DocumentTemplate',
@@ -243,6 +286,11 @@ class DmsModuleSeeder extends Seeder
             'Issue:DocumentIssuance',
             'Recall:DocumentIssuance',
             'Destroy:DocumentIssuance',
+            'ViewAny:DocumentExecution',
+            'View:DocumentExecution',
+            'ViewAny:DocumentImportBatch',
+            'View:DocumentImportBatch',
+            'Create:DocumentImportBatch',
             'ViewAny:ControlledDocument',
             'View:ControlledDocument',
             'ViewPdf:ControlledDocument',
@@ -259,7 +307,7 @@ class DmsModuleSeeder extends Seeder
         ]);
 
         $reviewerRole = Role::findOrCreate('qa reviewer', 'web');
-        $reviewerRole->givePermissionTo([
+        $reviewerRole->syncPermissions([
             'ViewAny:DocumentTemplate',
             'View:DocumentTemplate',
             'Review:DocumentTemplate',
@@ -273,9 +321,61 @@ class DmsModuleSeeder extends Seeder
             'ViewAny:SopApproval',
             'View:SopApproval',
             'Approve:SopApproval',
+            'ViewAny:DocumentExecution',
+            'View:DocumentExecution',
+            'Review:DocumentExecution',
+            'Approve:DocumentExecution',
             'ViewAny:KnowledgeGuide',
             'View:KnowledgeGuide',
         ]);
+
+        $recordExecutorRole = Role::findOrCreate('gmp record executor', 'web');
+        $recordExecutorRole->syncPermissions([
+            'ViewAny:ControlledDocument',
+            'View:ControlledDocument',
+            'ViewPdf:ControlledDocument',
+            'ViewAny:DocumentIssuance',
+            'View:DocumentIssuance',
+            'ViewAny:DocumentExecution',
+            'View:DocumentExecution',
+            'Update:DocumentExecution',
+            'Submit:DocumentExecution',
+            'ViewAny:KnowledgeGuide',
+            'View:KnowledgeGuide',
+        ]);
+
+        $productionSupervisorRole = Role::findOrCreate('production supervisor', 'web');
+        $productionSupervisorRole->syncPermissions([
+            'ViewAny:ControlledDocument',
+            'View:ControlledDocument',
+            'ViewPdf:ControlledDocument',
+            'ViewAny:DocumentIssuance',
+            'View:DocumentIssuance',
+            'ViewAny:DocumentExecution',
+            'View:DocumentExecution',
+            'Review:DocumentExecution',
+            'ViewAny:KnowledgeGuide',
+            'View:KnowledgeGuide',
+        ]);
+
+        foreach ([
+            ['Administrator@example.com', 'SOP Administrator', $adminRole],
+            ['Maker@example.com', 'SOP Maker', $makerRole],
+            ['Checker@example.com', 'SOP Checker', $checkerRole],
+            ['Approver@example.com', 'SOP Approver', $approverRole],
+            ['LogMaker@example.com', 'Log Maker', $logMakerRole],
+            ['DocumentController@example.com', 'Document Controller', $documentControllerRole],
+            ['QaReviewer@example.com', 'QA Reviewer', $reviewerRole],
+            ['RecordExecutor@example.com', 'GMP Record Executor', $recordExecutorRole],
+            ['ProductionSupervisor@example.com', 'Production Supervisor', $productionSupervisorRole],
+        ] as [$email, $name, $role]) {
+            $user = User::query()->firstOrCreate(
+                ['email' => $email],
+                ['name' => $name, 'password' => 'password'],
+            );
+
+            $user->syncRoles([$role]);
+        }
 
         $this->call(SopModuleSeeder::class);
         $this->call(ReportTemplateSeeder::class);

@@ -7,6 +7,8 @@ use App\Domain\DMS\Actions\CreateDocumentRevisionAction;
 use App\Domain\DMS\Services\DocumentActivationService;
 use App\Domain\DMS\Services\DocumentRevisionService;
 use App\Models\ControlledDocument;
+use App\Models\ControlledDocumentSection;
+use App\Models\ControlledDocumentSectionItem;
 use App\Models\DocumentStatus;
 use App\Models\DocumentTemplate;
 use App\Models\DocumentTemplateVersion;
@@ -58,10 +60,17 @@ it('creates an independent draft document version pinned to the same template ve
         'version' => 4,
         'document_status_id' => DocumentStatus::idFor(DocumentStatus::EFFECTIVE),
     ]);
-    $source->sections()->create([
+    $sourceSection = $source->sections()->create([
         'title' => 'Procedure',
         'section_order' => 1,
+        'section_type' => ControlledDocumentSection::TYPE_CHECKLIST,
         'content' => 'Controlled source content.',
+    ]);
+    $sourceSection->items()->create([
+        'item_order' => 1,
+        'label' => 'Verify line clearance',
+        'value_type' => ControlledDocumentSectionItem::VALUE_BOOLEAN,
+        'is_required' => true,
     ]);
     $source->variables()->create([
         'variable_name' => 'department',
@@ -83,6 +92,8 @@ it('creates an independent draft document version pinned to the same template ve
         ->and($revision->documentStatus->code)->toBe(DocumentStatus::DRAFT)
         ->and($revision->revision_reason)->toBe('Update the cleaning acceptance criteria.')
         ->and($revision->sections->first()->content)->toBe('Controlled source content.')
+        ->and($revision->sections->first()->items)->toHaveCount(1)
+        ->and($revision->sections->first()->items->first()->label)->toBe('Verify line clearance')
         ->and($revision->variables->first()->value)->toBe('Quality Assurance')
         ->and($source->documentStatus->code)->toBe(DocumentStatus::EFFECTIVE);
 

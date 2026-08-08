@@ -8,14 +8,12 @@ use App\Filament\Concerns\ManagesEditableDocuments;
 use App\Models\ControlledDocumentSection;
 use App\Models\ControlledDocumentSectionItem;
 use App\Models\DocumentTemplateSection;
-use App\Models\User;
 use Filament\Actions\CreateAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -23,6 +21,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class DocumentSectionRelationManager extends RelationManager
 {
@@ -45,21 +44,6 @@ class DocumentSectionRelationManager extends RelationManager
                 ->options(DocumentTemplateSection::typeOptions())
                 ->default(DocumentTemplateSection::TYPE_TEXT)
                 ->required(),
-            Select::make('execution_status')
-                ->label('Execution status')
-                ->options(ControlledDocumentSection::executionStatusOptions())
-                ->default(ControlledDocumentSection::STATUS_PENDING)
-                ->required(),
-            Textarea::make('execution_notes')
-                ->label('Completion / exception notes')
-                ->helperText('Record observations, exceptions, or the reason for marking a section not applicable.')
-                ->rows(3)
-                ->required(fn (Get $get): bool => $get('execution_status') === ControlledDocumentSection::STATUS_NOT_APPLICABLE),
-            Select::make('verified_by')
-                ->label('Verified by')
-                ->relationship('verifiedBy', 'name')
-                ->searchable()
-                ->preload(),
             TextInput::make('heading_level')->label('Heading level')->numeric()->minValue(1)->maxValue(6)->default(1)->required(),
             Toggle::make('include_in_toc')->label('Include in table of contents')->default(true),
             TextInput::make('toc_title')->label('TOC title override')->maxLength(255),
@@ -74,7 +58,7 @@ class DocumentSectionRelationManager extends RelationManager
                 ->columnSpanFull(),
             Repeater::make('items')
                 ->relationship()
-                ->label('Execution items')
+                ->label('Issued-copy field definitions')
                 ->schema([
                     TextInput::make('label')
                         ->label('Item')
@@ -85,10 +69,6 @@ class DocumentSectionRelationManager extends RelationManager
                         ->numeric()
                         ->default(1)
                         ->required(),
-                    TextInput::make('response')
-                        ->label('Response / reading')
-                        ->maxLength(100)
-                        ->helperText('For checklists use Pass, Fail, or N/A. For logs, enter the reading.'),
                     Select::make('value_type')
                         ->label('Value type')
                         ->options([
@@ -111,31 +91,34 @@ class DocumentSectionRelationManager extends RelationManager
                         ->visible(fn (Get $get): bool => $get('value_type') === ControlledDocumentSectionItem::VALUE_NUMERIC),
                     TextInput::make('acceptance_min')->label('Minimum / target')->numeric()->visible(fn (Get $get): bool => $get('value_type') === ControlledDocumentSectionItem::VALUE_NUMERIC),
                     TextInput::make('acceptance_max')->label('Maximum')->numeric()->visible(fn (Get $get): bool => $get('value_type') === ControlledDocumentSectionItem::VALUE_NUMERIC),
-                    Textarea::make('comments')
-                        ->label('Comments / result')
-                        ->rows(2),
                     Toggle::make('is_required')
                         ->label('Required')
                         ->default(true),
-                    Select::make('verified_by')
-                        ->label('Verified by')
-                        ->options(fn (): array => User::query()->orderBy('name')->pluck('name', 'id')->all())
-                        ->searchable()
-                        ->preload(),
                 ])
                 ->columns(5)
                 ->visible(fn (Get $get): bool => in_array($get('section_type'), [DocumentTemplateSection::TYPE_TABLE, DocumentTemplateSection::TYPE_CHECKLIST, DocumentTemplateSection::TYPE_REPEATING_LOG], true))
-                ->helperText('Add each checklist item, log reading point, or structured row that must be completed.'),
+                ->helperText('Define blank fields and acceptance rules. Responses are entered only on an issued copy.'),
         ]);
     }
 
     public function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->withCount('items'))
             ->columns([
                 TextColumn::make('section_order')->sortable(),
                 TextColumn::make('title')->searchable(),
-                TextColumn::make('execution_status')->label('Execution')->badge(),
+                TextColumn::make('field_definitions')
+                    ->label('Blank fields')
+                    ->state(fn (ControlledDocumentSection $record): string => $record->requiresFieldDefinitions()
+                        ? (string) $record->getAttribute('items_count')
+                        : 'N/A')
+                    ->badge()
+                    ->color(fn (ControlledDocumentSection $record): string => match (true) {
+                        ! $record->requiresFieldDefinitions() => 'gray',
+                        ((int) $record->getAttribute('items_count')) > 0 => 'success',
+                        default => 'danger',
+                    }),
             ])
             ->headerActions([
                 CreateAction::make()

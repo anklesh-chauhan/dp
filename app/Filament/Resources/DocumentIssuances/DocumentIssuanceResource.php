@@ -6,6 +6,7 @@ namespace App\Filament\Resources\DocumentIssuances;
 
 use App\Domain\DMS\Actions\DestroyIssuanceAction;
 use App\Domain\DMS\Actions\RecallIssuanceAction;
+use App\Filament\Resources\DocumentExecutions\DocumentExecutionResource;
 use App\Filament\Resources\LogDocuments\LogDocumentResource;
 use App\Filament\Support\ServiceExceptionHandler;
 use App\Models\DocumentIssuance;
@@ -53,6 +54,7 @@ class DocumentIssuanceResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('issuance_number')->searchable()->sortable(),
+                TextColumn::make('issuance_type')->label('Copy type')->badge(),
                 TextColumn::make('document.document_number')->label('Document #')->searchable(),
                 TextColumn::make('document.title')->label('Title')->limit(30),
                 TextColumn::make('document.referenced_sop_number')->label('Referenced SOP'),
@@ -70,12 +72,25 @@ class DocumentIssuanceResource extends Resource
                         IssuanceStatus::DESTROYED => 'danger',
                         default => 'gray',
                     }),
+                TextColumn::make('execution.status')->label('Execution')->badge()->placeholder('Not writable'),
             ])
             ->defaultSort('issued_at', 'desc')
             ->filters([
                 SelectFilter::make('issuance_status_id')->relationship('issuanceStatus', 'name')->label('Status'),
+                SelectFilter::make('issuance_type')->options([
+                    DocumentIssuance::TYPE_REFERENCE => 'Reference copy',
+                    DocumentIssuance::TYPE_EXECUTION => 'Writable execution record',
+                ]),
             ])
             ->recordActions([
+                Action::make('openExecution')
+                    ->label('Open Execution Record')
+                    ->icon(Heroicon::PencilSquare)
+                    ->url(fn (DocumentIssuance $record): string => DocumentExecutionResource::getUrl(
+                        $record->execution?->isEditable() ? 'edit' : 'view',
+                        ['record' => $record->execution],
+                    ))
+                    ->visible(fn (DocumentIssuance $record): bool => $record->isExecution() && $record->execution !== null),
                 Action::make('viewDocument')
                     ->label('View Document')
                     ->icon(Heroicon::Eye)
@@ -132,7 +147,7 @@ class DocumentIssuanceResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->with(['document', 'issuanceStatus', 'issuedToUser', 'issuer']);
+            ->with(['document', 'issuanceStatus', 'issuedToUser', 'issuer', 'execution']);
     }
 
     public static function canCreate(): bool

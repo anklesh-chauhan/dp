@@ -127,8 +127,6 @@ class SopGeneratorService
                 ]);
             }
 
-            $document->generateExpectedLogEntries();
-
             $this->auditLogService->log(
                 action: SopAuditLog::ACTION_GENERATED_SOP,
                 newValues: [

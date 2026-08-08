@@ -39,8 +39,47 @@ it('seeds only core and DMS permissions for a DMS installation', function (): vo
         ->toEqualCanonicalizing($expectedPermissions)
         ->and(Role::findByName('sop maker', 'web')->hasPermissionTo('Create:ControlledDocument'))
         ->toBeTrue()
+        ->and(Role::findByName('sop maker', 'web')->hasPermissionTo('Revise:ControlledDocument'))
+        ->toBeTrue()
         ->and(Role::findByName('document controller', 'web')->hasPermissionTo('Issue:DocumentIssuance'))
+        ->toBeTrue()
+        ->and(Role::findByName('document controller', 'web')->hasPermissionTo('View:DocumentExecution'))
+        ->toBeTrue()
+        ->and(Role::findByName('document controller', 'web')->hasPermissionTo('Update:DocumentExecution'))
+        ->toBeFalse()
+        ->and(Role::findByName('gmp record executor', 'web')->hasPermissionTo('Update:DocumentExecution'))
+        ->toBeTrue()
+        ->and(Role::findByName('gmp record executor', 'web')->hasPermissionTo('Submit:DocumentExecution'))
+        ->toBeTrue()
+        ->and(Role::findByName('gmp record executor', 'web')->hasPermissionTo('Review:DocumentExecution'))
+        ->toBeFalse()
+        ->and(Role::findByName('production supervisor', 'web')->hasPermissionTo('Review:DocumentExecution'))
+        ->toBeTrue()
+        ->and(Role::findByName('production supervisor', 'web')->hasPermissionTo('Approve:DocumentExecution'))
+        ->toBeFalse()
+        ->and(Role::findByName('qa reviewer', 'web')->hasPermissionTo('Approve:DocumentExecution'))
+        ->toBeTrue()
+        ->and(Role::findByName('qa reviewer', 'web')->hasPermissionTo('Update:DocumentExecution'))
+        ->toBeFalse()
+        ->and(User::query()->where('email', 'RecordExecutor@example.com')->firstOrFail()->hasRole('gmp record executor'))
+        ->toBeTrue()
+        ->and(User::query()->where('email', 'ProductionSupervisor@example.com')->firstOrFail()->hasRole('production supervisor'))
         ->toBeTrue();
+});
+
+it('removes stale grants from least-privilege DMS roles when reseeded', function (): void {
+    config()->set('modules.enabled', ['dms']);
+
+    $this->seed(DatabaseSeeder::class);
+
+    $executorRole = Role::findByName('gmp record executor', 'web');
+    $executorRole->givePermissionTo('Approve:DocumentExecution');
+
+    expect($executorRole->hasPermissionTo('Approve:DocumentExecution'))->toBeTrue();
+
+    $this->seed(DatabaseSeeder::class);
+
+    expect($executorRole->refresh()->hasPermissionTo('Approve:DocumentExecution'))->toBeFalse();
 });
 
 it('adds AI permissions without changing DMS role grants for a DMS and AI installation', function (): void {

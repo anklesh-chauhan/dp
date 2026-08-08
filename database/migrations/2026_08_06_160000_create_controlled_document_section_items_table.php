@@ -15,13 +15,7 @@ return new class extends Migration
             $table->foreignId('section_id')->constrained('controlled_document_sections')->cascadeOnDelete();
             $table->unsignedInteger('item_order')->default(1);
             $table->string('label');
-            $table->string('response', 100)->nullable();
-            $table->text('comments')->nullable();
             $table->boolean('is_required')->default(true);
-            $table->foreignId('completed_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->timestamp('completed_at')->nullable();
-            $table->foreignId('verified_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->timestamp('verified_at')->nullable();
             $table->timestamps();
             $table->index(['section_id', 'item_order']);
         });

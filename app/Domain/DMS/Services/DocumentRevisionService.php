@@ -29,7 +29,7 @@ class DocumentRevisionService
 
         return DB::transaction(function () use ($sourceDocument, $user, $reason): ControlledDocument {
             $source = ControlledDocument::query()
-                ->with(['documentStatus', 'sections', 'variables', 'regulationTags'])
+                ->with(['documentStatus', 'sections.items', 'variables', 'regulationTags'])
                 ->lockForUpdate()
                 ->findOrFail($sourceDocument->id);
 
@@ -88,7 +88,7 @@ class DocumentRevisionService
             $revision->save();
 
             foreach ($source->sections as $section) {
-                $revision->sections()->create($section->only([
+                $revisionSection = $revision->sections()->create($section->only([
                     'title',
                     'section_order',
                     'heading_level',
@@ -98,6 +98,20 @@ class DocumentRevisionService
                     'section_type',
                     'configuration',
                 ]));
+
+                foreach ($section->items as $item) {
+                    $revisionSection->items()->create($item->only([
+                        'item_order',
+                        'label',
+                        'value_type',
+                        'unit',
+                        'decimal_precision',
+                        'acceptance_operator',
+                        'acceptance_min',
+                        'acceptance_max',
+                        'is_required',
+                    ]));
+                }
             }
 
             foreach ($source->variables as $variable) {

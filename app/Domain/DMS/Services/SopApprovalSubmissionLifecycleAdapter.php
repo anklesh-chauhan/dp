@@ -11,7 +11,6 @@ use App\Domain\Shared\Services\AuditLogService;
 use App\Exceptions\WorkflowException;
 use App\Models\ControlledDocument;
 use App\Models\DocumentStatus;
-use App\Models\DocumentType;
 use App\Models\SopAuditLog;
 use App\Models\User;
 use InvalidArgumentException;
@@ -33,29 +32,17 @@ class SopApprovalSubmissionLifecycleAdapter implements ApprovalSubmissionLifecyc
             );
         }
 
-        if ($this->requiresCompletedExecution($document)) {
-            $document->loadMissing('sections');
+        if ($document->documentType?->requiresExecutionRecord()) {
+            $document->loadMissing('sections.items');
 
-            if ($document->sections->isEmpty()
-                || $document->sections->contains(fn ($section): bool => ! $section->isCompleted())
-                || $document->sections->contains(fn ($section): bool => ! $section->isIndependentlyVerified())
-                || $document->sections->contains(fn ($section): bool => ! $section->hasValidStructuredConfiguration())
-                || $document->sections->contains(function ($section): bool {
-                    $section->loadMissing('items');
+            $validationIssues = $this->masterValidationIssues($document);
 
-                    return $section->items->contains(fn ($item): bool => ! $item->responseIsValidFor((string) $section->section_type)
-                        || ($item->is_required && ! $item->isIndependentlyVerified()));
-                })) {
+            if ($validationIssues !== []) {
                 throw new WorkflowException(
-                    message: 'Complete and independently verify every execution section before submitting this controlled record for approval.'
+                    message: 'Complete the writable document master before approval: '.implode(' ', $validationIssues)
                 );
             }
         }
-    }
-
-    private function requiresCompletedExecution(ControlledDocument $document): bool
-    {
-        return in_array($document->documentType?->code, [DocumentType::BATCH_RECORD, 'BPR', 'CHECKLIST'], true);
     }
 
     public function prepareSubmission(ApprovableSubject $subject, User $submitter): void
@@ -98,5 +85,27 @@ class SopApprovalSubmissionLifecycleAdapter implements ApprovalSubmissionLifecyc
         }
 
         return $subject;
+    }
+
+    /** @return list<string> */
+    private function masterValidationIssues(ControlledDocument $document): array
+    {
+        if ($document->sections->isEmpty()) {
+            return ['Add at least one master section.'];
+        }
+
+        $issues = [];
+
+        foreach ($document->sections as $section) {
+            if (! $section->hasValidStructuredConfiguration()) {
+                $issues[] = "The '{$section->title}' section is missing its structured field configuration.";
+            }
+
+            if ($section->requiresFieldDefinitions() && $section->items->isEmpty()) {
+                $issues[] = "The '{$section->title}' section needs at least one issued-copy field definition.";
+            }
+        }
+
+        return $issues;
     }
 }

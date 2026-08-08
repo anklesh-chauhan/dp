@@ -8,19 +8,25 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
-        Schema::create('controlled_document_deviations', function (Blueprint $table): void {
+        Schema::create('document_execution_deviations', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('controlled_document_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('document_execution_id')->constrained()->cascadeOnDelete();
             $table->foreignId('deviation_id')->constrained('deviations')->cascadeOnDelete();
             $table->timestamps();
-            $table->unique(['controlled_document_id', 'deviation_id']);
+            $table->unique(['document_execution_id', 'deviation_id']);
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
-        Schema::dropIfExists('controlled_document_deviations');
+        Schema::dropIfExists('document_execution_deviations');
     }
 };

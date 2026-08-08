@@ -27,17 +27,28 @@ class DocumentType extends Model
 
     public const SOP = 'SOP';
 
+    public const POLICY = 'POLICY';
+
+    public const MANUAL = 'MANUAL';
+
     public const LOG = 'LOG';
 
     public const BATCH_RECORD = 'BMR';
 
+    public const BATCH_PACKAGING_RECORD = 'BPR';
+
     public const FORM = 'FORM';
+
+    public const CHECKLIST = 'CHECKLIST';
+
+    public const ANNEXURE = 'ANNEXURE';
 
     protected $fillable = [
         'name',
         'code',
         'description',
         'format_profile',
+        'execution_workflow',
         'requires_sop_reference',
         'is_issuable',
     ];
@@ -47,6 +58,7 @@ class DocumentType extends Model
         return [
             'requires_sop_reference' => 'boolean',
             'is_issuable' => 'boolean',
+            'execution_workflow' => 'array',
         ];
     }
 
@@ -82,6 +94,51 @@ class DocumentType extends Model
     public function isIssuableType(): bool
     {
         return $this->is_issuable;
+    }
+
+    public function requiresExecutionRecord(): bool
+    {
+        return in_array($this->format_profile, [
+            self::FORMAT_CONTROLLED_FORM,
+            self::FORMAT_REPEATING_LOG,
+            self::FORMAT_CHECKLIST,
+        ], true);
+    }
+
+    public function isBatchRecord(): bool
+    {
+        return self::isBatchRecordCode($this->code);
+    }
+
+    public function isRepeatingLog(): bool
+    {
+        return $this->format_profile === self::FORMAT_REPEATING_LOG;
+    }
+
+    public static function isBatchRecordCode(?string $code): bool
+    {
+        return in_array($code, [self::BATCH_RECORD, self::BATCH_PACKAGING_RECORD], true);
+    }
+
+    public static function isRepeatingLogCode(?string $code): bool
+    {
+        return $code === self::LOG;
+    }
+
+    /**
+     * @return array{requires_item_verification: bool, requires_supervisor_review: bool, requires_qa_approval: bool, requires_disposition: bool}
+     */
+    public function resolvedExecutionWorkflow(): array
+    {
+        $batchRecord = $this->isBatchRecord();
+        $checklist = $this->format_profile === self::FORMAT_CHECKLIST;
+
+        return array_replace([
+            'requires_item_verification' => $batchRecord || $checklist,
+            'requires_supervisor_review' => $batchRecord || $checklist || $this->isRepeatingLog(),
+            'requires_qa_approval' => $batchRecord,
+            'requires_disposition' => $batchRecord,
+        ], $this->execution_workflow ?? []);
     }
 
     /**
