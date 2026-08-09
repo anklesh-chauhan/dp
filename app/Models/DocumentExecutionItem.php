@@ -18,8 +18,17 @@ class DocumentExecutionItem extends Model
     protected static function booted(): void
     {
         static::saving(function (self $item): void {
-            if ($item->exists && ! $item->section()->firstOrFail()->execution()->firstOrFail()->isEditable()) {
-                throw new LogicException('A completed or reviewed execution record cannot be changed.');
+            if ($item->exists) {
+                $section = $item->relationLoaded('section')
+                    ? $item->section
+                    : $item->section()->with('execution')->firstOrFail();
+                $execution = $section->relationLoaded('execution')
+                    ? $section->execution
+                    : $section->execution()->firstOrFail();
+
+                if (! $execution->isEditable()) {
+                    throw new LogicException('A completed or reviewed execution record cannot be changed.');
+                }
             }
 
             if (in_array(strtolower(trim((string) $item->response)), ['n/a', 'na'], true) && blank($item->comments)) {
@@ -37,7 +46,7 @@ class DocumentExecutionItem extends Model
     }
 
     protected $fillable = [
-        'document_execution_section_id', 'source_item_id', 'item_order', 'scheduled_at',
+        'document_execution_section_id', 'source_item_id', 'item_order', 'row_number', 'scheduled_at',
         'label', 'value_type', 'unit', 'decimal_precision', 'acceptance_operator',
         'acceptance_min', 'acceptance_max', 'response', 'result_status', 'comments',
         'is_required', 'completed_by', 'completed_at', 'verified_by', 'verified_at',
@@ -47,6 +56,7 @@ class DocumentExecutionItem extends Model
     {
         return [
             'item_order' => 'integer',
+            'row_number' => 'integer',
             'scheduled_at' => 'datetime',
             'decimal_precision' => 'integer',
             'acceptance_min' => 'decimal:8',

@@ -35,7 +35,7 @@ it('keeps the canonical issuance guard behavior', function (): void {
     expect(fn () => app(IssueDocumentAction::class)->execute(
         new ControlledDocument,
         new User,
-    ))->toThrow(ValidationException::class, 'Only effective log documents');
+    ))->toThrow(ValidationException::class, 'Only effective issuable documents with a valid SOP reference can be issued.');
 });
 
 it('keeps the canonical recall guard behavior', function (): void {

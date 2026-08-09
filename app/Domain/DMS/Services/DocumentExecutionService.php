@@ -57,11 +57,20 @@ class DocumentExecutionService
                     'configuration' => $masterSection->configuration,
                 ]);
 
-                foreach ($masterSection->items as $masterItem) {
-                    $executionSection->items()->create($masterItem->only([
-                        'item_order', 'label', 'value_type', 'unit', 'decimal_precision',
-                        'acceptance_operator', 'acceptance_min', 'acceptance_max', 'is_required',
-                    ]) + ['source_item_id' => $masterItem->id]);
+                $rowCount = $masterSection->requiresFieldDefinitions()
+                    ? min(100, max(1, (int) data_get($masterSection->configuration, 'execution_row_count', 1)))
+                    : 1;
+
+                for ($rowNumber = 1; $rowNumber <= $rowCount; $rowNumber++) {
+                    foreach ($masterSection->items as $masterItem) {
+                        $executionSection->items()->create($masterItem->only([
+                            'item_order', 'label', 'value_type', 'unit', 'decimal_precision',
+                            'acceptance_operator', 'acceptance_min', 'acceptance_max', 'is_required',
+                        ]) + [
+                            'source_item_id' => $masterItem->id,
+                            'row_number' => $rowNumber,
+                        ]);
+                    }
                 }
 
                 if ($masterSection->section_type === ControlledDocumentSection::TYPE_REPEATING_LOG
@@ -213,6 +222,7 @@ class DocumentExecutionService
         foreach (CarbonPeriod::create($execution->log_period_start, $interval, $end) as $order => $scheduledAt) {
             $section->items()->create([
                 'item_order' => $order + 1,
+                'row_number' => $order + 1,
                 'scheduled_at' => $scheduledAt,
                 'label' => 'Scheduled log entry',
                 'value_type' => 'text',

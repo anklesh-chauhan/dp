@@ -349,6 +349,24 @@ it('renders real page counters for browser previews and generated pdf artifacts'
         ->not->toContain('print preview shows the actual total');
 });
 
+it('does not print unused structured field configuration metadata', function (): void {
+    $view = file_get_contents(resource_path('views/controlled-documents/print.blade.php'));
+
+    expect($view)
+        ->not->toContain('section-configuration')
+        ->not->toContain('$section->configuration as');
+});
+
+it('hides table of contents settings when the table of contents is disabled', function (): void {
+    $form = file_get_contents(app_path('Filament/Resources/ReportTemplates/Schemas/ReportTemplateForm.php'));
+
+    expect($form)
+        ->toContain("Toggle::make('toc_configuration.enabled')")
+        ->toContain('->live()')
+        ->toContain("->visible(fn (Get \$get): bool => (bool) \$get('toc_configuration.enabled'))")
+        ->toContain("->required(fn (Get \$get): bool => (bool) \$get('toc_configuration.enabled'))");
+});
+
 it('reserves generated pdf margins and shares configured typography with headers and footers', function (): void {
     $documentView = file_get_contents(resource_path('views/controlled-documents/print.blade.php'));
     $headerView = file_get_contents(resource_path('views/controlled-documents/pdf-header.blade.php'));

@@ -198,13 +198,31 @@ final class ReportTemplateForm
                                     ->required(),
                             ]),
                         Tab::make('Table of Contents')->schema([
-                            Toggle::make('toc_configuration.enabled')->label('Show Table of Contents by Default')->helperText('Individual documents can override this setting.'),
-                            TextInput::make('toc_configuration.title')->label('TOC Title')->default('Table of Contents')->required(),
-                            Select::make('toc_configuration.position')->options(['before_sections' => 'Before Sections', 'after_identity' => 'After Document Identity'])->default('before_sections')->required(),
-                            Select::make('toc_configuration.max_level')->label('Maximum Heading Level')->options([1 => 'Level 1', 2 => 'Level 2', 3 => 'Level 3', 4 => 'Level 4', 5 => 'Level 5', 6 => 'Level 6'])->default(3)->required(),
-                            Toggle::make('toc_configuration.show_section_numbers')->label('Show Section Numbers')->default(true),
-                            Toggle::make('toc_configuration.page_break_before')->label('Page Break Before TOC'),
-                            Toggle::make('toc_configuration.page_break_after')->label('Page Break After TOC'),
+                            Toggle::make('toc_configuration.enabled')
+                                ->label('Show Table of Contents by Default')
+                                ->helperText('Individual documents can override this setting.')
+                                ->live(),
+                            Grid::make(3)
+                                ->schema([
+                                    TextInput::make('toc_configuration.title')
+                                        ->label('TOC Title')
+                                        ->default('Table of Contents')
+                                        ->required(fn (Get $get): bool => (bool) $get('toc_configuration.enabled')),
+                                    Select::make('toc_configuration.position')
+                                        ->label('Position')
+                                        ->options(['before_sections' => 'Before Sections', 'after_identity' => 'After Document Identity'])
+                                        ->default('before_sections')
+                                        ->required(fn (Get $get): bool => (bool) $get('toc_configuration.enabled')),
+                                    Select::make('toc_configuration.max_level')
+                                        ->label('Maximum Heading Level')
+                                        ->options([1 => 'Level 1', 2 => 'Level 2', 3 => 'Level 3', 4 => 'Level 4', 5 => 'Level 5', 6 => 'Level 6'])
+                                        ->default(3)
+                                        ->required(fn (Get $get): bool => (bool) $get('toc_configuration.enabled')),
+                                    Toggle::make('toc_configuration.show_section_numbers')->label('Show Section Numbers')->default(true),
+                                    Toggle::make('toc_configuration.page_break_before')->label('Page Break Before TOC'),
+                                    Toggle::make('toc_configuration.page_break_after')->label('Page Break After TOC'),
+                                ])
+                                ->visible(fn (Get $get): bool => (bool) $get('toc_configuration.enabled')),
                         ]),
                         Tab::make('Title Page')->schema([
                             Toggle::make('title_page_configuration.enabled')

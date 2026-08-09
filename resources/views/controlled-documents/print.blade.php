@@ -529,46 +529,11 @@
                     @endif
                     {{ $section->section_order }}. {{ $section->title }}
                 </h3>@endif
-                @if (in_array($section->section_type ?? 'rich_text', ['structured_table', 'checklist', 'repeating_log'], true) && filled($section->configuration ?? null))
-                    <table class="section-configuration">
-                        <tbody>
-                            @foreach ($section->configuration as $configurationKey => $configurationValue)
-                                <tr>
-                                    <th>{{ str($configurationKey)->replace('_', ' ')->title() }}</th>
-                                    <td>{{ is_array($configurationValue) ? collect($configurationValue)->join(', ') : $configurationValue }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                @endif
                 <div class="content">
                     {!! filled($section->content) ? $section->content : '<p>-</p>' !!}
                 </div>
                 @if ($issuance?->isExecution() && $section->items->isNotEmpty())
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Date / Time</th>
-                                <th>Item</th>
-                                <th>Response</th>
-                                <th>Result</th>
-                                <th>Comments</th>
-                                <th>Completed / Verified</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($section->items as $item)
-                                <tr>
-                                    <td>{{ $item->scheduled_at?->toDayDateTimeString() ?? '-' }}</td>
-                                    <td>{{ $item->label }}</td>
-                                    <td>{{ $item->response ?? '________________' }} {{ $item->unit }}</td>
-                                    <td>{{ $item->result_status ? str($item->result_status)->title() : '-' }}</td>
-                                    <td>{{ $item->comments ?? '-' }}</td>
-                                    <td>{{ $item->completedBy?->name ?? '-' }} / {{ $item->verifiedBy?->name ?? '-' }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                    @include('controlled-documents.partials.execution-table', ['section' => $section])
                 @endif
             </article>
         @empty

@@ -255,7 +255,7 @@ DocuPharma supports the following controlled document formats through the existi
 | Checklist                                     | Checklist             | Line clearance, cleaning, and inspection checks       |
 | Annexure                                      | Attachment package    | Certificates, drawings, photos, and evidence          |
 
-The approved controlled document is the reusable master. Its template sections define blank text, structured tables, checklists, repeating logs, signatures, attachment requirements, columns, units, response options, decimal precision, and acceptance criteria. Execution data is never entered on the approved master.
+The approved controlled document is the reusable master. Its sections define controlled text, execution fields for tables and checklists, repeating logs, signatures, and attachment requirements. Execution fields can specify the item label, value type, unit, decimal precision, required status, and numeric acceptance criteria. Execution data is never entered on the approved master.
 
 The Document Controller selects one of two copy types. A **Reference Copy** is read-only and is controlled through issuance, recall, return, or destruction. A **Writable GMP Execution Record** creates a separate `DocumentExecution` and snapshots the approved master version. Form values, checklist responses, batch data, readings, completion details, and verification belong only to that execution record. A later master revision cannot alter it.
 
@@ -294,8 +294,7 @@ Except for SOP, Policy, and Manual, the standard configured document types requi
 Before submitting a writable master for approval:
 
 - add at least one master section;
-- complete the configuration of structured sections;
-- add blank **Issued-copy field definitions** to every required table/checklist section;
+- add **Execution fields** to every required table/checklist section;
 - keep responses and actual execution data out of the master.
 
 Before selecting **Complete and submit** on an execution record:

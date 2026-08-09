@@ -25,6 +25,7 @@ class DocumentExecutionItemFactory extends Factory
         return [
             'document_execution_section_id' => DocumentExecutionSection::factory(),
             'item_order' => fake()->numberBetween(1, 10),
+            'row_number' => 1,
             'label' => fake()->sentence(4),
             'value_type' => 'text',
             'is_required' => true,

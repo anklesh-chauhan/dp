@@ -26,30 +26,6 @@ class DocumentTemplateSection extends Model
     /** @use HasFactory<DocumentTemplateSectionFactory> */
     use HasFactory;
 
-    protected static function booted(): void
-    {
-        static::saving(function (self $section): void {
-            $configuration = is_array($section->configuration) ? $section->configuration : [];
-
-            $defaults = match ($section->section_type) {
-                self::TYPE_TABLE => [
-                    'columns' => 'Parameter, Specification, Result, Unit, Acceptance criteria',
-                ],
-                self::TYPE_CHECKLIST => [
-                    'response_options' => 'Pass, Fail, N/A',
-                    'columns' => 'Item, Response, Comments, Initials',
-                ],
-                self::TYPE_REPEATING_LOG => [
-                    'frequency' => 'Daily',
-                    'columns' => 'Date/Time, Reading, Initials, Remarks, Verified by',
-                ],
-                default => [],
-            };
-
-            $section->configuration = [...$defaults, ...$configuration];
-        });
-    }
-
     protected $fillable = [
         'template_version_id',
         'title',

@@ -18,7 +18,6 @@ use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
-use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -64,26 +63,10 @@ class SectionRelationManager extends RelationManager
                     ->options(DocumentTemplateSection::typeOptions())
                     ->default(DocumentTemplateSection::TYPE_TEXT)
                     ->required()
-                    ->afterStateUpdated(function (Set $set, ?string $state): void {
-                        $set('configuration', match ($state) {
-                            DocumentTemplateSection::TYPE_TABLE => [
-                                'columns' => 'Parameter, Specification, Result, Unit, Acceptance criteria',
-                            ],
-                            DocumentTemplateSection::TYPE_CHECKLIST => [
-                                'response_options' => 'Pass, Fail, N/A',
-                                'columns' => 'Item, Response, Comments, Initials',
-                            ],
-                            DocumentTemplateSection::TYPE_REPEATING_LOG => [
-                                'frequency' => 'Daily',
-                                'columns' => 'Date/Time, Reading, Initials, Remarks, Verified by',
-                            ],
-                            default => [],
-                        });
-                    })
                     ->helperText(fn (Get $get): string => match ($get('section_type')) {
-                        DocumentTemplateSection::TYPE_TABLE => 'Add an HTML table or structured table markup in the content area. Table headers repeat when printed.',
-                        DocumentTemplateSection::TYPE_CHECKLIST => 'Use checkbox, pass/fail, or N/A rows. Keep comments and verification fields in the same table.',
-                        DocumentTemplateSection::TYPE_REPEATING_LOG => 'Use a table with a date/time, value, initials, and remarks column for each entry.',
+                        DocumentTemplateSection::TYPE_TABLE => 'Execution fields are defined on the generated controlled document master.',
+                        DocumentTemplateSection::TYPE_CHECKLIST => 'Checklist items are defined as execution fields on the generated controlled document master.',
+                        DocumentTemplateSection::TYPE_REPEATING_LOG => 'Frequency and period are selected when the writable copy is issued; scheduled entries are generated automatically.',
                         DocumentTemplateSection::TYPE_SIGNATURES => 'Use a signature table with role, name, signature, and date columns.',
                         DocumentTemplateSection::TYPE_ANNEXURES => 'Use this block for supporting certificates, drawings, photographs, or controlled attachments.',
                         default => 'Choose the content block that best matches this section.',
@@ -116,13 +99,6 @@ class SectionRelationManager extends RelationManager
                                 ->action(fn (Get $get, Set $set) => $this->applyAiContent('shorten', $get, $set)),
                         ] : []
                     ),
-                KeyValue::make('configuration')
-                    ->label('Structured field configuration')
-                    ->keyLabel('Key')
-                    ->valueLabel('Value')
-                    ->helperText('For tables, checklists, and logs, define items such as columns, units, frequency, or acceptance criteria.')
-                    ->visible(fn (Get $get): bool => in_array($get('section_type'), [DocumentTemplateSection::TYPE_TABLE, DocumentTemplateSection::TYPE_CHECKLIST, DocumentTemplateSection::TYPE_REPEATING_LOG], true))
-                    ->columnSpanFull(),
             ]),
         ]);
     }

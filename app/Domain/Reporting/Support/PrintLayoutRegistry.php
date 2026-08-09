@@ -42,7 +42,7 @@ final class PrintLayoutRegistry
             'paper_size' => 'a4',
             'orientation' => 'portrait',
             'font_family' => 'arial',
-            'font_size' => 12,
+            'font_size' => 10,
             'primary_color' => '#1f2937',
             'secondary_color' => '#f1f5f9',
             'margin_top_mm' => 15,

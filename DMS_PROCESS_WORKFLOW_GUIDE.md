@@ -123,12 +123,12 @@ These codes follow the common controlled-master approval, reference issuance, re
 
 1. Keep the document in **Draft** while editing.
 2. Complete each section’s controlled content.
-3. For structured tables and checklists, define at least one **Issued-copy field definition** in every execution section that requires fields.
-4. For repeating logs, define the section configuration and the intended logging frequency.
+3. For structured tables and checklists, define at least one **Execution field** in every section that captures execution data.
+4. For repeating logs, select the logging frequency and period when issuing the writable copy.
 5. Add acceptance limits, units, required flags, and verification requirements where applicable.
 6. Review attachments, regulation tags, references, and organization data.
 
-Master field definitions must remain blank. Actual observations, readings, initials, and responses belong to an issued execution copy, not the master.
+Master execution fields define what must be captured but remain blank. Actual observations, readings, initials, and responses belong to an issued execution copy, not the master.
 
 ### Step 4: Pre-submission check
 
@@ -137,8 +137,7 @@ Before selecting **Submit for Approval**, verify:
 - the document is still Draft;
 - required metadata and references are complete;
 - at least one master section exists;
-- structured section configuration is valid;
-- every required table/checklist section contains blank field definitions;
+- every required table/checklist section contains execution fields;
 - no execution responses have been entered in the master;
 - the correct department approval workflow is active.
 
@@ -204,7 +203,7 @@ The reviewer must be different from the person who completed the log.
 
 Use for controlled pass/fail/N/A checks.
 
-Define each check as a blank field, mark required checks, and configure response options. N/A responses require an explanation.
+Define each check as an execution field and mark required checks. Use **Pass / Fail** for controlled checklist decisions. N/A responses require an explanation.
 
 Default execution flow: **Issued → In progress → Independent item verification → Under supervisor review → Closed**.
 
@@ -348,7 +347,7 @@ Document Controller permissions are required for these actions. Retention action
 
 | Message or condition | Resolution |
 |---|---|
-| Writable master needs field definitions | Edit each named structured section and add at least one **Issued-copy field definition**. |
+| Writable master needs execution fields | Edit each named table/checklist section and add at least one **Execution field**. |
 | Referenced SOP is unavailable | Select an Effective SOP that has not been archived or deleted. |
 | No active approval workflow | Ask the administrator to configure an active workflow for the document’s department. |
 | Complete required items and sections | Enter the named responses and mark the named sections Completed/Not applicable. |
@@ -378,8 +377,7 @@ Users should always:
 - [ ] Correct template, type, department, category, and owner.
 - [ ] Required effective SOP reference selected.
 - [ ] All sections and controlled content complete.
-- [ ] Structured configuration complete.
-- [ ] Blank issued-copy field definitions added where required.
+- [ ] Execution fields added to every required table/checklist section.
 - [ ] Attachments, references, and tags reviewed.
 - [ ] Appropriate approval workflow is active.
 

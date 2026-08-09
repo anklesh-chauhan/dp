@@ -8,6 +8,8 @@ use App\Domain\Shared\Contracts\ApprovalSubmissionLifecycle;
 use App\Exceptions\WorkflowException;
 use App\Filament\Resources\ControlledDocuments\Pages\ViewControlledDocument;
 use App\Filament\Resources\ControlledDocuments\RelationManagers\DocumentSectionRelationManager;
+use App\Filament\Resources\DocumentExecutions\Pages\EditDocumentExecution;
+use App\Filament\Resources\DocumentExecutions\RelationManagers\SectionsRelationManager;
 use App\Models\ControlledDocument;
 use App\Models\ControlledDocumentSection;
 use App\Models\ControlledDocumentSectionItem;
@@ -22,7 +24,9 @@ use App\Models\DocumentType;
 use App\Models\TemplateStatus;
 use App\Models\User;
 use Database\Seeders\LookupTableSeeder;
+use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 
@@ -67,7 +71,6 @@ it('validates writable master definitions without treating them as completed exe
         'section_type' => $documentTypeCode === DocumentType::LOG
             ? ControlledDocumentSection::TYPE_REPEATING_LOG
             : ControlledDocumentSection::TYPE_CHECKLIST,
-        'configuration' => ['response_options' => 'Pass, Fail, N/A'],
     ]);
 
     if ($section->requiresFieldDefinitions()) {
@@ -90,7 +93,7 @@ it('validates writable master definitions without treating them as completed exe
     DocumentType::BATCH_PACKAGING_RECORD,
 ]);
 
-it('rejects a writable master whose structured section has no blank field definitions', function (): void {
+it('rejects a writable master whose structured section has no execution fields', function (): void {
     $document = executionMasterDocument(DocumentType::FORM, DocumentStatus::DRAFT);
     ControlledDocumentSection::factory()->create([
         'document_id' => $document,
@@ -98,10 +101,10 @@ it('rejects a writable master whose structured section has no blank field defini
     ]);
 
     expect(fn () => app(ApprovalSubmissionLifecycle::class)->assertSubmittable($document))
-        ->toThrow(WorkflowException::class, "The '{$document->sections()->firstOrFail()->title}' section needs at least one issued-copy field definition.");
+        ->toThrow(WorkflowException::class, "The '{$document->sections()->firstOrFail()->title}' section needs at least one execution field.");
 });
 
-it('shows the blank field definition count for writable master sections', function (): void {
+it('shows the execution field count for writable master sections', function (): void {
     $document = executionMasterDocument(DocumentType::FORM, DocumentStatus::DRAFT);
     $section = ControlledDocumentSection::factory()->create([
         'document_id' => $document,
@@ -114,6 +117,178 @@ it('shows the blank field definition count for writable master sections', functi
     ])
         ->assertCanSeeTableRecords([$section])
         ->assertTableColumnStateSet('field_definitions', '0', $section);
+});
+
+it('does not populate unused structured configuration defaults', function (): void {
+    $document = executionMasterDocument(DocumentType::FORM, DocumentStatus::DRAFT);
+    $section = ControlledDocumentSection::factory()->create([
+        'document_id' => $document,
+        'section_type' => ControlledDocumentSection::TYPE_TABLE,
+    ]);
+
+    expect($section->fresh()->configuration)->toBeNull();
+});
+
+it('uses execution fields instead of a generic structured configuration editor', function (): void {
+    $masterSectionEditor = file_get_contents(app_path('Filament/Resources/ControlledDocuments/RelationManagers/DocumentSectionRelationManager.php'));
+    $templateSectionEditor = file_get_contents(app_path('Filament/Resources/DocumentTemplates/RelationManagers/SectionRelationManager.php'));
+
+    expect($masterSectionEditor)
+        ->toContain("Repeater::make('items')")
+        ->toContain("->label('Execution fields')")
+        ->not->toContain("KeyValue::make('configuration')")
+        ->and($templateSectionEditor)
+        ->not->toContain("KeyValue::make('configuration')");
+});
+
+it('presents execution entries as a compact table with understandable field labels', function (): void {
+    $executionEditor = file_get_contents(app_path('Filament/Resources/DocumentExecutions/RelationManagers/SectionsRelationManager.php'));
+
+    expect($executionEditor)
+        ->toContain("->label('Execution entries')")
+        ->toContain("ExecutionGrid::make('execution_rows')")
+        ->toContain("'key' => \$this->executionFieldKey(\$field)")
+        ->toContain('executionRowsState')
+        ->toContain('updateExecutionRows')
+        ->toContain("isDirty(['response', 'comments', 'verified_by'])")
+        ->toContain('->modalWidth(Width::Full)')
+        ->not->toContain("TextInput::make('scheduled_at')->disabled()")
+        ->not->toContain("TextInput::make('label')->disabled()");
+});
+
+it('opens the structured execution section editor', function (): void {
+    Gate::before(static fn (): bool => true);
+
+    $document = executionMasterDocument();
+    $section = ControlledDocumentSection::factory()->create([
+        'document_id' => $document,
+        'section_type' => ControlledDocumentSection::TYPE_TABLE,
+        'configuration' => ['execution_row_count' => 4],
+    ]);
+
+    foreach (['Material', 'Qty', 'Cleaning date'] as $order => $header) {
+        ControlledDocumentSectionItem::query()->create([
+            'section_id' => $section->id,
+            'item_order' => $order + 1,
+            'label' => $header,
+            'value_type' => ControlledDocumentSectionItem::VALUE_TEXT,
+            'is_required' => true,
+        ]);
+    }
+
+    $execution = app(DocumentIssuanceService::class)->issue($document, $this->issuer)->execution;
+    $executionSection = $execution->sections()->firstOrFail();
+
+    $this->actingAs($this->issuer);
+
+    $component = Livewire::test(SectionsRelationManager::class, [
+        'ownerRecord' => $execution,
+        'pageClass' => EditDocumentExecution::class,
+    ]);
+
+    $component->mountAction(TestAction::make('edit')->table($executionSection))
+        ->assertActionMounted(TestAction::make('edit')->table($executionSection))
+        ->assertActionDataSet(function (array $data): array {
+            expect($data['execution_rows'])->toHaveCount(4)
+                ->and($data['execution_rows'][0]['row_label'])->toBe('1')
+                ->and($data['execution_rows'][3]['row_label'])->toBe('4');
+
+            return [];
+        });
+
+    $rows = $component->get('mountedActions.0.data.execution_rows');
+    $materialItem = $executionSection->items()->where('row_number', 1)->orderBy('id')->firstOrFail();
+    $rows[0]['responses']['field_'.$materialItem->source_item_id] = 'Stainless steel vessel';
+
+    $component
+        ->setActionData(['execution_rows' => $rows])
+        ->callMountedAction()
+        ->assertHasNoActionErrors();
+
+    expect($materialItem->fresh()->response)->toBe('Stainless steel vessel');
+});
+
+it('uses execution field names as the issued table headers', function (): void {
+    $document = executionMasterDocument();
+    $section = ControlledDocumentSection::factory()->create([
+        'document_id' => $document,
+        'section_type' => ControlledDocumentSection::TYPE_TABLE,
+        'configuration' => ['execution_row_count' => 3],
+    ]);
+    foreach (['Material', 'Qty', 'Cleaning date'] as $order => $header) {
+        ControlledDocumentSectionItem::query()->create([
+            'section_id' => $section->id,
+            'item_order' => $order + 1,
+            'label' => $header,
+            'value_type' => ControlledDocumentSectionItem::VALUE_TEXT,
+            'is_required' => true,
+        ]);
+    }
+
+    $issuance = app(DocumentIssuanceService::class)->issue($document, $this->issuer);
+    $issuedSection = $issuance->execution->sections()->with('items')->firstOrFail();
+    $firstRow = $issuedSection->items->where('row_number', 1)->values();
+    $firstRow[0]->update(['response' => 'Citric acid']);
+    $firstRow[1]->update(['response' => '25 kg']);
+    $firstRow[2]->update(['response' => '2026-08-09']);
+
+    $html = view('controlled-documents.partials.execution-table', [
+        'section' => $issuedSection->fresh(['items.completedBy', 'items.verifiedBy']),
+    ])->render();
+
+    expect($issuedSection->items)->toHaveCount(9)
+        ->and($issuedSection->items->pluck('row_number')->unique()->values()->all())->toBe([1, 2, 3])
+        ->and(substr_count($html, '<tr>'))->toBe(4)
+        ->and(substr_count($html, 'Material'))->toBe(1)
+        ->and($html)
+        ->toContain('Material')
+        ->toContain('Qty')
+        ->toContain('Cleaning date')
+        ->toContain('Citric acid')
+        ->toContain('25 kg')
+        ->toContain('2026-08-09')
+        ->not->toContain('Date / Time')
+        ->not->toContain('Completed / Verified');
+});
+
+it('renders execution fields as a vertical field and value form when configured', function (): void {
+    $document = executionMasterDocument();
+    $section = ControlledDocumentSection::factory()->create([
+        'document_id' => $document,
+        'section_type' => ControlledDocumentSection::TYPE_TABLE,
+        'configuration' => [
+            'execution_layout' => 'field_value',
+            'execution_row_count' => 1,
+        ],
+    ]);
+    foreach (['Date', 'Lot No.', 'Amount of PBS used'] as $order => $header) {
+        ControlledDocumentSectionItem::query()->create([
+            'section_id' => $section->id,
+            'item_order' => $order + 1,
+            'label' => $header,
+            'value_type' => ControlledDocumentSectionItem::VALUE_TEXT,
+            'is_required' => true,
+        ]);
+    }
+
+    $issuance = app(DocumentIssuanceService::class)->issue($document, $this->issuer);
+    $issuedSection = $issuance->execution->sections()->with('items')->firstOrFail();
+    $issuedSection->items[0]->update(['response' => '2026-08-09']);
+    $issuedSection->items[1]->update(['response' => 'LOT-001']);
+    $issuedSection->items[2]->update(['response' => '40000 ml']);
+
+    $html = view('controlled-documents.partials.execution-table', [
+        'section' => $issuedSection->fresh(['items.completedBy', 'items.verifiedBy']),
+    ])->render();
+
+    expect($html)
+        ->toContain('Date')
+        ->toContain('2026-08-09')
+        ->toContain('Lot No.')
+        ->toContain('LOT-001')
+        ->toContain('Amount of PBS used')
+        ->toContain('40000 ml')
+        ->not->toContain('Entry 1');
 });
 
 it('classifies copy behavior from the document format profile', function (string $documentTypeCode, bool $requiresExecution): void {
@@ -141,7 +316,6 @@ it('snapshots blank master field definitions into each issued copy', function ()
     $section = ControlledDocumentSection::factory()->create([
         'document_id' => $document,
         'section_type' => ControlledDocumentSection::TYPE_CHECKLIST,
-        'configuration' => ['response_options' => 'Pass, Fail, N/A'],
     ]);
     $item = ControlledDocumentSectionItem::query()->create([
         'section_id' => $section->id,

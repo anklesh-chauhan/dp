@@ -97,12 +97,8 @@ class SopApprovalSubmissionLifecycleAdapter implements ApprovalSubmissionLifecyc
         $issues = [];
 
         foreach ($document->sections as $section) {
-            if (! $section->hasValidStructuredConfiguration()) {
-                $issues[] = "The '{$section->title}' section is missing its structured field configuration.";
-            }
-
             if ($section->requiresFieldDefinitions() && $section->items->isEmpty()) {
-                $issues[] = "The '{$section->title}' section needs at least one issued-copy field definition.";
+                $issues[] = "The '{$section->title}' section needs at least one execution field.";
             }
         }
 
