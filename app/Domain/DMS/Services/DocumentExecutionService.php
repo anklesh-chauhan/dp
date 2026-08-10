@@ -25,7 +25,11 @@ class DocumentExecutionService
         }
 
         return DB::transaction(function () use ($issuance, $data): DocumentExecution {
-            $issuance->loadMissing('document.documentType', 'document.sections.items');
+            $issuance->loadMissing(
+                'document.documentType',
+                'document.sections.items',
+                'document.sections.executionTables.items',
+            );
             $document = $issuance->document;
             $workflow = $document->documentType?->resolvedExecutionWorkflow() ?? [];
 
@@ -57,19 +61,41 @@ class DocumentExecutionService
                     'configuration' => $masterSection->configuration,
                 ]);
 
-                $rowCount = $masterSection->requiresFieldDefinitions()
-                    ? min(100, max(1, (int) data_get($masterSection->configuration, 'execution_row_count', 1)))
-                    : 1;
+                if ($masterSection->requiresFieldDefinitions() && $masterSection->executionTables->isNotEmpty()) {
+                    foreach ($masterSection->executionTables as $masterTable) {
+                        $rowCount = min(100, max(1, $masterTable->row_count));
 
-                for ($rowNumber = 1; $rowNumber <= $rowCount; $rowNumber++) {
-                    foreach ($masterSection->items as $masterItem) {
-                        $executionSection->items()->create($masterItem->only([
-                            'item_order', 'label', 'value_type', 'unit', 'decimal_precision',
-                            'acceptance_operator', 'acceptance_min', 'acceptance_max', 'is_required',
-                        ]) + [
-                            'source_item_id' => $masterItem->id,
-                            'row_number' => $rowNumber,
-                        ]);
+                        for ($rowNumber = 1; $rowNumber <= $rowCount; $rowNumber++) {
+                            foreach ($masterTable->items as $masterItem) {
+                                $executionSection->items()->create($masterItem->only([
+                                    'item_order', 'label', 'value_type', 'unit', 'decimal_precision',
+                                    'acceptance_operator', 'acceptance_min', 'acceptance_max', 'is_required',
+                                ]) + [
+                                    'source_item_id' => $masterItem->id,
+                                    'source_table_id' => $masterTable->id,
+                                    'table_title' => $masterTable->title,
+                                    'table_order' => $masterTable->table_order,
+                                    'table_layout' => $masterTable->execution_layout,
+                                    'row_number' => $rowNumber,
+                                ]);
+                            }
+                        }
+                    }
+                } else {
+                    $rowCount = $masterSection->requiresFieldDefinitions()
+                        ? min(100, max(1, (int) data_get($masterSection->configuration, 'execution_row_count', 1)))
+                        : 1;
+
+                    for ($rowNumber = 1; $rowNumber <= $rowCount; $rowNumber++) {
+                        foreach ($masterSection->items as $masterItem) {
+                            $executionSection->items()->create($masterItem->only([
+                                'item_order', 'label', 'value_type', 'unit', 'decimal_precision',
+                                'acceptance_operator', 'acceptance_min', 'acceptance_max', 'is_required',
+                            ]) + [
+                                'source_item_id' => $masterItem->id,
+                                'row_number' => $rowNumber,
+                            ]);
+                        }
                     }
                 }
 

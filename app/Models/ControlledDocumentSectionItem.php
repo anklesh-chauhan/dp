@@ -15,8 +15,20 @@ class ControlledDocumentSectionItem extends Model
 
     public const VALUE_BOOLEAN = 'boolean';
 
+    protected static function booted(): void
+    {
+        static::creating(function (self $item): void {
+            if ($item->section_id === null && $item->section_table_id !== null) {
+                $item->section_id = ControlledDocumentSectionTable::query()
+                    ->findOrFail($item->section_table_id)
+                    ->section_id;
+            }
+        });
+    }
+
     protected $fillable = [
         'section_id',
+        'section_table_id',
         'item_order',
         'label',
         'value_type',
@@ -43,5 +55,11 @@ class ControlledDocumentSectionItem extends Model
     public function section(): BelongsTo
     {
         return $this->belongsTo(ControlledDocumentSection::class, 'section_id');
+    }
+
+    /** @return BelongsTo<ControlledDocumentSectionTable, $this> */
+    public function executionTable(): BelongsTo
+    {
+        return $this->belongsTo(ControlledDocumentSectionTable::class, 'section_table_id');
     }
 }

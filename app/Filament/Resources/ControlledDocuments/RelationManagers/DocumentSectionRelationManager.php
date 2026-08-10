@@ -51,66 +51,81 @@ class DocumentSectionRelationManager extends RelationManager
                 ->label('Content')
                 ->required()
                 ->columnSpanFull(),
-            Section::make('Execution fields')
+            Section::make('Execution tables')
                 ->schema([
-                    Select::make('configuration.execution_layout')
-                        ->label('Print layout')
-                        ->options([
-                            'table' => 'Table — fields are columns',
-                            'field_value' => 'Form — fields are vertical rows',
-                        ])
-                        ->default('table')
-                        ->required(),
-                    TextInput::make('configuration.execution_row_count')
-                        ->label('Number of rows')
-                        ->helperText('For a table, this is the number of writable rows beneath the headers. A vertical form normally uses one row.')
-                        ->numeric()
-                        ->integer()
-                        ->minValue(1)
-                        ->maxValue(100)
-                        ->default(1)
-                        ->required(),
-                    Repeater::make('items')
+                    Repeater::make('executionTables')
                         ->relationship()
-                        ->label('Columns')
+                        ->label('Tables')
+                        ->orderColumn('table_order')
+                        ->defaultItems(0)
+                        ->minItems(1)
+                        ->addActionLabel('Add another table')
                         ->schema([
-                            TextInput::make('label')
-                                ->label('Column header')
+                            TextInput::make('title')
+                                ->label('Table title')
+                                ->placeholder('For example: Container details')
                                 ->required()
                                 ->columnSpan(2),
-                            TextInput::make('item_order')
-                                ->label('Order')
+                            Select::make('execution_layout')
+                                ->label('Print layout')
+                                ->options([
+                                    'table' => 'Table - fields are columns',
+                                    'field_value' => 'Form - fields are vertical rows',
+                                ])
+                                ->default('table')
+                                ->required(),
+                            TextInput::make('row_count')
+                                ->label('Number of rows')
+                                ->helperText('Writable rows beneath this table header.')
                                 ->numeric()
+                                ->integer()
+                                ->minValue(1)
+                                ->maxValue(100)
                                 ->default(1)
                                 ->required(),
-                            Select::make('value_type')
-                                ->label('Value type')
-                                ->options([
-                                    ControlledDocumentSectionItem::VALUE_TEXT => 'Text',
-                                    ControlledDocumentSectionItem::VALUE_NUMERIC => 'Numeric',
-                                    ControlledDocumentSectionItem::VALUE_BOOLEAN => 'Pass / Fail',
+                            Repeater::make('items')
+                                ->relationship()
+                                ->label('Columns')
+                                ->orderColumn('item_order')
+                                ->defaultItems(0)
+                                ->minItems(1)
+                                ->addActionLabel('Add column')
+                                ->schema([
+                                    TextInput::make('label')
+                                        ->label('Column header')
+                                        ->required()
+                                        ->columnSpan(2),
+                                    Select::make('value_type')
+                                        ->label('Value type')
+                                        ->options([
+                                            ControlledDocumentSectionItem::VALUE_TEXT => 'Text',
+                                            ControlledDocumentSectionItem::VALUE_NUMERIC => 'Numeric',
+                                            ControlledDocumentSectionItem::VALUE_BOOLEAN => 'Pass / Fail',
+                                        ])
+                                        ->default(ControlledDocumentSectionItem::VALUE_TEXT)
+                                        ->required(),
+                                    TextInput::make('unit')->label('Unit')->maxLength(30),
+                                    TextInput::make('decimal_precision')->label('Decimals')->numeric()->minValue(0)->maxValue(8),
+                                    Select::make('acceptance_operator')
+                                        ->label('Acceptance')
+                                        ->options([
+                                            'between' => 'Between minimum and maximum',
+                                            'gte' => 'Greater than or equal to minimum',
+                                            'lte' => 'Less than or equal to maximum',
+                                            'eq' => 'Equal to minimum',
+                                        ])
+                                        ->visible(fn (Get $get): bool => $get('value_type') === ControlledDocumentSectionItem::VALUE_NUMERIC),
+                                    TextInput::make('acceptance_min')->label('Minimum / target')->numeric()->visible(fn (Get $get): bool => $get('value_type') === ControlledDocumentSectionItem::VALUE_NUMERIC),
+                                    TextInput::make('acceptance_max')->label('Maximum')->numeric()->visible(fn (Get $get): bool => $get('value_type') === ControlledDocumentSectionItem::VALUE_NUMERIC),
+                                    Toggle::make('is_required')
+                                        ->label('Required')
+                                        ->default(true),
                                 ])
-                                ->default(ControlledDocumentSectionItem::VALUE_TEXT)
-                                ->required(),
-                            TextInput::make('unit')->label('Unit')->maxLength(30),
-                            TextInput::make('decimal_precision')->label('Decimals')->numeric()->minValue(0)->maxValue(8),
-                            Select::make('acceptance_operator')
-                                ->label('Acceptance')
-                                ->options([
-                                    'between' => 'Between minimum and maximum',
-                                    'gte' => 'Greater than or equal to minimum',
-                                    'lte' => 'Less than or equal to maximum',
-                                    'eq' => 'Equal to minimum',
-                                ])
-                                ->visible(fn (Get $get): bool => $get('value_type') === ControlledDocumentSectionItem::VALUE_NUMERIC),
-                            TextInput::make('acceptance_min')->label('Minimum / target')->numeric()->visible(fn (Get $get): bool => $get('value_type') === ControlledDocumentSectionItem::VALUE_NUMERIC),
-                            TextInput::make('acceptance_max')->label('Maximum')->numeric()->visible(fn (Get $get): bool => $get('value_type') === ControlledDocumentSectionItem::VALUE_NUMERIC),
-                            Toggle::make('is_required')
-                                ->label('Required')
-                                ->default(true),
+                                ->columns(5)
+                                ->columnSpanFull(),
                         ])
-                        ->columns(5)
-                        ->helperText('Each execution field becomes one table column. Enter the exact header you need, such as Material, Qty, or Cleaning date; responses are entered only on the issued copy.'),
+                        ->columns(4)
+                        ->helperText('Add as many tables as the section needs. Each table has its own title, layout, row count, and columns.'),
                 ])
                 ->visible(fn (Get $get): bool => in_array($get('section_type'), [DocumentTemplateSection::TYPE_TABLE, DocumentTemplateSection::TYPE_CHECKLIST], true))
                 ->columnSpanFull(),
@@ -120,7 +135,7 @@ class DocumentSectionRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn (Builder $query): Builder => $query->withCount('items'))
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->withCount(['items', 'executionTables']))
             ->columns([
                 TextColumn::make('section_order')->sortable(),
                 TextColumn::make('title')->searchable(),
@@ -135,6 +150,12 @@ class DocumentSectionRelationManager extends RelationManager
                         ((int) $record->getAttribute('items_count')) > 0 => 'success',
                         default => 'danger',
                     }),
+                TextColumn::make('table_definitions')
+                    ->label('Tables')
+                    ->state(fn (ControlledDocumentSection $record): string => $record->requiresFieldDefinitions()
+                        ? (string) $record->getAttribute('execution_tables_count')
+                        : 'N/A')
+                    ->badge(),
             ])
             ->headerActions([
                 CreateAction::make()

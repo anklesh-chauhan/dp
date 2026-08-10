@@ -6,6 +6,7 @@ use App\Domain\DMS\Services\DocumentExecutionService;
 use App\Domain\DMS\Services\DocumentIssuanceService;
 use App\Domain\Shared\Contracts\ApprovalSubmissionLifecycle;
 use App\Exceptions\WorkflowException;
+use App\Filament\Resources\ControlledDocuments\Pages\EditControlledDocument;
 use App\Filament\Resources\ControlledDocuments\Pages\ViewControlledDocument;
 use App\Filament\Resources\ControlledDocuments\RelationManagers\DocumentSectionRelationManager;
 use App\Filament\Resources\DocumentExecutions\Pages\EditDocumentExecution;
@@ -13,6 +14,7 @@ use App\Filament\Resources\DocumentExecutions\RelationManagers\SectionsRelationM
 use App\Models\ControlledDocument;
 use App\Models\ControlledDocumentSection;
 use App\Models\ControlledDocumentSectionItem;
+use App\Models\ControlledDocumentSectionTable;
 use App\Models\Department;
 use App\Models\DocumentCategory;
 use App\Models\DocumentExecution;
@@ -104,6 +106,21 @@ it('rejects a writable master whose structured section has no execution fields',
         ->toThrow(WorkflowException::class, "The '{$document->sections()->firstOrFail()->title}' section needs at least one execution field.");
 });
 
+it('rejects an empty table inside a writable section', function (): void {
+    $document = executionMasterDocument(DocumentType::FORM, DocumentStatus::DRAFT);
+    $section = ControlledDocumentSection::factory()->create([
+        'document_id' => $document,
+        'section_type' => ControlledDocumentSection::TYPE_TABLE,
+    ]);
+    ControlledDocumentSectionTable::factory()->create([
+        'section_id' => $section,
+        'title' => 'Container details',
+    ]);
+
+    expect(fn () => app(ApprovalSubmissionLifecycle::class)->assertSubmittable($document))
+        ->toThrow(WorkflowException::class, "The 'Container details' table in '{$section->title}' needs at least one column.");
+});
+
 it('shows the execution field count for writable master sections', function (): void {
     $document = executionMasterDocument(DocumentType::FORM, DocumentStatus::DRAFT);
     $section = ControlledDocumentSection::factory()->create([
@@ -135,25 +152,112 @@ it('uses execution fields instead of a generic structured configuration editor',
 
     expect($masterSectionEditor)
         ->toContain("Repeater::make('items')")
-        ->toContain("->label('Execution fields')")
+        ->toContain("Repeater::make('executionTables')")
+        ->toContain("Section::make('Execution tables')")
+        ->toContain("->addActionLabel('Add another table')")
         ->not->toContain("KeyValue::make('configuration')")
         ->and($templateSectionEditor)
         ->not->toContain("KeyValue::make('configuration')");
 });
 
+it('creates multiple execution tables from the controlled document section form', function (): void {
+    Gate::before(static fn (): bool => true);
+
+    $document = executionMasterDocument(DocumentType::FORM, DocumentStatus::DRAFT);
+    $document->load('documentStatus');
+    $this->actingAs($this->issuer);
+
+    Livewire::test(DocumentSectionRelationManager::class, [
+        'ownerRecord' => $document,
+        'pageClass' => EditControlledDocument::class,
+    ])
+        ->callAction(TestAction::make('create')->table(), [
+            'title' => 'Manufacturing details',
+            'section_order' => 1,
+            'section_type' => ControlledDocumentSection::TYPE_TABLE,
+            'heading_level' => 1,
+            'include_in_toc' => true,
+            'content' => '<p>Record manufacturing details.</p>',
+            'executionTables' => [
+                [
+                    'title' => 'Material details',
+                    'execution_layout' => 'table',
+                    'row_count' => 3,
+                    'items' => [
+                        [
+                            'label' => 'Material',
+                            'value_type' => ControlledDocumentSectionItem::VALUE_TEXT,
+                            'is_required' => true,
+                        ],
+                        [
+                            'label' => 'Qty',
+                            'value_type' => ControlledDocumentSectionItem::VALUE_NUMERIC,
+                            'unit' => 'kg',
+                            'decimal_precision' => 2,
+                            'is_required' => true,
+                        ],
+                    ],
+                ],
+                [
+                    'title' => 'Cleaning details',
+                    'execution_layout' => 'field_value',
+                    'row_count' => 1,
+                    'items' => [
+                        [
+                            'label' => 'Cleaning date',
+                            'value_type' => ControlledDocumentSectionItem::VALUE_TEXT,
+                            'is_required' => true,
+                        ],
+                    ],
+                ],
+            ],
+        ])
+        ->assertHasNoActionErrors();
+
+    $section = $document->sections()->with('executionTables.items')->firstOrFail();
+
+    expect($section->executionTables)->toHaveCount(2)
+        ->and($section->executionTables->pluck('title')->all())->toBe(['Material details', 'Cleaning details'])
+        ->and($section->executionTables[0]->row_count)->toBe(3)
+        ->and($section->executionTables[0]->items)->toHaveCount(2)
+        ->and($section->executionTables[1]->execution_layout)->toBe('field_value')
+        ->and($section->executionTables[1]->items)->toHaveCount(1)
+        ->and($section->items()->whereNull('section_table_id')->count())->toBe(0);
+});
+
 it('presents execution entries as a compact table with understandable field labels', function (): void {
     $executionEditor = file_get_contents(app_path('Filament/Resources/DocumentExecutions/RelationManagers/SectionsRelationManager.php'));
+    $executionGrid = file_get_contents(resource_path('views/filament/forms/components/execution-grid.blade.php'));
+    $adminTheme = file_get_contents(resource_path('css/filament/admin/theme.css'));
 
     expect($executionEditor)
-        ->toContain("->label('Execution entries')")
-        ->toContain("ExecutionGrid::make('execution_rows')")
+        ->toContain("label: filled(\$title) ? \$title : 'Execution entries'")
+        ->toContain('ExecutionGrid::make($statePath)')
         ->toContain("'key' => \$this->executionFieldKey(\$field)")
-        ->toContain('executionRowsState')
-        ->toContain('updateExecutionRows')
+        ->toContain("'value_type' => \$field->value_type")
+        ->toContain("'decimal_precision' => \$field->decimal_precision")
+        ->toContain("'step' => \$this->numericStep(\$field->decimal_precision)")
+        ->toContain('executionTablesState')
+        ->toContain('updateExecutionTables')
         ->toContain("isDirty(['response', 'comments', 'verified_by'])")
         ->toContain('->modalWidth(Width::Full)')
         ->not->toContain("TextInput::make('scheduled_at')->disabled()")
-        ->not->toContain("TextInput::make('label')->disabled()");
+        ->not->toContain("TextInput::make('label')->disabled()")
+        ->and($executionGrid)
+        ->toContain("column.value_type === 'numeric'")
+        ->toContain('x-bind:step="column.step"')
+        ->toContain("column.value_type === 'boolean'")
+        ->toContain('<option value="Pass">Pass</option>')
+        ->toContain('<option value="Fail">Fail</option>')
+        ->toContain('column.decimal_precision')
+        ->toContain('x-text="column.unit"')
+        ->toContain('overflow-x-auto')
+        ->toContain('<span class="sr-only">Row number</span>')
+        ->toContain('even:bg-gray-50/50')
+        ->not->toContain('sticky left-0')
+        ->and($adminTheme)
+        ->toContain("@source '../../../../app/Filament/**/*';")
+        ->toContain("@source '../../../../resources/views/filament/**/*';");
 });
 
 it('opens the structured execution section editor', function (): void {
@@ -166,12 +270,17 @@ it('opens the structured execution section editor', function (): void {
         'configuration' => ['execution_row_count' => 4],
     ]);
 
-    foreach (['Material', 'Qty', 'Cleaning date'] as $order => $header) {
+    $columns = [
+        ['label' => 'Material', 'value_type' => ControlledDocumentSectionItem::VALUE_TEXT],
+        ['label' => 'Qty', 'value_type' => ControlledDocumentSectionItem::VALUE_NUMERIC, 'unit' => 'kg', 'decimal_precision' => 2],
+        ['label' => 'Cleaning complete', 'value_type' => ControlledDocumentSectionItem::VALUE_BOOLEAN],
+    ];
+
+    foreach ($columns as $order => $column) {
         ControlledDocumentSectionItem::query()->create([
             'section_id' => $section->id,
             'item_order' => $order + 1,
-            'label' => $header,
-            'value_type' => ControlledDocumentSectionItem::VALUE_TEXT,
+            ...$column,
             'is_required' => true,
         ]);
     }
@@ -189,23 +298,116 @@ it('opens the structured execution section editor', function (): void {
     $component->mountAction(TestAction::make('edit')->table($executionSection))
         ->assertActionMounted(TestAction::make('edit')->table($executionSection))
         ->assertActionDataSet(function (array $data): array {
-            expect($data['execution_rows'])->toHaveCount(4)
-                ->and($data['execution_rows'][0]['row_label'])->toBe('1')
-                ->and($data['execution_rows'][3]['row_label'])->toBe('4');
+            expect($data['execution_tables']['legacy'])->toHaveCount(4)
+                ->and($data['execution_tables']['legacy'][0]['row_label'])->toBe('1')
+                ->and($data['execution_tables']['legacy'][3]['row_label'])->toBe('4');
 
             return [];
         });
 
-    $rows = $component->get('mountedActions.0.data.execution_rows');
+    $tables = $component->get('mountedActions.0.data.execution_tables');
     $materialItem = $executionSection->items()->where('row_number', 1)->orderBy('id')->firstOrFail();
-    $rows[0]['responses']['field_'.$materialItem->source_item_id] = 'Stainless steel vessel';
+    $tables['legacy'][0]['responses']['field_'.$materialItem->source_item_id] = 'Stainless steel vessel';
 
     $component
-        ->setActionData(['execution_rows' => $rows])
+        ->setActionData(['execution_tables' => $tables])
         ->callMountedAction()
         ->assertHasNoActionErrors();
 
     expect($materialItem->fresh()->response)->toBe('Stainless steel vessel');
+});
+
+it('issues, edits, and prints multiple execution tables within one section', function (): void {
+    Gate::before(static fn (): bool => true);
+
+    $document = executionMasterDocument();
+    $section = ControlledDocumentSection::factory()->create([
+        'document_id' => $document,
+        'section_type' => ControlledDocumentSection::TYPE_TABLE,
+    ]);
+    $materialsTable = ControlledDocumentSectionTable::factory()->create([
+        'section_id' => $section,
+        'title' => 'Material details',
+        'table_order' => 1,
+        'execution_layout' => 'table',
+        'row_count' => 2,
+    ]);
+    $materialsTable->items()->create([
+        'item_order' => 1,
+        'label' => 'Material',
+        'value_type' => ControlledDocumentSectionItem::VALUE_TEXT,
+        'is_required' => true,
+    ]);
+    $materialsTable->items()->create([
+        'item_order' => 2,
+        'label' => 'Qty',
+        'value_type' => ControlledDocumentSectionItem::VALUE_NUMERIC,
+        'unit' => 'kg',
+        'decimal_precision' => 2,
+        'is_required' => true,
+    ]);
+    $cleaningTable = ControlledDocumentSectionTable::factory()->create([
+        'section_id' => $section,
+        'title' => 'Cleaning details',
+        'table_order' => 2,
+        'execution_layout' => 'field_value',
+        'row_count' => 1,
+    ]);
+    $cleaningTable->items()->create([
+        'item_order' => 1,
+        'label' => 'Cleaning date',
+        'value_type' => ControlledDocumentSectionItem::VALUE_TEXT,
+        'is_required' => true,
+    ]);
+
+    $execution = app(DocumentIssuanceService::class)->issue($document, $this->issuer)->execution;
+    $executionSection = $execution->sections()->with('items')->firstOrFail();
+
+    expect($executionSection->items)->toHaveCount(5)
+        ->and($executionSection->items->where('source_table_id', $materialsTable->id))->toHaveCount(4)
+        ->and($executionSection->items->where('source_table_id', $cleaningTable->id))->toHaveCount(1)
+        ->and($executionSection->items->pluck('table_title')->unique()->values()->all())
+        ->toBe(['Material details', 'Cleaning details']);
+
+    $this->actingAs($this->issuer);
+
+    $component = Livewire::test(SectionsRelationManager::class, [
+        'ownerRecord' => $execution,
+        'pageClass' => EditDocumentExecution::class,
+    ]);
+    $component->mountAction(TestAction::make('edit')->table($executionSection));
+    $tables = $component->get('mountedActions.0.data.execution_tables');
+    $materialKey = 'table_1';
+    $cleaningKey = 'table_2';
+    $materialItem = $executionSection->items->firstWhere('source_table_id', $materialsTable->id);
+    $cleaningItem = $executionSection->items->firstWhere('source_table_id', $cleaningTable->id);
+
+    expect($tables[$materialKey])->toHaveCount(2)
+        ->and($tables[$cleaningKey])->toHaveCount(1);
+
+    $tables[$materialKey][0]['responses']['field_'.$materialItem->source_item_id] = 'Citric acid';
+    $tables[$cleaningKey][0]['responses']['field_'.$cleaningItem->source_item_id] = '2026-08-10';
+
+    $component
+        ->setActionData(['execution_tables' => $tables])
+        ->callMountedAction()
+        ->assertHasNoActionErrors();
+
+    $html = view('controlled-documents.partials.execution-table', [
+        'section' => $executionSection->fresh(['items.completedBy', 'items.verifiedBy']),
+    ])->render();
+
+    expect($materialItem->fresh()->response)->toBe('Citric acid')
+        ->and($cleaningItem->fresh()->response)->toBe('2026-08-10')
+        ->and(substr_count($html, '<table>'))->toBe(2)
+        ->and($html)
+        ->toContain('Material details')
+        ->toContain('Cleaning details')
+        ->toContain('Material')
+        ->toContain('Qty')
+        ->toContain('Cleaning date')
+        ->toContain('Citric acid')
+        ->toContain('2026-08-10');
 });
 
 it('uses execution field names as the issued table headers', function (): void {
@@ -215,12 +417,17 @@ it('uses execution field names as the issued table headers', function (): void {
         'section_type' => ControlledDocumentSection::TYPE_TABLE,
         'configuration' => ['execution_row_count' => 3],
     ]);
-    foreach (['Material', 'Qty', 'Cleaning date'] as $order => $header) {
+    $columns = [
+        ['label' => 'Material', 'value_type' => ControlledDocumentSectionItem::VALUE_TEXT],
+        ['label' => 'Qty', 'value_type' => ControlledDocumentSectionItem::VALUE_NUMERIC, 'unit' => 'kg', 'decimal_precision' => 2],
+        ['label' => 'Cleaning complete', 'value_type' => ControlledDocumentSectionItem::VALUE_BOOLEAN],
+    ];
+
+    foreach ($columns as $order => $column) {
         ControlledDocumentSectionItem::query()->create([
             'section_id' => $section->id,
             'item_order' => $order + 1,
-            'label' => $header,
-            'value_type' => ControlledDocumentSectionItem::VALUE_TEXT,
+            ...$column,
             'is_required' => true,
         ]);
     }
@@ -228,9 +435,11 @@ it('uses execution field names as the issued table headers', function (): void {
     $issuance = app(DocumentIssuanceService::class)->issue($document, $this->issuer);
     $issuedSection = $issuance->execution->sections()->with('items')->firstOrFail();
     $firstRow = $issuedSection->items->where('row_number', 1)->values();
-    $firstRow[0]->update(['response' => 'Citric acid']);
-    $firstRow[1]->update(['response' => '25 kg']);
-    $firstRow[2]->update(['response' => '2026-08-09']);
+    $executor = User::factory()->create(['name' => 'Execution Operator']);
+    $verifier = User::factory()->create(['name' => 'QA Verifier']);
+    $firstRow[0]->update(['response' => 'Citric acid', 'completed_by' => $executor->id, 'verified_by' => $verifier->id]);
+    $firstRow[1]->update(['response' => '25.5', 'completed_by' => $executor->id, 'verified_by' => $verifier->id]);
+    $firstRow[2]->update(['response' => 'Pass', 'completed_by' => $executor->id, 'verified_by' => $verifier->id]);
 
     $html = view('controlled-documents.partials.execution-table', [
         'section' => $issuedSection->fresh(['items.completedBy', 'items.verifiedBy']),
@@ -243,12 +452,64 @@ it('uses execution field names as the issued table headers', function (): void {
         ->and($html)
         ->toContain('Material')
         ->toContain('Qty')
-        ->toContain('Cleaning date')
+        ->toContain('(kg)')
+        ->toContain('Cleaning complete')
         ->toContain('Citric acid')
-        ->toContain('25 kg')
-        ->toContain('2026-08-09')
+        ->toContain('25.50')
+        ->toContain('Pass')
+        ->toContain('Completed by')
+        ->toContain('Execution Operator')
+        ->toContain('Verified by')
+        ->toContain('QA Verifier')
         ->not->toContain('Date / Time')
         ->not->toContain('Completed / Verified');
+});
+
+it('aligns printed execution values with their headers when column orders are duplicated', function (): void {
+    $document = executionMasterDocument();
+    $section = ControlledDocumentSection::factory()->create([
+        'document_id' => $document,
+        'section_type' => ControlledDocumentSection::TYPE_TABLE,
+        'configuration' => ['execution_row_count' => 2],
+    ]);
+
+    foreach (['Material', 'Qty', 'Temp'] as $label) {
+        ControlledDocumentSectionItem::query()->create([
+            'section_id' => $section->id,
+            'item_order' => 1,
+            'label' => $label,
+            'value_type' => ControlledDocumentSectionItem::VALUE_TEXT,
+            'is_required' => true,
+        ]);
+    }
+
+    $issuance = app(DocumentIssuanceService::class)->issue($document, $this->issuer);
+    $issuedSection = $issuance->execution->sections()->with('items')->firstOrFail();
+    $rows = $issuedSection->items->groupBy('row_number');
+
+    foreach ($rows[1] as $item) {
+        $item->update(['response' => 'First '.$item->label]);
+    }
+
+    foreach ($rows[2] as $item) {
+        $item->update(['response' => 'Second '.$item->label]);
+    }
+
+    $issuedSection->setRelation('items', $rows[1]->concat($rows[2]->reverse())->values());
+
+    $html = view('controlled-documents.partials.execution-table', [
+        'section' => $issuedSection,
+    ])->render();
+
+    preg_match_all('/<tr>(.*?)<\/tr>/s', $html, $renderedRows);
+
+    expect($renderedRows[1])->toHaveCount(3)
+        ->and(strip_tags($renderedRows[1][2]))
+        ->toContain('Second Material')
+        ->toContain('Second Qty')
+        ->toContain('Second Temp')
+        ->and(strpos($renderedRows[1][2], 'Second Material'))->toBeLessThan(strpos($renderedRows[1][2], 'Second Qty'))
+        ->and(strpos($renderedRows[1][2], 'Second Qty'))->toBeLessThan(strpos($renderedRows[1][2], 'Second Temp'));
 });
 
 it('renders execution fields as a vertical field and value form when configured', function (): void {

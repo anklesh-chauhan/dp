@@ -1,5 +1,8 @@
 @import '../../../../vendor/filament/filament/resources/css/theme.css';
 
+@source '../../../../app/Filament/**/*';
+@source '../../../../resources/views/filament/**/*';
+
 @layer components {
     .fi-ta-table {
         border-collapse: separate;

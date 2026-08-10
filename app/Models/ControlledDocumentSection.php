@@ -55,6 +55,17 @@ class ControlledDocumentSection extends Model
     /** @return HasMany<ControlledDocumentSectionItem, $this> */
     public function items(): HasMany
     {
-        return $this->hasMany(ControlledDocumentSectionItem::class, 'section_id')->orderBy('item_order');
+        return $this->hasMany(ControlledDocumentSectionItem::class, 'section_id')
+            ->orderBy('section_table_id')
+            ->orderBy('item_order')
+            ->orderBy('id');
+    }
+
+    /** @return HasMany<ControlledDocumentSectionTable, $this> */
+    public function executionTables(): HasMany
+    {
+        return $this->hasMany(ControlledDocumentSectionTable::class, 'section_id')
+            ->orderBy('table_order')
+            ->orderBy('id');
     }
 }

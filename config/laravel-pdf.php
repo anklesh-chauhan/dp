@@ -94,7 +94,7 @@ return [
         'version' => env('GOTENBERG_VERSION', '8.34.0'),
     ],
 
-    'controlled_document_layout_version' => env('CONTROLLED_DOCUMENT_PDF_LAYOUT_VERSION', 3),
+    'controlled_document_layout_version' => env('CONTROLLED_DOCUMENT_PDF_LAYOUT_VERSION', 6),
 
     /*
      * DOMPDF driver configuration.

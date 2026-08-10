@@ -55,8 +55,11 @@ class DocumentExecutionSection extends Model
     public function items(): HasMany
     {
         return $this->hasMany(DocumentExecutionItem::class)
+            ->orderBy('table_order')
             ->orderBy('row_number')
-            ->orderBy('item_order');
+            ->orderBy('item_order')
+            ->orderBy('source_item_id')
+            ->orderBy('id');
     }
 
     public function completedBy(): BelongsTo

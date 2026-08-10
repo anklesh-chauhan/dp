@@ -106,6 +106,22 @@
             margin-top: 18px;
         }
 
+        .section-format-structured-table,
+        .section-format-checklist,
+        .section-format-repeating-log {
+            break-inside: auto;
+        }
+
+        .execution-table-title {
+            break-after: avoid;
+            font-weight: 700;
+            margin: 8px 0 4px;
+        }
+
+        .execution-table-block {
+            break-inside: avoid;
+        }
+
         .section-format-structured-table .content thead,
         .section-format-checklist .content thead,
         .section-format-repeating-log .content thead {

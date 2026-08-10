@@ -9,6 +9,7 @@ use App\Domain\DMS\Services\DocumentRevisionService;
 use App\Models\ControlledDocument;
 use App\Models\ControlledDocumentSection;
 use App\Models\ControlledDocumentSectionItem;
+use App\Models\ControlledDocumentSectionTable;
 use App\Models\DocumentStatus;
 use App\Models\DocumentTemplate;
 use App\Models\DocumentTemplateVersion;
@@ -66,7 +67,13 @@ it('creates an independent draft document version pinned to the same template ve
         'section_type' => ControlledDocumentSection::TYPE_CHECKLIST,
         'content' => 'Controlled source content.',
     ]);
-    $sourceSection->items()->create([
+    $sourceTable = ControlledDocumentSectionTable::factory()->create([
+        'section_id' => $sourceSection,
+        'title' => 'Line clearance checks',
+        'execution_layout' => 'table',
+        'row_count' => 3,
+    ]);
+    $sourceTable->items()->create([
         'item_order' => 1,
         'label' => 'Verify line clearance',
         'value_type' => ControlledDocumentSectionItem::VALUE_BOOLEAN,
@@ -94,6 +101,10 @@ it('creates an independent draft document version pinned to the same template ve
         ->and($revision->sections->first()->content)->toBe('Controlled source content.')
         ->and($revision->sections->first()->items)->toHaveCount(1)
         ->and($revision->sections->first()->items->first()->label)->toBe('Verify line clearance')
+        ->and($revision->sections->first()->executionTables)->toHaveCount(1)
+        ->and($revision->sections->first()->executionTables->first()->title)->toBe('Line clearance checks')
+        ->and($revision->sections->first()->executionTables->first()->row_count)->toBe(3)
+        ->and($revision->sections->first()->executionTables->first()->items)->toHaveCount(1)
         ->and($revision->variables->first()->value)->toBe('Quality Assurance')
         ->and($source->documentStatus->code)->toBe(DocumentStatus::EFFECTIVE);
 

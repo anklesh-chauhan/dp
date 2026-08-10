@@ -21,6 +21,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class SectionsRelationManager extends RelationManager
 {
@@ -64,24 +65,24 @@ class SectionsRelationManager extends RelationManager
                 TextColumn::make('title')->searchable(),
                 TextColumn::make('section_type')->label('Format')->badge(),
                 TextColumn::make('status')->badge(),
-                TextColumn::make('completedBy.name')->label('Completed by')->placeholder('—'),
-                TextColumn::make('verifiedBy.name')->label('Verified by')->placeholder('—'),
+                TextColumn::make('completedBy.name')->label('Completed by')->placeholder('â€”'),
+                TextColumn::make('verifiedBy.name')->label('Verified by')->placeholder('â€”'),
             ])
             ->recordActions([
                 EditAction::make()
                     ->modalWidth(Width::Full)
                     ->schema(fn (DocumentExecutionSection $record): array => [
                         ...$this->sectionFormComponents(),
-                        $this->executionGrid($record),
+                        ...$this->executionGrids($record),
                     ])
                     ->mutateRecordDataUsing(function (array $data, DocumentExecutionSection $record): array {
-                        $data['execution_rows'] = $this->executionRowsState($record);
+                        $data['execution_tables'] = $this->executionTablesState($record);
 
                         return $data;
                     })
                     ->mutateDataUsing(function (array $data, DocumentExecutionSection $record): array {
-                        $this->updateExecutionRows($record, $data['execution_rows'] ?? []);
-                        unset($data['execution_rows']);
+                        $this->updateExecutionTables($record, $data['execution_tables'] ?? []);
+                        unset($data['execution_tables']);
 
                         return $data;
                     })
@@ -91,17 +92,37 @@ class SectionsRelationManager extends RelationManager
             ]);
     }
 
-    private function executionGrid(DocumentExecutionSection $section): ExecutionGrid
+    /** @return array<int, ExecutionGrid> */
+    private function executionGrids(DocumentExecutionSection $section): array
     {
-        $fields = $this->executionFields($section);
+        return $this->executionTableGroups($section)
+            ->map(function (Collection $items, string $tableKey): ExecutionGrid {
+                $title = $items->first()?->table_title;
+
+                return $this->executionGrid(
+                    items: $items,
+                    statePath: 'execution_tables.'.$tableKey,
+                    label: filled($title) ? $title : 'Execution entries',
+                );
+            })
+            ->values()
+            ->all();
+    }
+
+    private function executionGrid(Collection $items, string $statePath, string $label): ExecutionGrid
+    {
+        $fields = $this->executionFields($items);
         $isScheduledLog = $fields->first()?->source_item_id === null;
 
-        return ExecutionGrid::make('execution_rows')
-            ->label('Execution entries')
+        return ExecutionGrid::make($statePath)
+            ->label($label)
             ->executionColumns($fields->map(fn (DocumentExecutionItem $field): array => [
                 'key' => $this->executionFieldKey($field),
                 'label' => $field->label,
+                'value_type' => $field->value_type,
                 'unit' => $field->unit,
+                'decimal_precision' => $field->decimal_precision,
+                'step' => $this->numericStep($field->decimal_precision),
                 'required' => $field->is_required,
                 'placeholder' => 'Enter '.strtolower($field->label),
             ])->all())
@@ -111,66 +132,103 @@ class SectionsRelationManager extends RelationManager
     }
 
     /** @return Collection<int, DocumentExecutionItem> */
-    private function executionFields(DocumentExecutionSection $section): Collection
+    private function executionFields(Collection $items): Collection
     {
-        $section->loadMissing('items');
-
-        return $section->items
+        return $items
             ->groupBy('row_number')
             ->first()
             ?->values() ?? collect();
     }
 
-    /** @return array<int, array<string, mixed>> */
-    private function executionRowsState(DocumentExecutionSection $section): array
+    /** @return Collection<string, Collection<int, DocumentExecutionItem>> */
+    private function executionTableGroups(DocumentExecutionSection $section): Collection
     {
         $section->loadMissing('items');
 
-        return $section->items
+        return $section->items->groupBy(fn (DocumentExecutionItem $item): string => $this->executionTableKey($item));
+    }
+
+    /** @return array<string, array<int, array<string, mixed>>> */
+    private function executionTablesState(DocumentExecutionSection $section): array
+    {
+        return $this->executionTableGroups($section)
+            ->map(fn (Collection $items): array => $this->executionRowsState($items))
+            ->all();
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private function executionRowsState(Collection $items): array
+    {
+        return $items
             ->groupBy('row_number')
-            ->map(function ($items, int|string $rowNumber): array {
-                $firstItem = $items->first();
+            ->map(function (Collection $rowItems, int|string $rowNumber): array {
+                $firstItem = $rowItems->first();
 
                 return [
                     'row_label' => $firstItem?->scheduled_at?->toDayDateTimeString() ?? (string) $rowNumber,
-                    'responses' => $items->mapWithKeys(fn (DocumentExecutionItem $item): array => [
+                    'responses' => $rowItems->mapWithKeys(fn (DocumentExecutionItem $item): array => [
                         $this->executionFieldKey($item) => $item->response,
                     ])->all(),
-                    'comments' => $items->first(fn (DocumentExecutionItem $item): bool => filled($item->comments))?->comments,
-                    'verified_by' => $items->first(fn (DocumentExecutionItem $item): bool => filled($item->verified_by))?->verified_by,
+                    'comments' => $rowItems->first(fn (DocumentExecutionItem $item): bool => filled($item->comments))?->comments,
+                    'verified_by' => $rowItems->first(fn (DocumentExecutionItem $item): bool => filled($item->verified_by))?->verified_by,
                 ];
             })
             ->values()
             ->all();
     }
 
-    /** @param array<int, array<string, mixed>> $rows */
-    private function updateExecutionRows(DocumentExecutionSection $section, array $rows): void
+    /** @param array<string, array<int, array<string, mixed>>> $tables */
+    private function updateExecutionTables(DocumentExecutionSection $section, array $tables): void
     {
         $section->loadMissing('execution', 'items');
+        $groups = $this->executionTableGroups($section);
 
-        DB::transaction(function () use ($section, $rows): void {
-            foreach (array_values($rows) as $index => $row) {
-                $rowNumber = $index + 1;
+        DB::transaction(function () use ($section, $tables, $groups): void {
+            foreach ($tables as $tableKey => $rows) {
+                $items = $groups->get($tableKey, collect());
 
-                foreach ($section->items->where('row_number', $rowNumber) as $item) {
-                    $item->setRelation('section', $section);
-                    $item->fill([
-                        'response' => data_get($row, 'responses.'.$this->executionFieldKey($item)),
-                        'comments' => $row['comments'] ?? null,
-                        'verified_by' => $row['verified_by'] ?? null,
-                    ]);
+                foreach (array_values($rows) as $index => $row) {
+                    $rowNumber = $index + 1;
 
-                    if ($item->isDirty(['response', 'comments', 'verified_by'])) {
-                        $item->save();
+                    foreach ($items->where('row_number', $rowNumber) as $item) {
+                        $item->setRelation('section', $section);
+                        $item->fill([
+                            'response' => data_get($row, 'responses.'.$this->executionFieldKey($item)),
+                            'comments' => $row['comments'] ?? null,
+                            'verified_by' => $row['verified_by'] ?? null,
+                        ]);
+
+                        if ($item->isDirty(['response', 'comments', 'verified_by'])) {
+                            $item->save();
+                        }
                     }
                 }
             }
         });
     }
 
+    private function executionTableKey(DocumentExecutionItem $item): string
+    {
+        return $item->source_table_id === null && blank($item->table_title)
+            ? 'legacy'
+            : 'table_'.$item->table_order;
+    }
+
     private function executionFieldKey(DocumentExecutionItem $item): string
     {
         return $item->source_item_id === null ? 'response' : 'field_'.$item->source_item_id;
+    }
+
+    private function numericStep(?int $decimalPrecision): string
+    {
+        if ($decimalPrecision === null) {
+            return 'any';
+        }
+
+        if ($decimalPrecision === 0) {
+            return '1';
+        }
+
+        return '0.'.Str::repeat('0', $decimalPrecision - 1).'1';
     }
 }

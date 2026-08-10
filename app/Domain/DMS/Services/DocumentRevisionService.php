@@ -29,7 +29,7 @@ class DocumentRevisionService
 
         return DB::transaction(function () use ($sourceDocument, $user, $reason): ControlledDocument {
             $source = ControlledDocument::query()
-                ->with(['documentStatus', 'sections.items', 'variables', 'regulationTags'])
+                ->with(['documentStatus', 'sections.items', 'sections.executionTables.items', 'variables', 'regulationTags'])
                 ->lockForUpdate()
                 ->findOrFail($sourceDocument->id);
 
@@ -99,18 +99,43 @@ class DocumentRevisionService
                     'configuration',
                 ]));
 
-                foreach ($section->items as $item) {
-                    $revisionSection->items()->create($item->only([
-                        'item_order',
-                        'label',
-                        'value_type',
-                        'unit',
-                        'decimal_precision',
-                        'acceptance_operator',
-                        'acceptance_min',
-                        'acceptance_max',
-                        'is_required',
-                    ]));
+                if ($section->executionTables->isNotEmpty()) {
+                    foreach ($section->executionTables as $table) {
+                        $revisionTable = $revisionSection->executionTables()->create($table->only([
+                            'title',
+                            'table_order',
+                            'execution_layout',
+                            'row_count',
+                        ]));
+
+                        foreach ($table->items as $item) {
+                            $revisionTable->items()->create($item->only([
+                                'item_order',
+                                'label',
+                                'value_type',
+                                'unit',
+                                'decimal_precision',
+                                'acceptance_operator',
+                                'acceptance_min',
+                                'acceptance_max',
+                                'is_required',
+                            ]));
+                        }
+                    }
+                } else {
+                    foreach ($section->items as $item) {
+                        $revisionSection->items()->create($item->only([
+                            'item_order',
+                            'label',
+                            'value_type',
+                            'unit',
+                            'decimal_precision',
+                            'acceptance_operator',
+                            'acceptance_min',
+                            'acceptance_max',
+                            'is_required',
+                        ]));
+                    }
                 }
             }
 

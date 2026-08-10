@@ -33,7 +33,7 @@ class SopApprovalSubmissionLifecycleAdapter implements ApprovalSubmissionLifecyc
         }
 
         if ($document->documentType?->requiresExecutionRecord()) {
-            $document->loadMissing('sections.items');
+            $document->loadMissing('sections.items', 'sections.executionTables.items');
 
             $validationIssues = $this->masterValidationIssues($document);
 
@@ -99,6 +99,10 @@ class SopApprovalSubmissionLifecycleAdapter implements ApprovalSubmissionLifecyc
         foreach ($document->sections as $section) {
             if ($section->requiresFieldDefinitions() && $section->items->isEmpty()) {
                 $issues[] = "The '{$section->title}' section needs at least one execution field.";
+            }
+
+            foreach ($section->executionTables->filter(fn ($table): bool => $table->items->isEmpty()) as $table) {
+                $issues[] = "The '{$table->title}' table in '{$section->title}' needs at least one column.";
             }
         }
 

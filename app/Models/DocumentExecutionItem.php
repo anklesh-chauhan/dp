@@ -8,6 +8,7 @@ use Database\Factories\DocumentExecutionItemFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Number;
 use LogicException;
 
 class DocumentExecutionItem extends Model
@@ -46,7 +47,8 @@ class DocumentExecutionItem extends Model
     }
 
     protected $fillable = [
-        'document_execution_section_id', 'source_item_id', 'item_order', 'row_number', 'scheduled_at',
+        'document_execution_section_id', 'source_item_id', 'source_table_id', 'table_title',
+        'table_order', 'table_layout', 'item_order', 'row_number', 'scheduled_at',
         'label', 'value_type', 'unit', 'decimal_precision', 'acceptance_operator',
         'acceptance_min', 'acceptance_max', 'response', 'result_status', 'comments',
         'is_required', 'completed_by', 'completed_at', 'verified_by', 'verified_at',
@@ -56,6 +58,7 @@ class DocumentExecutionItem extends Model
     {
         return [
             'item_order' => 'integer',
+            'table_order' => 'integer',
             'row_number' => 'integer',
             'scheduled_at' => 'datetime',
             'decimal_precision' => 'integer',
@@ -70,6 +73,11 @@ class DocumentExecutionItem extends Model
     public function section(): BelongsTo
     {
         return $this->belongsTo(DocumentExecutionSection::class, 'document_execution_section_id');
+    }
+
+    public function sourceTable(): BelongsTo
+    {
+        return $this->belongsTo(ControlledDocumentSectionTable::class, 'source_table_id');
     }
 
     public function completedBy(): BelongsTo
@@ -90,6 +98,23 @@ class DocumentExecutionItem extends Model
     public function isIndependentlyVerified(): bool
     {
         return $this->isComplete() && $this->verified_by !== null && $this->verified_by !== $this->completed_by;
+    }
+
+    public function formattedResponse(): ?string
+    {
+        if (blank($this->response)) {
+            return null;
+        }
+
+        if ($this->value_type !== 'numeric' || $this->decimal_precision === null || ! is_numeric($this->response)) {
+            return $this->response;
+        }
+
+        return Number::format(
+            (float) $this->response,
+            precision: $this->decimal_precision,
+            locale: 'en',
+        );
     }
 
     public function calculateResultStatus(): void
