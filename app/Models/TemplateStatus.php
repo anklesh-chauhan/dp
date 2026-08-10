@@ -58,7 +58,6 @@ class TemplateStatus extends Model
     {
         return [
             self::DRAFT,
-            self::PUBLISHED,
         ];
     }
 

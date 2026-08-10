@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\DocumentTemplates\RelationManagers;
 
+use App\Domain\DMS\Actions\CreateTemplateDraftRevisionAction;
 use App\Domain\Shared\Services\AuditLogService;
+use App\Filament\Concerns\HandlesServiceExceptions;
 use App\Filament\Concerns\ManagesEditableTemplates;
 use App\Models\DocumentTemplateVersion;
 use App\Models\SopAuditLog;
 use App\Models\TemplateStatus;
+use App\Models\User;
+use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -19,12 +23,14 @@ use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Auth;
 
 class VersionRelationManager extends RelationManager
 {
+    use HandlesServiceExceptions;
     use ManagesEditableTemplates;
 
     protected static string $relationship = 'versions';
@@ -66,7 +72,8 @@ class VersionRelationManager extends RelationManager
             ])
             ->recordActions([
                 EditAction::make()
-                    ->visible(fn (): bool => $this->canManageTemplateRecord())
+                    ->visible(fn (DocumentTemplateVersion $record): bool => $this->canManageTemplateRecord()
+                        && $record->isContentEditable())
                     ->using(function (DocumentTemplateVersion $record, array $data): DocumentTemplateVersion {
                         $oldValues = [
                             'version' => $record->version,
@@ -92,11 +99,13 @@ class VersionRelationManager extends RelationManager
                         return $record;
                     }),
                 DeleteAction::make()
-                    ->visible(fn (): bool => $this->canManageTemplateRecord()),
+                    ->visible(fn (DocumentTemplateVersion $record): bool => $this->canManageTemplateRecord()
+                        && $record->isContentEditable()),
             ])
             ->headerActions([
                 CreateAction::make()
-                    ->visible(fn (): bool => $this->canManageTemplateRecord())
+                    ->visible(fn (): bool => $this->canManageTemplateRecord()
+                        && ! $this->getOwnerRecord()->templateStatus?->hasCode(TemplateStatus::PUBLISHED))
                     ->mutateDataUsing(function (array $data): array {
                         $data['template_status_id'] = TemplateStatus::idFor(TemplateStatus::DRAFT);
                         $data['created_by'] = Auth::id();
@@ -114,6 +123,35 @@ class VersionRelationManager extends RelationManager
                             ],
                             userId: Auth::id(),
                             template: $this->getOwnerRecord(),
+                        );
+                    }),
+                Action::make('createDraftRevision')
+                    ->label('Create Draft Revision')
+                    ->icon(Heroicon::DocumentDuplicate)
+                    ->color('warning')
+                    ->visible(fn (): bool => $this->canStartDraftRevision())
+                    ->modalHeading('Create a draft revision?')
+                    ->modalDescription('The published version stays locked. Sections and variables are cloned into a new draft version.')
+                    ->modalSubmitActionLabel('Create draft revision')
+                    ->schema([
+                        Textarea::make('change_reason')
+                            ->label('Revision reason')
+                            ->required()
+                            ->maxLength(2_000),
+                    ])
+                    ->action(function (array $data): void {
+                        /** @var User $user */
+                        $user = Auth::user();
+
+                        $this->runServiceAction(
+                            fn () => app(CreateTemplateDraftRevisionAction::class)->execute(
+                                $this->getOwnerRecord(),
+                                $user,
+                                $data['change_reason'],
+                            ),
+                            failureTitle: 'Draft Revision Failed',
+                            successTitle: 'Draft revision created',
+                            successBody: 'The published version remains locked. Edit the new draft version to continue.',
                         );
                     }),
             ]);

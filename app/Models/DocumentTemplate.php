@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Concerns\Lockable;
-use App\Domain\DMS\Enums\TemplateApprovalStatus;
 use Database\Factories\DocumentTemplateFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -73,7 +72,13 @@ class DocumentTemplate extends Model
             return false;
         }
 
-        return in_array($this->templateStatus?->code, TemplateStatus::editableCodes(), true);
+        $draft = $this->latestDraftVersion()->first();
+
+        if ($draft === null) {
+            return $this->templateStatus?->hasCode(TemplateStatus::DRAFT) ?? false;
+        }
+
+        return $draft->approval_status->isEditable();
     }
 
     public function isArchivedOrBeyond(): bool
@@ -88,27 +93,28 @@ class DocumentTemplate extends Model
 
     public function canBeEditedBy(User $user): bool
     {
-        if ($this->isArchivedOrBeyond()) {
+        if ($this->isArchivedOrBeyond() || $this->isLockedByOther($user)) {
             return false;
         }
 
-        if (! $this->isEditable() || $this->isLockedByOther($user)) {
+        return $this->isEditable();
+    }
+
+    public function canStartDraftRevisionBy(User $user): bool
+    {
+        if ($this->isArchivedOrBeyond() || $this->isInRetentionLifecycle() || $this->isLockedByOther($user)) {
             return false;
         }
 
-        $draftApprovalStatus = $this->versions()
-            ->whereHas('templateStatus', fn ($query) => $query->where('code', TemplateStatus::DRAFT))
-            ->latest('version')
-            ->value('approval_status');
-
-        if ($draftApprovalStatus === null) {
-            return true;
+        if (! $this->templateStatus?->hasCode(TemplateStatus::PUBLISHED)) {
+            return false;
         }
 
-        return ($draftApprovalStatus instanceof TemplateApprovalStatus
-            ? $draftApprovalStatus
-            : TemplateApprovalStatus::from($draftApprovalStatus)
-        )->isEditable();
+        if ($this->latestDraftVersion()->exists()) {
+            return false;
+        }
+
+        return $user->can('revise', $this);
     }
 
     /**

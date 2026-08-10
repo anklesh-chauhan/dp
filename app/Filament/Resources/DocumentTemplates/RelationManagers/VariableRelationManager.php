@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\DocumentTemplates\RelationManagers;
 
 use App\Filament\Concerns\ManagesEditableTemplates;
+use App\Models\TemplateStatus;
 use App\Models\VariableDataType;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
@@ -38,6 +39,7 @@ class VariableRelationManager extends RelationManager
                         titleAttribute: 'version',
                         modifyQueryUsing: fn (Builder $query): Builder => $query
                             ->where('document_template_id', $this->getOwnerRecord()->getKey())
+                            ->whereHas('templateStatus', fn (Builder $statusQuery): Builder => $statusQuery->where('code', TemplateStatus::DRAFT))
                             ->orderByDesc('version'),
                     )
                     ->required(),
@@ -77,9 +79,11 @@ class VariableRelationManager extends RelationManager
             ])
             ->recordActions([
                 EditAction::make()
-                    ->visible(fn (): bool => $this->canManageTemplateRecord()),
+                    ->visible(fn ($record): bool => $this->canManageTemplateRecord()
+                        && ($record->templateVersion?->isContentEditable() ?? false)),
                 DeleteAction::make()
-                    ->visible(fn (): bool => $this->canManageTemplateRecord()),
+                    ->visible(fn ($record): bool => $this->canManageTemplateRecord()
+                        && ($record->templateVersion?->isContentEditable() ?? false)),
             ]);
     }
 

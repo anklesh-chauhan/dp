@@ -141,9 +141,10 @@ class DocumentTemplateResource extends Resource
                                     ->label('Generate with AI')
                                     ->icon('heroicon-m-sparkles')
                                     ->visible(
-                                        fn (callable $get): bool => app(ModuleManager::class)->enabled(ProductModule::AI)
+                                        fn (callable $get, ?DocumentTemplate $record): bool => app(ModuleManager::class)->enabled(ProductModule::AI)
                                             && filled($get('name'))
                                             && filled($get('department_id'))
+                                            && ($record === null || $record->isEditable())
                                     )
                                     ->disabled(
                                         fn (Component $livewire): bool => $livewire->metadataAiTaskPolling
@@ -171,7 +172,7 @@ class DocumentTemplateResource extends Resource
                                 ->all())
                             ->searchable()
                             ->preload()
-                            ->helperText('The saved layout used for draft previews, approval previews, printing, and generated PDFs. Save changes before opening a preview.')
+                            ->helperText('The layout used for template previews, approval previews, printing, and generated PDFs. Save this selection before opening Preview with Print Template.')
                             ->nullable(),
 
                         TextInput::make('current_version')

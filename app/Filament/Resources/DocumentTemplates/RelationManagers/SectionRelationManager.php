@@ -53,6 +53,7 @@ class SectionRelationManager extends RelationManager
                         titleAttribute: 'version',
                         modifyQueryUsing: fn (Builder $query): Builder => $query
                             ->where('document_template_id', $this->getOwnerRecord()->getKey())
+                            ->whereHas('templateStatus', fn (Builder $statusQuery): Builder => $statusQuery->where('code', TemplateStatus::DRAFT))
                             ->orderByDesc('version'),
                     )
                     ->required(),
@@ -105,11 +106,27 @@ class SectionRelationManager extends RelationManager
 
     private function applyAiContent(string $operation, Get $get, Set $set): void
     {
+        if (! $this->canManageTemplateRecord()) {
+            Notification::make()->danger()->title('Template content is locked')->send();
+
+            return;
+        }
+
         $content = trim((string) ($get('content') ?? ''));
         $title = trim((string) ($get('title') ?? 'Untitled section'));
         $template = $this->getOwnerRecord()->loadMissing(['department', 'regulationTags']);
         $versionId = (int) ($get('template_version_id') ?? 0);
         $version = $template->versions()->with('variables')->find($versionId);
+
+        if ($version !== null && ! $version->isContentEditable()) {
+            Notification::make()
+                ->danger()
+                ->title('Section is locked')
+                ->body('Published or in-review sections cannot be changed by AI.')
+                ->send();
+
+            return;
+        }
         $existingVariables = $version?->variables->map(fn ($variable): array => [
             'name' => $variable->name,
             'label' => $variable->label,
@@ -184,7 +201,8 @@ class SectionRelationManager extends RelationManager
                         && $this->canManageTemplateRecord()
                         && app(ModuleManager::class)->enabled(ProductModule::AI))
                     ->action(function (): void {
-                        $version = $this->getOwnerRecord()->versions()->latest('version')->first();
+                        $version = $this->getOwnerRecord()->latestDraftVersion()->first();
+
                         if (! $version instanceof DocumentTemplateVersion) {
                             $version = $this->getOwnerRecord()->versions()->create([
                                 'version' => 1,
@@ -192,6 +210,16 @@ class SectionRelationManager extends RelationManager
                                 'change_reason' => 'Draft version created for AI section generation.',
                                 'created_by' => Auth::id(),
                             ]);
+                        }
+
+                        if (! $version->isContentEditable()) {
+                            Notification::make()
+                                ->danger()
+                                ->title('Template content is locked')
+                                ->body('Published or in-review versions cannot be changed by AI.')
+                                ->send();
+
+                            return;
                         }
 
                         GenerateTemplateSectionTitlesJob::dispatch($version);
@@ -205,12 +233,25 @@ class SectionRelationManager extends RelationManager
             ])
             ->recordActions([
                 EditAction::make()
-                    ->visible(fn (): bool => $this->canManageTemplateRecord()),
+                    ->visible(fn (DocumentTemplateSection $record): bool => $this->canManageTemplateRecord()
+                        && ($record->templateVersion?->isContentEditable() ?? false)),
                 Action::make('completeWithAi')
                     ->label('Complete with AI')
                     ->icon('heroicon-m-sparkles')
-                    ->visible(fn (): bool => $this->canManageTemplateRecord() && app(ModuleManager::class)->enabled(ProductModule::AI))
+                    ->visible(fn (DocumentTemplateSection $record): bool => $this->canManageTemplateRecord()
+                        && app(ModuleManager::class)->enabled(ProductModule::AI)
+                        && ($record->templateVersion?->isContentEditable() ?? false))
                     ->action(function (DocumentTemplateSection $record): void {
+                        if (! $record->templateVersion?->isContentEditable()) {
+                            Notification::make()
+                                ->danger()
+                                ->title('Section is locked')
+                                ->body('Published or in-review sections cannot be changed by AI.')
+                                ->send();
+
+                            return;
+                        }
+
                         CompleteTemplateSectionWithAiJob::dispatch($record);
 
                         Notification::make()
@@ -218,10 +259,10 @@ class SectionRelationManager extends RelationManager
                             ->title('Section completion started')
                             ->body('AI will replace the existing section content in the background.')
                             ->send();
-                    })
-                    ->visible(fn (): bool => $this->canManageTemplateRecord()),
+                    }),
                 DeleteAction::make()
-                    ->visible(fn (): bool => $this->canManageTemplateRecord()),
+                    ->visible(fn (DocumentTemplateSection $record): bool => $this->canManageTemplateRecord()
+                        && ($record->templateVersion?->isContentEditable() ?? false)),
             ]);
     }
 }

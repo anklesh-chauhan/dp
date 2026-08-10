@@ -132,6 +132,15 @@ class DocumentTemplateVersion extends Model implements ApprovableSubject
         return $this->template->created_by;
     }
 
+    public function isContentEditable(): bool
+    {
+        if (! $this->templateStatus?->hasCode(TemplateStatus::DRAFT)) {
+            return false;
+        }
+
+        return $this->approval_status->isEditable();
+    }
+
     /** @return BelongsTo<User, $this> */
     public function submitter(): BelongsTo
     {

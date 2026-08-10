@@ -20,6 +20,10 @@ class GenerateTemplateSectionTitlesJob implements ShouldQueue
 
     public function handle(TemplateGenerator $generator): void
     {
+        if (! $this->version->isContentEditable()) {
+            return;
+        }
+
         $template = $this->version->template()->with(['category', 'documentType'])->firstOrFail();
         $existingSections = $this->version->sections()->orderBy('section_order')->get();
         $titles = $generator->generateSectionTitles($template->toArray(), max($existingSections->count(), 8));

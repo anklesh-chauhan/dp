@@ -220,7 +220,10 @@ it('publishes only after every mandatory workflow approval has a valid signature
     );
 
     expect($published->version)->toBe(1)
-        ->and($this->template->refresh()->current_version)->toBe(1);
+        ->and($this->template->refresh()->current_version)->toBe(1)
+        ->and($this->template->isEditable())->toBeFalse()
+        ->and($this->template->canBeEditedBy($this->author))->toBeFalse()
+        ->and($published->isContentEditable())->toBeFalse();
 });
 
 it('preserves submission audit events and workflow approval instances', function (): void {

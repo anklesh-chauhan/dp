@@ -9,7 +9,6 @@ use App\Filament\Concerns\HasGenerationPolling;
 use App\Filament\Concerns\ProcessesDocumentTemplateMetadataAi;
 use App\Filament\Resources\DocumentTemplates\DocumentTemplateResource;
 use App\Models\DocumentTemplateVersion;
-use App\Models\TemplateStatus;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Notifications\Notification;
@@ -35,7 +34,7 @@ class EditDocumentTemplate extends EditRecord
         ) {
             Notification::make()
                 ->title('Template is not editable')
-                ->body('Archived templates and templates in retention cannot be edited.')
+                ->body('Published templates without a draft revision cannot be edited. Create a draft revision from the view page first.')
                 ->danger()
                 ->send();
 
@@ -46,15 +45,16 @@ class EditDocumentTemplate extends EditRecord
     protected function getActions(): array
     {
         return [
-            Action::make('previewDraft')
-                ->label('Preview Draft with Print Template')
+            Action::make('previewWithPrintTemplate')
+                ->label('Preview with Print Template')
                 ->icon(Heroicon::Eye)
                 ->url(fn (): string => route('document-templates.versions.preview', [
                     'documentTemplate' => $this->record,
                     'documentTemplateVersion' => $this->draftVersion(),
                 ]))
                 ->openUrlInNewTab()
-                ->visible(fn (): bool => $this->draftVersion() !== null),
+                ->visible(fn (): bool => $this->draftVersion() !== null
+                    && $this->record->report_template_id !== null),
             DeleteAction::make(),
         ];
     }
@@ -74,27 +74,6 @@ class EditDocumentTemplate extends EditRecord
                 $state['regulationTags'] ?? [],
             ),
         );
-    }
-
-    /**
-     * @param  array<string, mixed>  $data
-     * @return array<string, mixed>
-     */
-    protected function mutateFormDataBeforeSave(array $data): array
-    {
-        if (
-            $this->record
-                ->templateStatus
-                ?->hasCode(TemplateStatus::PUBLISHED)
-        ) {
-            $data['template_status_id'] = TemplateStatus::idFor(
-                TemplateStatus::DRAFT,
-            );
-
-            $data['current_version'] = $this->record->current_version;
-        }
-
-        return $data;
     }
 
     protected function afterSave(): void

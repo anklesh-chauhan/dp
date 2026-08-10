@@ -23,7 +23,7 @@ use function Pest\Laravel\get;
 
 uses(RefreshDatabase::class);
 
-it('renders the latest draft template version in the draft preview', function (): void {
+it('renders the latest draft template version with the selected print template layout', function (): void {
     $user = User::factory()->create();
     actingAs($user);
 
@@ -38,9 +38,20 @@ it('renders the latest draft template version in the draft preview', function ()
         'name' => 'Text',
         'sort_order' => 1,
     ]);
+    $reportTemplate = ReportTemplate::factory()->create([
+        'name' => 'QA Print Layout',
+        'scope' => ReportScope::ControlledDocument,
+        'format' => ReportFormat::Pdf,
+        'fields' => app(ReportFieldRegistry::class)->defaultFields(ReportScope::ControlledDocument),
+        'created_by' => $user->getKey(),
+        'updated_by' => $user->getKey(),
+    ]);
     $template = DocumentTemplate::factory()->create([
+        'name' => 'Cleaning Procedure Template',
+        'code' => 'TPL-CLEAN-001',
         'created_by' => $user->getKey(),
         'department_id' => Department::factory(),
+        'report_template_id' => $reportTemplate->getKey(),
         'template_status_id' => $draftStatus->getKey(),
     ]);
     $version = DocumentTemplateVersion::factory()->create([
@@ -63,10 +74,13 @@ it('renders the latest draft template version in the draft preview', function ()
 
     get(route('document-templates.draft-preview', $template))
         ->assertOk()
-        ->assertSee('Draft Preview')
+        ->assertSee('Cleaning Procedure Template')
+        ->assertSee('TPL-CLEAN-001')
         ->assertSee('Responsibilities')
         ->assertSee('Follow this procedure.', false)
-        ->assertSee('Quality Assurance');
+        ->assertSee('Quality Assurance')
+        ->assertSee($reportTemplate->layout_key)
+        ->assertDontSee('Draft Preview');
 });
 
 it('uses the print template saved on the document template for its preview layout', function (): void {
@@ -134,13 +148,13 @@ it('uses the print template saved on the document template for its preview layou
 
     get(route('document-templates.versions.preview', [$template, $version]))
         ->assertOk()
-        ->assertSee('Version Preview')
-        ->assertSee('QA Current Printing Template')
         ->assertSee('Current User Print Sections')
         ->assertSee('Current version content.', false)
         ->assertSee('#9a3412')
+        ->assertSee($reportTemplate->layout_key)
         ->assertDontSee('Hidden Variable Label')
-        ->assertDontSee('Hidden by current print layout');
+        ->assertDontSee('Hidden by current print layout')
+        ->assertDontSee('SOP-QA-001');
 });
 
 it('previews the requested template version instead of replacing it with the latest draft', function (): void {
@@ -153,9 +167,17 @@ it('previews the requested template version instead of replacing it with the lat
         'name' => 'Draft',
         'code' => TemplateStatus::DRAFT,
     ]);
+    $reportTemplate = ReportTemplate::factory()->create([
+        'scope' => ReportScope::ControlledDocument,
+        'format' => ReportFormat::Pdf,
+        'fields' => app(ReportFieldRegistry::class)->defaultFields(ReportScope::ControlledDocument),
+        'created_by' => $user->getKey(),
+        'updated_by' => $user->getKey(),
+    ]);
     $template = DocumentTemplate::factory()->create([
         'created_by' => $user->getKey(),
         'department_id' => Department::factory(),
+        'report_template_id' => $reportTemplate->getKey(),
         'template_status_id' => $draftStatus->getKey(),
     ]);
     $reviewedVersion = DocumentTemplateVersion::factory()->create([
@@ -193,13 +215,22 @@ it('does not preview a version that belongs to another document template', funct
         'name' => 'Draft',
         'code' => TemplateStatus::DRAFT,
     ]);
+    $reportTemplate = ReportTemplate::factory()->create([
+        'scope' => ReportScope::ControlledDocument,
+        'format' => ReportFormat::Pdf,
+        'fields' => app(ReportFieldRegistry::class)->defaultFields(ReportScope::ControlledDocument),
+        'created_by' => $user->getKey(),
+        'updated_by' => $user->getKey(),
+    ]);
     $template = DocumentTemplate::factory()->create([
+        'report_template_id' => $reportTemplate->getKey(),
         'template_status_id' => $draftStatus->getKey(),
     ]);
     $otherTemplate = DocumentTemplate::factory()->create([
         'department_id' => $template->department_id,
         'category_id' => $template->category_id,
         'document_type_id' => $template->document_type_id,
+        'report_template_id' => $reportTemplate->getKey(),
         'template_status_id' => $draftStatus->getKey(),
     ]);
     $otherVersion = DocumentTemplateVersion::factory()->create([
@@ -209,4 +240,27 @@ it('does not preview a version that belongs to another document template', funct
 
     get(route('document-templates.versions.preview', [$template, $otherVersion]))
         ->assertNotFound();
+});
+
+it('requires a selected print template before previewing', function (): void {
+    $user = User::factory()->create();
+    actingAs($user);
+
+    Gate::before(static fn (): bool => true);
+
+    $draftStatus = TemplateStatus::query()->create([
+        'name' => 'Draft',
+        'code' => TemplateStatus::DRAFT,
+    ]);
+    $template = DocumentTemplate::factory()->create([
+        'report_template_id' => null,
+        'template_status_id' => $draftStatus->getKey(),
+    ]);
+    DocumentTemplateVersion::factory()->create([
+        'document_template_id' => $template->getKey(),
+        'template_status_id' => $draftStatus->getKey(),
+    ]);
+
+    get(route('document-templates.draft-preview', $template))
+        ->assertStatus(422);
 });

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\DocumentTemplates\Pages;
 
+use App\Domain\DMS\Actions\CreateTemplateDraftRevisionAction;
 use App\Domain\DMS\Actions\PublishTemplateAction;
 use App\Domain\DMS\Enums\TemplateApprovalStatus;
 use App\Domain\DMS\Services\TemplateApprovalService;
@@ -12,6 +13,7 @@ use App\Filament\Concerns\ProcessesDocumentTemplateMetadataAi;
 use App\Filament\Concerns\ProvidesRetentionLifecycleActions;
 use App\Filament\Resources\DocumentTemplates\DocumentTemplateResource;
 use App\Models\DocumentTemplateVersion;
+use App\Models\TemplateStatus;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
@@ -33,6 +35,10 @@ class ViewDocumentTemplate extends ViewRecord
         $version = $this->draftVersion();
 
         if (! $version instanceof DocumentTemplateVersion) {
+            if ($this->record->templateStatus?->hasCode(TemplateStatus::PUBLISHED)) {
+                return 'This template is published and locked. Create a draft revision to propose changes.';
+            }
+
             return 'No draft version is currently available.';
         }
 
@@ -47,15 +53,52 @@ class ViewDocumentTemplate extends ViewRecord
     protected function getActions(): array
     {
         return [
-            Action::make('previewDraft')
-                ->label('Preview Draft with Print Template')
+            Action::make('previewWithPrintTemplate')
+                ->label('Preview with Print Template')
                 ->icon(Heroicon::Eye)
                 ->url(fn (): string => route('document-templates.versions.preview', [
                     'documentTemplate' => $this->record,
                     'documentTemplateVersion' => $this->draftVersion(),
                 ]))
                 ->openUrlInNewTab()
-                ->visible(fn (): bool => $this->draftVersion() !== null),
+                ->visible(fn (): bool => $this->draftVersion() !== null
+                    && $this->record->report_template_id !== null),
+            Action::make('createDraftRevision')
+                ->label('Create Draft Revision')
+                ->icon(Heroicon::DocumentDuplicate)
+                ->color('warning')
+                ->modalHeading('Create a draft revision?')
+                ->modalDescription('The published version stays locked. A new draft version will be cloned from it for editing, AI updates, review, and later publishing.')
+                ->modalSubmitActionLabel('Create draft revision')
+                ->schema([
+                    Textarea::make('change_reason')
+                        ->label('Revision reason')
+                        ->helperText('Describe why this published template needs a new version.')
+                        ->required()
+                        ->maxLength(2_000),
+                ])
+                ->visible(fn (): bool => Auth::user() !== null
+                    && $this->record->canStartDraftRevisionBy(Auth::user()))
+                ->action(function (array $data): void {
+                    /** @var User $user */
+                    $user = Auth::user();
+
+                    $this->runServiceAction(
+                        fn () => app(CreateTemplateDraftRevisionAction::class)->execute(
+                            $this->record,
+                            $user,
+                            $data['change_reason'],
+                        ),
+                        failureTitle: 'Draft Revision Failed',
+                        successTitle: 'Draft revision created',
+                        successBody: 'The published version remains locked. Continue on the edit page to update the new draft.',
+                        afterSuccess: function (): void {
+                            $this->redirect(DocumentTemplateResource::getUrl('edit', [
+                                'record' => $this->record,
+                            ]));
+                        },
+                    );
+                }),
             ...$this->getTemplateRetentionLifecycleActions(),
             $this->approvalAction(
                 name: 'submitApproval',

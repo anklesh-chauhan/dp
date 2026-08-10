@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\DocumentTemplate;
+use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
 class DocumentTemplatePolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:DocumentTemplate');
@@ -29,7 +30,11 @@ class DocumentTemplatePolicy
 
     public function update(AuthUser $authUser, DocumentTemplate $documentTemplate): bool
     {
-        return $authUser->can('Update:DocumentTemplate');
+        if (! $authUser->can('Update:DocumentTemplate') || ! $authUser instanceof User) {
+            return false;
+        }
+
+        return $documentTemplate->canBeEditedBy($authUser);
     }
 
     public function delete(AuthUser $authUser, DocumentTemplate $documentTemplate): bool
@@ -126,5 +131,4 @@ class DocumentTemplatePolicy
     {
         return $authUser->can('Destroy:DocumentTemplate');
     }
-
 }

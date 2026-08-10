@@ -8,6 +8,7 @@ use App\Enums\ProductModule;
 use App\Jobs\ProcessDocumentTemplateMetadataAiJob;
 use App\Models\AiTask;
 use App\Models\Department;
+use App\Models\DocumentTemplate;
 use App\Services\AI\Enums\AiTaskStatus;
 use App\Services\AI\Enums\AIUseCase;
 use App\Support\Modules\ModuleManager;
@@ -30,6 +31,20 @@ trait ProcessesDocumentTemplateMetadataAi
         app(ModuleManager::class)->ensureEnabled(ProductModule::AI);
 
         if ($this->metadataAiTaskPolling) {
+            return;
+        }
+
+        if (
+            property_exists($this, 'record')
+            && $this->record instanceof DocumentTemplate
+            && ! $this->record->isEditable()
+        ) {
+            Notification::make()
+                ->danger()
+                ->title('Template is locked')
+                ->body('Published templates cannot be changed with AI.')
+                ->send();
+
             return;
         }
 

@@ -21,7 +21,13 @@ class CompleteTemplateSectionWithAiJob implements ShouldQueue
     public function handle(TemplateGenerator $generator): void
     {
         $section = $this->section->load('templateVersion.template');
-        $template = $section->templateVersion->template->load(['category', 'documentType']);
+        $version = $section->templateVersion;
+
+        if ($version === null || ! $version->isContentEditable()) {
+            return;
+        }
+
+        $template = $version->template->load(['category', 'documentType']);
         $content = $generator->completeSection($template->toArray(), $section->title);
 
         if ($content !== null) {
