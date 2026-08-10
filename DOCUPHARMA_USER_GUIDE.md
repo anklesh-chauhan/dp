@@ -4,11 +4,13 @@
 
 DocuPharma is a pharmaceutical document and quality management application. It is divided into three licensed modules:
 
-| Module | Purpose 											| Dependency 	|
-| --- 	 | ---------------------------------------------------------------------------------------------| -------------	|
-| DMS 	 | Controlled documents, templates, approvals, issuance, audit history, and retention 		| Required core |
-| QMS    | Change controls, quality events, CAPA, risk management, and computer system validation 	| Requires DMS 	|
-| AI     | Assisted template generation and AI execution monitoring 					| Requires DMS 	|
+
+| Module | Purpose                                                                                | Dependency    |
+| ------ | -------------------------------------------------------------------------------------- | ------------- |
+| DMS    | Controlled documents, templates, approvals, issuance, audit history, and retention     | Required core |
+| QMS    | Change controls, quality events, CAPA, risk management, and computer system validation | Requires DMS  |
+| AI     | Assisted template generation and AI execution monitoring                               | Requires DMS  |
+
 
 The menus visible to a user depend on both the enabled modules and the permissions assigned to the user's role.
 
@@ -54,6 +56,8 @@ php artisan optimize:clear
 Sign out and sign back in after changing role permissions.
 
 ## 4. Module Configuration and Licences
+
+
 
 ### Local and single-install configuration
 
@@ -110,18 +114,20 @@ The module seeders grant their permissions to `sop administrator`.
 
 Examples:
 
-| Permission 				| Capability 						|
-| --------------------------------------| ------------------------------------------------------|
-| `ViewAny:SopDocument` 		| See the controlled-document list 			|
-| `Submit:SopDocument` 			| Submit a draft document for approval 			|
-| `ViewAny:Deviation` 			| See QMS deviations 					|
-| `Investigate:Deviation` 		| Progress a deviation investigation 			|
-| `Approve:ChangeControl` 		| Approve a change control 				|
-| `VerifyEffectiveness:Capa` 		| Record whether a CAPA was effective 			|
-| `ViewAny:CsvValidationProject` 	| See computer system validation projects 		|
-| `Test:CsvValidationProject` 		| Progress validation testing and deviation resolution	|
-| `Release:CsvValidationProject` 	| Make the independent, signed QA release decision 	|
-| `PeriodicReview:CsvValidationProject`	| Start or complete a periodic validation review 	|
+
+| Permission                            | Capability                                           |
+| ------------------------------------- | ---------------------------------------------------- |
+| `ViewAny:SopDocument`                 | See the controlled-document list                     |
+| `Submit:SopDocument`                  | Submit a draft document for approval                 |
+| `ViewAny:Deviation`                   | See QMS deviations                                   |
+| `Investigate:Deviation`               | Progress a deviation investigation                   |
+| `Approve:ChangeControl`               | Approve a change control                             |
+| `VerifyEffectiveness:Capa`            | Record whether a CAPA was effective                  |
+| `ViewAny:CsvValidationProject`        | See computer system validation projects              |
+| `Test:CsvValidationProject`           | Progress validation testing and deviation resolution |
+| `Release:CsvValidationProject`        | Make the independent, signed QA release decision     |
+| `PeriodicReview:CsvValidationProject` | Start or complete a periodic validation review       |
+
 
 Grant only the permissions required for each job function. Use different accounts for maker, reviewer, and approver activities when separation of duties applies.
 
@@ -181,6 +187,8 @@ Suggested sections:
 7. CAPA requirements
 8. Records and retention
 
+
+
 ### 6.3 Create a controlled document
 
 1. Open **DMS · Document Control → SOP Documents**.
@@ -203,6 +211,8 @@ Effective date: 01-Aug-2026
 Review date: 01-Aug-2028
 Purpose: Define reporting, investigation, CAPA, and closure requirements.
 ```
+
+
 
 ### 6.4 Review and approve
 
@@ -228,8 +238,8 @@ Updated the deviation escalation timeline from 48 hours to 24 hours
 following internal audit observation IA-2026-014.
 ```
 
-4. Edit the newly created draft revision.
-5. Submit it through approval again.
+1. Edit the newly created draft revision.
+2. Submit it through approval again.
 
 The previous version remains traceable.
 
@@ -242,18 +252,22 @@ The previous version remains traceable.
 - Each controlled copy is rendered with its issuance number and watermark. Recalled or destroyed copies cannot be printed.
 - Recall or destroy issued copies only through the available lifecycle actions so the audit history is preserved.
 
+
+
 ### 6.7 GMP document formats and execution controls
 
 DocuPharma supports the following controlled document formats through the existing template, approval, revision, issuance, and audit lifecycle:
 
-| Document type                                 | Format profile        | Typical use                                           |
-|---                                            |---                    |---                                                    |
-| SOP, Policy, Manual                           | Text document         | Procedures, policies, and manuals                     |
-| Specification, Protocol, Report, Validation   | Structured table      | Acceptance criteria, validation, testing, and reports |
-| Form, BMR, BPR                                | Controlled form       | Batch and controlled data-entry records               |
-| Log                                           | Repeating log         | Hourly, shift, or daily recurring entries             |
-| Checklist                                     | Checklist             | Line clearance, cleaning, and inspection checks       |
-| Annexure                                      | Attachment package    | Certificates, drawings, photos, and evidence          |
+
+| Document type                               | Format profile     | Typical use                                           |
+| ------------------------------------------- | ------------------ | ----------------------------------------------------- |
+| SOP, Policy, Manual                         | Text document      | Procedures, policies, and manuals                     |
+| Specification, Protocol, Report, Validation | Structured table   | Acceptance criteria, validation, testing, and reports |
+| Form, BMR, BPR                              | Controlled form    | Batch and controlled data-entry records               |
+| Log                                         | Repeating log      | Hourly, shift, or daily recurring entries             |
+| Checklist                                   | Checklist          | Line clearance, cleaning, and inspection checks       |
+| Annexure                                    | Attachment package | Certificates, drawings, photos, and evidence          |
+
 
 The approved controlled document is the reusable master. Its sections define controlled text, execution fields for tables and checklists, repeating logs, signatures, and attachment requirements. Execution fields can specify the item label, value type, unit, decimal precision, required status, and numeric acceptance criteria. Execution data is never entered on the approved master.
 
@@ -277,15 +291,17 @@ Draft → Under review → Effective → Revision/Superseded or Obsolete → Arc
 
 The issued-copy workflow depends on the document type:
 
-| Document type | Normal issued-copy workflow |
-|---|---|
-| SOP, Policy, Manual | Controlled read-only reference copy. |
-| Report, Protocol, Specification, Validation | Controlled read-only reference copy. |
-| Annexure | Controlled read-only evidence/reference package. |
-| Form | Writable execution record; complete required fields and sections, then close. |
-| Log | Writable execution record; complete scheduled entries, submit, and complete independent supervisor review. |
-| Checklist | Writable execution record; complete responses, independently verify required items, submit, and complete supervisor review. |
-| BMR / BPR | Writable execution record; complete and verify required items, complete production supervisor review, reconcile materials, and record independent QA release/reject disposition. |
+
+| Document type                               | Normal issued-copy workflow                                                                                                                                                      |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SOP, Policy, Manual                         | Controlled read-only reference copy.                                                                                                                                             |
+| Report, Protocol, Specification, Validation | Controlled read-only reference copy.                                                                                                                                             |
+| Annexure                                    | Controlled read-only evidence/reference package.                                                                                                                                 |
+| Form                                        | Writable execution record; complete required fields and sections, then close.                                                                                                    |
+| Log                                         | Writable execution record; complete scheduled entries, submit, and complete independent supervisor review.                                                                       |
+| Checklist                                   | Writable execution record; complete responses, independently verify required items, submit, and complete supervisor review.                                                      |
+| BMR / BPR                                   | Writable execution record; complete and verify required items, complete production supervisor review, reconcile materials, and record independent QA release/reject disposition. |
+
 
 Except for SOP, Policy, and Manual, the standard configured document types require an effective referenced SOP before an effective controlled copy can be issued.
 
@@ -390,6 +406,8 @@ Procedure:
 7. Select **Require CAPA** when corrective or preventive actions are necessary.
 8. Complete the effectiveness review before closing the deviation.
 
+
+
 ### 7.3 Investigation example
 
 Example:
@@ -452,17 +470,21 @@ Draft → GxP Assessment → Planning → Specification → Testing
 → Periodic Review → Released, Revalidation, or Retired
 ```
 
+
+
 #### Recommended user separation
 
 Use separate named accounts. Do not perform the entire validation with `admin@example.com`.
 
-| Responsibility | Example user | Permitted activity |
-| --- | --- | --- |
-| Project creator/business owner | `process.owner@example.com` | Intended use, requirements, business acceptance criteria |
-| System owner | `system.owner@example.com` | System boundary, version, configuration, technical specifications |
-| Test executor | `validator@example.com` | Execute approved tests and record actual results |
-| Test reviewer | `validation.reviewer@example.com` | Independently review completed execution evidence |
-| Quality releaser | `qa.approver@example.com` | Make the final signed QA release decision |
+
+| Responsibility                 | Example user                      | Permitted activity                                                |
+| ------------------------------ | --------------------------------- | ----------------------------------------------------------------- |
+| Project creator/business owner | `process.owner@example.com`       | Intended use, requirements, business acceptance criteria          |
+| System owner                   | `system.owner@example.com`        | System boundary, version, configuration, technical specifications |
+| Test executor                  | `validator@example.com`           | Execute approved tests and record actual results                  |
+| Test reviewer                  | `validation.reviewer@example.com` | Independently review completed execution evidence                 |
+| Quality releaser               | `qa.approver@example.com`         | Make the final signed QA release decision                         |
+
 
 The test reviewer must be different from the executor. The QA releaser must be different from the project creator, business owner, and system owner.
 
@@ -488,6 +510,8 @@ Planned release date: 30-Sep-2026
 Next periodic review date: 30-Sep-2027
 ```
 
+
+
 #### Step 1: Create the project
 
 1. Select **New CSV Validation Project**.
@@ -502,6 +526,8 @@ DocuPharma generates a project number such as:
 ```text
 CSV-2026-4F8A91CD
 ```
+
+
 
 #### Step 2: Complete the GxP assessment and plan
 
@@ -520,6 +546,8 @@ specifications before testing. Execute security, audit-trail, backup/restore,
 and critical workflow OQ tests. Complete UAT for intended business use.
 Independently review every executed protocol before QA release.
 ```
+
+
 
 #### Step 3: Enter requirements
 
@@ -639,6 +667,8 @@ Important controls:
 - Correct the issue through deviation/change control, then execute a new numbered run. Do not overwrite the failed run.
 - The latest relevant execution must be Passed and independently reviewed for release credit.
 
+
+
 #### Step 7: Record the release baseline and validation summary
 
 Before selecting **QA Release**, complete:
@@ -697,9 +727,9 @@ After release:
 4. Select **Begin Periodic Review** when the review becomes due.
 5. Record the review scope, findings, conclusion, and next review date.
 6. Choose one outcome:
-   - **Continue Validated Use**
-   - **Require Revalidation**
-   - **Retire System**
+  - **Continue Validated Use**
+  - **Require Revalidation**
+  - **Retire System**
 
 Never modify a reviewed test execution or released evidence to represent a later system state.
 
@@ -769,7 +799,11 @@ Then press `Ctrl + F5` in the browser. If the application is being developed con
 - Preserve failed validation runs and resolve them through linked deviations.
 - Use separate accounts for test execution, test review, and QA release.
 
+
+
 ## 11. Troubleshooting
+
+
 
 ### QMS menus are missing
 
@@ -860,3 +894,4 @@ For validation teams:
 3. Preserve actual results and failed runs.
 4. Use different users for execution, review, and QA release.
 5. Schedule periodic review and control every post-release change.
+

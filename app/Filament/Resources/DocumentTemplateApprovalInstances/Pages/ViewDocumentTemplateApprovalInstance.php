@@ -42,45 +42,48 @@ class ViewDocumentTemplateApprovalInstance extends ViewRecord
         return [
 
             $this->decisionAction(
-                    name: 'approve',
-                    label: 'Approve',
-                    decision: ApprovalDecisionCode::APPROVED,
-                    color: 'success',
-                    icon: Heroicon::CheckBadge,
+                name: 'approve',
+                label: 'Approve',
+                decision: ApprovalDecisionCode::APPROVED,
+                color: 'success',
+                icon: Heroicon::CheckBadge,
+            ),
+
+            ActionGroup::make([
+                Action::make('previewTemplate')
+                    ->label('Preview This Version')
+                    ->icon(Heroicon::Eye)
+                    ->color('gray')
+                    ->url(fn (): string => route('document-templates.versions.preview', [
+                        'documentTemplate' => $this->record->templateVersion->template,
+                        'documentTemplateVersion' => $this->record->templateVersion,
+                    ]))
+                    ->openUrlInNewTab(),
+                Action::make('viewTemplate')
+                    ->label('View Template Record')
+                    ->icon(Heroicon::OutlinedDocumentText)
+                    ->color('gray')
+                    ->url(fn (): string => DocumentTemplateResource::getUrl('view', [
+                        'record' => $this->record->templateVersion->template,
+                    ])),
+
+                $this->decisionAction(
+                    name: 'return',
+                    label: 'Return for Correction',
+                    decision: ApprovalDecisionCode::RETURNED,
+                    color: 'warning',
+                    icon: Heroicon::ArrowUturnLeft,
                 ),
-
-        ActionGroup::make([
-            Action::make('previewTemplate')
-                ->label('Preview Version')
-                ->icon(Heroicon::Eye)
-                ->color('gray')
-                ->url(fn (): string => route('document-templates.draft-preview', $this->record->templateVersion->template))
-                ->openUrlInNewTab(),
-            Action::make('viewTemplate')
-                ->label('View Template Record')
-                ->icon(Heroicon::OutlinedDocumentText)
-                ->color('gray')
-                ->url(fn (): string => DocumentTemplateResource::getUrl('view', [
-                    'record' => $this->record->templateVersion->template,
-                ])),
-
-            $this->decisionAction(
-                name: 'return',
-                label: 'Return for Correction',
-                decision: ApprovalDecisionCode::RETURNED,
-                color: 'warning',
-                icon: Heroicon::ArrowUturnLeft,
-            ),
-            $this->decisionAction(
-                name: 'reject',
-                label: 'Reject Submission',
-                decision: ApprovalDecisionCode::REJECTED,
-                color: 'danger',
-                icon: Heroicon::XCircle,
-            ),
-            Action::make('backToQueue')
-                ->label('Back to My Queue')
-                ->icon(Heroicon::QueueList)
+                $this->decisionAction(
+                    name: 'reject',
+                    label: 'Reject Submission',
+                    decision: ApprovalDecisionCode::REJECTED,
+                    color: 'danger',
+                    icon: Heroicon::XCircle,
+                ),
+                Action::make('backToQueue')
+                    ->label('Back to My Queue')
+                    ->icon(Heroicon::QueueList)
                     ->color('gray')
                     ->url(MyApprovalQueue::getUrl()),
             ]),

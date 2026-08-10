@@ -71,3 +71,7 @@ Route::get('/report-templates/{reportTemplate}/preview', ReportTemplatePreviewCo
 Route::get('/document-templates/{documentTemplate}/draft-preview', DocumentTemplateDraftPreviewController::class)
     ->middleware(['auth', 'module:dms', 'can:view,documentTemplate'])
     ->name('document-templates.draft-preview');
+
+Route::get('/document-templates/{documentTemplate}/versions/{documentTemplateVersion}/preview', DocumentTemplateDraftPreviewController::class)
+    ->middleware(['auth', 'module:dms', 'can:view,documentTemplate'])
+    ->name('document-templates.versions.preview');

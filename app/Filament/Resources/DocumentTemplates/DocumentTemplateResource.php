@@ -171,7 +171,7 @@ class DocumentTemplateResource extends Resource
                                 ->all())
                             ->searchable()
                             ->preload()
-                            ->helperText('Default template used when printing or generating PDFs from this document template.')
+                            ->helperText('The saved layout used for draft previews, approval previews, printing, and generated PDFs. Save changes before opening a preview.')
                             ->nullable(),
 
                         TextInput::make('current_version')

@@ -105,7 +105,7 @@ class SopGeneratorService
             ]);
 
             foreach ($version->sections as $section) {
-                $document->sections()->create([
+                $documentSection = $document->sections()->create([
                     'title' => $section->title,
                     'section_order' => $section->section_order,
                     'heading_level' => $section->heading_level,
@@ -118,6 +118,19 @@ class SopGeneratorService
                     'section_type' => $section->section_type,
                     'configuration' => $section->configuration,
                 ]);
+
+                foreach (data_get($section->configuration, 'execution_tables', []) as $tableDefinition) {
+                    $executionTable = $documentSection->executionTables()->create([
+                        'title' => $tableDefinition['title'] ?? null,
+                        'table_order' => $tableDefinition['table_order'] ?? 1,
+                        'execution_layout' => $tableDefinition['execution_layout'] ?? 'table',
+                        'row_count' => $tableDefinition['row_count'] ?? 1,
+                    ]);
+
+                    foreach ($tableDefinition['fields'] ?? [] as $fieldDefinition) {
+                        $executionTable->items()->create($fieldDefinition);
+                    }
+                }
             }
 
             foreach ($resolvedVariables['storage'] as $name => $value) {
@@ -145,7 +158,7 @@ class SopGeneratorService
                 $document->regulationTags()->sync($data->regulationTagIds);
             }
 
-            return $document->refresh()->load(['organization', 'sections', 'variables', 'documentType', 'referencedSop', 'regulationTags']);
+            return $document->refresh()->load(['organization', 'sections.executionTables.items', 'variables', 'documentType', 'referencedSop', 'regulationTags']);
         });
     }
 

@@ -47,9 +47,12 @@ class EditDocumentTemplate extends EditRecord
     {
         return [
             Action::make('previewDraft')
-                ->label('Preview Draft')
+                ->label('Preview Draft with Print Template')
                 ->icon(Heroicon::Eye)
-                ->url(fn (): string => route('document-templates.draft-preview', $this->record))
+                ->url(fn (): string => route('document-templates.versions.preview', [
+                    'documentTemplate' => $this->record,
+                    'documentTemplateVersion' => $this->draftVersion(),
+                ]))
                 ->openUrlInNewTab()
                 ->visible(fn (): bool => $this->draftVersion() !== null),
             DeleteAction::make(),

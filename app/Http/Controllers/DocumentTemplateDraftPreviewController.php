@@ -9,16 +9,38 @@ use App\Domain\Reporting\Enums\ReportScope;
 use App\Domain\Reporting\Support\PrintLayoutRegistry;
 use App\Domain\Reporting\Support\ReportFieldRegistry;
 use App\Models\DocumentTemplate;
+use App\Models\DocumentTemplateVersion;
 use App\Models\ReportTemplate;
 use Illuminate\Contracts\View\View;
 
 class DocumentTemplateDraftPreviewController extends Controller
 {
-    public function __invoke(DocumentTemplate $documentTemplate): View
-    {
-        $version = $documentTemplate->latestDraftVersion()
-            ->with(['sections', 'variables'])
-            ->first();
+    public function __invoke(
+        DocumentTemplate $documentTemplate,
+        ?DocumentTemplateVersion $documentTemplateVersion = null,
+    ): View {
+        if ($documentTemplateVersion instanceof DocumentTemplateVersion) {
+            abort_unless(
+                $documentTemplateVersion->document_template_id === $documentTemplate->getKey(),
+                404,
+            );
+
+            $version = $documentTemplateVersion->load([
+                'approvalInstances.decider',
+                'approvalInstances.workflowStep.approvalStepType',
+                'sections',
+                'variables',
+            ]);
+        } else {
+            $version = $documentTemplate->latestDraftVersion()
+                ->with([
+                    'approvalInstances.decider',
+                    'approvalInstances.workflowStep.approvalStepType',
+                    'sections',
+                    'variables',
+                ])
+                ->first();
+        }
 
         abort_unless($version !== null, 404, 'This template does not have a draft version to preview.');
 
@@ -51,9 +73,12 @@ class DocumentTemplateDraftPreviewController extends Controller
         }
 
         return view('document-templates.draft-preview', [
-            'template' => $documentTemplate->load(['department', 'documentType']),
+            'template' => $documentTemplate->load(['creator', 'department', 'documentType']),
             'version' => $version,
             'reportTemplate' => $reportTemplate,
+            'previewLabel' => $documentTemplateVersion instanceof DocumentTemplateVersion
+                ? 'Version Preview'
+                : 'Draft Preview',
             'pageSettings' => $reportTemplate->printPageSettings(),
             'headerZones' => $reportTemplate->printHeaderZones(),
             'footerZones' => $reportTemplate->printFooterZones(),
