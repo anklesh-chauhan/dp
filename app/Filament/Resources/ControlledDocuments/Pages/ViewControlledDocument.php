@@ -103,6 +103,13 @@ class ViewControlledDocument extends ViewRecord
                 icon: Heroicon::CheckBadge,
             ),
 
+            Action::make('previewWithPrintTemplate')
+                ->label('Preview with Print Template')
+                ->icon(Heroicon::Eye)
+                ->url(fn (): string => route('controlled-documents.draft-preview', $this->record))
+                ->openUrlInNewTab()
+                ->visible(fn (): bool => $this->canPreviewWithPrintTemplate()),
+
             Action::make('printPdf')
                 ->label('View Controlled PDF')
                 ->icon(Heroicon::Eye)
@@ -377,6 +384,28 @@ class ViewControlledDocument extends ViewRecord
                     },
                 );
             });
+    }
+
+    private function canPreviewWithPrintTemplate(): bool
+    {
+        // Prefer the controlled PDF viewer once the document can be printed directly.
+        if ($this->record->canBePrintedDirectly()) {
+            return false;
+        }
+
+        // Intermediate "approved" is used while later mandatory steps are still pending.
+        if (! $this->record->documentStatus?->hasCode(DocumentStatus::DRAFT)
+            && ! $this->record->documentStatus?->hasCode(DocumentStatus::UNDER_REVIEW)
+            && ! $this->record->documentStatus?->hasCode(DocumentStatus::APPROVED)
+            && ! $this->record->documentStatus?->hasCode(DocumentStatus::REJECTED)) {
+            return false;
+        }
+
+        if ($this->record->template?->report_template_id === null) {
+            return false;
+        }
+
+        return app(ControlledDocumentAccessService::class)->canView(Auth::user(), $this->record);
     }
 
     private function approvalDecisionHeading(string $label): string

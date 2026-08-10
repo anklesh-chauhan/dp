@@ -201,7 +201,7 @@ it('requires a unique signer for every SOP document approval step', function ():
         );
 });
 
-it('keeps an approved document awaiting its remaining mandatory approval', function (): void {
+it('keeps the document under review while awaiting remaining mandatory approvals', function (): void {
     $remainingStep = SopWorkflowStep::factory()->create([
         'workflow_id' => $this->workflow->id,
         'step_no' => 2,
@@ -231,7 +231,7 @@ it('keeps an approved document awaiting its remaining mandatory approval', funct
         ->where('action', SopAuditLog::ACTION_APPROVED)
         ->firstOrFail();
 
-    expect($this->document->refresh()->documentStatus?->code)->toBe(DocumentStatus::APPROVED)
+    expect($this->document->refresh()->documentStatus?->code)->toBe(DocumentStatus::UNDER_REVIEW)
         ->and($auditLog->new_values)->toMatchArray([
             'approval_id' => $this->approval->id,
             'approved_by' => $this->approver->id,

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ChangeControlReportController;
+use App\Http\Controllers\ControlledDocumentDraftPreviewController;
 use App\Http\Controllers\ControlledDocumentOriginalArtifactController;
 use App\Http\Controllers\ControlledDocumentPrintController;
 use App\Http\Controllers\ControlledDocumentViewerController;
@@ -18,6 +19,10 @@ Route::get('/controlled-documents/{controlledDocument}/print', ControlledDocumen
     ->middleware(['auth', 'module:dms', 'can:view,controlledDocument'])
     ->defaults('access_mode', 'print')
     ->name('controlled-documents.print');
+
+Route::get('/controlled-documents/{controlledDocument}/draft-preview', ControlledDocumentDraftPreviewController::class)
+    ->middleware(['auth', 'module:dms', 'can:view,controlledDocument'])
+    ->name('controlled-documents.draft-preview');
 
 Route::get('/controlled-documents/{controlledDocument}/viewer', ControlledDocumentViewerController::class)
     ->middleware(['auth', 'module:dms', 'can:view,controlledDocument'])

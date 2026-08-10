@@ -96,6 +96,30 @@ it('selects the department SOP workflow and creates ordered template approval in
         ->and($instances->pluck('decision_code')->unique()->all())->toBe(['pending']);
 });
 
+it('shows under review instead of draft while mandatory approval steps remain pending', function (): void {
+    $version = app(TemplateApprovalService::class)->submit(
+        $this->template,
+        $this->author,
+        'Ready for configured workflow review.',
+    );
+    [$review] = $version->approvalInstances()->orderBy('id')->get()->all();
+
+    expect($this->template->refresh()->displayStatusLabel())->toBe('Under Review')
+        ->and($this->template->displayStatusColor())->toBe('warning')
+        ->and($version->approval_status->label())->toBe('Under Review');
+
+    app(TemplateApprovalDecisionService::class)->decide(
+        $review,
+        $this->reviewer,
+        ApprovalDecisionCode::APPROVED,
+        'First step signed; second step still pending.',
+    );
+
+    expect($version->refresh()->approval_status)->toBe(TemplateApprovalStatus::Submitted)
+        ->and($this->template->refresh()->displayStatusLabel())->toBe('Under Review')
+        ->and($this->template->templateStatus?->code)->toBe(TemplateStatus::DRAFT);
+});
+
 it('falls back to the active global SOP workflow', function (): void {
     $this->workflow->update(['is_active' => false]);
     $global = SopWorkflow::factory()->create(['department_id' => null, 'is_active' => true]);

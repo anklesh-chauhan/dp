@@ -44,7 +44,8 @@ class ViewDocumentTemplate extends ViewRecord
 
         return match ($version->approval_status) {
             TemplateApprovalStatus::Draft => "Version {$version->version} is a draft and can be submitted for review.",
-            TemplateApprovalStatus::Submitted => "Version {$version->version} is under review. Follow progress in Template Workflow Approvals below.",
+            TemplateApprovalStatus::Submitted,
+            TemplateApprovalStatus::Reviewed => "Version {$version->version} is under review. Follow progress in Template Workflow Approvals below.",
             TemplateApprovalStatus::Approved => "Version {$version->version} is approved and ready to publish.",
             TemplateApprovalStatus::Rejected => "Version {$version->version} was rejected. Review the decision rationale, correct it, and resubmit.",
         };

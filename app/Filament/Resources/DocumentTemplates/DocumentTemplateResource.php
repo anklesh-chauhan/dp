@@ -157,8 +157,10 @@ class DocumentTemplateResource extends Resource
                         ...DocumentClassificationFormFields::templateFields(),
 
                         Select::make('template_status_id')
+                            ->label('Lifecycle')
                             ->relationship('templateStatus', 'name')
                             ->default(fn (): int => TemplateStatus::idFor(TemplateStatus::DRAFT))
+                            ->helperText('Lifecycle is Draft until the template is published. Approval progress appears as Under Review on the list and versions.')
                             ->required(),
 
                         Select::make('report_template_id')
@@ -211,18 +213,11 @@ class DocumentTemplateResource extends Resource
                     ->label('Regulation Tags')
                     ->badge()
                     ->toggleable(),
-                TextColumn::make('templateStatus.name')
+                TextColumn::make('display_status')
                     ->label('Status')
+                    ->state(fn (DocumentTemplate $record): string => $record->displayStatusLabel())
                     ->badge()
-                    ->color(fn (DocumentTemplate $record): string => match ($record->templateStatus?->code) {
-                        TemplateStatus::DRAFT => 'gray',
-                        TemplateStatus::PUBLISHED => 'success',
-                        TemplateStatus::OBSOLETE => 'warning',
-                        TemplateStatus::ARCHIVED => 'gray',
-                        TemplateStatus::RETENTION_COMPLETED => 'gray',
-                        TemplateStatus::DESTROYED => 'danger',
-                        default => 'gray',
-                    }),
+                    ->color(fn (DocumentTemplate $record): string => $record->displayStatusColor()),
                 TextColumn::make('current_version')->sortable(),
                 TextColumn::make('updated_at')->dateTime()->sortable(),
             ])
@@ -230,7 +225,7 @@ class DocumentTemplateResource extends Resource
                 SelectFilter::make('category_id')->relationship('category', 'name')->label('Category'),
                 SelectFilter::make('document_type_id')->relationship('documentType', 'name')->label('Document Type'),
                 SelectFilter::make('regulationTags')->relationship('regulationTags', 'name')->label('Regulation Tag'),
-                SelectFilter::make('template_status_id')->relationship('templateStatus', 'name')->label('Status'),
+                SelectFilter::make('template_status_id')->relationship('templateStatus', 'name')->label('Lifecycle'),
                 TrashedFilter::make(),
             ])
             ->recordActions([
@@ -272,7 +267,7 @@ class DocumentTemplateResource extends Resource
     {
         return parent::getEloquentQuery()
             ->withoutGlobalScopes([SoftDeletingScope::class])
-            ->with(['department', 'category', 'documentType', 'regulationTags', 'templateStatus']);
+            ->with(['department', 'category', 'documentType', 'regulationTags', 'templateStatus', 'latestDraftVersion']);
     }
 
     private static function runAiClassification(

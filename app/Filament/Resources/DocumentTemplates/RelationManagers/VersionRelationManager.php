@@ -53,11 +53,8 @@ class VersionRelationManager extends RelationManager
             ->recordTitleAttribute('version')
             ->columns([
                 TextColumn::make('version')->sortable(),
-                TextColumn::make('templateStatus.name')
-                    ->label('Status')
-                    ->badge(),
                 TextColumn::make('approval_status')
-                    ->label('Approval')
+                    ->label('Status')
                     ->formatStateUsing(fn ($state): string => $state->label())
                     ->badge()
                     ->color(fn ($state): string => match ($state->value) {
@@ -66,6 +63,10 @@ class VersionRelationManager extends RelationManager
                         'rejected' => 'danger',
                         default => 'gray',
                     }),
+                TextColumn::make('templateStatus.name')
+                    ->label('Lifecycle')
+                    ->badge()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('sections_count')->counts('sections')->label('Sections'),
                 TextColumn::make('variables_count')->counts('variables')->label('Variables'),
                 TextColumn::make('effective_date')->date(),

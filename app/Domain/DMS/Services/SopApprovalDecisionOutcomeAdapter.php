@@ -66,11 +66,9 @@ class SopApprovalDecisionOutcomeAdapter implements ApprovalDecisionOutcome
             fn (SopApproval $item): bool => $item->approvalDecision?->hasCode(ApprovalDecision::APPROVED)
         )) {
             $this->documentActivationService->activate($document, $decidedBy);
-        } else {
-            $document->update([
-                'document_status_id' => DocumentStatus::idFor(DocumentStatus::APPROVED),
-            ]);
         }
+        // Intermediate step approvals leave the document under review until every
+        // mandatory workflow step has been signed.
 
         $this->auditLogService->log(
             action: SopAuditLog::ACTION_APPROVED,

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Concerns\Lockable;
+use App\Domain\DMS\Enums\TemplateApprovalStatus;
 use Database\Factories\DocumentTemplateFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -89,6 +90,59 @@ class DocumentTemplate extends Model
     public function isInRetentionLifecycle(): bool
     {
         return in_array($this->templateStatus?->code, TemplateStatus::retentionLifecycleCodes(), true);
+    }
+
+    /**
+     * Workflow-aware status for UI badges. Lifecycle stays Draft/Published;
+     * while a draft version is in approval, surface that instead of Draft.
+     */
+    public function displayStatusLabel(): string
+    {
+        $draft = $this->relationLoaded('latestDraftVersion')
+            ? $this->latestDraftVersion
+            : $this->latestDraftVersion()->first();
+
+        if ($draft instanceof DocumentTemplateVersion) {
+            return match ($draft->approval_status) {
+                TemplateApprovalStatus::Submitted,
+                TemplateApprovalStatus::Reviewed,
+                TemplateApprovalStatus::Approved,
+                TemplateApprovalStatus::Rejected => $draft->approval_status->label(),
+                default => $this->templateStatus?->name
+                    ?? TemplateApprovalStatus::Draft->label(),
+            };
+        }
+
+        return $this->templateStatus?->name ?? 'Unknown';
+    }
+
+    public function displayStatusColor(): string
+    {
+        $draft = $this->relationLoaded('latestDraftVersion')
+            ? $this->latestDraftVersion
+            : $this->latestDraftVersion()->first();
+
+        if ($draft instanceof DocumentTemplateVersion) {
+            return match ($draft->approval_status) {
+                TemplateApprovalStatus::Submitted,
+                TemplateApprovalStatus::Reviewed => 'warning',
+                TemplateApprovalStatus::Approved => 'success',
+                TemplateApprovalStatus::Rejected => 'danger',
+                default => $this->lifecycleStatusColor(),
+            };
+        }
+
+        return $this->lifecycleStatusColor();
+    }
+
+    private function lifecycleStatusColor(): string
+    {
+        return match ($this->templateStatus?->code) {
+            TemplateStatus::PUBLISHED => 'success',
+            TemplateStatus::OBSOLETE => 'warning',
+            TemplateStatus::DESTROYED => 'danger',
+            default => 'gray',
+        };
     }
 
     public function canBeEditedBy(User $user): bool

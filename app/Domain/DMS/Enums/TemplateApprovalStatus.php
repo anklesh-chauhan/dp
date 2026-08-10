@@ -16,8 +16,7 @@ enum TemplateApprovalStatus: string
     {
         return match ($this) {
             self::Draft => 'Draft',
-            self::Submitted => 'Submitted',
-            self::Reviewed => 'Reviewed',
+            self::Submitted, self::Reviewed => 'Under Review',
             self::Approved => 'Approved',
             self::Rejected => 'Rejected',
         };
