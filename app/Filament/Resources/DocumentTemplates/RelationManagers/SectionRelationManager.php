@@ -180,7 +180,9 @@ class SectionRelationManager extends RelationManager
                 Action::make('generateSectionTitlesWithAi')
                     ->label('Generate Section Names with AI')
                     ->icon('heroicon-m-sparkles')
-                    ->visible(fn (): bool => $this->canManageTemplateRecord() && app(ModuleManager::class)->enabled(ProductModule::AI))
+                    ->visible(fn (): bool => ! $this->isReadOnly()
+                        && $this->canManageTemplateRecord()
+                        && app(ModuleManager::class)->enabled(ProductModule::AI))
                     ->action(function (): void {
                         $version = $this->getOwnerRecord()->versions()->latest('version')->first();
                         if (! $version instanceof DocumentTemplateVersion) {
@@ -199,7 +201,7 @@ class SectionRelationManager extends RelationManager
                             ->title('Section names generation started')
                             ->body('AI will replace existing section names or create sections in the background.')
                             ->send();
-                    })->visible(fn (): bool => $this->canManageTemplateRecord()),
+                    }),
             ])
             ->recordActions([
                 EditAction::make()

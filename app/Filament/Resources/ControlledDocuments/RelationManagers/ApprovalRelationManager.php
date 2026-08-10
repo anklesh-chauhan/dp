@@ -7,14 +7,17 @@ namespace App\Filament\Resources\ControlledDocuments\RelationManagers;
 use App\Actions\Sop\ApproveDocumentAction;
 use App\Actions\Sop\RejectDocumentAction;
 use App\Actions\Sop\ReturnDocumentAction;
+use App\Domain\DMS\Services\SopApprovalDecisionAuthorizationAdapter;
+use App\Exceptions\WorkflowException;
 use App\Filament\Concerns\HandlesServiceExceptions;
 use App\Models\ApprovalDecision;
-use App\Models\ApprovalStepType;
 use App\Models\SopApproval;
+use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Auth;
@@ -51,9 +54,18 @@ class ApprovalRelationManager extends RelationManager
             ])
             ->recordActions([
                 Action::make('approve')
-                    ->schema([Textarea::make('comments')])
-                    ->visible(fn (SopApproval $record): bool => Auth::user()?->can('approve', $record) ?? false
-                        && $record->workflowStep->approvalStepType->code === ApprovalStepType::APPROVE
+                    ->label('Approve Step')
+                    ->icon(Heroicon::CheckBadge)
+                    ->color('success')
+                    ->modalHeading('Approve this workflow step?')
+                    ->modalDescription('Your rationale and electronic signature will be added to the permanent approval history.')
+                    ->schema([
+                        Textarea::make('comments')
+                            ->label('Decision rationale')
+                            ->required()
+                            ->maxLength(2_000),
+                    ])
+                    ->visible(fn (SopApproval $record): bool => $this->canDecide($record)
                         && $record->approvalDecision?->hasCode(ApprovalDecision::PENDING))
                     ->action(function ($record, array $data): void {
                         $this->runServiceAction(
@@ -67,11 +79,13 @@ class ApprovalRelationManager extends RelationManager
                         );
                     }),
                 Action::make('return')
-                    ->label('Return to Maker')
+                    ->label('Return for Correction')
                     ->color('warning')
                     ->icon('heroicon-o-arrow-uturn-left')
-                    ->schema([Textarea::make('comments')->required()])
-                    ->visible(fn (SopApproval $record): bool => Auth::user()?->can('approve', $record) ?? false
+                    ->modalHeading('Return this document for correction?')
+                    ->modalDescription('The document will return to Draft and unlock so the maker can correct and resubmit it.')
+                    ->schema([Textarea::make('comments')->label('Correction required')->required()->maxLength(2_000)])
+                    ->visible(fn (SopApproval $record): bool => $this->canDecide($record)
                         && $record->approvalDecision?->hasCode(ApprovalDecision::PENDING))
                     ->action(function ($record, array $data): void {
                         $this->runServiceAction(
@@ -85,9 +99,13 @@ class ApprovalRelationManager extends RelationManager
                         );
                     }),
                 Action::make('reject')
+                    ->label('Reject Submission')
                     ->color('danger')
-                    ->schema([Textarea::make('comments')->required()])
-                    ->visible(fn (SopApproval $record): bool => Auth::user()?->can('approve', $record) ?? false
+                    ->icon(Heroicon::XCircle)
+                    ->modalHeading('Reject this approval submission?')
+                    ->modalDescription('The current approval cycle will close. Record a clear reason for the signed audit trail.')
+                    ->schema([Textarea::make('comments')->label('Rejection reason')->required()->maxLength(2_000)])
+                    ->visible(fn (SopApproval $record): bool => $this->canDecide($record)
                         && $record->approvalDecision?->hasCode(ApprovalDecision::PENDING))
                     ->action(function ($record, array $data): void {
                         $this->runServiceAction(
@@ -101,5 +119,22 @@ class ApprovalRelationManager extends RelationManager
                         );
                     }),
             ]);
+    }
+
+    private function canDecide(SopApproval $approval): bool
+    {
+        $user = Auth::user();
+
+        if (! $user instanceof User) {
+            return false;
+        }
+
+        try {
+            app(SopApprovalDecisionAuthorizationAdapter::class)->authorizeDecision($approval, $user);
+
+            return true;
+        } catch (WorkflowException) {
+            return false;
+        }
     }
 }

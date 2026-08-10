@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\DocumentTemplateApprovalInstances;
 
+use App\Domain\DMS\Services\TemplateApprovalDecisionService;
 use App\Filament\Resources\DocumentTemplateApprovalInstances\Pages\ListDocumentTemplateApprovalInstances;
 use App\Filament\Resources\DocumentTemplateApprovalInstances\Pages\ViewDocumentTemplateApprovalInstance;
 use App\Filament\Resources\DocumentTemplateApprovalInstances\Schemas\DocumentTemplateApprovalInstanceInfolist;
@@ -62,6 +63,8 @@ class DocumentTemplateApprovalInstanceResource extends Resource
     {
         $query = parent::getEloquentQuery()->with([
             'templateVersion.template',
+            'templateVersion.approvalEvents',
+            'templateVersion.submitter',
             'workflow',
             'workflowStep.role',
             'workflowStep.approvalStepType',
@@ -86,7 +89,14 @@ class DocumentTemplateApprovalInstanceResource extends Resource
 
     public static function canView(mixed $record): bool
     {
-        return (bool) auth()->user()?->can('View:DocumentTemplateApproval');
+        $user = auth()->user();
+
+        if ($user === null) {
+            return false;
+        }
+
+        return $user->can('View:DocumentTemplateApproval')
+            || app(TemplateApprovalDecisionService::class)->canDecide($record, $user);
     }
 
     public static function canCreate(): bool

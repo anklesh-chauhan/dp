@@ -4,21 +4,27 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\ControlledDocuments\Pages;
 
+use App\Actions\Sop\ApproveDocumentAction;
+use App\Actions\Sop\RejectDocumentAction;
+use App\Actions\Sop\ReturnDocumentAction;
 use App\Actions\Sop\SubmitDocumentAction;
 use App\Domain\DMS\Actions\CreateDocumentRevisionAction;
 use App\Domain\DMS\Actions\IssueDocumentAction;
 use App\Domain\DMS\Actions\LockDocumentAction;
 use App\Domain\DMS\Actions\UnlockDocumentAction;
 use App\Domain\DMS\Services\ControlledDocumentAccessService;
+use App\Domain\DMS\Services\SopApprovalDecisionAuthorizationAdapter;
 use App\Domain\Reporting\Enums\ReportFormat;
 use App\Domain\Reporting\Enums\ReportScope;
 use App\Domain\Shared\Services\AuditLogService;
+use App\Exceptions\WorkflowException;
 use App\Filament\Concerns\HandlesServiceExceptions;
 use App\Filament\Concerns\ProvidesRetentionLifecycleActions;
 use App\Filament\Resources\ControlledDocuments\ControlledDocumentResource;
 use App\Models\DocumentIssuance;
 use App\Models\DocumentStatus;
 use App\Models\ReportTemplate;
+use App\Models\SopApproval;
 use App\Models\SopAuditLog;
 use App\Models\User;
 use Filament\Actions\Action;
@@ -43,6 +49,28 @@ class ViewControlledDocument extends ViewRecord
 
     protected static string $resource = ControlledDocumentResource::class;
 
+    private bool $currentApprovalResolved = false;
+
+    private ?SopApproval $resolvedCurrentApproval = null;
+
+    public function getSubheading(): ?string
+    {
+        $status = $this->record->documentStatus?->name ?? 'Unknown status';
+        $approval = $this->currentApprovalForUser();
+
+        if ($approval instanceof SopApproval) {
+            $step = $approval->workflowStep;
+
+            return "Action required: Step {$step->step_no} · {$step->approvalStepType->name}. Review the document and record your signed decision.";
+        }
+
+        if ($this->record->documentStatus?->hasCode(DocumentStatus::UNDER_REVIEW)) {
+            return 'Under review · Waiting for the next assigned workflow step.';
+        }
+
+        return "Status: {$status}";
+    }
+
     protected function getActions(): array
     {
         return [
@@ -52,7 +80,9 @@ class ViewControlledDocument extends ViewRecord
                 ->icon(Heroicon::PaperAirplane)
                 ->color('success')
                 ->requiresConfirmation()
-                ->modalDescription('Submit this document to the department approval workflow. Editing will be locked once submitted.')
+                ->modalHeading('Start document approval workflow?')
+                ->modalDescription('The document will be locked for editing and sent to the first eligible reviewer. You can follow each signed decision in Approval History.')
+                ->modalSubmitActionLabel('Submit for approval')
                 ->visible(fn (): bool => $this->record->documentStatus?->hasCode(DocumentStatus::DRAFT)
                     && Auth::user()?->can('submit', $this->record))
                 ->action(function (): void {
@@ -60,9 +90,18 @@ class ViewControlledDocument extends ViewRecord
                         fn () => app(SubmitDocumentAction::class)->execute($this->record, Auth::user()),
                         failureTitle: 'Submission Failed',
                         successTitle: 'Document submitted for approval',
+                        successBody: 'The document is locked and the first actionable step is now available in the assigned reviewer’s approval queue.',
                         afterSuccess: fn () => $this->refreshFormData(['document_status_id', 'approvals']),
                     );
                 }),
+
+            $this->approvalDecisionAction(
+                name: 'approveCurrentStep',
+                label: 'Approve',
+                decision: 'approve',
+                color: 'success',
+                icon: Heroicon::CheckBadge,
+            ),
 
             Action::make('printPdf')
                 ->label('View Controlled PDF')
@@ -140,6 +179,23 @@ class ViewControlledDocument extends ViewRecord
 
             ActionGroup::make([
                 ...$this->getDocumentRetentionLifecycleActions(),
+
+                $this->approvalDecisionAction(
+                    name: 'returnCurrentStep',
+                    label: 'Return for Correction',
+                    decision: 'return',
+                    color: 'warning',
+                    icon: Heroicon::ArrowUturnLeft,
+                ),
+
+                $this->approvalDecisionAction(
+                    name: 'rejectCurrentStep',
+                    label: 'Reject Submission',
+                    decision: 'reject',
+                    color: 'danger',
+                    icon: Heroicon::XCircle,
+                ),
+
                 Action::make('createRevision')
                     ->label('Create Revision')
                     ->icon(Heroicon::DocumentDuplicate)
@@ -266,5 +322,107 @@ class ViewControlledDocument extends ViewRecord
                     ->visible(fn (): bool => app(ControlledDocumentAccessService::class)->canManage(Auth::user(), $this->record)),
             ]),
         ];
+    }
+
+    private function approvalDecisionAction(
+        string $name,
+        string $label,
+        string $decision,
+        string $color,
+        Heroicon $icon,
+    ): Action {
+        return Action::make($name)
+            ->label($label)
+            ->icon($icon)
+            ->color($color)
+            ->modalHeading(fn (): string => $this->approvalDecisionHeading($label))
+            ->modalDescription(match ($decision) {
+                'approve' => 'Your decision will be electronically signed. If this is the final mandatory step, the controlled document will become effective.',
+                'return' => 'The document will return to Draft and unlock for correction. The maker can revise and submit it again.',
+                default => 'The current submission will be rejected and its remaining workflow steps will close.',
+            })
+            ->modalSubmitActionLabel($label)
+            ->schema([
+                Textarea::make('comments')
+                    ->label('Decision rationale')
+                    ->helperText('Explain what you reviewed and why you are making this decision. This text becomes part of the signed audit trail.')
+                    ->rows(4)
+                    ->required()
+                    ->maxLength(2_000),
+            ])
+            ->visible(fn (): bool => $this->currentApprovalForUser() instanceof SopApproval)
+            ->action(function (array $data) use ($decision, $label): void {
+                $this->runServiceAction(
+                    callback: function () use ($decision, $data): SopApproval {
+                        $approval = $this->currentApprovalForUser();
+
+                        if (! $approval instanceof SopApproval) {
+                            throw new WorkflowException(message: 'This approval step is no longer available. Refresh the page to see the current workflow status.');
+                        }
+
+                        return match ($decision) {
+                            'approve' => app(ApproveDocumentAction::class)->execute($approval, Auth::user(), $data['comments']),
+                            'return' => app(ReturnDocumentAction::class)->execute($approval, Auth::user(), $data['comments']),
+                            default => app(RejectDocumentAction::class)->execute($approval, Auth::user(), $data['comments']),
+                        };
+                    },
+                    failureTitle: "{$label} Failed",
+                    successTitle: "Decision recorded: {$label}",
+                    successBody: 'Your electronic signature and rationale were saved. The workflow status has been updated.',
+                    afterSuccess: function (): void {
+                        $this->currentApprovalResolved = false;
+                        $this->resolvedCurrentApproval = null;
+                        $this->record->refresh();
+                        $this->refreshFormData(['document_status_id']);
+                    },
+                );
+            });
+    }
+
+    private function approvalDecisionHeading(string $label): string
+    {
+        $approval = $this->currentApprovalForUser();
+
+        if (! $approval instanceof SopApproval) {
+            return $label;
+        }
+
+        return "{$label}: Step {$approval->workflowStep->step_no} · {$approval->workflowStep->approvalStepType->name}";
+    }
+
+    private function currentApprovalForUser(): ?SopApproval
+    {
+        if ($this->currentApprovalResolved) {
+            return $this->resolvedCurrentApproval;
+        }
+
+        $this->currentApprovalResolved = true;
+        $user = Auth::user();
+
+        if (! $user instanceof User) {
+            return null;
+        }
+
+        return $this->resolvedCurrentApproval = $this->record->approvals()
+            ->actionableFor($user)
+            ->with([
+                'approvalDecision',
+                'document.approvals.approvalDecision',
+                'document.approvals.workflowStep',
+                'workflowStep.approvalStepType',
+                'workflowStep.department',
+                'workflowStep.role',
+            ])
+            ->get()
+            ->sortBy('workflowStep.step_no')
+            ->first(function (SopApproval $approval) use ($user): bool {
+                try {
+                    app(SopApprovalDecisionAuthorizationAdapter::class)->authorizeDecision($approval, $user);
+
+                    return true;
+                } catch (WorkflowException) {
+                    return false;
+                }
+            });
     }
 }

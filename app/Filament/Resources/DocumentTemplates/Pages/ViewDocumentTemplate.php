@@ -28,6 +28,22 @@ class ViewDocumentTemplate extends ViewRecord
 
     protected static string $resource = DocumentTemplateResource::class;
 
+    public function getSubheading(): ?string
+    {
+        $version = $this->draftVersion();
+
+        if (! $version instanceof DocumentTemplateVersion) {
+            return 'No draft version is currently available.';
+        }
+
+        return match ($version->approval_status) {
+            TemplateApprovalStatus::Draft => "Version {$version->version} is a draft and can be submitted for review.",
+            TemplateApprovalStatus::Submitted => "Version {$version->version} is under review. Follow progress in Template Workflow Approvals below.",
+            TemplateApprovalStatus::Approved => "Version {$version->version} is approved and ready to publish.",
+            TemplateApprovalStatus::Rejected => "Version {$version->version} was rejected. Review the decision rationale, correct it, and resubmit.",
+        };
+    }
+
     protected function getActions(): array
     {
         return [
@@ -47,6 +63,9 @@ class ViewDocumentTemplate extends ViewRecord
             Action::make('publish')
                 ->label('Publish Approved Version')
                 ->color('success')
+                ->icon(Heroicon::CheckBadge)
+                ->modalHeading('Publish this approved template version?')
+                ->modalDescription('Publishing makes this version available for creating controlled documents. The approved version and signatures remain immutable.')
                 ->schema([
                     Textarea::make('change_reason')
                         ->label('Publishing reason')
@@ -89,8 +108,15 @@ class ViewDocumentTemplate extends ViewRecord
         return Action::make($name)
             ->label($label)
             ->color($color)
+            ->icon(Heroicon::PaperAirplane)
+            ->modalHeading('Submit this template version for review?')
+            ->modalDescription('The draft will be locked for editing and sent through the configured workflow. Assigned reviewers will see each actionable step in My Approval Queue.')
+            ->modalSubmitActionLabel('Submit for review')
             ->schema([
                 Textarea::make('reason')
+                    ->label('Submission note')
+                    ->helperText('Tell reviewers what changed and what they should focus on.')
+                    ->rows(4)
                     ->required()
                     ->maxLength(2_000),
             ])
@@ -110,7 +136,8 @@ class ViewDocumentTemplate extends ViewRecord
                         request()->userAgent(),
                     ),
                     failureTitle: "{$label} Failed",
-                    successTitle: "Template version: {$label}",
+                    successTitle: 'Template version submitted for review',
+                    successBody: 'The draft is locked and the first actionable step is now available in the assigned reviewer’s approval queue.',
                     afterSuccess: function (): void {
                         $this->record->refresh();
                     },
