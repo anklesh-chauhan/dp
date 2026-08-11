@@ -45,18 +45,30 @@ class ViewDocumentTemplate extends ViewRecord
         return match ($version->approval_status) {
             TemplateApprovalStatus::Draft => "Version {$version->version} is a draft and can be submitted for review.",
             TemplateApprovalStatus::Submitted,
-            TemplateApprovalStatus::Reviewed => "Version {$version->version} is under review. Follow progress in Template Workflow Approvals below.",
+            TemplateApprovalStatus::Reviewed => $this->underReviewSubheading($version),
             TemplateApprovalStatus::Approved => "Version {$version->version} is approved and ready to publish.",
             TemplateApprovalStatus::Rejected => "Version {$version->version} was rejected. Review the decision rationale, correct it, and resubmit.",
         };
+    }
+
+    private function underReviewSubheading(DocumentTemplateVersion $version): string
+    {
+        $pending = $this->record->currentPendingApprovalStep();
+
+        if ($pending !== null) {
+            return "Version {$version->version} is under review · Waiting at {$pending->label()}.";
+        }
+
+        return "Version {$version->version} is under review. Follow progress in Template Workflow Approvals below.";
     }
 
     protected function getActions(): array
     {
         return [
             Action::make('previewWithPrintTemplate')
-                ->label('Preview with Print Template')
+                ->label('Print Preview')
                 ->icon(Heroicon::Eye)
+                ->tooltip('Opens the print layout for review. This is not controlled printing.')
                 ->url(fn (): string => route('document-templates.versions.preview', [
                     'documentTemplate' => $this->record,
                     'documentTemplateVersion' => $this->draftVersion(),

@@ -10,7 +10,9 @@ use App\Actions\Sop\ReturnDocumentAction;
 use App\Domain\DMS\Services\SopApprovalDecisionAuthorizationAdapter;
 use App\Exceptions\WorkflowException;
 use App\Filament\Concerns\HandlesServiceExceptions;
+use App\Filament\Concerns\ProvidesControlledDocumentPrintPreviewAction;
 use App\Models\ApprovalDecision;
+use App\Models\ControlledDocument;
 use App\Models\SopApproval;
 use App\Models\User;
 use Filament\Actions\Action;
@@ -25,6 +27,7 @@ use Illuminate\Support\Facades\Auth;
 class ApprovalRelationManager extends RelationManager
 {
     use HandlesServiceExceptions;
+    use ProvidesControlledDocumentPrintPreviewAction;
 
     protected static string $relationship = 'approvals';
 
@@ -52,73 +55,119 @@ class ApprovalRelationManager extends RelationManager
                 TextColumn::make('approved_at')->dateTime(),
                 TextColumn::make('comments')->limit(50)->toggleable(),
             ])
+            ->headerActions($this->printPreviewHeaderActions())
             ->recordActions([
-                Action::make('approve')
-                    ->label('Approve Step')
-                    ->icon(Heroicon::CheckBadge)
-                    ->color('success')
-                    ->modalHeading('Approve this workflow step?')
-                    ->modalDescription('Your rationale and electronic signature will be added to the permanent approval history.')
-                    ->schema([
-                        Textarea::make('comments')
-                            ->label('Decision rationale')
-                            ->required()
-                            ->maxLength(2_000),
-                    ])
-                    ->visible(fn (SopApproval $record): bool => $this->canDecide($record)
-                        && $record->approvalDecision?->hasCode(ApprovalDecision::PENDING))
-                    ->action(function ($record, array $data): void {
-                        $this->runServiceAction(
-                            fn () => app(ApproveDocumentAction::class)->execute(
-                                $record,
-                                Auth::user(),
-                                $data['comments'] ?? null,
-                            ),
-                            failureTitle: 'Approval Failed',
-                            successTitle: 'Document approved successfully.',
-                        );
-                    }),
-                Action::make('return')
-                    ->label('Return for Correction')
-                    ->color('warning')
-                    ->icon('heroicon-o-arrow-uturn-left')
-                    ->modalHeading('Return this document for correction?')
-                    ->modalDescription('The document will return to Draft and unlock so the maker can correct and resubmit it.')
-                    ->schema([Textarea::make('comments')->label('Correction required')->required()->maxLength(2_000)])
-                    ->visible(fn (SopApproval $record): bool => $this->canDecide($record)
-                        && $record->approvalDecision?->hasCode(ApprovalDecision::PENDING))
-                    ->action(function ($record, array $data): void {
-                        $this->runServiceAction(
-                            fn () => app(ReturnDocumentAction::class)->execute(
-                                $record,
-                                Auth::user(),
-                                $data['comments'] ?? null,
-                            ),
-                            failureTitle: 'Return Failed',
-                            successTitle: 'Document returned to maker.',
-                        );
-                    }),
-                Action::make('reject')
-                    ->label('Reject Submission')
-                    ->color('danger')
-                    ->icon(Heroicon::XCircle)
-                    ->modalHeading('Reject this approval submission?')
-                    ->modalDescription('The current approval cycle will close. Record a clear reason for the signed audit trail.')
-                    ->schema([Textarea::make('comments')->label('Rejection reason')->required()->maxLength(2_000)])
-                    ->visible(fn (SopApproval $record): bool => $this->canDecide($record)
-                        && $record->approvalDecision?->hasCode(ApprovalDecision::PENDING))
-                    ->action(function ($record, array $data): void {
-                        $this->runServiceAction(
-                            fn () => app(RejectDocumentAction::class)->execute(
-                                $record,
-                                Auth::user(),
-                                $data['comments'] ?? null,
-                            ),
-                            failureTitle: 'Reject Failed',
-                            successTitle: 'Document rejected.',
-                        );
-                    }),
+                $this->decisionRecordAction(
+                    name: 'approve',
+                    label: 'Approve Step',
+                    decision: 'approve',
+                    color: 'success',
+                    icon: Heroicon::CheckBadge,
+                    heading: 'Approve this workflow step?',
+                    description: 'Your rationale and electronic signature will be added to the permanent approval history.',
+                    commentsLabel: 'Decision rationale',
+                    successTitle: 'Document approved successfully.',
+                ),
+                $this->decisionRecordAction(
+                    name: 'return',
+                    label: 'Return for Correction',
+                    decision: 'return',
+                    color: 'warning',
+                    icon: Heroicon::ArrowUturnLeft,
+                    heading: 'Return this document for correction?',
+                    description: 'The document will return to Draft and unlock so the maker can correct and resubmit it.',
+                    commentsLabel: 'Correction required',
+                    successTitle: 'Document returned to maker.',
+                ),
+                $this->decisionRecordAction(
+                    name: 'reject',
+                    label: 'Reject Submission',
+                    decision: 'reject',
+                    color: 'danger',
+                    icon: Heroicon::XCircle,
+                    heading: 'Reject this approval submission?',
+                    description: 'The current approval cycle will close. Record a clear reason for the signed audit trail.',
+                    commentsLabel: 'Rejection reason',
+                    successTitle: 'Document rejected.',
+                ),
             ]);
+    }
+
+    /**
+     * @return list<Action>
+     */
+    private function printPreviewHeaderActions(): array
+    {
+        $document = $this->getOwnerRecord();
+
+        if (! $document instanceof ControlledDocument) {
+            return [];
+        }
+
+        $preview = $this->controlledDocumentPrintPreviewModalAction($document, 'previewWithPrintTemplate');
+
+        return $preview instanceof Action ? [$preview] : [];
+    }
+
+    private function decisionRecordAction(
+        string $name,
+        string $label,
+        string $decision,
+        string $color,
+        Heroicon $icon,
+        string $heading,
+        string $description,
+        string $commentsLabel,
+        string $successTitle,
+    ): Action {
+        return Action::make($name)
+            ->label($label)
+            ->icon($icon)
+            ->color($color)
+            ->modalHeading($heading)
+            ->modalDescription($description)
+            ->schema([
+                Textarea::make('comments')
+                    ->label($commentsLabel)
+                    ->required()
+                    ->maxLength(2_000),
+            ])
+            ->extraModalFooterActions(function (): array {
+                $document = $this->getOwnerRecord();
+
+                if (! $document instanceof ControlledDocument) {
+                    return [];
+                }
+
+                $preview = $this->controlledDocumentPrintPreviewModalAction($document);
+
+                return $preview instanceof Action ? [$preview] : [];
+            })
+            ->visible(fn (SopApproval $record): bool => $this->canDecide($record)
+                && $record->approvalDecision?->hasCode(ApprovalDecision::PENDING))
+            ->action(function (SopApproval $record, array $data) use ($decision, $label, $successTitle): void {
+                $this->runServiceAction(
+                    fn () => match ($decision) {
+                        'approve' => app(ApproveDocumentAction::class)->execute(
+                            $record,
+                            Auth::user(),
+                            $data['comments'] ?? null,
+                        ),
+                        'return' => app(ReturnDocumentAction::class)->execute(
+                            $record,
+                            Auth::user(),
+                            $data['comments'] ?? null,
+                        ),
+                        default => app(RejectDocumentAction::class)->execute(
+                            $record,
+                            Auth::user(),
+                            $data['comments'] ?? null,
+                        ),
+                    },
+                    failureTitle: "{$label} Failed",
+                    successTitle: $successTitle,
+                );
+            });
     }
 
     private function canDecide(SopApproval $approval): bool

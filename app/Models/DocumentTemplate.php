@@ -6,6 +6,8 @@ namespace App\Models;
 
 use App\Concerns\Lockable;
 use App\Domain\DMS\Enums\TemplateApprovalStatus;
+use App\Domain\Shared\Services\CurrentPendingApprovalStepResolver;
+use App\Domain\Shared\Support\PendingApprovalStep;
 use Database\Factories\DocumentTemplateFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -94,7 +96,8 @@ class DocumentTemplate extends Model
 
     /**
      * Workflow-aware status for UI badges. Lifecycle stays Draft/Published;
-     * while a draft version is in approval, surface that instead of Draft.
+     * while a draft version is in approval, surface that instead of Draft,
+     * including the current pending workflow step when available.
      */
     public function displayStatusLabel(): string
     {
@@ -103,7 +106,7 @@ class DocumentTemplate extends Model
             : $this->latestDraftVersion()->first();
 
         if ($draft instanceof DocumentTemplateVersion) {
-            return match ($draft->approval_status) {
+            $label = match ($draft->approval_status) {
                 TemplateApprovalStatus::Submitted,
                 TemplateApprovalStatus::Reviewed,
                 TemplateApprovalStatus::Approved,
@@ -111,9 +114,27 @@ class DocumentTemplate extends Model
                 default => $this->templateStatus?->name
                     ?? TemplateApprovalStatus::Draft->label(),
             };
+
+            if (in_array($draft->approval_status, [
+                TemplateApprovalStatus::Submitted,
+                TemplateApprovalStatus::Reviewed,
+            ], true)) {
+                $pending = $this->currentPendingApprovalStep();
+
+                if ($pending instanceof PendingApprovalStep) {
+                    return $pending->withStatusLabel($label);
+                }
+            }
+
+            return $label;
         }
 
         return $this->templateStatus?->name ?? 'Unknown';
+    }
+
+    public function currentPendingApprovalStep(): ?PendingApprovalStep
+    {
+        return app(CurrentPendingApprovalStepResolver::class)->forDocumentTemplate($this);
     }
 
     public function displayStatusColor(): string

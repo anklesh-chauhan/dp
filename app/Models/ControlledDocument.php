@@ -8,6 +8,8 @@ use App\Concerns\Lockable;
 use App\Domain\DMS\Contracts\ControlledDocument as ControlledDocumentContract;
 use App\Domain\QMS\Models\QualityAttachment;
 use App\Domain\Shared\Contracts\ApprovableSubject;
+use App\Domain\Shared\Services\CurrentPendingApprovalStepResolver;
+use App\Domain\Shared\Support\PendingApprovalStep;
 use Database\Factories\ControlledDocumentFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -243,6 +245,60 @@ class ControlledDocument extends Model implements ApprovableSubject, ControlledD
     public function canBePrintedDirectly(): bool
     {
         return ! $this->isIssuableType() && $this->canBePrinted();
+    }
+
+    /**
+     * Workflow-aware status for UI badges. While under review, append the
+     * current actionable step (role / step type) so lists show where work is waiting.
+     */
+    public function displayStatusLabel(): string
+    {
+        $status = $this->documentStatus?->name ?? 'Unknown';
+
+        if (! $this->documentStatus?->hasCode(DocumentStatus::UNDER_REVIEW)) {
+            return $status;
+        }
+
+        $pending = $this->currentPendingApprovalStep();
+
+        return $pending instanceof PendingApprovalStep
+            ? $pending->withStatusLabel($status)
+            : $status;
+    }
+
+    public function currentPendingApprovalStep(): ?PendingApprovalStep
+    {
+        return app(CurrentPendingApprovalStepResolver::class)->forControlledDocument($this);
+    }
+
+    /**
+     * Non-controlled HTML print-layout preview for draft / review work.
+     * Prefer the controlled PDF viewer once {@see canBePrintedDirectly()} is true.
+     */
+    public function canPreviewWithPrintTemplate(?User $user = null): bool
+    {
+        if ($this->canBePrintedDirectly()) {
+            return false;
+        }
+
+        if (! $this->documentStatus?->hasCode(DocumentStatus::DRAFT)
+            && ! $this->documentStatus?->hasCode(DocumentStatus::UNDER_REVIEW)
+            && ! $this->documentStatus?->hasCode(DocumentStatus::APPROVED)
+            && ! $this->documentStatus?->hasCode(DocumentStatus::REJECTED)) {
+            return false;
+        }
+
+        $this->loadMissing('template');
+
+        if ($this->template?->report_template_id === null) {
+            return false;
+        }
+
+        if ($user === null) {
+            return true;
+        }
+
+        return $user->can('view', $this);
     }
 
     /**

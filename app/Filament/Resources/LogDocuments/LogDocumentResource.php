@@ -162,7 +162,8 @@ class LogDocumentResource extends Resource
                 TextColumn::make('batch_number')->toggleable(),
                 TextColumn::make('documentStatus.name')
                     ->label('Status')
-                    ->badge(),
+                    ->badge()
+                    ->state(fn (ControlledDocument $record): string => $record->displayStatusLabel()),
                 TextColumn::make('activeIssuances_count')->counts('activeIssuances')->label('Active Copies'),
             ])
             ->filters([
@@ -202,7 +203,17 @@ class LogDocumentResource extends Resource
     {
         return parent::getEloquentQuery()
             ->logDocuments()
-            ->with(['department', 'documentType', 'documentStatus', 'referencedSop', 'lockedByUser']);
+            ->with([
+                'department',
+                'documentType',
+                'documentStatus',
+                'referencedSop',
+                'lockedByUser',
+                'approvals.workflowStep.approvalStepType',
+                'approvals.workflowStep.role',
+                'approvals.workflowStep.department',
+                'approvals.approvalDecision',
+            ]);
     }
 
     public static function canViewAny(): bool

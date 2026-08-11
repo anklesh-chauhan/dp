@@ -49,16 +49,19 @@ class ViewDocumentTemplateApprovalInstance extends ViewRecord
                 icon: Heroicon::CheckBadge,
             ),
 
+            Action::make('previewTemplate')
+                ->label('Print Preview')
+                ->icon(Heroicon::Eye)
+                ->color('gray')
+                ->tooltip('Opens the print layout for this template version. This is not controlled printing.')
+                ->url(fn (): string => route('document-templates.versions.preview', [
+                    'documentTemplate' => $this->record->templateVersion->template,
+                    'documentTemplateVersion' => $this->record->templateVersion,
+                ]))
+                ->openUrlInNewTab()
+                ->visible(fn (): bool => $this->record->templateVersion?->template?->report_template_id !== null),
+
             ActionGroup::make([
-                Action::make('previewTemplate')
-                    ->label('Preview This Version')
-                    ->icon(Heroicon::Eye)
-                    ->color('gray')
-                    ->url(fn (): string => route('document-templates.versions.preview', [
-                        'documentTemplate' => $this->record->templateVersion->template,
-                        'documentTemplateVersion' => $this->record->templateVersion,
-                    ]))
-                    ->openUrlInNewTab(),
                 Action::make('viewTemplate')
                     ->label('View Template Record')
                     ->icon(Heroicon::OutlinedDocumentText)
@@ -116,6 +119,26 @@ class ViewDocumentTemplateApprovalInstance extends ViewRecord
                     ->required()
                     ->maxLength(2_000),
             ])
+            ->extraModalFooterActions(function (): array {
+                $template = $this->record->templateVersion?->template;
+                $version = $this->record->templateVersion;
+
+                if ($template === null || $version === null || $template->report_template_id === null) {
+                    return [];
+                }
+
+                return [
+                    Action::make('openPrintPreview')
+                        ->label('Print Preview')
+                        ->icon(Heroicon::Eye)
+                        ->color('gray')
+                        ->url(route('document-templates.versions.preview', [
+                            'documentTemplate' => $template,
+                            'documentTemplateVersion' => $version,
+                        ]))
+                        ->openUrlInNewTab(),
+                ];
+            })
             ->visible(fn (): bool => $this->canDecide())
             ->action(function (array $data) use ($decision, $label): void {
                 /** @var User $user */

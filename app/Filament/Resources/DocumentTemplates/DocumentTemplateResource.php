@@ -267,7 +267,16 @@ class DocumentTemplateResource extends Resource
     {
         return parent::getEloquentQuery()
             ->withoutGlobalScopes([SoftDeletingScope::class])
-            ->with(['department', 'category', 'documentType', 'regulationTags', 'templateStatus', 'latestDraftVersion']);
+            ->with([
+                'department',
+                'category',
+                'documentType',
+                'regulationTags',
+                'templateStatus',
+                'latestDraftVersion.approvalInstances.workflowStep.approvalStepType',
+                'latestDraftVersion.approvalInstances.workflowStep.role',
+                'latestDraftVersion.approvalInstances.workflowStep.department',
+            ]);
     }
 
     private static function runAiClassification(

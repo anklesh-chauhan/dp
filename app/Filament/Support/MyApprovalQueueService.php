@@ -41,7 +41,8 @@ class MyApprovalQueueService
      *     step_type: string,
      *     required_role: string,
      *     submitted_at: string,
-     *     review_url: string
+     *     review_url: string,
+     *     print_preview_url: ?string
      * }>
      */
     public function forUser(User $user): Collection
@@ -64,6 +65,9 @@ class MyApprovalQueueService
             ->visibleToUser($user)
             ->with([
                 'document.department',
+                'document.template',
+                'document.documentStatus',
+                'document.documentType',
                 'workflowStep.approvalStepType',
                 'workflowStep.role',
                 'approvalDecision',
@@ -82,6 +86,9 @@ class MyApprovalQueueService
                 'required_role' => (string) $approval->workflowStep->role->name,
                 'submitted_at' => $approval->created_at->toISOString(),
                 'review_url' => ControlledDocumentResource::getUrl('view', ['record' => $approval->document_id]),
+                'print_preview_url' => $approval->document->canPreviewWithPrintTemplate($user)
+                    ? route('controlled-documents.draft-preview', $approval->document)
+                    : null,
             ]);
     }
 
@@ -111,6 +118,12 @@ class MyApprovalQueueService
                 'required_role' => (string) $instance->workflowStep->role->name,
                 'submitted_at' => ($instance->templateVersion->submitted_at ?? $instance->created_at)->toISOString(),
                 'review_url' => DocumentTemplateApprovalInstanceResource::getUrl('view', ['record' => $instance]),
+                'print_preview_url' => $instance->templateVersion->template->report_template_id !== null
+                    ? route('document-templates.versions.preview', [
+                        'documentTemplate' => $instance->templateVersion->template,
+                        'documentTemplateVersion' => $instance->templateVersion,
+                    ])
+                    : null,
             ]);
     }
 
@@ -149,6 +162,7 @@ class MyApprovalQueueService
                     'required_role' => (string) $instance->workflowStep->role->name,
                     'submitted_at' => $instance->created_at->toISOString(),
                     'review_url' => DeviationResource::getUrl('view', ['record' => $deviation]),
+                    'print_preview_url' => null,
                 ];
             });
     }

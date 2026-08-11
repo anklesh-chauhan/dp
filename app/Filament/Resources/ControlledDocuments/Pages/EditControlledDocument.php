@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\ControlledDocuments\Pages;
 
+use App\Filament\Concerns\ProvidesControlledDocumentPrintPreviewAction;
 use App\Filament\Resources\ControlledDocuments\ControlledDocumentResource;
-use App\Models\DocumentStatus;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Notifications\Notification;
@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Auth;
 
 class EditControlledDocument extends EditRecord
 {
+    use ProvidesControlledDocumentPrintPreviewAction;
+
     protected static string $resource = ControlledDocumentResource::class;
 
     public function mount(int|string $record): void
@@ -35,13 +37,7 @@ class EditControlledDocument extends EditRecord
     protected function getActions(): array
     {
         return [
-            Action::make('previewWithPrintTemplate')
-                ->label('Preview with Print Template')
-                ->icon(Heroicon::Eye)
-                ->url(fn (): string => route('controlled-documents.draft-preview', $this->record))
-                ->openUrlInNewTab()
-                ->visible(fn (): bool => $this->record->documentStatus?->hasCode(DocumentStatus::DRAFT)
-                    && $this->record->template?->report_template_id !== null),
+            $this->controlledDocumentPrintPreviewAction(),
             Action::make('printPdf')
                 ->label('View PDF')
                 ->icon(Heroicon::Eye)

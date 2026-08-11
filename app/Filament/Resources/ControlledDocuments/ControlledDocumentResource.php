@@ -188,6 +188,7 @@ class ControlledDocumentResource extends Resource
                 TextColumn::make('documentStatus.name')
                     ->label('Status')
                     ->badge()
+                    ->state(fn (ControlledDocument $record): string => $record->displayStatusLabel())
                     ->color(fn (ControlledDocument $record): string => match ($record->documentStatus?->code) {
                         DocumentStatus::DRAFT => 'gray',
                         DocumentStatus::UNDER_REVIEW => 'warning',
@@ -266,7 +267,22 @@ class ControlledDocumentResource extends Resource
     {
         return parent::getEloquentQuery()
             ->withoutGlobalScopes([SoftDeletingScope::class])
-            ->with(['organization', 'department', 'category', 'template.category', 'template.regulationTags', 'templateVersion', 'documentType', 'regulationTags', 'documentStatus', 'lockedByUser']);
+            ->with([
+                'organization',
+                'department',
+                'category',
+                'template.category',
+                'template.regulationTags',
+                'templateVersion',
+                'documentType',
+                'regulationTags',
+                'documentStatus',
+                'lockedByUser',
+                'approvals.workflowStep.approvalStepType',
+                'approvals.workflowStep.role',
+                'approvals.workflowStep.department',
+                'approvals.approvalDecision',
+            ]);
     }
 
     private static function publishedTemplateVersionId(?int $templateId): ?int

@@ -9,6 +9,7 @@ use App\Domain\DMS\Actions\IssueDocumentAction;
 use App\Domain\DMS\Actions\LockDocumentAction;
 use App\Domain\DMS\Actions\UnlockDocumentAction;
 use App\Filament\Concerns\HandlesServiceExceptions;
+use App\Filament\Concerns\ProvidesControlledDocumentPrintPreviewAction;
 use App\Filament\Concerns\ProvidesRetentionLifecycleActions;
 use App\Filament\Resources\LogDocuments\LogDocumentResource;
 use App\Models\Department;
@@ -30,14 +31,33 @@ use Illuminate\Support\Facades\Auth;
 class ViewLogDocument extends ViewRecord
 {
     use HandlesServiceExceptions;
+    use ProvidesControlledDocumentPrintPreviewAction;
     use ProvidesRetentionLifecycleActions;
 
     protected static string $resource = LogDocumentResource::class;
+
+    public function getSubheading(): ?string
+    {
+        $status = $this->record->documentStatus?->name ?? 'Unknown status';
+
+        if ($this->record->documentStatus?->hasCode(DocumentStatus::UNDER_REVIEW)) {
+            $pending = $this->record->currentPendingApprovalStep();
+
+            if ($pending !== null) {
+                return "Under review · Waiting at {$pending->label()}.";
+            }
+
+            return 'Under review · Waiting for the next assigned workflow step.';
+        }
+
+        return "Status: {$status}";
+    }
 
     protected function getActions(): array
     {
         return [
             ...$this->getDocumentRetentionLifecycleActions(),
+            $this->controlledDocumentPrintPreviewAction(),
             Action::make('submitForApproval')
                 ->label('Submit for Approval')
                 ->icon(Heroicon::PaperAirplane)

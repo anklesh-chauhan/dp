@@ -3,10 +3,14 @@
 declare(strict_types=1);
 
 use App\Domain\DMS\Enums\TemplateApprovalStatus;
+use App\Domain\Reporting\Enums\ReportFormat;
+use App\Domain\Reporting\Enums\ReportScope;
+use App\Domain\Reporting\Support\ReportFieldRegistry;
 use App\Domain\Shared\Enums\ApprovalDecisionCode;
 use App\Filament\Resources\ControlledDocuments\Pages\ViewControlledDocument;
 use App\Filament\Resources\ControlledDocuments\RelationManagers\ApprovalRelationManager;
 use App\Filament\Resources\DocumentTemplateApprovalInstances\Pages\ViewDocumentTemplateApprovalInstance;
+use App\Filament\Resources\LogDocuments\Pages\ViewLogDocument;
 use App\Models\ApprovalDecision;
 use App\Models\ApprovalStepType;
 use App\Models\ControlledDocument;
@@ -18,6 +22,7 @@ use App\Models\DocumentTemplateApprovalEvent;
 use App\Models\DocumentTemplateApprovalInstance;
 use App\Models\DocumentTemplateVersion;
 use App\Models\DocumentType;
+use App\Models\ReportTemplate;
 use App\Models\SopApproval;
 use App\Models\SopWorkflow;
 use App\Models\SopWorkflowStep;
@@ -67,10 +72,18 @@ beforeEach(function (): void {
 
     $documentType = DocumentType::query()->where('code', DocumentType::SOP)->firstOrFail();
     $category = DocumentCategory::factory()->create();
+    $this->reportTemplate = ReportTemplate::factory()->create([
+        'scope' => ReportScope::ControlledDocument,
+        'format' => ReportFormat::Pdf,
+        'fields' => app(ReportFieldRegistry::class)->defaultFields(ReportScope::ControlledDocument),
+        'created_by' => $this->author,
+        'updated_by' => $this->author,
+    ]);
     $this->template = DocumentTemplate::factory()->create([
         'category_id' => $category,
         'department_id' => $this->department,
         'document_type_id' => $documentType,
+        'report_template_id' => $this->reportTemplate,
         'template_status_id' => TemplateStatus::idFor(TemplateStatus::DRAFT),
         'created_by' => $this->author,
     ]);
@@ -131,6 +144,7 @@ it('places signed controlled-document decisions at the top of the review page', 
     Livewire::test(ViewControlledDocument::class, ['record' => $this->document->getRouteKey()])
         ->assertSee('Action required: Step 1')
         ->assertActionVisible('approveCurrentStep')
+        ->assertActionVisible('previewWithPrintTemplate')
         ->assertActionVisible('returnCurrentStep')
         ->assertActionVisible('rejectCurrentStep')
         ->mountAction('approveCurrentStep')
@@ -145,11 +159,47 @@ it('places signed controlled-document decisions at the top of the review page', 
         ->and($this->document->refresh()->documentStatus?->code)->toBe(DocumentStatus::EFFECTIVE);
 });
 
+it('shows print preview on log documents under review', function (): void {
+    $logType = DocumentType::query()->where('code', DocumentType::LOG)->firstOrFail();
+    $logType->update(['is_issuable' => true, 'requires_sop_reference' => false]);
+    $logTemplate = DocumentTemplate::factory()->create([
+        'category_id' => $this->template->category_id,
+        'department_id' => $this->department,
+        'document_type_id' => $logType,
+        'report_template_id' => $this->reportTemplate,
+        'template_status_id' => TemplateStatus::idFor(TemplateStatus::PUBLISHED),
+        'created_by' => $this->author,
+    ]);
+    $logVersion = DocumentTemplateVersion::factory()->create([
+        'document_template_id' => $logTemplate,
+        'template_status_id' => TemplateStatus::idFor(TemplateStatus::PUBLISHED),
+        'created_by' => $this->author,
+    ]);
+    $logDocument = ControlledDocument::factory()->create([
+        'template_id' => $logTemplate,
+        'template_version_id' => $logVersion,
+        'department_id' => $this->department,
+        'category_id' => $this->template->category_id,
+        'document_type_id' => $logType,
+        'document_status_id' => DocumentStatus::idFor(DocumentStatus::UNDER_REVIEW),
+        'created_by' => $this->author,
+        'owner_id' => $this->author,
+    ]);
+
+    Livewire::test(ViewLogDocument::class, ['record' => $logDocument->getRouteKey()])
+        ->assertActionVisible('previewWithPrintTemplate');
+
+    Livewire::test(ViewControlledDocument::class, ['record' => $logDocument->getRouteKey()])
+        ->assertActionVisible('previewWithPrintTemplate');
+});
+
 it('shows approve for checker workflow steps in controlled-document approval history', function (): void {
     Livewire::test(ApprovalRelationManager::class, [
         'ownerRecord' => $this->document,
         'pageClass' => ViewControlledDocument::class,
-    ])->assertActionVisible(TestAction::make('approve')->table($this->documentApproval));
+    ])
+        ->assertActionVisible(TestAction::make('approve')->table($this->documentApproval))
+        ->assertActionVisible(TestAction::make('previewWithPrintTemplate')->table());
 });
 
 it('provides a complete template decision workspace from the approval queue', function (): void {

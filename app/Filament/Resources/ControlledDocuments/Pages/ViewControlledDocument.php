@@ -19,6 +19,7 @@ use App\Domain\Reporting\Enums\ReportScope;
 use App\Domain\Shared\Services\AuditLogService;
 use App\Exceptions\WorkflowException;
 use App\Filament\Concerns\HandlesServiceExceptions;
+use App\Filament\Concerns\ProvidesControlledDocumentPrintPreviewAction;
 use App\Filament\Concerns\ProvidesRetentionLifecycleActions;
 use App\Filament\Resources\ControlledDocuments\ControlledDocumentResource;
 use App\Models\DocumentIssuance;
@@ -46,6 +47,7 @@ use Illuminate\Support\Facades\DB;
 class ViewControlledDocument extends ViewRecord
 {
     use HandlesServiceExceptions;
+    use ProvidesControlledDocumentPrintPreviewAction;
     use ProvidesRetentionLifecycleActions;
 
     protected static string $resource = ControlledDocumentResource::class;
@@ -66,6 +68,12 @@ class ViewControlledDocument extends ViewRecord
         }
 
         if ($this->record->documentStatus?->hasCode(DocumentStatus::UNDER_REVIEW)) {
+            $pending = $this->record->currentPendingApprovalStep();
+
+            if ($pending !== null) {
+                return "Under review · Waiting at {$pending->label()}.";
+            }
+
             return 'Under review · Waiting for the next assigned workflow step.';
         }
 
@@ -104,12 +112,7 @@ class ViewControlledDocument extends ViewRecord
                 icon: Heroicon::CheckBadge,
             ),
 
-            Action::make('previewWithPrintTemplate')
-                ->label('Preview with Print Template')
-                ->icon(Heroicon::Eye)
-                ->url(fn (): string => route('controlled-documents.draft-preview', $this->record))
-                ->openUrlInNewTab()
-                ->visible(fn (): bool => $this->canPreviewWithPrintTemplate()),
+            $this->controlledDocumentPrintPreviewAction(),
 
             Action::make('printPdf')
                 ->label('View Controlled PDF')
@@ -376,6 +379,11 @@ class ViewControlledDocument extends ViewRecord
                     ->required()
                     ->maxLength(2_000),
             ])
+            ->extraModalFooterActions(function (): array {
+                $preview = $this->controlledDocumentPrintPreviewModalAction($this->record);
+
+                return $preview instanceof Action ? [$preview] : [];
+            })
             ->visible(fn (): bool => $this->currentApprovalForUser() instanceof SopApproval)
             ->action(function (array $data) use ($decision, $label): void {
                 $this->runServiceAction(
@@ -403,28 +411,6 @@ class ViewControlledDocument extends ViewRecord
                     },
                 );
             });
-    }
-
-    private function canPreviewWithPrintTemplate(): bool
-    {
-        // Prefer the controlled PDF viewer once the document can be printed directly.
-        if ($this->record->canBePrintedDirectly()) {
-            return false;
-        }
-
-        // Intermediate "approved" is used while later mandatory steps are still pending.
-        if (! $this->record->documentStatus?->hasCode(DocumentStatus::DRAFT)
-            && ! $this->record->documentStatus?->hasCode(DocumentStatus::UNDER_REVIEW)
-            && ! $this->record->documentStatus?->hasCode(DocumentStatus::APPROVED)
-            && ! $this->record->documentStatus?->hasCode(DocumentStatus::REJECTED)) {
-            return false;
-        }
-
-        if ($this->record->template?->report_template_id === null) {
-            return false;
-        }
-
-        return app(ControlledDocumentAccessService::class)->canView(Auth::user(), $this->record);
     }
 
     private function approvalDecisionHeading(string $label): string

@@ -46,8 +46,9 @@ class EditDocumentTemplate extends EditRecord
     {
         return [
             Action::make('previewWithPrintTemplate')
-                ->label('Preview with Print Template')
+                ->label('Print Preview')
                 ->icon(Heroicon::Eye)
+                ->tooltip('Opens the print layout for review. This is not controlled printing.')
                 ->url(fn (): string => route('document-templates.versions.preview', [
                     'documentTemplate' => $this->record,
                     'documentTemplateVersion' => $this->draftVersion(),

@@ -7,6 +7,9 @@ use App\Domain\QMS\Models\Deviation;
 use App\Domain\QMS\Models\QualityApprovalInstance;
 use App\Domain\QMS\Models\QualityApprovalWorkflow;
 use App\Domain\QMS\Models\QualityApprovalWorkflowStep;
+use App\Domain\Reporting\Enums\ReportFormat;
+use App\Domain\Reporting\Enums\ReportScope;
+use App\Domain\Reporting\Support\ReportFieldRegistry;
 use App\Filament\Pages\MyApprovalQueue;
 use App\Filament\Resources\DocumentTemplateApprovalInstances\DocumentTemplateApprovalInstanceResource;
 use App\Filament\Resources\SopApprovals\SopApprovalResource;
@@ -21,12 +24,14 @@ use App\Models\DocumentTemplate;
 use App\Models\DocumentTemplateApprovalInstance;
 use App\Models\DocumentTemplateVersion;
 use App\Models\DocumentType;
+use App\Models\ReportTemplate;
 use App\Models\SopApproval;
 use App\Models\SopWorkflow;
 use App\Models\SopWorkflowStep;
 use App\Models\TemplateStatus;
 use App\Models\User;
 use Database\Seeders\LookupTableSeeder;
+use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
@@ -43,6 +48,9 @@ beforeEach(function (): void {
         'Decide:DocumentTemplateApproval',
         'Decide:QualityApproval',
         'Investigate:Deviation',
+        'View:ControlledDocument',
+        'View:DocumentTemplate',
+        'View:DocumentTemplateApproval',
     ] as $permission) {
         Permission::findOrCreate($permission, 'web');
     }
@@ -58,16 +66,27 @@ beforeEach(function (): void {
         'Decide:DocumentTemplateApproval',
         'Decide:QualityApproval',
         'Investigate:Deviation',
+        'View:ControlledDocument',
+        'View:DocumentTemplate',
+        'View:DocumentTemplateApproval',
     ]);
 });
 
 it('combines only actionable document template and QMS approvals for the signed-in user', function (): void {
     $documentType = DocumentType::query()->where('code', DocumentType::SOP)->firstOrFail();
+    $reportTemplate = ReportTemplate::factory()->create([
+        'scope' => ReportScope::ControlledDocument,
+        'format' => ReportFormat::Pdf,
+        'fields' => app(ReportFieldRegistry::class)->defaultFields(ReportScope::ControlledDocument),
+        'created_by' => $this->author,
+        'updated_by' => $this->author,
+    ]);
     $template = DocumentTemplate::factory()->create([
         'category_id' => DocumentCategory::factory(),
         'department_id' => $this->department,
         'created_by' => $this->author,
         'document_type_id' => $documentType,
+        'report_template_id' => $reportTemplate,
         'template_status_id' => TemplateStatus::idFor(TemplateStatus::DRAFT),
     ]);
     $templateVersion = DocumentTemplateVersion::factory()->create([
@@ -133,13 +152,17 @@ it('combines only actionable document template and QMS approvals for the signed-
         ->and($items->pluck('work_type')->sort()->values()->all())
         ->toBe(['Controlled Document', 'Deviation', 'Document Template'])
         ->and($items->every(fn (array $item): bool => filled($item['review_url'])))->toBeTrue()
+        ->and($items->firstWhere('work_type', 'Controlled Document')['print_preview_url'])->not->toBeNull()
+        ->and($items->firstWhere('work_type', 'Document Template')['print_preview_url'])->not->toBeNull()
+        ->and($items->firstWhere('work_type', 'Deviation')['print_preview_url'])->toBeNull()
         ->and(MyApprovalQueue::canAccess())->toBeTrue();
 
     Livewire::test(MyApprovalQueue::class)
         ->assertOk()
         ->assertSee('Controlled Document')
         ->assertSee('Document Template')
-        ->assertSee('Deviation');
+        ->assertSee('Deviation')
+        ->assertActionVisible(TestAction::make('printPreview')->table($items->firstWhere('work_type', 'Controlled Document')['id']));
 
     Livewire::test(PendingApprovalsTable::class)
         ->assertSee('Controlled Document')

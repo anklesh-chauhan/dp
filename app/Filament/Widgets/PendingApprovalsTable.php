@@ -58,6 +58,13 @@ class PendingApprovalsTable extends TableWidget
                     ->label('Review')
                     ->icon(Heroicon::Eye)
                     ->url(fn (array $record): string => $record['review_url']),
+                Action::make('printPreview')
+                    ->label('Print Preview')
+                    ->icon(Heroicon::OutlinedDocumentText)
+                    ->color('gray')
+                    ->url(fn (array $record): string => (string) $record['print_preview_url'])
+                    ->openUrlInNewTab()
+                    ->visible(fn (array $record): bool => filled($record['print_preview_url'] ?? null)),
             ])
             ->emptyStateHeading('No pending approvals')
             ->emptyStateDescription('You are all caught up. New submissions will appear here.')
