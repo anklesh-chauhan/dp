@@ -50,7 +50,7 @@ class ControlledDocumentPrintController extends Controller
 
         if (! $controlledDocument->canBePrinted($issuance)) {
             $message = $controlledDocument->isIssuableType()
-                ? 'This controlled document must be issued before printing. Open DMS → Issuance → Log Documents, issue a controlled copy, then select Print Copy from the issuance register.'
+                ? 'This controlled document must be issued before printing. Open DMS → Issuance → Issuable Documents, issue a controlled copy, then select Print Copy from the issuance register.'
                 : 'Only approved or effective documents can be printed.';
 
             throw new AccessDeniedHttpException($message);

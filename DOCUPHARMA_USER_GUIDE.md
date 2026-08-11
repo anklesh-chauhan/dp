@@ -246,7 +246,7 @@ The previous version remains traceable.
 ### 6.6 Print, issue, and control copies
 
 - Use **Print / PDF** from the document view only for approved or effective documents that do not require controlled-copy issuance.
-- For an issuable controlled document, open **DMS · Issuance → Log Documents**, open the effective document, and select **Issue Controlled Copy**.
+- For an issuable controlled document, open **DMS · Issuance → Issuable Documents**, open the effective document, and select **Issue Controlled Copy**.
 - Enter the receiving user, department, or location, then open the document's **Controlled Copy Issuance Register** and select **Print Copy** on the active issuance.
 - Use **DMS · Issuance → Issuance Register** to find and print active issued copies.
 - Each controlled copy is rendered with its issuance number and watermark. Recalled or destroyed copies cannot be printed.

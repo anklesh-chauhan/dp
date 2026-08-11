@@ -53,20 +53,23 @@ function logDocumentResourceDocument(string $documentTypeCode): ControlledDocume
     ]);
 }
 
-it('limits the log documents resource to issuable masters', function (): void {
+it('limits the issuable documents resource to issuable masters', function (): void {
     $log = logDocumentResourceDocument(DocumentType::LOG);
     $nonIssuable = logDocumentResourceDocument(DocumentType::SOP);
     $nonIssuable->documentType->update(['is_issuable' => false]);
 
     $ids = LogDocumentResource::getEloquentQuery()->pluck('id');
 
-    expect($ids)->toContain($log->id)
+    expect(LogDocumentResource::getNavigationLabel())->toBe('Issuable Documents')
+        ->and(LogDocumentResource::getModelLabel())->toBe('Issuable Document')
+        ->and(LogDocumentResource::getPluralModelLabel())->toBe('Issuable Documents')
+        ->and($ids)->toContain($log->id)
         ->and($ids)->not->toContain($nonIssuable->id)
         ->and(ControlledDocument::query()->logDocuments()->pluck('id'))->toContain($log->id)
         ->and(ControlledDocument::query()->logDocuments()->pluck('id'))->not->toContain($nonIssuable->id);
 });
 
-it('does not resolve non-issuable masters on the log documents view page', function (): void {
+it('does not resolve non-issuable masters on the issuable documents view page', function (): void {
     Gate::before(static fn (): bool => true);
 
     $nonIssuable = logDocumentResourceDocument(DocumentType::SOP);

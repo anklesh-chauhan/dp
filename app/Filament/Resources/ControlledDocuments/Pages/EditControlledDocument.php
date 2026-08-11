@@ -6,6 +6,7 @@ namespace App\Filament\Resources\ControlledDocuments\Pages;
 
 use App\Filament\Concerns\ProvidesControlledDocumentPrintPreviewAction;
 use App\Filament\Resources\ControlledDocuments\ControlledDocumentResource;
+use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Notifications\Notification;
@@ -23,10 +24,16 @@ class EditControlledDocument extends EditRecord
     {
         parent::mount($record);
 
-        if (! Auth::user()?->can('update', $this->record)) {
+        $user = Auth::user();
+
+        if (
+            ! $user instanceof User
+            || ! $user->can('update', $this->record)
+            || ! $this->record->canBeEditedBy($user)
+        ) {
             Notification::make()
-                ->title('Document is locked or not editable')
-                ->body('Only draft documents that are not locked by another user can be edited.')
+                ->title('Document is not editable')
+                ->body('Only unlocked draft documents can be edited. Effective and approved documents require a new revision.')
                 ->danger()
                 ->send();
 

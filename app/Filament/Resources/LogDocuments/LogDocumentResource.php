@@ -53,11 +53,11 @@ class LogDocumentResource extends Resource
 
     protected static ?string $model = ControlledDocument::class;
 
-    protected static ?string $navigationLabel = 'Log Documents';
+    protected static ?string $navigationLabel = 'Issuable Documents';
 
-    protected static ?string $modelLabel = 'Log Document';
+    protected static ?string $modelLabel = 'Issuable Document';
 
-    protected static ?string $pluralModelLabel = 'Log Documents';
+    protected static ?string $pluralModelLabel = 'Issuable Documents';
 
     protected static ?int $navigationSort = 1;
 

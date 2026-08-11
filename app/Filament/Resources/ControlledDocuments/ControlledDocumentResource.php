@@ -22,6 +22,7 @@ use App\Models\DocumentStatus;
 use App\Models\DocumentTemplate;
 use App\Models\DocumentTemplateVersion;
 use App\Models\TemplateStatus;
+use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\DeleteAction;
@@ -228,7 +229,10 @@ class ControlledDocumentResource extends Resource
                         ->url(fn (ControlledDocument $record): string => route('controlled-documents.viewer', $record))
                         ->openUrlInNewTab()
                         ->visible(fn (ControlledDocument $record): bool => $record->canBePrintedDirectly()),
-                    EditAction::make(),
+                    EditAction::make()
+                        ->visible(fn (ControlledDocument $record): bool => ($user = auth()->user()) instanceof User
+                            && $user->can('update', $record)
+                            && $record->canBeEditedBy($user)),
                     DeleteAction::make(),
                     RestoreAction::make(),
                     ForceDeleteAction::make(),

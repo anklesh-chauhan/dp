@@ -104,7 +104,7 @@ it('shows under review instead of draft while mandatory approval steps remain pe
     );
     [$review] = $version->approvalInstances()->orderBy('id')->get()->all();
 
-    expect($this->template->refresh()->displayStatusLabel())->toBe('Under Review')
+    expect($this->template->refresh()->displayStatusLabel())->toBe('Under Review · Step 1 · Checker · qa reviewer')
         ->and($this->template->displayStatusColor())->toBe('warning')
         ->and($version->approval_status->label())->toBe('Under Review');
 
@@ -116,7 +116,7 @@ it('shows under review instead of draft while mandatory approval steps remain pe
     );
 
     expect($version->refresh()->approval_status)->toBe(TemplateApprovalStatus::Submitted)
-        ->and($this->template->refresh()->displayStatusLabel())->toBe('Under Review')
+        ->and($this->template->refresh()->displayStatusLabel())->toBe('Under Review · Step 2 · Approver · sop approver')
         ->and($this->template->templateStatus?->code)->toBe(TemplateStatus::DRAFT);
 });
 

@@ -66,7 +66,7 @@ it('guides direct controlled-copy print attempts to the issuance register', func
         $document,
     ))->toThrow(
         AccessDeniedHttpException::class,
-        'Open DMS → Issuance → Log Documents',
+        'Open DMS → Issuance → Issuable Documents',
     );
 });
 
