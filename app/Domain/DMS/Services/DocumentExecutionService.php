@@ -190,12 +190,6 @@ class DocumentExecutionService
     {
         $this->ensureStatus($execution, [DocumentExecution::STATUS_QA_REVIEW]);
 
-        if ($execution->requires('requires_disposition') && ! $execution->materialsAreReconciled()) {
-            throw ValidationException::withMessages([
-                'materials' => 'Batch materials and quantities must be entered and reconciled before QA disposition.',
-            ]);
-        }
-
         if (! in_array($disposition, [DocumentExecution::DISPOSITION_RELEASED, DocumentExecution::DISPOSITION_REJECTED], true)) {
             throw ValidationException::withMessages(['disposition' => 'Select Released or Rejected.']);
         }

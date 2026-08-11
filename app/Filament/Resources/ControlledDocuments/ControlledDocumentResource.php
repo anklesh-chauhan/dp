@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\ControlledDocuments;
 
+use App\Domain\DMS\Services\SopReferenceService;
 use App\Filament\Resources\ControlledDocuments\Pages\CreateControlledDocument;
 use App\Filament\Resources\ControlledDocuments\Pages\EditControlledDocument;
 use App\Filament\Resources\ControlledDocuments\Pages\ListControlledDocuments;
@@ -20,7 +21,6 @@ use App\Models\ControlledDocument;
 use App\Models\DocumentStatus;
 use App\Models\DocumentTemplate;
 use App\Models\DocumentTemplateVersion;
-use App\Models\DocumentType;
 use App\Models\TemplateStatus;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -103,15 +103,13 @@ class ControlledDocumentResource extends Resource
                         ...DocumentClassificationFormFields::templateDerivedDisplayFields(),
                         Select::make('referenced_controlled_document_id')
                             ->label('Referenced SOP')
-                            ->relationship(
-                                'referencedSop',
-                                'document_number',
-                                modifyQueryUsing: fn (Builder $query) => $query
-                                    ->whereHas(
-                                        'documentType',
-                                        fn (Builder $q) => $q->where('code', DocumentType::SOP)
-                                    )
-                            )
+                            ->options(function (Get $get, $livewire): array {
+                                $includeId = property_exists($livewire, 'record') && $livewire->record instanceof ControlledDocument
+                                    ? $livewire->record->referenced_controlled_document_id
+                                    : null;
+
+                                return app(SopReferenceService::class)->sopSelectOptions((int) $get('template_id'), $includeId);
+                            })
                             ->searchable()
                             ->preload()
                             ->visible(fn (Get $get) => self::requiresSopReference($get)),

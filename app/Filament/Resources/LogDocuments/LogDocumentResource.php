@@ -69,7 +69,7 @@ class LogDocumentResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return strval(static::getModel()::issuableDocuments()->count());
+        return strval(static::getEloquentQuery()->count());
     }
 
     public static function form(Schema $schema): Schema
@@ -109,7 +109,13 @@ class LogDocumentResource extends Resource
                             ->afterStateUpdated(fn (Set $set, ?int $state): mixed => $set('variables', self::templateVariableDefaultValues($state))),
                         Select::make('referenced_controlled_document_id')
                             ->label('Referenced Effective SOP')
-                            ->options(fn (Get $get): array => app(SopReferenceService::class)->effectiveSopOptions((int) $get('template_id')))
+                            ->options(function (Get $get, $livewire): array {
+                                $includeId = property_exists($livewire, 'record') && $livewire->record instanceof ControlledDocument
+                                    ? $livewire->record->referenced_controlled_document_id
+                                    : null;
+
+                                return app(SopReferenceService::class)->sopSelectOptions((int) $get('template_id'), $includeId);
+                            })
                             ->searchable()
                             ->preload()
                             ->required(fn ($livewire): bool => $livewire instanceof CreateLogDocument)

@@ -12,6 +12,7 @@ use App\Filament\Concerns\HandlesServiceExceptions;
 use App\Filament\Concerns\ProvidesRetentionLifecycleActions;
 use App\Filament\Resources\LogDocuments\LogDocumentResource;
 use App\Models\Department;
+use App\Models\DocumentIssuance;
 use App\Models\DocumentStatus;
 use App\Models\User;
 use Filament\Actions\Action;
@@ -22,6 +23,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Auth;
 
@@ -56,6 +58,15 @@ class ViewLogDocument extends ViewRecord
                 ->icon(Heroicon::DocumentCheck)
                 ->color('primary')
                 ->schema([
+                    Select::make('issuance_type')
+                        ->label('Copy type')
+                        ->options([
+                            DocumentIssuance::TYPE_EXECUTION => 'Writable GMP execution record',
+                            DocumentIssuance::TYPE_REFERENCE => 'Read-only reference copy',
+                        ])
+                        ->default(DocumentIssuance::TYPE_EXECUTION)
+                        ->live()
+                        ->required(),
                     Select::make('issued_to_user_id')
                         ->label('Issue To User')
                         ->options(fn (): array => User::query()->orderBy('name')->pluck('name', 'id')->all())
@@ -68,14 +79,31 @@ class ViewLogDocument extends ViewRecord
                     Select::make('log_frequency')
                         ->label('Execution frequency')
                         ->options(['hourly' => 'Hourly', 'shift' => 'Every shift', 'daily' => 'Daily'])
-                        ->required(),
-                    DatePicker::make('log_period_start')->required(),
-                    DatePicker::make('log_period_end')->required()->afterOrEqual('log_period_start'),
+                        ->visible(fn (Get $get): bool => ($this->record->documentType?->isRepeatingLog() ?? false)
+                            && $get('issuance_type') === DocumentIssuance::TYPE_EXECUTION)
+                        ->required(fn (Get $get): bool => ($this->record->documentType?->isRepeatingLog() ?? false)
+                            && $get('issuance_type') === DocumentIssuance::TYPE_EXECUTION),
+                    DatePicker::make('log_period_start')
+                        ->label('Log period start')
+                        ->visible(fn (Get $get): bool => ($this->record->documentType?->isRepeatingLog() ?? false)
+                            && $get('issuance_type') === DocumentIssuance::TYPE_EXECUTION)
+                        ->required(fn (Get $get): bool => ($this->record->documentType?->isRepeatingLog() ?? false)
+                            && $get('issuance_type') === DocumentIssuance::TYPE_EXECUTION),
+                    DatePicker::make('log_period_end')
+                        ->label('Log period end')
+                        ->afterOrEqual('log_period_start')
+                        ->visible(fn (Get $get): bool => ($this->record->documentType?->isRepeatingLog() ?? false)
+                            && $get('issuance_type') === DocumentIssuance::TYPE_EXECUTION)
+                        ->required(fn (Get $get): bool => ($this->record->documentType?->isRepeatingLog() ?? false)
+                            && $get('issuance_type') === DocumentIssuance::TYPE_EXECUTION),
                     Select::make('supervisor_id')
                         ->label('Supervisor reviewer')
                         ->options(fn (): array => User::query()->orderBy('name')->pluck('name', 'id')->all())
                         ->searchable()
-                        ->required(),
+                        ->visible(fn (Get $get): bool => ($this->record->documentType?->requiresSupervisorReview() ?? false)
+                            && $get('issuance_type') === DocumentIssuance::TYPE_EXECUTION)
+                        ->required(fn (Get $get): bool => ($this->record->documentType?->requiresSupervisorReview() ?? false)
+                            && $get('issuance_type') === DocumentIssuance::TYPE_EXECUTION),
                     Textarea::make('notes')->rows(2),
                 ])
                 ->visible(fn (): bool => $this->record->canBeIssued()

@@ -8,21 +8,11 @@ use Database\Factories\DocumentExecutionMaterialFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use LogicException;
 
 class DocumentExecutionMaterial extends Model
 {
     /** @use HasFactory<DocumentExecutionMaterialFactory> */
     use HasFactory;
-
-    protected static function booted(): void
-    {
-        static::saving(function (self $material): void {
-            if ($material->exists && ! $material->execution()->firstOrFail()->isEditable()) {
-                throw new LogicException('A completed or reviewed execution record cannot be changed.');
-            }
-        });
-    }
 
     protected $fillable = [
         'document_execution_id', 'material_order', 'material_name', 'material_code',

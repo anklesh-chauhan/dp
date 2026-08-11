@@ -66,10 +66,34 @@ trait ProvidesDocumentExecutionActions
                 ->schema([Textarea::make('review_notes')->rows(3)])
                 ->visible(fn (): bool => $this->record->status === DocumentExecution::STATUS_UNDER_REVIEW
                     && (Auth::user()?->can('review', $this->record) ?? false))
-                ->action(fn (array $data) => $this->replaceRecord(
-                    app(DocumentExecutionService::class)->review($this->record, Auth::user(), $data['review_notes'] ?? null),
-                    'Supervisor review completed.',
-                )),
+                ->action(function (array $data, Action $action): void {
+                    try {
+                        $record = app(DocumentExecutionService::class)->review(
+                            $this->record,
+                            Auth::user(),
+                            $data['review_notes'] ?? null,
+                        );
+                    } catch (ValidationException $exception) {
+                        Notification::make()
+                            ->danger()
+                            ->title('Supervisor review blocked')
+                            ->body(collect($exception->errors())
+                                ->flatten()
+                                ->unique()
+                                ->implode("\n"))
+                            ->persistent()
+                            ->send();
+
+                        $action->halt();
+
+                        return;
+                    }
+
+                    $this->replaceRecord(
+                        $record,
+                        'Supervisor review completed.',
+                    );
+                }),
             Action::make('qaDisposition')
                 ->label('QA disposition')
                 ->icon(Heroicon::ShieldCheck)

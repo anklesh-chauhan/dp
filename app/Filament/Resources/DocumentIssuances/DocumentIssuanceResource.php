@@ -12,6 +12,7 @@ use App\Filament\Support\ServiceExceptionHandler;
 use App\Models\DocumentIssuance;
 use App\Models\IssuanceStatus;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Forms\Components\Textarea;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -83,57 +84,59 @@ class DocumentIssuanceResource extends Resource
                 ]),
             ])
             ->recordActions([
-                Action::make('openExecution')
-                    ->label('Open Execution Record')
-                    ->icon(Heroicon::PencilSquare)
-                    ->url(fn (DocumentIssuance $record): string => DocumentExecutionResource::getUrl(
-                        $record->execution?->isEditable() ? 'edit' : 'view',
-                        ['record' => $record->execution],
-                    ))
-                    ->visible(fn (DocumentIssuance $record): bool => $record->isExecution() && $record->execution !== null),
-                Action::make('viewDocument')
-                    ->label('View Document')
-                    ->icon(Heroicon::Eye)
-                    ->url(fn (DocumentIssuance $record): string => LogDocumentResource::getUrl('view', ['record' => $record->document_id])),
-                Action::make('printCopy')
-                    ->label('View Controlled Copy')
-                    ->icon(Heroicon::Eye)
-                    ->url(fn (DocumentIssuance $record): string => route('controlled-documents.viewer', [
-                        'controlledDocument' => $record->document_id,
-                        'issuance' => $record->id,
-                    ]))
-                    ->openUrlInNewTab()
-                    ->visible(fn (DocumentIssuance $record): bool => $record->isActive()),
-                Action::make('recall')
-                    ->label('Recall')
-                    ->color('warning')
-                    ->schema([Textarea::make('recall_reason')->required()])
-                    ->visible(fn (DocumentIssuance $record): bool => $record->isActive()
-                        && (Auth::user()?->can('recall', $record) ?? false))
-                    ->action(fn (DocumentIssuance $record, array $data): mixed => ServiceExceptionHandler::run(
-                        fn () => app(RecallIssuanceAction::class)->execute(
-                            $record,
-                            Auth::user(),
-                            $data['recall_reason'],
-                        ),
-                        failureTitle: 'Recall Failed',
-                        successTitle: 'Controlled copy recalled.',
-                    )),
-                Action::make('destroyCopy')
-                    ->label('Destroy')
-                    ->color('danger')
-                    ->schema([Textarea::make('destroy_reason')->required()])
-                    ->visible(fn (DocumentIssuance $record): bool => ! $record->issuanceStatus?->hasCode(IssuanceStatus::DESTROYED)
-                        && (Auth::user()?->can('destroyCopy', $record) ?? false))
-                    ->action(fn (DocumentIssuance $record, array $data): mixed => ServiceExceptionHandler::run(
-                        fn () => app(DestroyIssuanceAction::class)->execute(
-                            $record,
-                            Auth::user(),
-                            $data['destroy_reason'],
-                        ),
-                        failureTitle: 'Destroy Failed',
-                        successTitle: 'Controlled copy destroyed.',
-                    )),
+                ActionGroup::make([
+                    Action::make('openExecution')
+                        ->label('Open Execution Record')
+                        ->icon(Heroicon::PencilSquare)
+                        ->url(fn (DocumentIssuance $record): string => DocumentExecutionResource::getUrl(
+                            $record->execution?->isEditable() ? 'edit' : 'view',
+                            ['record' => $record->execution],
+                        ))
+                        ->visible(fn (DocumentIssuance $record): bool => $record->isExecution() && $record->execution !== null),
+                    Action::make('viewDocument')
+                        ->label('View Document')
+                        ->icon(Heroicon::Eye)
+                        ->url(fn (DocumentIssuance $record): string => LogDocumentResource::getUrl('view', ['record' => $record->document_id])),
+                    Action::make('printCopy')
+                        ->label('View Controlled Copy')
+                        ->icon(Heroicon::Eye)
+                        ->url(fn (DocumentIssuance $record): string => route('controlled-documents.viewer', [
+                            'controlledDocument' => $record->document_id,
+                            'issuance' => $record->id,
+                        ]))
+                        ->openUrlInNewTab()
+                        ->visible(fn (DocumentIssuance $record): bool => $record->isActive()),
+                    Action::make('recall')
+                        ->label('Recall')
+                        ->color('warning')
+                        ->schema([Textarea::make('recall_reason')->required()])
+                        ->visible(fn (DocumentIssuance $record): bool => $record->isActive()
+                            && (Auth::user()?->can('recall', $record) ?? false))
+                        ->action(fn (DocumentIssuance $record, array $data): mixed => ServiceExceptionHandler::run(
+                            fn () => app(RecallIssuanceAction::class)->execute(
+                                $record,
+                                Auth::user(),
+                                $data['recall_reason'],
+                            ),
+                            failureTitle: 'Recall Failed',
+                            successTitle: 'Controlled copy recalled.',
+                        )),
+                    Action::make('destroyCopy')
+                        ->label('Destroy')
+                        ->color('danger')
+                        ->schema([Textarea::make('destroy_reason')->required()])
+                        ->visible(fn (DocumentIssuance $record): bool => ! $record->issuanceStatus?->hasCode(IssuanceStatus::DESTROYED)
+                            && (Auth::user()?->can('destroyCopy', $record) ?? false))
+                        ->action(fn (DocumentIssuance $record, array $data): mixed => ServiceExceptionHandler::run(
+                            fn () => app(DestroyIssuanceAction::class)->execute(
+                                $record,
+                                Auth::user(),
+                                $data['destroy_reason'],
+                            ),
+                            failureTitle: 'Destroy Failed',
+                            successTitle: 'Controlled copy destroyed.',
+                        )),
+                ])->icon('heroicon-o-ellipsis-vertical')->dropdownTeleport(),
             ]);
     }
 

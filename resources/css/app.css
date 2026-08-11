@@ -32,6 +32,11 @@
         padding-inline: 0.75rem;
     }
 
+    /* Keep an open action menu above neighboring sticky action icons. */
+    .fi-ta-cell:has(> .fi-ta-actions):has([aria-expanded='true']) {
+        z-index: 40;
+    }
+
     .dark .fi-ta-cell:has(> .fi-ta-actions),
     .dark .fi-ta-actions-header-cell {
         background-color: var(--color-gray-900);
@@ -42,5 +47,9 @@
     .fi-ta-record-content > .fi-ta-actions {
         position: sticky;
         right: 0;
+    }
+
+    .fi-ta-record-content > .fi-ta-actions:has([aria-expanded='true']) {
+        z-index: 40;
     }
 }

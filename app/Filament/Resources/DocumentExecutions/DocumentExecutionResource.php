@@ -7,7 +7,6 @@ namespace App\Filament\Resources\DocumentExecutions;
 use App\Filament\Resources\DocumentExecutions\Pages\EditDocumentExecution;
 use App\Filament\Resources\DocumentExecutions\Pages\ListDocumentExecutions;
 use App\Filament\Resources\DocumentExecutions\Pages\ViewDocumentExecution;
-use App\Filament\Resources\DocumentExecutions\RelationManagers\MaterialsRelationManager;
 use App\Filament\Resources\DocumentExecutions\RelationManagers\SectionsRelationManager;
 use App\Filament\Resources\Shared\RelationManagers\QualityAttachmentsRelationManager;
 use App\Models\DocumentExecution;
@@ -41,6 +40,11 @@ class DocumentExecutionResource extends Resource
 
     protected static ?int $navigationSort = 3;
 
+    public static function getNavigationBadge(): ?string
+    {
+        return strval(static::getModel()::count());
+    }
+
     protected static ?string $recordTitleAttribute = 'execution_number';
 
     public static function form(Schema $schema): Schema
@@ -56,14 +60,22 @@ class DocumentExecutionResource extends Resource
             TextInput::make('product_name')
                 ->visible(fn (?DocumentExecution $record): bool => DocumentType::isBatchRecordCode($record?->document_type_code)),
             Select::make('log_frequency')
+                ->label('Execution frequency')
                 ->options(['hourly' => 'Hourly', 'shift' => 'Every shift', 'daily' => 'Daily'])
                 ->visible(fn (?DocumentExecution $record): bool => DocumentType::isRepeatingLogCode($record?->document_type_code)),
             DatePicker::make('log_period_start')
+                ->label('Log period start')
                 ->visible(fn (?DocumentExecution $record): bool => DocumentType::isRepeatingLogCode($record?->document_type_code)),
             DatePicker::make('log_period_end')
+                ->label('Log period end')
                 ->afterOrEqual('log_period_start')
                 ->visible(fn (?DocumentExecution $record): bool => DocumentType::isRepeatingLogCode($record?->document_type_code)),
-            Select::make('supervisor_id')->relationship('supervisor', 'name')->searchable()->preload(),
+            Select::make('supervisor_id')
+                ->label('Supervisor reviewer')
+                ->relationship('supervisor', 'name')
+                ->searchable()
+                ->preload()
+                ->visible(fn (?DocumentExecution $record): bool => $record?->requires('requires_supervisor_review') ?? false),
             Textarea::make('review_notes')->disabled()->columnSpanFull(),
             Textarea::make('qa_notes')->disabled()->columnSpanFull(),
             Select::make('disposition')->options([
@@ -115,7 +127,6 @@ class DocumentExecutionResource extends Resource
     {
         return [
             SectionsRelationManager::class,
-            MaterialsRelationManager::class,
             QualityAttachmentsRelationManager::class,
         ];
     }

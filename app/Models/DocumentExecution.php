@@ -82,13 +82,6 @@ class DocumentExecution extends Model
         return $this->belongsToMany(Deviation::class, 'document_execution_deviations');
     }
 
-    public function materialsAreReconciled(): bool
-    {
-        $materials = $this->relationLoaded('materials') ? $this->materials : $this->materials()->get();
-
-        return $materials->isNotEmpty() && $materials->every->isReconciled();
-    }
-
     public function supervisor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'supervisor_id');

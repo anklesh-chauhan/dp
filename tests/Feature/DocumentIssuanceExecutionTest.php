@@ -650,6 +650,56 @@ it('never creates a writable record for a reference issuance', function (): void
         ->and($issuance->execution)->toBeNull();
 });
 
+it('shows log schedule fields only for repeating-log writable issuances', function (string $documentTypeCode, bool $expectsLogFields, bool $expectsSupervisor): void {
+    Gate::before(static fn (): bool => true);
+
+    $document = executionMasterDocument($documentTypeCode);
+    $this->actingAs($this->issuer);
+
+    $component = Livewire::test(ViewControlledDocument::class, ['record' => $document->getRouteKey()])
+        ->mountAction('issueControlledCopy');
+
+    if ($expectsLogFields) {
+        $component
+            ->assertFormFieldVisible('log_frequency')
+            ->assertFormFieldVisible('log_period_start')
+            ->assertFormFieldVisible('log_period_end');
+    } else {
+        $component
+            ->assertFormFieldHidden('log_frequency')
+            ->assertFormFieldHidden('log_period_start')
+            ->assertFormFieldHidden('log_period_end');
+    }
+
+    if ($expectsSupervisor) {
+        $component->assertFormFieldVisible('supervisor_id');
+    } else {
+        $component->assertFormFieldHidden('supervisor_id');
+    }
+})->with([
+    'form' => [DocumentType::FORM, false, false],
+    'log' => [DocumentType::LOG, true, true],
+    'checklist' => [DocumentType::CHECKLIST, false, true],
+    'batch record' => [DocumentType::BATCH_RECORD, false, true],
+]);
+
+it('hides execution-only issuance fields when a reference copy is selected', function (): void {
+    Gate::before(static fn (): bool => true);
+
+    $document = executionMasterDocument(DocumentType::LOG);
+    $this->actingAs($this->issuer);
+
+    Livewire::test(ViewControlledDocument::class, ['record' => $document->getRouteKey()])
+        ->mountAction('issueControlledCopy')
+        ->assertFormFieldVisible('log_frequency')
+        ->assertFormFieldVisible('supervisor_id')
+        ->setActionData(['issuance_type' => DocumentIssuance::TYPE_REFERENCE])
+        ->assertFormFieldHidden('log_frequency')
+        ->assertFormFieldHidden('log_period_start')
+        ->assertFormFieldHidden('log_period_end')
+        ->assertFormFieldHidden('supervisor_id');
+});
+
 it('rejects an unsupported controlled-copy type', function (): void {
     $document = executionMasterDocument();
 

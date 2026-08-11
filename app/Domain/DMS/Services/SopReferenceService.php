@@ -14,6 +14,11 @@ use Illuminate\Validation\ValidationException;
 
 class SopReferenceService
 {
+    public function formatOptionLabel(ControlledDocument $document): string
+    {
+        return "{$document->document_number} - {$document->title}";
+    }
+
     /**
      * @return array<int, string>
      */
@@ -34,8 +39,35 @@ class SopReferenceService
             ->whereHas('documentStatus', fn (Builder $query): Builder => $query->where('code', DocumentStatus::EFFECTIVE))
             ->whereHas('documentType', fn (Builder $query): Builder => $query->where('code', DocumentType::SOP))
             ->orderBy('document_number')
-            ->pluck('document_number', 'id')
+            ->get(['id', 'document_number', 'title'])
+            ->mapWithKeys(fn (ControlledDocument $document): array => [
+                $document->id => $this->formatOptionLabel($document),
+            ])
             ->all();
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function sopSelectOptions(?int $templateId, ?int $includeDocumentId = null): array
+    {
+        $options = $this->effectiveSopOptions($templateId);
+
+        if ($includeDocumentId === null || array_key_exists($includeDocumentId, $options)) {
+            return $options;
+        }
+
+        $document = ControlledDocument::query()
+            ->whereKey($includeDocumentId)
+            ->first(['id', 'document_number', 'title']);
+
+        if ($document === null) {
+            return $options;
+        }
+
+        $options[$document->id] = $this->formatOptionLabel($document);
+
+        return $options;
     }
 
     /**

@@ -115,6 +115,11 @@ class DocumentType extends Model
         return $this->format_profile === self::FORMAT_REPEATING_LOG;
     }
 
+    public function requiresSupervisorReview(): bool
+    {
+        return (bool) ($this->resolvedExecutionWorkflow()['requires_supervisor_review'] ?? false);
+    }
+
     public static function isBatchRecordCode(?string $code): bool
     {
         return in_array($code, [self::BATCH_RECORD, self::BATCH_PACKAGING_RECORD], true);

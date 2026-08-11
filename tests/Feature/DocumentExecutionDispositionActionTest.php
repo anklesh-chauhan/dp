@@ -8,7 +8,6 @@ use App\Models\Department;
 use App\Models\DocumentCategory;
 use App\Models\DocumentExecution;
 use App\Models\DocumentExecutionItem;
-use App\Models\DocumentExecutionMaterial;
 use App\Models\DocumentExecutionSection;
 use App\Models\DocumentIssuance;
 use App\Models\DocumentStatus;
@@ -29,7 +28,13 @@ beforeEach(function (): void {
     config()->set('modules.enabled', ['dms']);
     $this->seed(LookupTableSeeder::class);
 
-    foreach (['ViewAny:DocumentExecution', 'View:DocumentExecution', 'Submit:DocumentExecution', 'Approve:DocumentExecution'] as $permission) {
+    foreach ([
+        'ViewAny:DocumentExecution',
+        'View:DocumentExecution',
+        'Submit:DocumentExecution',
+        'Review:DocumentExecution',
+        'Approve:DocumentExecution',
+    ] as $permission) {
         Permission::findOrCreate($permission, 'web');
     }
 
@@ -38,6 +43,7 @@ beforeEach(function (): void {
         'ViewAny:DocumentExecution',
         'View:DocumentExecution',
         'Submit:DocumentExecution',
+        'Review:DocumentExecution',
         'Approve:DocumentExecution',
     ]);
     $this->actingAs($this->qaApprover);
@@ -66,6 +72,7 @@ beforeEach(function (): void {
     ]);
     $this->execution = DocumentExecution::factory()->create([
         'document_issuance_id' => $issuance,
+        'document_type_code' => DocumentType::BATCH_RECORD,
         'workflow_configuration' => [
             'requires_qa_approval' => true,
             'requires_disposition' => true,
@@ -78,8 +85,6 @@ beforeEach(function (): void {
 });
 
 it('records a QA disposition and displays the success notification', function (): void {
-    DocumentExecutionMaterial::factory()->for($this->execution, 'execution')->create();
-
     Livewire::test(ViewDocumentExecution::class, ['record' => $this->execution->id])
         ->callAction('qaDisposition', [
             'disposition' => DocumentExecution::DISPOSITION_RELEASED,
@@ -96,19 +101,86 @@ it('records a QA disposition and displays the success notification', function ()
         ->closed_at->not->toBeNull();
 });
 
-it('notifies the QA approver when disposition is blocked', function (): void {
+it('notifies the QA approver when disposition is blocked by lack of independence', function (): void {
+    $this->execution->update([
+        'completed_by' => $this->qaApprover->id,
+    ]);
+
     Livewire::test(ViewDocumentExecution::class, ['record' => $this->execution->id])
         ->callAction('qaDisposition', [
             'disposition' => DocumentExecution::DISPOSITION_RELEASED,
             'qa_notes' => 'Ready for release.',
         ])
-        ->assertNotified('QA disposition blocked');
+        ->assertNotified(
+            Notification::make()
+                ->danger()
+                ->title('QA disposition blocked')
+                ->body('The QA approver must be independent of execution and production review.')
+                ->persistent()
+        );
 
     expect($this->execution->fresh())
         ->status->toBe(DocumentExecution::STATUS_QA_REVIEW)
         ->disposition->toBe(DocumentExecution::DISPOSITION_PENDING)
         ->qa_approved_by->toBeNull()
         ->closed_at->toBeNull();
+});
+
+it('notifies when supervisor review is blocked because the completer cannot review their own record', function (): void {
+    $this->execution->update([
+        'workflow_configuration' => [
+            'requires_supervisor_review' => true,
+            'requires_qa_approval' => true,
+            'requires_disposition' => true,
+        ],
+        'status' => DocumentExecution::STATUS_UNDER_REVIEW,
+        'completed_by' => $this->qaApprover->id,
+        'reviewed_by' => null,
+        'disposition' => DocumentExecution::DISPOSITION_PENDING,
+    ]);
+
+    Livewire::test(ViewDocumentExecution::class, ['record' => $this->execution->id])
+        ->callAction('supervisorReview', [
+            'review_notes' => 'Self-review attempt.',
+        ])
+        ->assertNotified(
+            Notification::make()
+                ->danger()
+                ->title('Supervisor review blocked')
+                ->body('The reviewer must be different from the person who completed the record.')
+                ->persistent()
+        );
+
+    expect($this->execution->fresh())
+        ->status->toBe(DocumentExecution::STATUS_UNDER_REVIEW)
+        ->reviewed_by->toBeNull();
+});
+
+it('completes supervisor review and advances the execution to QA review', function (): void {
+    $completer = User::factory()->create();
+    $this->execution->update([
+        'workflow_configuration' => [
+            'requires_supervisor_review' => true,
+            'requires_qa_approval' => true,
+            'requires_disposition' => true,
+        ],
+        'status' => DocumentExecution::STATUS_UNDER_REVIEW,
+        'completed_by' => $completer->id,
+        'reviewed_by' => null,
+        'disposition' => DocumentExecution::DISPOSITION_PENDING,
+    ]);
+
+    Livewire::test(ViewDocumentExecution::class, ['record' => $this->execution->id])
+        ->callAction('supervisorReview', [
+            'review_notes' => 'Entries checked.',
+        ])
+        ->assertHasNoFormErrors()
+        ->assertNotified('Supervisor review completed.');
+
+    expect($this->execution->fresh())
+        ->status->toBe(DocumentExecution::STATUS_QA_REVIEW)
+        ->reviewed_by->toBe($this->qaApprover->id)
+        ->review_notes->toBe('Entries checked.');
 });
 
 it('notifies the executor when completion is blocked by missing verification', function (): void {
