@@ -20,8 +20,9 @@ final class Organization extends Model
         'code', 'legal_name', 'display_name', 'registration_number', 'tax_identifier',
         'regulatory_identifiers', 'address_line_1', 'address_line_2', 'city', 'state',
         'postal_code', 'country_code', 'phone', 'email', 'website', 'logo_path',
-        'document_header', 'document_footer', 'timezone', 'is_active', 'is_default',
-        'created_by',
+        'document_header', 'document_footer', 'timezone',
+        'date_display_format', 'datetime_display_format', 'time_display_format',
+        'is_active', 'is_default', 'created_by',
     ];
 
     protected static function booted(): void

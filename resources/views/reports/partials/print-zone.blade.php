@@ -9,6 +9,8 @@
     'serverPdf' => false,
 ])
 
+@php($dates = app(\App\Support\Formatting\DateFormatSettings::class))
+
 <div class="print-zone print-zone-{{ $alignment }} print-zone-vertical-{{ $verticalAlignment }}">
     @foreach ($items as $item)
         <div class="{{ ($item['emphasized'] ?? false) ? 'print-zone-emphasized' : '' }}">
@@ -56,22 +58,22 @@
                 <span>{{ ($item['show_label'] ?? true) ? $item['label'].': ' : '' }}{{ $preview ? 'Quality Assurance' : ($document?->department?->name ?? '-') }}</span>
                 @break
             @case('effective_date')
-                <span>{{ $item['label'] }}: {{ $preview ? now()->toFormattedDateString() : ($document?->effective_date?->toFormattedDateString() ?? '-') }}</span>
+                <span>{{ ($item['show_label'] ?? true) ? $item['label'].': ' : '' }}{{ $preview ? $dates->formatDate(now()) : ($dates->formatDate($document?->effective_date) ?? '-') }}</span>
                 @break
             @case('review_date')
-                <span>{{ $item['label'] }}: {{ $preview ? now()->addYear()->toFormattedDateString() : ($document?->review_date?->toFormattedDateString() ?? '-') }}</span>
+                <span>{{ ($item['show_label'] ?? true) ? $item['label'].': ' : '' }}{{ $preview ? $dates->formatDate(now()->addYear()) : ($dates->formatDate($document?->review_date) ?? '-') }}</span>
                 @break
             @case('copy_status')
                 <strong>{{ $preview ? 'CONTROLLED COPY' : ($issuance ? "CONTROLLED COPY {$issuance->copy_number}" : 'UNCONTROLLED WHEN PRINTED') }}</strong>
                 @break
             @case('printed_by')
-                <span>{{ $item['label'] }}: {{ $preview ? 'Preview User' : auth()->user()->name }}</span>
+                <span>{{ ($item['show_label'] ?? true) ? $item['label'].': ' : '' }}{{ $preview ? 'Preview User' : auth()->user()->name }}</span>
                 @break
             @case('printed_at')
-                <span>{{ $item['label'] }}: {{ now()->toDayDateTimeString() }}</span>
+                <span>{{ ($item['show_label'] ?? true) ? $item['label'].': ' : '' }}{{ $dates->formatDateTime(now()) }}</span>
                 @break
             @case('template_reference')
-                <span>{{ $item['label'] }}: {{ $reportTemplate->layout_key }}</span>
+                <span>{{ ($item['show_label'] ?? true) ? $item['label'].': ' : '' }}{{ $reportTemplate->layout_key }}</span>
                 @break
             @case('controlled_notice')
                 <strong>{{ $issuance || $preview ? 'CONTROLLED COPY' : 'UNCONTROLLED WHEN PRINTED' }}</strong>

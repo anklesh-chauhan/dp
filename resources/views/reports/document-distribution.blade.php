@@ -15,7 +15,7 @@
 <body>
     <div class="toolbar"><button type="button" onclick="window.print()">Print / Save PDF</button></div>
     <h1>Document Distribution Sheet</h1>
-    <div class="meta">Generated {{ now()->toDayDateTimeString() }} by {{ auth()->user()->name }}</div>
+    <div class="meta">Generated {{ app(\App\Support\Formatting\DateFormatSettings::class)->formatDateTime(now()) }} by {{ auth()->user()->name }}</div>
     <table>
         <thead><tr>
         @foreach ($template->fields as $field)

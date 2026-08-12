@@ -565,7 +565,7 @@
                             <td>{{ $approval->workflowStep?->department?->name ?? $document->department?->name ?? '-' }}</td>
                             <td>{{ $approval->approvalDecision?->name ?? '-' }}</td>
                             <td>{{ $approval->approver?->name ?? '-' }}</td>
-                            <td>{{ $approval->approved_at?->toDayDateTimeString() ?? '-' }}</td>
+                            <td>{{ app(\App\Support\Formatting\DateFormatSettings::class)->formatDateTime($approval->approved_at) ?? '-' }}</td>
                         </tr>
                     @empty
                         <tr><td colspan="5">No approval signatures recorded.</td></tr>
@@ -608,7 +608,7 @@
 
         @if (in_array('audit_reference', $enabledFields, true))
             <footer class="muted" style="order: {{ $fieldOrder['audit_reference'] ?? 0 }}; margin-top: 24px;">
-                Printed by {{ auth()->user()->name }} at {{ now()->toDayDateTimeString() }} · Template {{ $reportTemplate->layout_key }}
+                Printed by {{ auth()->user()->name }} at {{ app(\App\Support\Formatting\DateFormatSettings::class)->formatDateTime(now()) }} · Template {{ $reportTemplate->layout_key }}
             </footer>
         @endif
 

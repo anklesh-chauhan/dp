@@ -37,6 +37,9 @@ class OrganizationFactory extends Factory
             'email' => fake()->companyEmail(),
             'website' => fake()->url(),
             'timezone' => 'Asia/Kolkata',
+            'date_display_format' => 'd/m/Y',
+            'datetime_display_format' => 'd/m/Y H:i',
+            'time_display_format' => 'H:i',
             'is_active' => true,
             'is_default' => false,
         ];

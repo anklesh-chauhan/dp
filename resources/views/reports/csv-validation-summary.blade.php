@@ -48,7 +48,7 @@
             <tbody>
             @forelse ($project->auditEvents as $event)
                 <tr>
-                    <td>{{ $event->occurred_at?->toDayDateTimeString() ?? '-' }}</td>
+                    <td>{{ app(\App\Support\Formatting\DateFormatSettings::class)->formatDateTime($event->occurred_at) ?? '-' }}</td>
                     <td>{{ $event->from_status?->value ?? 'created' }} → {{ $event->to_status->value }}</td>
                     <td>{{ $event->actor?->name ?? '-' }}</td>
                     <td>{{ $event->reason ?? '-' }}</td>
@@ -62,7 +62,7 @@
     @endif
 
     <p class="attribution">
-        Generated {{ now()->toDayDateTimeString() }} by {{ auth()->user()->name }} ·
+        Generated {{ app(\App\Support\Formatting\DateFormatSettings::class)->formatDateTime(now()) }} by {{ auth()->user()->name }} ·
         Template {{ $template->layout_key }} · ALCOA+ traceable export
     </p>
 </body>

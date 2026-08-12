@@ -53,7 +53,7 @@
         <h2>Lifecycle Milestones</h2>
         <table><tbody>
         @foreach (['submitted_at' => 'Submitted', 'approved_at' => 'Approved', 'implementation_due_at' => 'Implementation Due', 'implemented_at' => 'Implemented', 'effectiveness_due_at' => 'Effectiveness Due', 'effectiveness_verified_at' => 'Effectiveness Verified', 'closed_at' => 'Closed'] as $field => $label)
-            <tr><th>{{ $label }}</th><td>{{ $changeControl->{$field}?->toDayDateTimeString() ?? '-' }}</td></tr>
+            <tr><th>{{ $label }}</th><td>{{ app(\App\Support\Formatting\DateFormatSettings::class)->formatDateTime($changeControl->{$field}) ?? '-' }}</td></tr>
         @endforeach
         </tbody></table>
     @endif
@@ -61,12 +61,12 @@
         <h2>Decision & Audit Trail</h2>
         <table><thead><tr><th>Time</th><th>Action</th><th>Actor</th><th>Reason</th></tr></thead><tbody>
         @foreach ($changeControl->auditEvents as $event)
-            <tr><td>{{ $event->occurred_at->toDayDateTimeString() }}</td><td>{{ $event->from_status?->value ?? 'created' }} → {{ $event->to_status->value }}</td><td>{{ $event->actor?->name ?? '-' }}</td><td>{{ $event->reason ?? '-' }}</td></tr>
+            <tr><td>{{ app(\App\Support\Formatting\DateFormatSettings::class)->formatDateTime($event->occurred_at) }}</td><td>{{ $event->from_status?->value ?? 'created' }} → {{ $event->to_status->value }}</td><td>{{ $event->actor?->name ?? '-' }}</td><td>{{ $event->reason ?? '-' }}</td></tr>
         @endforeach
         </tbody></table>
     @endif
     <p style="color: #64748b; margin-top: 24px;">
-        Generated {{ now()->toDayDateTimeString() }} by {{ auth()->user()->name }} · Template {{ $template->layout_key }}
+        Generated {{ app(\App\Support\Formatting\DateFormatSettings::class)->formatDateTime(now()) }} by {{ auth()->user()->name }} · Template {{ $template->layout_key }}
     </p>
 </body>
 </html>

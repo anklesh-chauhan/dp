@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Organizations\Schemas;
 
+use App\Enums\DateDisplayFormat;
+use App\Enums\DateTimeDisplayFormat;
+use App\Enums\TimeDisplayFormat;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\KeyValue;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Grid;
@@ -36,6 +40,31 @@ final class OrganizationForm
                             ->valueLabel('Registration / licence number')
                             ->addActionLabel('Add regulatory identifier')
                             ->columnSpanFull(),
+                    ])
+                    ->columnSpanFull(),
+                Section::make('Date and Time Display')
+                    ->description('Applies across Filament tables, forms, and detail views for this deployment.')
+                    ->schema([
+                        Grid::make(3)->schema([
+                            Select::make('date_display_format')
+                                ->label('Date format')
+                                ->options(DateDisplayFormat::options())
+                                ->required()
+                                ->default(DateDisplayFormat::DayMonthYear->value)
+                                ->native(false),
+                            Select::make('datetime_display_format')
+                                ->label('Date and time format')
+                                ->options(DateTimeDisplayFormat::options())
+                                ->required()
+                                ->default(DateTimeDisplayFormat::DayMonthYearHm->value)
+                                ->native(false),
+                            Select::make('time_display_format')
+                                ->label('Time format')
+                                ->options(TimeDisplayFormat::options())
+                                ->required()
+                                ->default(TimeDisplayFormat::TwentyFourHour->value)
+                                ->native(false),
+                        ]),
                     ])
                     ->columnSpanFull(),
                 Section::make('Registered Address and Contact')

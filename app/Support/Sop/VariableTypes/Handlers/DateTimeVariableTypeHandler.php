@@ -6,6 +6,7 @@ namespace App\Support\Sop\VariableTypes\Handlers;
 
 use App\Models\DocumentTemplateVariable;
 use App\Models\VariableDataType;
+use App\Support\Formatting\DateFormatSettings;
 use App\Support\Sop\VariableTypes\VariableTypeFieldContext;
 use Carbon\CarbonInterface;
 use Filament\Forms\Components\DatePicker;
@@ -67,6 +68,20 @@ class DateTimeVariableTypeHandler extends AbstractVariableTypeHandler
 
     public function formatForSubstitution(DocumentTemplateVariable $variable, mixed $value): string
     {
+        if ($value instanceof CarbonInterface || (is_string($value) && filled($value))) {
+            $dates = app(DateFormatSettings::class);
+
+            $formatted = match ($variable->variableDataType?->code) {
+                VariableDataType::DATETIME => $dates->formatDateTime($value),
+                VariableDataType::TIME => $dates->formatTime($value),
+                default => $dates->formatDate($value),
+            };
+
+            if (filled($formatted)) {
+                return $formatted;
+            }
+        }
+
         return $this->formatForStorage($variable, $value);
     }
 }

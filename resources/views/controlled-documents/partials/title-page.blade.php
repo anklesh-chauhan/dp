@@ -21,7 +21,7 @@
                 <span>{{ $document->department->name }}</span>
             @endif
             @if ($document->effective_date)
-                <span>Effective {{ $document->effective_date->toFormattedDateString() }}</span>
+                <span>Effective {{ app(\App\Support\Formatting\DateFormatSettings::class)->formatDate($document->effective_date) }}</span>
             @endif
         </div>
     @endif

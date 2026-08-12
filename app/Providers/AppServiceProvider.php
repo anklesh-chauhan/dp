@@ -30,6 +30,7 @@ use App\Domain\Shared\Services\Sha256ContentIntegrityHasher;
 use App\Domain\Shared\Services\Sha256ElectronicSignatureHasher;
 use App\Models\DocumentType;
 use App\Observers\DocumentTypeObserver;
+use App\Support\Formatting\DateFormatSettings;
 use App\Support\Modules\AuditedProductLicenseRevoker;
 use App\Support\Modules\ConfiguredModuleEntitlementProvider;
 use App\Support\Modules\Contracts\LicenseAuditRecorder;
@@ -46,6 +47,10 @@ use App\Support\Modules\ValidatedSignedLicenseActivator;
 use App\Support\Modules\VerifiedLicenseLifecycleEvaluator;
 use App\Support\Modules\VerifiedProductLicenseStateResolver;
 use App\Support\Sop\VariableTypes\VariableTypeRegistry;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Schemas\Schema;
+use Filament\Tables\Table;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 use InvalidArgumentException;
@@ -96,6 +101,7 @@ class AppServiceProvider extends ServiceProvider
             },
         );
         $this->app->singleton(VariableTypeRegistry::class, fn (): VariableTypeRegistry => VariableTypeRegistry::default());
+        $this->app->singleton(DateFormatSettings::class);
     }
 
     /**
@@ -104,5 +110,43 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         DocumentType::observe(DocumentTypeObserver::class);
+
+        $this->configureFilamentDateFormats();
+    }
+
+    private function configureFilamentDateFormats(): void
+    {
+        Table::configureUsing(function (Table $table): void {
+            $formats = app(DateFormatSettings::class);
+
+            $table
+                ->defaultDateDisplayFormat(fn (): string => $formats->date())
+                ->defaultDateTimeDisplayFormat(fn (): string => $formats->dateTime())
+                ->defaultTimeDisplayFormat(fn (): string => $formats->time());
+        });
+
+        Schema::configureUsing(function (Schema $schema): void {
+            $formats = app(DateFormatSettings::class);
+
+            $schema
+                ->defaultDateDisplayFormat(fn (): string => $formats->date())
+                ->defaultDateTimeDisplayFormat(fn (): string => $formats->dateTime())
+                ->defaultTimeDisplayFormat(fn (): string => $formats->time());
+        });
+
+        DatePicker::configureUsing(function (DatePicker $datePicker): void {
+            $formats = app(DateFormatSettings::class);
+
+            $datePicker->defaultDateDisplayFormat(fn (): string => $formats->date());
+        });
+
+        DateTimePicker::configureUsing(function (DateTimePicker $dateTimePicker): void {
+            $formats = app(DateFormatSettings::class);
+
+            $dateTimePicker
+                ->defaultDateDisplayFormat(fn (): string => $formats->date())
+                ->defaultDateTimeDisplayFormat(fn (): string => $formats->dateTime())
+                ->defaultTimeDisplayFormat(fn (): string => $formats->time());
+        });
     }
 }

@@ -9,6 +9,7 @@ use App\Domain\QMS\Models\CsvRequirement;
 use App\Domain\QMS\Models\CsvValidationProject;
 use App\Domain\Reporting\Enums\ReportScope;
 use App\Models\ControlledDocument;
+use App\Support\Formatting\DateFormatSettings;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
@@ -224,8 +225,8 @@ final class ReportFieldRegistry
             'status' => (string) $document->documentStatus?->name,
             'department' => (string) $document->department?->name,
             'owner' => (string) $document->owner?->name,
-            'effective_date' => $document->effective_date?->toDateString() ?? '',
-            'review_date' => $document->review_date?->toDateString() ?? '',
+            'effective_date' => app(DateFormatSettings::class)->formatDate($document->effective_date) ?? '',
+            'review_date' => app(DateFormatSettings::class)->formatDate($document->review_date) ?? '',
             'active_copy_count' => $document->active_issuances_count ?? $document->activeIssuances()->count(),
             default => '',
         };
@@ -295,7 +296,7 @@ final class ReportFieldRegistry
             'ownership' => collect([$project->businessOwner?->name, $project->systemOwner?->name, $project->qualityOwner?->name])->filter()->implode(' / '),
             'release_decision' => $project->released_at === null
                 ? 'Not released'
-                : "Released {$project->released_at->toDateString()} by ".($project->releaser?->name ?? 'Unknown'),
+                : 'Released '.(app(DateFormatSettings::class)->formatDate($project->released_at) ?? '').' by '.($project->releaser?->name ?? 'Unknown'),
             default => '',
         };
     }

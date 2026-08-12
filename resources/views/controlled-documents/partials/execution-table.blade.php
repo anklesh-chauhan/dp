@@ -13,7 +13,7 @@
         <tbody>
             @foreach ($section->items as $item)
                 <tr>
-                    <td>{{ $item->scheduled_at?->toDayDateTimeString() ?? '-' }}</td>
+                    <td>{{ app(\App\Support\Formatting\DateFormatSettings::class)->formatDateTime($item->scheduled_at) ?? '-' }}</td>
                     <td>{{ $item->formattedResponse() ?? '________________' }} {{ $item->unit }}</td>
                     <td>{{ filled($item->result_status) ? str($item->result_status)->title() : '-' }}</td>
                     <td>{{ $item->comments ?? '-' }}</td>
