@@ -14,6 +14,8 @@ enum AIUseCase: string
 
     case SOP_GENERATION = 'sop_generation';
 
+    case CONTROLLED_DOCUMENT_DRAFTING = 'controlled_document_drafting';
+
     case SOP_REVIEW = 'sop_review';
 
     case DOCUMENT_SUMMARIZATION = 'document_summarization';

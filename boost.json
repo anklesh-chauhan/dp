@@ -12,6 +12,7 @@
     ],
     "sail": false,
     "skills": [
+        "ai-sdk-development",
         "laravel-best-practices",
         "pest-testing",
         "tailwindcss-development",
