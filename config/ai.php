@@ -166,6 +166,12 @@ return [
             'ollama',
         ],
 
+        'document_content_assistance' => [
+            'openai',
+            'gemini',
+            'ollama',
+        ],
+
     ],
 
 ];

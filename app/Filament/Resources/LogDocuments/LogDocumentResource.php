@@ -14,11 +14,13 @@ use App\Filament\Resources\LogDocuments\Pages\EditLogDocument;
 use App\Filament\Resources\LogDocuments\Pages\ListLogDocuments;
 use App\Filament\Resources\LogDocuments\Pages\ViewLogDocument;
 use App\Filament\Resources\LogDocuments\RelationManagers\IssuanceRelationManager;
+use App\Filament\Support\ContentAiAssist;
 use App\Filament\Support\IssueControlledCopyAction;
 use App\Filament\Support\TemplateVariableFieldBuilder;
 use App\Models\ControlledDocument;
 use App\Models\DocumentTemplateVersion;
 use App\Models\TemplateStatus;
+use App\Services\AI\Enums\ContentAssistFormat;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
@@ -125,7 +127,17 @@ class LogDocumentResource extends Resource
                         Select::make('owner_id')->relationship('owner', 'name')->searchable()->preload()->required(),
                         TextInput::make('batch_number')->label('Batch Number')->maxLength(100),
                         TextInput::make('product_name')->label('Product Name')->maxLength(255),
-                        Textarea::make('purpose')->rows(2)->columnSpanFull(),
+                        ContentAiAssist::attach(
+                            field: Textarea::make('purpose')->rows(2)->columnSpanFull(),
+                            format: ContentAssistFormat::Plain,
+                            context: fn (Get $get): array => [
+                                'field_label' => 'Log document purpose',
+                                'subject' => trim((string) ($get('title') ?? '')),
+                                'extra' => filled($get('product_name'))
+                                    ? 'Product: '.$get('product_name')
+                                    : null,
+                            ],
+                        ),
                         DatePicker::make('effective_date'),
                         DatePicker::make('review_date'),
                     ]),

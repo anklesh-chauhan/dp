@@ -16,11 +16,13 @@ use App\Services\AI\ApprovalNarrativeAssistant;
 use App\Services\AI\Contracts\AiExecutionRecorder;
 use App\Services\AI\Contracts\ApprovalNarrativeGenerator;
 use App\Services\AI\Contracts\DocumentClassifier;
+use App\Services\AI\Contracts\DocumentContentGenerator;
 use App\Services\AI\Contracts\DocumentDescriptionGenerator;
 use App\Services\AI\Contracts\LLMManagerContract;
 use App\Services\AI\Contracts\TemplateGenerator;
 use App\Services\AI\DocumentAiClassifier;
 use App\Services\AI\DocumentAiDescriptionGenerator;
+use App\Services\AI\DocumentContentAssistant;
 use App\Services\AI\Observability\DatabaseAiExecutionRecorder;
 use App\Services\AI\Providers\GeminiProvider;
 use App\Services\AI\Providers\OllamaProvider;
@@ -108,6 +110,11 @@ final class AIServiceProvider extends ServiceProvider
         $this->app->bind(
             ApprovalNarrativeGenerator::class,
             ApprovalNarrativeAssistant::class,
+        );
+
+        $this->app->bind(
+            DocumentContentGenerator::class,
+            DocumentContentAssistant::class,
         );
 
         $this->app->bind(

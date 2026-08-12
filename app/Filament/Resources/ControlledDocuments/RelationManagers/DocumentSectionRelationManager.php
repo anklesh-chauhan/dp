@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Filament\Resources\ControlledDocuments\RelationManagers;
 
 use App\Filament\Concerns\ManagesEditableDocuments;
+use App\Filament\Support\ContentAiAssist;
 use App\Models\ControlledDocumentSection;
 use App\Models\ControlledDocumentSectionItem;
 use App\Models\DocumentTemplateSection;
+use App\Services\AI\Enums\ContentAssistFormat;
 use Filament\Actions\CreateAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Repeater;
@@ -50,7 +52,25 @@ class DocumentSectionRelationManager extends RelationManager
             RichEditor::make('content')
                 ->label('Content')
                 ->required()
-                ->columnSpanFull(),
+                ->columnSpanFull()
+                ->hintActions(ContentAiAssist::hintActions(
+                    fieldName: 'content',
+                    format: ContentAssistFormat::Html,
+                    context: function (Get $get): array {
+                        $document = $this->getOwnerRecord()->loadMissing('department');
+
+                        return [
+                            'field_label' => 'Controlled document section content',
+                            'section_title' => trim((string) ($get('title') ?? '')),
+                            'subject' => trim(implode(' · ', array_filter([
+                                $document->document_number,
+                                $document->title,
+                            ]))),
+                            'department' => $document->department?->name,
+                            'extra' => 'Section format: '.((string) ($get('section_type') ?? DocumentTemplateSection::TYPE_TEXT)),
+                        ];
+                    },
+                )),
             Section::make('Execution tables')
                 ->schema([
                     Repeater::make('executionTables')
