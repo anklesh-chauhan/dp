@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Filament\Pages;
 
-use App\Domain\DMS\Actions\CreateControlledDocumentFromAiDraftAction;
 use App\Domain\DMS\Services\SopReferenceService;
 use App\Domain\DMS\Services\VariableResolverService;
 use App\Enums\ProductModule;
@@ -13,6 +12,7 @@ use App\Models\ControlledDocumentDraftSession;
 use App\Models\DocumentTemplate;
 use App\Models\TemplateStatus;
 use App\Models\User;
+use App\Services\AI\Actions\CreateControlledDocumentFromAiDraftAction;
 use App\Services\AI\ControlledDocumentDraftConversationService;
 use App\Support\Modules\ModuleManager;
 use BackedEnum;

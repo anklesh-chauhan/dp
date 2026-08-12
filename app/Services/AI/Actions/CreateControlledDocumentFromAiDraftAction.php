@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\DMS\Actions;
+namespace App\Services\AI\Actions;
 
 use App\Data\ControlledDocumentData;
+use App\Domain\DMS\Actions\CreateDocumentFromTemplateAction;
 use App\Enums\ProductModule;
 use App\Models\ControlledDocument;
 use App\Models\ControlledDocumentDraftSession;

@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Domain\DMS\Actions\CreateControlledDocumentFromAiDraftAction;
 use App\Models\ControlledDocument;
 use App\Models\ControlledDocumentDraftSession;
 use App\Models\Department;
@@ -17,6 +16,7 @@ use App\Models\Organization;
 use App\Models\TemplateStatus;
 use App\Models\User;
 use App\Models\VariableDataType;
+use App\Services\AI\Actions\CreateControlledDocumentFromAiDraftAction;
 use App\Services\AI\Enums\ControlledDocumentDraftSessionStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
