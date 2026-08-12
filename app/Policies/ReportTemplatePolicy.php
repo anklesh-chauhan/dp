@@ -112,19 +112,4 @@ class ReportTemplatePolicy
         return $authUser->can('Unarchive:ReportTemplate');
     }
 
-    public function markObsolete(AuthUser $authUser, ReportTemplate $reportTemplate): bool
-    {
-        return $authUser->can('MarkObsolete:ReportTemplate');
-    }
-
-    public function completeRetention(AuthUser $authUser, ReportTemplate $reportTemplate): bool
-    {
-        return $authUser->can('CompleteRetention:ReportTemplate');
-    }
-
-    public function destroy(AuthUser $authUser, ReportTemplate $reportTemplate): bool
-    {
-        return $authUser->can('Destroy:ReportTemplate');
-    }
-
 }

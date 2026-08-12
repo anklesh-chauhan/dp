@@ -112,19 +112,4 @@ class ChangeControlPolicy
         return $authUser->can('Unarchive:ChangeControl');
     }
 
-    public function markObsolete(AuthUser $authUser, ChangeControl $changeControl): bool
-    {
-        return $authUser->can('MarkObsolete:ChangeControl');
-    }
-
-    public function completeRetention(AuthUser $authUser, ChangeControl $changeControl): bool
-    {
-        return $authUser->can('CompleteRetention:ChangeControl');
-    }
-
-    public function destroy(AuthUser $authUser, ChangeControl $changeControl): bool
-    {
-        return $authUser->can('Destroy:ChangeControl');
-    }
-
 }

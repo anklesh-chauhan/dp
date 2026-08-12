@@ -112,19 +112,4 @@ class CsvValidationProjectPolicy
         return $authUser->can('Unarchive:CsvValidationProject');
     }
 
-    public function markObsolete(AuthUser $authUser, CsvValidationProject $csvValidationProject): bool
-    {
-        return $authUser->can('MarkObsolete:CsvValidationProject');
-    }
-
-    public function completeRetention(AuthUser $authUser, CsvValidationProject $csvValidationProject): bool
-    {
-        return $authUser->can('CompleteRetention:CsvValidationProject');
-    }
-
-    public function destroy(AuthUser $authUser, CsvValidationProject $csvValidationProject): bool
-    {
-        return $authUser->can('Destroy:CsvValidationProject');
-    }
-
 }

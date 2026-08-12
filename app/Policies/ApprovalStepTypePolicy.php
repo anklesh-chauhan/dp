@@ -112,19 +112,4 @@ class ApprovalStepTypePolicy
         return $authUser->can('Unarchive:ApprovalStepType');
     }
 
-    public function markObsolete(AuthUser $authUser, ApprovalStepType $approvalStepType): bool
-    {
-        return $authUser->can('MarkObsolete:ApprovalStepType');
-    }
-
-    public function completeRetention(AuthUser $authUser, ApprovalStepType $approvalStepType): bool
-    {
-        return $authUser->can('CompleteRetention:ApprovalStepType');
-    }
-
-    public function destroy(AuthUser $authUser, ApprovalStepType $approvalStepType): bool
-    {
-        return $authUser->can('Destroy:ApprovalStepType');
-    }
-
 }

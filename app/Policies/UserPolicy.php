@@ -109,19 +109,4 @@ class UserPolicy
         return $authUser->can('Unarchive:User');
     }
 
-    public function markObsolete(AuthUser $authUser): bool
-    {
-        return $authUser->can('MarkObsolete:User');
-    }
-
-    public function completeRetention(AuthUser $authUser): bool
-    {
-        return $authUser->can('CompleteRetention:User');
-    }
-
-    public function destroy(AuthUser $authUser): bool
-    {
-        return $authUser->can('Destroy:User');
-    }
-
 }

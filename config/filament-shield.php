@@ -130,7 +130,7 @@ return [
             'viewAny', 'view', 'create', 'update', 'delete', 'deleteAny', 'restore',
             'forceDelete', 'forceDeleteAny', 'restoreAny', 'replicate', 'reorder', 'approve',
             'submit', 'review', 'publish', 'unpublish', 'revise', 'archive', 'unarchive',
-            'markObsolete', 'completeRetention', 'destroy',
+            // Document lifecycle actions are already covered by explicit app policies/seeded permissions.
         ],
         'single_parameter_methods' => [
             'viewAny',
@@ -249,9 +249,7 @@ return [
         'revise',
         'archive',
         'unarchive',
-        'mark_obsolete',
-        'complete_retention',
-        'destroy',
+        // keep only non-resource-scoped permissions here
     ],
 
     /*

@@ -112,19 +112,4 @@ class InvestigationPolicy
         return $authUser->can('Unarchive:Investigation');
     }
 
-    public function markObsolete(AuthUser $authUser, Investigation $investigation): bool
-    {
-        return $authUser->can('MarkObsolete:Investigation');
-    }
-
-    public function completeRetention(AuthUser $authUser, Investigation $investigation): bool
-    {
-        return $authUser->can('CompleteRetention:Investigation');
-    }
-
-    public function destroy(AuthUser $authUser, Investigation $investigation): bool
-    {
-        return $authUser->can('Destroy:Investigation');
-    }
-
 }

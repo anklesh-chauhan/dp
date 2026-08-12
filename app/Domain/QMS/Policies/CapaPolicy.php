@@ -112,19 +112,4 @@ class CapaPolicy
         return $authUser->can('Unarchive:Capa');
     }
 
-    public function markObsolete(AuthUser $authUser, Capa $capa): bool
-    {
-        return $authUser->can('MarkObsolete:Capa');
-    }
-
-    public function completeRetention(AuthUser $authUser, Capa $capa): bool
-    {
-        return $authUser->can('CompleteRetention:Capa');
-    }
-
-    public function destroy(AuthUser $authUser, Capa $capa): bool
-    {
-        return $authUser->can('Destroy:Capa');
-    }
-
 }

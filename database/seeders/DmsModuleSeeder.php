@@ -379,7 +379,7 @@ class DmsModuleSeeder extends Seeder
             $user->syncRoles([$role]);
         }
 
-        $this->call(SopModuleSeeder::class);
         $this->call(ReportTemplateSeeder::class);
+        $this->call(SopModuleSeeder::class);
     }
 }

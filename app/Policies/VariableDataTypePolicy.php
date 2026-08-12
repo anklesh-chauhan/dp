@@ -112,19 +112,4 @@ class VariableDataTypePolicy
         return $authUser->can('Unarchive:VariableDataType');
     }
 
-    public function markObsolete(AuthUser $authUser, VariableDataType $variableDataType): bool
-    {
-        return $authUser->can('MarkObsolete:VariableDataType');
-    }
-
-    public function completeRetention(AuthUser $authUser, VariableDataType $variableDataType): bool
-    {
-        return $authUser->can('CompleteRetention:VariableDataType');
-    }
-
-    public function destroy(AuthUser $authUser, VariableDataType $variableDataType): bool
-    {
-        return $authUser->can('Destroy:VariableDataType');
-    }
-
 }

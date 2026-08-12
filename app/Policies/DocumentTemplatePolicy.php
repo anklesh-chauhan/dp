@@ -4,15 +4,14 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use App\Models\DocumentTemplate;
-use App\Models\User;
-use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Foundation\Auth\User as AuthUser;
+use App\Models\DocumentTemplate;
+use Illuminate\Auth\Access\HandlesAuthorization;
 
 class DocumentTemplatePolicy
 {
     use HandlesAuthorization;
-
+    
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:DocumentTemplate');
@@ -30,11 +29,7 @@ class DocumentTemplatePolicy
 
     public function update(AuthUser $authUser, DocumentTemplate $documentTemplate): bool
     {
-        if (! $authUser->can('Update:DocumentTemplate') || ! $authUser instanceof User) {
-            return false;
-        }
-
-        return $documentTemplate->canBeEditedBy($authUser);
+        return $authUser->can('Update:DocumentTemplate');
     }
 
     public function delete(AuthUser $authUser, DocumentTemplate $documentTemplate): bool
@@ -117,18 +112,4 @@ class DocumentTemplatePolicy
         return $authUser->can('Unarchive:DocumentTemplate');
     }
 
-    public function markObsolete(AuthUser $authUser, DocumentTemplate $documentTemplate): bool
-    {
-        return $authUser->can('MarkObsolete:DocumentTemplate');
-    }
-
-    public function completeRetention(AuthUser $authUser, DocumentTemplate $documentTemplate): bool
-    {
-        return $authUser->can('CompleteRetention:DocumentTemplate');
-    }
-
-    public function destroy(AuthUser $authUser, DocumentTemplate $documentTemplate): bool
-    {
-        return $authUser->can('Destroy:DocumentTemplate');
-    }
 }

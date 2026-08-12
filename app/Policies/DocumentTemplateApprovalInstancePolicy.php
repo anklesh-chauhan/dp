@@ -112,19 +112,4 @@ class DocumentTemplateApprovalInstancePolicy
         return $authUser->can('Unarchive:DocumentTemplateApprovalInstance');
     }
 
-    public function markObsolete(AuthUser $authUser, DocumentTemplateApprovalInstance $documentTemplateApprovalInstance): bool
-    {
-        return $authUser->can('MarkObsolete:DocumentTemplateApprovalInstance');
-    }
-
-    public function completeRetention(AuthUser $authUser, DocumentTemplateApprovalInstance $documentTemplateApprovalInstance): bool
-    {
-        return $authUser->can('CompleteRetention:DocumentTemplateApprovalInstance');
-    }
-
-    public function destroy(AuthUser $authUser, DocumentTemplateApprovalInstance $documentTemplateApprovalInstance): bool
-    {
-        return $authUser->can('Destroy:DocumentTemplateApprovalInstance');
-    }
-
 }

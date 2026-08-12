@@ -115,10 +115,13 @@ class GotenbergControlledDocumentPdfRenderer implements ControlledDocumentPdfRen
     private function estimatedFooterHeight(array $footerZones, float $fontSize): float
     {
         $lineHeight = $fontSize * 0.352778 * 1.2;
-        $largestColumn = collect($footerZones['columns'])
-            ->max(fn (array $column): int => count($column['items']));
 
-        return max(7, ((int) $largestColumn * $lineHeight) + 3);
+        return collect($footerZones['rows'])->sum(function (array $row) use ($lineHeight): float {
+            $largestCell = collect($row['cells'])
+                ->max(fn (array $cell): int => count($cell['items']));
+
+            return max(7, ((int) $largestCell * $lineHeight) + 3);
+        });
     }
 
     /**

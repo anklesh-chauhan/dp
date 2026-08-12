@@ -67,9 +67,6 @@
             margin: 0 {{ $pageSettings['margin_right_mm'] }}mm 0 {{ $pageSettings['margin_left_mm'] }}mm;
         }
 
-        .print-grid { display: grid; width: 100%; }
-        .print-grid-bordered { border: 1px solid var(--primary); }
-        .print-grid-bordered .print-zone + .print-zone { border-left: 1px solid var(--primary); }
         .print-table { display: flex; flex-direction: column; width: 100%; }
         .print-table-row { display: grid; }
         .print-table-bordered { border-left: 1px solid var(--primary); border-top: 1px solid var(--primary); }

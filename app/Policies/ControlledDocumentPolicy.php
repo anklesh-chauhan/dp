@@ -4,15 +4,14 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use App\Models\ControlledDocument;
-use App\Models\User;
-use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Foundation\Auth\User as AuthUser;
+use App\Models\ControlledDocument;
+use Illuminate\Auth\Access\HandlesAuthorization;
 
 class ControlledDocumentPolicy
 {
     use HandlesAuthorization;
-
+    
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:ControlledDocument');
@@ -30,11 +29,7 @@ class ControlledDocumentPolicy
 
     public function update(AuthUser $authUser, ControlledDocument $controlledDocument): bool
     {
-        if (! $authUser->can('Update:ControlledDocument') || ! $authUser instanceof User) {
-            return false;
-        }
-
-        return $controlledDocument->canBeEditedBy($authUser);
+        return $authUser->can('Update:ControlledDocument');
     }
 
     public function delete(AuthUser $authUser, ControlledDocument $controlledDocument): bool
@@ -117,18 +112,4 @@ class ControlledDocumentPolicy
         return $authUser->can('Unarchive:ControlledDocument');
     }
 
-    public function markObsolete(AuthUser $authUser, ControlledDocument $controlledDocument): bool
-    {
-        return $authUser->can('MarkObsolete:ControlledDocument');
-    }
-
-    public function completeRetention(AuthUser $authUser, ControlledDocument $controlledDocument): bool
-    {
-        return $authUser->can('CompleteRetention:ControlledDocument');
-    }
-
-    public function destroy(AuthUser $authUser, ControlledDocument $controlledDocument): bool
-    {
-        return $authUser->can('Destroy:ControlledDocument');
-    }
 }

@@ -112,19 +112,4 @@ class RolePolicy
         return $authUser->can('Unarchive:Role');
     }
 
-    public function markObsolete(AuthUser $authUser, Role $role): bool
-    {
-        return $authUser->can('MarkObsolete:Role');
-    }
-
-    public function completeRetention(AuthUser $authUser, Role $role): bool
-    {
-        return $authUser->can('CompleteRetention:Role');
-    }
-
-    public function destroy(AuthUser $authUser, Role $role): bool
-    {
-        return $authUser->can('Destroy:Role');
-    }
-
 }

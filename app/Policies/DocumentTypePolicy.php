@@ -112,19 +112,4 @@ class DocumentTypePolicy
         return $authUser->can('Unarchive:DocumentType');
     }
 
-    public function markObsolete(AuthUser $authUser, DocumentType $documentType): bool
-    {
-        return $authUser->can('MarkObsolete:DocumentType');
-    }
-
-    public function completeRetention(AuthUser $authUser, DocumentType $documentType): bool
-    {
-        return $authUser->can('CompleteRetention:DocumentType');
-    }
-
-    public function destroy(AuthUser $authUser, DocumentType $documentType): bool
-    {
-        return $authUser->can('Destroy:DocumentType');
-    }
-
 }

@@ -112,19 +112,4 @@ class DeviationPolicy
         return $authUser->can('Unarchive:Deviation');
     }
 
-    public function markObsolete(AuthUser $authUser, Deviation $deviation): bool
-    {
-        return $authUser->can('MarkObsolete:Deviation');
-    }
-
-    public function completeRetention(AuthUser $authUser, Deviation $deviation): bool
-    {
-        return $authUser->can('CompleteRetention:Deviation');
-    }
-
-    public function destroy(AuthUser $authUser, Deviation $deviation): bool
-    {
-        return $authUser->can('Destroy:Deviation');
-    }
-
 }

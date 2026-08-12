@@ -112,19 +112,4 @@ class DocumentImportBatchPolicy
         return $authUser->can('Unarchive:DocumentImportBatch');
     }
 
-    public function markObsolete(AuthUser $authUser, DocumentImportBatch $documentImportBatch): bool
-    {
-        return $authUser->can('MarkObsolete:DocumentImportBatch');
-    }
-
-    public function completeRetention(AuthUser $authUser, DocumentImportBatch $documentImportBatch): bool
-    {
-        return $authUser->can('CompleteRetention:DocumentImportBatch');
-    }
-
-    public function destroy(AuthUser $authUser, DocumentImportBatch $documentImportBatch): bool
-    {
-        return $authUser->can('Destroy:DocumentImportBatch');
-    }
-
 }

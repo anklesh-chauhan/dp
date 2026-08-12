@@ -83,6 +83,24 @@ final class PrintLayoutRegistry
         ];
     }
 
+    /** @return array{enabled: bool, title: string, position: string, show_section_numbers: bool, page_break_before: bool, page_break_after: bool, max_level: int} */
+    public function defaultReportsManualsTocConfiguration(): array
+    {
+        return [
+            ...$this->defaultTocConfiguration(),
+            'enabled' => true,
+        ];
+    }
+
+    /** @return array{enabled: bool, subtitle: string, show_logo: bool, show_organization: bool, show_identity: bool, show_controlled_notice: bool, show_header: bool, show_footer: bool, page_break_after: bool} */
+    public function defaultReportsManualsTitlePageConfiguration(): array
+    {
+        return [
+            ...$this->defaultTitlePageConfiguration(),
+            'enabled' => true,
+        ];
+    }
+
     /** @return array<string, mixed> */
     public function normalizeTitlePageConfiguration(array $configuration): array
     {
@@ -123,40 +141,61 @@ final class PrintLayoutRegistry
             'content_gap_mm' => 5,
             'rows' => [
                 $this->row('organization', [
-                    $this->column('organization_name', 100, 'center', 'center', [
+                    $this->column('logo', 20, 'center', 'center', [
+                        $this->item('logo'),
+                    ]),
+                    $this->column('organization_name', 80, 'left', 'center', [
                         $this->item('organization_name', emphasized: true),
+                        $this->item('organization_address', showLabel: false),
                     ]),
                 ]),
                 $this->row('document_title', [
-                    $this->column('document_title', 100, 'center', 'center', [
+                    $this->column('document_title_label', 20, 'left', 'center', [
+                        $this->item('custom_text', customText: 'Title', emphasized: true),
+                    ]),
+                    $this->column('document_title', 80, 'left', 'center', [
                         $this->item('document_title', emphasized: true),
                     ]),
                 ]),
                 $this->row('document_identity', [
-                    $this->column('document_number_label', 22, 'left', 'center', [
+                    $this->column('document_number_label', 20, 'left', 'center', [
                         $this->item('custom_text', customText: 'Document No.', emphasized: true),
                     ]),
-                    $this->column('document_number_value', 35, 'left', 'center', [
+                    $this->column('document_number_value', 30, 'left', 'center', [
                         $this->item('document_number', showLabel: false),
                     ]),
-                    $this->column('department_label', 18, 'left', 'center', [
+                    $this->column('department_label', 20, 'left', 'center', [
                         $this->item('custom_text', customText: 'Department', emphasized: true),
                     ]),
-                    $this->column('department_value', 25, 'left', 'center', [
+                    $this->column('department_value', 30, 'left', 'center', [
                         $this->item('department', showLabel: false),
                     ]),
                 ]),
+                $this->row('effective_and_review', [
+                    $this->column('effective_date_label', 20, 'left', 'center', [
+                        $this->item('custom_text', customText: 'Effective Date', emphasized: true),
+                    ]),
+                    $this->column('effective_date_value', 30, 'left', 'center', [
+                        $this->item('effective_date', showLabel: false),
+                    ]),
+                    $this->column('review_date_label', 20, 'left', 'center', [
+                        $this->item('custom_text', customText: 'Review Date'),
+                    ]),
+                    $this->column('review_date_value', 30, 'left', 'center', [
+                        $this->item('review_date', showLabel: false),
+                    ]),
+                ]),
                 $this->row('revision_and_page', [
-                    $this->column('revision_label', 22, 'left', 'center', [
+                    $this->column('revision_label', 20, 'left', 'center', [
                         $this->item('custom_text', customText: 'Revision No.', emphasized: true),
                     ]),
-                    $this->column('revision_value', 35, 'left', 'center', [
+                    $this->column('revision_value', 30, 'left', 'center', [
                         $this->item('document_version', showLabel: false),
                     ]),
-                    $this->column('page_label', 18, 'left', 'center', [
+                    $this->column('page_label', 20, 'left', 'center', [
                         $this->item('custom_text', customText: 'Page No.', emphasized: true),
                     ]),
-                    $this->column('page_value', 25, 'left', 'center', [
+                    $this->column('page_value', 30, 'left', 'center', [
                         $this->item('page_number', showLabel: false),
                     ]),
                 ]),
@@ -171,18 +210,19 @@ final class PrintLayoutRegistry
             'gap_mm' => 0,
             'show_borders' => true,
             'repeat_every_page' => true,
-            'content_gap_mm' => 5,
-            'columns' => [
-                $this->column('footer_left', 35, 'left', 'center', [
-                    ['token' => 'printed_by', 'label' => 'Printed By', 'custom_text' => null],
-                    ['token' => 'printed_at', 'label' => 'Printed At', 'custom_text' => null],
-                ]),
-                $this->column('footer_center', 40, 'center', 'center', [
-                    ['token' => 'controlled_notice', 'label' => 'Controlled / Uncontrolled Notice', 'custom_text' => null],
-                ]),
-                $this->column('footer_right', 25, 'right', 'center', [
-                    ['token' => 'document_number', 'label' => 'Document Number', 'custom_text' => null],
-                    ['token' => 'page_number', 'label' => 'Page Number', 'custom_text' => null],
+            'content_gap_mm' => 15,
+            'rows' => [
+                $this->row('footer', [
+                    $this->column('footer_left', 38, 'left', 'center', [
+                        $this->item('printed_by'),
+                        $this->item('printed_at'),
+                    ]),
+                    $this->column('footer_center', 24, 'center', 'center', [
+                        $this->item('controlled_notice'),
+                    ]),
+                    $this->column('footer_right', 38, 'right', 'center', [
+                        $this->item('page_number'),
+                    ]),
                 ]),
             ],
         ];
@@ -212,95 +252,33 @@ final class PrintLayoutRegistry
 
     /**
      * @param  array<string, mixed>  $zones
-     * @return array{gap_mm: int, show_borders: bool, repeat_every_page?: bool, content_gap_mm?: int, columns: list<array{key: string, width: int, alignment: string, vertical_alignment: string, items: list<array{token: string, label: string, custom_text: string|null}>}>}
+     * @return array{gap_mm: int, show_borders: bool, repeat_every_page: bool, content_gap_mm: int, rows: list<array{key: string, cells: list<array<string, mixed>>}>}
      */
     public function normalizeZones(array $zones, bool $footer = false): array
     {
         $defaults = $footer ? $this->defaultFooterZones() : $this->defaultHeaderZones();
         $options = $this->tokenOptions();
+        $legacyKey = $footer ? 'legacy_footer' : 'legacy_header';
 
-        if (! $footer) {
-            if (isset($zones['columns']) && ! isset($zones['rows'])) {
-                $zones['rows'] = [[
-                    'key' => 'legacy_header',
-                    'cells' => $zones['columns'],
-                ]];
-            } elseif (array_intersect(['left', 'center', 'right'], array_keys($zones)) && ! isset($zones['rows'])) {
-                $zones['rows'] = [[
-                    'key' => 'legacy_header',
-                    'cells' => [
-                        $this->column('legacy_left', 33, 'left', 'center', Arr::get($zones, 'left', [])),
-                        $this->column('legacy_center', 34, 'center', 'center', Arr::get($zones, 'center', [])),
-                        $this->column('legacy_right', 33, 'right', 'center', Arr::get($zones, 'right', [])),
-                    ],
-                ]];
-            } elseif (! isset($zones['rows'])) {
-                $zones = $defaults;
-            }
-
-            return $this->normalizeTableRows($zones, $options);
+        if (isset($zones['columns']) && ! isset($zones['rows'])) {
+            $zones['rows'] = [[
+                'key' => $legacyKey,
+                'cells' => $zones['columns'],
+            ]];
+        } elseif (array_intersect(['left', 'center', 'right'], array_keys($zones)) && ! isset($zones['rows'])) {
+            $zones['rows'] = [[
+                'key' => $legacyKey,
+                'cells' => [
+                    $this->column('legacy_left', 33, 'left', 'center', Arr::get($zones, 'left', [])),
+                    $this->column('legacy_center', 34, 'center', 'center', Arr::get($zones, 'center', [])),
+                    $this->column('legacy_right', 33, 'right', 'center', Arr::get($zones, 'right', [])),
+                ],
+            ]];
+        } elseif (! isset($zones['rows'])) {
+            $zones = $defaults;
         }
 
-        $zones = $this->convertLegacyZones($zones, $defaults);
-        $columns = Arr::get($zones, 'columns');
-
-        if (! is_array($columns) || count($columns) < 1 || count($columns) > 4) {
-            throw ValidationException::withMessages(['columns' => 'Header and footer layouts require between one and four columns.']);
-        }
-
-        $normalizedColumns = collect($columns)
-            ->map(function (mixed $column, int $index) use ($options): array {
-                if (! is_array($column)) {
-                    throw ValidationException::withMessages(['columns' => 'Every layout column must have valid configuration.']);
-                }
-
-                $items = Arr::get($column, 'items', []);
-
-                if (! is_array($items) || count($items) > 8) {
-                    throw ValidationException::withMessages(['columns' => 'Each column may contain up to eight approved items.']);
-                }
-
-                return $this->column(
-                    key: Str::slug((string) Arr::get($column, 'key', 'column_'.($index + 1)), '_'),
-                    width: $this->boundedInteger(Arr::get($column, 'width'), 10, 100, 'column width'),
-                    alignment: $this->allowed(Arr::get($column, 'alignment'), ['left', 'center', 'right'], 'column alignment'),
-                    verticalAlignment: $this->allowed(Arr::get($column, 'vertical_alignment'), ['top', 'center', 'bottom'], 'vertical alignment'),
-                    items: collect($items)->map(function (mixed $item) use ($options): array {
-                        if (! is_array($item) || ! isset($options[$item['token'] ?? ''])) {
-                            throw ValidationException::withMessages(['columns' => 'The layout contains an unsupported token.']);
-                        }
-
-                        $token = (string) $item['token'];
-
-                        return [
-                            'token' => $token,
-                            'label' => $options[$token],
-                            'custom_text' => $token === 'custom_text'
-                                ? Str::limit(Str::squish((string) ($item['custom_text'] ?? '')), 200, '')
-                                : null,
-                            'show_label' => (bool) ($item['show_label'] ?? true),
-                            'emphasized' => (bool) ($item['emphasized'] ?? false),
-                        ];
-                    })->values()->all(),
-                );
-            })
-            ->values();
-
-        if ($normalizedColumns->pluck('key')->duplicates()->isNotEmpty()) {
-            throw ValidationException::withMessages(['columns' => 'Every layout column must have a unique key.']);
-        }
-
-        if ($normalizedColumns->sum('width') !== 100) {
-            throw ValidationException::withMessages(['columns' => 'Header and footer column widths must total exactly 100%.']);
-        }
-
-        return [
-            'gap_mm' => $this->boundedInteger(Arr::get($zones, 'gap_mm', 0), 0, 10, 'column gap'),
-            'show_borders' => (bool) Arr::get($zones, 'show_borders', true),
-            'repeat_every_page' => (bool) Arr::get($zones, 'repeat_every_page', true),
-            'content_gap_mm' => $this->boundedInteger(Arr::get($zones, 'content_gap_mm', 5), 0, 20, 'gap before footer'),
-            'columns' => $normalizedColumns->all(),
-        ];
+        return $this->normalizeTableRows($zones, $options, $footer);
     }
 
     /**
@@ -308,34 +286,35 @@ final class PrintLayoutRegistry
      * @param  array<string, string>  $options
      * @return array{gap_mm: int, show_borders: bool, repeat_every_page: bool, content_gap_mm: int, rows: list<array{key: string, cells: list<array<string, mixed>>}>}
      */
-    private function normalizeTableRows(array $zones, array $options): array
+    private function normalizeTableRows(array $zones, array $options, bool $footer = false): array
     {
+        $label = $footer ? 'footer' : 'header';
         $rows = Arr::get($zones, 'rows');
 
         if (! is_array($rows) || count($rows) < 1 || count($rows) > 8) {
-            throw ValidationException::withMessages(['rows' => 'Header tables require between one and eight rows.']);
+            throw ValidationException::withMessages(['rows' => "{$label} tables require between one and eight rows."]);
         }
 
-        $normalizedRows = collect($rows)->map(function (mixed $row, int $rowIndex) use ($options): array {
+        $normalizedRows = collect($rows)->map(function (mixed $row, int $rowIndex) use ($options, $label): array {
             if (! is_array($row)) {
-                throw ValidationException::withMessages(['rows' => 'Every header row must have valid configuration.']);
+                throw ValidationException::withMessages(['rows' => "Every {$label} row must have valid configuration."]);
             }
 
             $cells = Arr::get($row, 'cells');
 
             if (! is_array($cells) || count($cells) < 1 || count($cells) > 6) {
-                throw ValidationException::withMessages(['rows' => 'Each header row requires between one and six cells.']);
+                throw ValidationException::withMessages(['rows' => "Each {$label} row requires between one and six cells."]);
             }
 
-            $normalizedCells = collect($cells)->map(function (mixed $cell, int $cellIndex) use ($options): array {
+            $normalizedCells = collect($cells)->map(function (mixed $cell, int $cellIndex) use ($options, $label): array {
                 if (! is_array($cell)) {
-                    throw ValidationException::withMessages(['rows' => 'Every header cell must have valid configuration.']);
+                    throw ValidationException::withMessages(['rows' => "Every {$label} cell must have valid configuration."]);
                 }
 
                 $items = Arr::get($cell, 'items', []);
 
                 if (! is_array($items) || count($items) > 8) {
-                    throw ValidationException::withMessages(['rows' => 'Each header cell may contain up to eight approved items.']);
+                    throw ValidationException::withMessages(['rows' => "Each {$label} cell may contain up to eight approved items."]);
                 }
 
                 return $this->column(
@@ -343,9 +322,9 @@ final class PrintLayoutRegistry
                     width: $this->boundedInteger(Arr::get($cell, 'width'), 10, 100, 'cell width'),
                     alignment: $this->allowed(Arr::get($cell, 'alignment'), ['left', 'center', 'right'], 'cell alignment'),
                     verticalAlignment: $this->allowed(Arr::get($cell, 'vertical_alignment'), ['top', 'center', 'bottom'], 'vertical alignment'),
-                    items: collect($items)->map(function (mixed $item) use ($options): array {
+                    items: collect($items)->map(function (mixed $item) use ($options, $label): array {
                         if (! is_array($item) || ! isset($options[$item['token'] ?? ''])) {
-                            throw ValidationException::withMessages(['rows' => 'The header table contains an unsupported token.']);
+                            throw ValidationException::withMessages(['rows' => "The {$label} table contains an unsupported token."]);
                         }
 
                         $token = (string) $item['token'];
@@ -364,7 +343,7 @@ final class PrintLayoutRegistry
             })->values();
 
             if ($normalizedCells->sum('width') !== 100) {
-                throw ValidationException::withMessages(['rows' => 'Cell widths in every header row must total exactly 100%.']);
+                throw ValidationException::withMessages(['rows' => "Cell widths in every {$label} row must total exactly 100%."]);
             }
 
             return [
@@ -374,14 +353,19 @@ final class PrintLayoutRegistry
         })->values();
 
         if ($normalizedRows->pluck('key')->duplicates()->isNotEmpty()) {
-            throw ValidationException::withMessages(['rows' => 'Every header row must have a unique key.']);
+            throw ValidationException::withMessages(['rows' => "Every {$label} row must have a unique key."]);
         }
 
         return [
             'gap_mm' => $this->boundedInteger(Arr::get($zones, 'gap_mm', 0), 0, 10, 'cell gap'),
             'show_borders' => (bool) Arr::get($zones, 'show_borders', true),
             'repeat_every_page' => (bool) Arr::get($zones, 'repeat_every_page', true),
-            'content_gap_mm' => $this->boundedInteger(Arr::get($zones, 'content_gap_mm', 5), 0, 20, 'gap after header'),
+            'content_gap_mm' => $this->boundedInteger(
+                Arr::get($zones, 'content_gap_mm', 5),
+                0,
+                20,
+                $footer ? 'gap before footer' : 'gap after header',
+            ),
             'rows' => $normalizedRows->all(),
         ];
     }
@@ -422,35 +406,6 @@ final class PrintLayoutRegistry
             'custom_text' => $customText,
             'show_label' => $showLabel,
             'emphasized' => $emphasized,
-        ];
-    }
-
-    /** @param array<string, mixed> $zones
-     * @param  array<string, mixed>  $defaults
-     * @return array<string, mixed>
-     */
-    private function convertLegacyZones(array $zones, array $defaults): array
-    {
-        if (isset($zones['columns'])) {
-            return $zones;
-        }
-
-        if (isset($defaults['rows'])) {
-            return $defaults;
-        }
-
-        if (! array_intersect(['left', 'center', 'right'], array_keys($zones))) {
-            return $defaults;
-        }
-
-        return [
-            'gap_mm' => 0,
-            'show_borders' => true,
-            'columns' => [
-                $this->column('legacy_left', 33, 'left', 'center', Arr::get($zones, 'left', [])),
-                $this->column('legacy_center', 34, 'center', 'center', Arr::get($zones, 'center', [])),
-                $this->column('legacy_right', 33, 'right', 'center', Arr::get($zones, 'right', [])),
-            ],
         ];
     }
 

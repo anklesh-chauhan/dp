@@ -112,19 +112,4 @@ class AiExecutionPolicy
         return $authUser->can('Unarchive:AiExecution');
     }
 
-    public function markObsolete(AuthUser $authUser, AiExecution $aiExecution): bool
-    {
-        return $authUser->can('MarkObsolete:AiExecution');
-    }
-
-    public function completeRetention(AuthUser $authUser, AiExecution $aiExecution): bool
-    {
-        return $authUser->can('CompleteRetention:AiExecution');
-    }
-
-    public function destroy(AuthUser $authUser, AiExecution $aiExecution): bool
-    {
-        return $authUser->can('Destroy:AiExecution');
-    }
-
 }

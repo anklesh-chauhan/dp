@@ -7,6 +7,7 @@ use App\Domain\DMS\Actions\CreateDocumentFromTemplateAction;
 use App\Models\DocumentTemplate;
 use App\Models\Organization;
 use App\Models\User;
+use Database\Seeders\ReportTemplateSeeder;
 use Database\Seeders\SopModuleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -59,6 +60,31 @@ it('seeds reusable GMP execution table definitions idempotently', function (): v
         ->and($controlledForm->versions->sole()->sections->firstWhere('title', 'Record Identification')->configuration['execution_tables'][0]['execution_layout'])->toBe('field_value')
         ->and(collect($checklist->versions->sole()->sections->firstWhere('title', 'Checks')->configuration['execution_tables'][0]['fields'])->pluck('label'))->toContain('Pass / Fail / N/A')
         ->and(collect($annexure->versions->sole()->sections->firstWhere('title', 'Evidence Package Index')->configuration['execution_tables'][0]['fields'])->pluck('label'))->toContain('Annexure number', 'Integrity / review status');
+});
+
+it('links seeded document templates to their GMP print and report templates', function (): void {
+    $this->seed(ReportTemplateSeeder::class);
+    $this->seed(SopModuleSeeder::class);
+
+    $mappings = [
+        'TPL-SOP-GMP' => 'sop-gmp-standard',
+        'TPL-LOG-GMP' => 'repeating-log-gmp-print',
+        'TPL-STRUCTURED-GMP' => 'structured-table-gmp-print',
+        'TPL-CONTROLLED-FORM-GMP' => 'controlled-form-gmp-print',
+        'TPL-BMR-BPR-GMP' => 'batch-record-gmp-print',
+        'TPL-CHECKLIST-GMP' => 'checklist-gmp-print',
+        'TPL-ANNEXURE-GMP' => 'annexure-gmp-print',
+    ];
+
+    foreach ($mappings as $templateCode => $layoutKey) {
+        $template = DocumentTemplate::query()
+            ->where('code', $templateCode)
+            ->with('reportTemplate')
+            ->firstOrFail();
+
+        expect($template->report_template_id)->not->toBeNull()
+            ->and($template->reportTemplate?->layout_key)->toBe($layoutKey);
+    }
 });
 
 it('creates related execution tables and field headers from a seeded GMP template', function (): void {

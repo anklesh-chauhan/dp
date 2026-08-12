@@ -13,6 +13,7 @@ use App\Models\DocumentTemplateSection;
 use App\Models\DocumentTemplateVersion;
 use App\Models\DocumentType;
 use App\Models\RegulationTag;
+use App\Models\ReportTemplate;
 use App\Models\SopWorkflow;
 use App\Models\TemplateStatus;
 use App\Models\User;
@@ -557,6 +558,35 @@ class SopModuleSeeder extends Seeder
 
         foreach ($standardTemplates as $definition) {
             $this->seedStandardTemplate($definition, $qa, $publishedStatusId);
+        }
+
+        $this->assignPrintReportTemplates();
+    }
+
+    private function assignPrintReportTemplates(): void
+    {
+        $mappings = [
+            'TPL-SOP-GMP' => 'sop-gmp-standard',
+            'TPL-LOG-GMP' => 'repeating-log-gmp-print',
+            'TPL-STRUCTURED-GMP' => 'structured-table-gmp-print',
+            'TPL-CONTROLLED-FORM-GMP' => 'controlled-form-gmp-print',
+            'TPL-BMR-BPR-GMP' => 'batch-record-gmp-print',
+            'TPL-CHECKLIST-GMP' => 'checklist-gmp-print',
+            'TPL-ANNEXURE-GMP' => 'annexure-gmp-print',
+        ];
+
+        foreach ($mappings as $templateCode => $layoutKey) {
+            $reportTemplateId = ReportTemplate::query()
+                ->where('layout_key', $layoutKey)
+                ->value('id');
+
+            if ($reportTemplateId === null) {
+                continue;
+            }
+
+            DocumentTemplate::query()
+                ->where('code', $templateCode)
+                ->update(['report_template_id' => $reportTemplateId]);
         }
     }
 

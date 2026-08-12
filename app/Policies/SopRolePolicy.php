@@ -112,19 +112,4 @@ class SopRolePolicy
         return $authUser->can('Unarchive:SopRole');
     }
 
-    public function markObsolete(AuthUser $authUser, SopRole $sopRole): bool
-    {
-        return $authUser->can('MarkObsolete:SopRole');
-    }
-
-    public function completeRetention(AuthUser $authUser, SopRole $sopRole): bool
-    {
-        return $authUser->can('CompleteRetention:SopRole');
-    }
-
-    public function destroy(AuthUser $authUser, SopRole $sopRole): bool
-    {
-        return $authUser->can('Destroy:SopRole');
-    }
-
 }

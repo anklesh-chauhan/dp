@@ -112,19 +112,4 @@ class TemplateStatusPolicy
         return $authUser->can('Unarchive:TemplateStatus');
     }
 
-    public function markObsolete(AuthUser $authUser, TemplateStatus $templateStatus): bool
-    {
-        return $authUser->can('MarkObsolete:TemplateStatus');
-    }
-
-    public function completeRetention(AuthUser $authUser, TemplateStatus $templateStatus): bool
-    {
-        return $authUser->can('CompleteRetention:TemplateStatus');
-    }
-
-    public function destroy(AuthUser $authUser, TemplateStatus $templateStatus): bool
-    {
-        return $authUser->can('Destroy:TemplateStatus');
-    }
-
 }

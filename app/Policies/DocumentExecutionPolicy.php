@@ -112,19 +112,4 @@ class DocumentExecutionPolicy
         return $authUser->can('Unarchive:DocumentExecution');
     }
 
-    public function markObsolete(AuthUser $authUser, DocumentExecution $documentExecution): bool
-    {
-        return $authUser->can('MarkObsolete:DocumentExecution');
-    }
-
-    public function completeRetention(AuthUser $authUser, DocumentExecution $documentExecution): bool
-    {
-        return $authUser->can('CompleteRetention:DocumentExecution');
-    }
-
-    public function destroy(AuthUser $authUser, DocumentExecution $documentExecution): bool
-    {
-        return $authUser->can('Destroy:DocumentExecution');
-    }
-
 }

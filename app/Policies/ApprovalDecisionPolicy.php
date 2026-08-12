@@ -112,19 +112,4 @@ class ApprovalDecisionPolicy
         return $authUser->can('Unarchive:ApprovalDecision');
     }
 
-    public function markObsolete(AuthUser $authUser, ApprovalDecision $approvalDecision): bool
-    {
-        return $authUser->can('MarkObsolete:ApprovalDecision');
-    }
-
-    public function completeRetention(AuthUser $authUser, ApprovalDecision $approvalDecision): bool
-    {
-        return $authUser->can('CompleteRetention:ApprovalDecision');
-    }
-
-    public function destroy(AuthUser $authUser, ApprovalDecision $approvalDecision): bool
-    {
-        return $authUser->can('Destroy:ApprovalDecision');
-    }
-
 }

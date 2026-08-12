@@ -112,19 +112,4 @@ class RegulationTagPolicy
         return $authUser->can('Unarchive:RegulationTag');
     }
 
-    public function markObsolete(AuthUser $authUser, RegulationTag $regulationTag): bool
-    {
-        return $authUser->can('MarkObsolete:RegulationTag');
-    }
-
-    public function completeRetention(AuthUser $authUser, RegulationTag $regulationTag): bool
-    {
-        return $authUser->can('CompleteRetention:RegulationTag');
-    }
-
-    public function destroy(AuthUser $authUser, RegulationTag $regulationTag): bool
-    {
-        return $authUser->can('Destroy:RegulationTag');
-    }
-
 }

@@ -112,19 +112,4 @@ class PdfAccessPolicyPolicy
         return $authUser->can('Unarchive:PdfAccessPolicy');
     }
 
-    public function markObsolete(AuthUser $authUser, PdfAccessPolicy $pdfAccessPolicy): bool
-    {
-        return $authUser->can('MarkObsolete:PdfAccessPolicy');
-    }
-
-    public function completeRetention(AuthUser $authUser, PdfAccessPolicy $pdfAccessPolicy): bool
-    {
-        return $authUser->can('CompleteRetention:PdfAccessPolicy');
-    }
-
-    public function destroy(AuthUser $authUser, PdfAccessPolicy $pdfAccessPolicy): bool
-    {
-        return $authUser->can('Destroy:PdfAccessPolicy');
-    }
-
 }

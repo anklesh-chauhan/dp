@@ -112,19 +112,4 @@ class DocumentStatusPolicy
         return $authUser->can('Unarchive:DocumentStatus');
     }
 
-    public function markObsolete(AuthUser $authUser, DocumentStatus $documentStatus): bool
-    {
-        return $authUser->can('MarkObsolete:DocumentStatus');
-    }
-
-    public function completeRetention(AuthUser $authUser, DocumentStatus $documentStatus): bool
-    {
-        return $authUser->can('CompleteRetention:DocumentStatus');
-    }
-
-    public function destroy(AuthUser $authUser, DocumentStatus $documentStatus): bool
-    {
-        return $authUser->can('Destroy:DocumentStatus');
-    }
-
 }

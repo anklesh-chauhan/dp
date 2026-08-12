@@ -243,7 +243,7 @@ final class ReportTemplateForm
                             ->schema([
                                 Grid::make(4)->schema([
                                     TextInput::make('footer_zones.gap_mm')
-                                        ->label('Column Gap')
+                                        ->label('Cell Gap')
                                         ->numeric()
                                         ->minValue(0)
                                         ->maxValue(10)
@@ -251,7 +251,7 @@ final class ReportTemplateForm
                                         ->suffix('mm')
                                         ->required(),
                                     Toggle::make('footer_zones.show_borders')
-                                        ->label('Show Column Borders')
+                                        ->label('Show Table Borders')
                                         ->default(true),
                                     Toggle::make('footer_zones.repeat_every_page')
                                         ->label('Repeat on Every Page')
@@ -269,69 +269,21 @@ final class ReportTemplateForm
                                         ->visible(fn (Get $get): bool => (bool) $get('footer_zones.repeat_every_page'))
                                         ->required(fn (Get $get): bool => (bool) $get('footer_zones.repeat_every_page')),
                                 ]),
-                                self::columnRepeater('footer_zones.columns', footer: true),
+                                self::rowRepeater(footer: true),
                             ]),
                     ])
                     ->columnSpanFull(),
             ]);
     }
 
-    private static function columnRepeater(string $name, bool $footer): Repeater
+    private static function rowRepeater(bool $footer = false): Repeater
     {
         $defaults = $footer
             ? app(PrintLayoutRegistry::class)->defaultFooterZones()
             : app(PrintLayoutRegistry::class)->defaultHeaderZones();
+        $name = $footer ? 'footer_zones.rows' : 'header_zones.rows';
 
         return Repeater::make($name)
-            ->label('Columns')
-            ->schema([
-                Hidden::make('key')
-                    ->default(fn (): string => 'column_'.Str::lower(Str::random(8)))
-                    ->required(),
-                TextInput::make('width')
-                    ->label('Width')
-                    ->numeric()
-                    ->minValue(10)
-                    ->maxValue(100)
-                    ->suffix('%')
-                    ->helperText('Set 50% to occupy the space of two 25% columns; widths in this row must total 100%.')
-                    ->live(onBlur: true)
-                    ->required(),
-                Select::make('alignment')
-                    ->label('Horizontal Alignment')
-                    ->options(['left' => 'Left', 'center' => 'Center', 'right' => 'Right'])
-                    ->default('left')
-                    ->required(),
-                Select::make('vertical_alignment')
-                    ->label('Vertical Alignment')
-                    ->options(['top' => 'Top', 'center' => 'Center', 'bottom' => 'Bottom'])
-                    ->default('center')
-                    ->required(),
-                self::tokenRepeater('items'),
-            ])
-            ->columns(3)
-            ->default($defaults['columns'])
-            ->itemLabel(fn (array $state): string => ($state['width'] ?? '?').'% · '.str($state['alignment'] ?? 'left')->title().' aligned')
-            ->reorderable()
-            ->reorderableWithButtons()
-            ->collapsible()
-            ->minItems(1)
-            ->maxItems(4)
-            ->addActionLabel('Add Column')
-            ->rules([
-                fn (): Closure => function (string $attribute, mixed $value, Closure $fail): void {
-                    if (! is_array($value) || collect($value)->sum(fn (mixed $column): int => (int) data_get($column, 'width', 0)) !== 100) {
-                        $fail('Column widths must total exactly 100%.');
-                    }
-                },
-            ]);
-    }
-
-    private static function rowRepeater(): Repeater
-    {
-        $defaults = app(PrintLayoutRegistry::class)->defaultHeaderZones();
-
-        return Repeater::make('header_zones.rows')
             ->label('Table Rows')
             ->schema([
                 Hidden::make('key')
@@ -349,6 +301,7 @@ final class ReportTemplateForm
                             ->minValue(10)
                             ->maxValue(100)
                             ->suffix('%')
+                            ->helperText('Widths in this row must total 100%.')
                             ->live(onBlur: true)
                             ->required(),
                         Select::make('alignment')

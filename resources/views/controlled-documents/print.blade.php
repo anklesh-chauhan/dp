@@ -7,7 +7,7 @@
     @php($pageSettings = $reportTemplate->printPageSettings())
     @php($configuredHeaderZones = $reportTemplate->printHeaderZones())
     @php($configuredFooterZones = $reportTemplate->printFooterZones())
-    @php($pageNumberColumn = collect($configuredFooterZones['columns'])->first(fn (array $column): bool => collect($column['items'])->contains('token', 'page_number')))
+    @php($pageNumberColumn = collect($configuredFooterZones['rows'])->flatMap(fn (array $row) => $row['cells'])->first(fn (array $cell): bool => collect($cell['items'])->contains('token', 'page_number')))
     <style>
         :root {
             --primary: {{ $pageSettings['primary_color'] }};
@@ -201,25 +201,12 @@
         .title-page-notice { border: 1px solid var(--primary); font-size: .9em; font-weight: 700; letter-spacing: .12em; margin-top: 12mm; padding: 8px 20px; }
         .toc-marker { color: transparent; font-size: 1px; }
 
-        .print-grid {
-            display: grid;
-            grid-column: 1 / -1;
-        }
-
-        .print-grid-bordered {
-            border: 1px solid var(--primary);
-        }
-
         .print-zone {
             display: flex;
             flex-direction: column;
             gap: 4px;
             /* min-height: 56px;    */
             padding: 8px;
-        }
-
-        .print-grid-bordered .print-zone + .print-zone {
-            border-left: 1px solid var(--primary);
         }
 
         .print-table {

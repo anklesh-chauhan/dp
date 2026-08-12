@@ -112,19 +112,4 @@ class KnowledgeGuidePolicy
         return $authUser->can('Unarchive:KnowledgeGuide');
     }
 
-    public function markObsolete(AuthUser $authUser, KnowledgeGuide $knowledgeGuide): bool
-    {
-        return $authUser->can('MarkObsolete:KnowledgeGuide');
-    }
-
-    public function completeRetention(AuthUser $authUser, KnowledgeGuide $knowledgeGuide): bool
-    {
-        return $authUser->can('CompleteRetention:KnowledgeGuide');
-    }
-
-    public function destroy(AuthUser $authUser, KnowledgeGuide $knowledgeGuide): bool
-    {
-        return $authUser->can('Destroy:KnowledgeGuide');
-    }
-
 }

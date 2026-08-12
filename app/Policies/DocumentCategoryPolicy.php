@@ -112,19 +112,4 @@ class DocumentCategoryPolicy
         return $authUser->can('Unarchive:DocumentCategory');
     }
 
-    public function markObsolete(AuthUser $authUser, DocumentCategory $documentCategory): bool
-    {
-        return $authUser->can('MarkObsolete:DocumentCategory');
-    }
-
-    public function completeRetention(AuthUser $authUser, DocumentCategory $documentCategory): bool
-    {
-        return $authUser->can('CompleteRetention:DocumentCategory');
-    }
-
-    public function destroy(AuthUser $authUser, DocumentCategory $documentCategory): bool
-    {
-        return $authUser->can('Destroy:DocumentCategory');
-    }
-
 }

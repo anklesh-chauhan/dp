@@ -112,19 +112,4 @@ class OrganizationPolicy
         return $authUser->can('Unarchive:Organization');
     }
 
-    public function markObsolete(AuthUser $authUser, Organization $organization): bool
-    {
-        return $authUser->can('MarkObsolete:Organization');
-    }
-
-    public function completeRetention(AuthUser $authUser, Organization $organization): bool
-    {
-        return $authUser->can('CompleteRetention:Organization');
-    }
-
-    public function destroy(AuthUser $authUser, Organization $organization): bool
-    {
-        return $authUser->can('Destroy:Organization');
-    }
-
 }

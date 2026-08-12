@@ -112,19 +112,4 @@ class NumberSeriesPolicy
         return $authUser->can('Unarchive:NumberSeries');
     }
 
-    public function markObsolete(AuthUser $authUser, NumberSeries $numberSeries): bool
-    {
-        return $authUser->can('MarkObsolete:NumberSeries');
-    }
-
-    public function completeRetention(AuthUser $authUser, NumberSeries $numberSeries): bool
-    {
-        return $authUser->can('CompleteRetention:NumberSeries');
-    }
-
-    public function destroy(AuthUser $authUser, NumberSeries $numberSeries): bool
-    {
-        return $authUser->can('Destroy:NumberSeries');
-    }
-
 }

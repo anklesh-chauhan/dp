@@ -112,19 +112,4 @@ class ProductLicensePolicy
         return $authUser->can('Unarchive:ProductLicense');
     }
 
-    public function markObsolete(AuthUser $authUser, ProductLicense $productLicense): bool
-    {
-        return $authUser->can('MarkObsolete:ProductLicense');
-    }
-
-    public function completeRetention(AuthUser $authUser, ProductLicense $productLicense): bool
-    {
-        return $authUser->can('CompleteRetention:ProductLicense');
-    }
-
-    public function destroy(AuthUser $authUser, ProductLicense $productLicense): bool
-    {
-        return $authUser->can('Destroy:ProductLicense');
-    }
-
 }

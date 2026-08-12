@@ -28,11 +28,40 @@ uses(RefreshDatabase::class);
 it('seeds the GMP and ALCOA plus standard template library', function (): void {
     $this->seed(ReportTemplateSeeder::class);
 
-    expect(ReportTemplate::query()->count())->toBe(14)
+    expect(ReportTemplate::query()->count())->toBe(15)
         ->and(ReportTemplate::query()->where('layout_key', 'sop-gmp-standard')->value('is_system'))->toBeTrue()
         ->and(ReportTemplate::query()->where('scope', ReportScope::DocumentDistribution)->count())->toBe(3)
         ->and(ReportTemplate::query()->where('scope', ReportScope::CsvValidationTraceability)->count())->toBe(2)
         ->and(ReportTemplate::query()->where('layout_key', 'csv-validation-summary-pdf')->value('is_system'))->toBeTrue();
+});
+
+it('seeds GMP controlled document templates with UI body block defaults and a reports and manuals layout', function (): void {
+    $this->seed(ReportTemplateSeeder::class);
+
+    $gmpTemplate = ReportTemplate::query()->where('layout_key', 'sop-gmp-standard')->firstOrFail();
+    $reportsManualsTemplate = ReportTemplate::query()->where('layout_key', 'reports-manuals-gmp-print')->firstOrFail();
+
+    $enabledKeys = collect($gmpTemplate->fields)->filter(fn (array $field): bool => $field['enabled'])->pluck('key')->all();
+    $sections = collect($gmpTemplate->fields)->firstWhere('key', 'sections');
+    $approvals = collect($gmpTemplate->fields)->firstWhere('key', 'approvals');
+
+    expect($enabledKeys)->toBe(['sections', 'approvals'])
+        ->and($sections)
+        ->enabled->toBeTrue()
+        ->show_label->toBeFalse()
+        ->show_section_titles->toBeTrue()
+        ->and($approvals)
+        ->enabled->toBeTrue()
+        ->show_label->toBeTrue()
+        ->and(collect($gmpTemplate->fields)->firstWhere('key', 'organization')['enabled'])->toBeFalse()
+        ->and(ReportTemplate::query()->where('layout_key', 'like', '%-gmp-%')->orWhere('layout_key', 'sop-gmp-standard')->count())->toBe(8)
+        ->and($reportsManualsTemplate->tocConfiguration())
+        ->enabled->toBeTrue()
+        ->title->toBe('Table of Contents')
+        ->and($reportsManualsTemplate->titlePageConfiguration())
+        ->enabled->toBeTrue()
+        ->show_logo->toBeTrue()
+        ->page_break_after->toBeTrue();
 });
 
 it('preserves configured field order and rejects unsupported system fields', function (): void {
@@ -128,7 +157,8 @@ it('normalizes safe variable-column header and footer configuration with legacy 
         ->and($twoColumnZones['show_borders'])->toBeFalse()
         ->and($twoColumnZones['repeat_every_page'])->toBeTrue()
         ->and($twoColumnZones['content_gap_mm'])->toBe(5)
-        ->and(array_column($twoColumnZones['columns'], 'width'))->toBe([40, 60]);
+        ->and($twoColumnZones['rows'][0]['key'])->toBe('legacy_footer')
+        ->and(array_column($twoColumnZones['rows'][0]['cells'], 'width'))->toBe([40, 60]);
 
     expect(fn () => $registry->normalizeZones([
         'rows' => [[
@@ -155,8 +185,12 @@ it('normalizes safe variable-column header and footer configuration with legacy 
 
     expect($legacyTemplate->printPageSettings()['paper_size'])->toBe('a4')
         ->and($legacyTemplate->printHeaderZones())->toHaveKeys(['gap_mm', 'show_borders', 'rows'])
-        ->and($legacyTemplate->printFooterZones())->toHaveKeys(['gap_mm', 'show_borders', 'columns'])
-        ->and($legacyTemplate->printHeaderZones()['rows'])->toHaveCount(4);
+        ->and($legacyTemplate->printFooterZones())->toHaveKeys(['gap_mm', 'show_borders', 'rows'])
+        ->and($legacyTemplate->printHeaderZones()['rows'])->toHaveCount(5)
+        ->and($legacyTemplate->printFooterZones()['rows'])->toHaveCount(1)
+        ->and($legacyTemplate->printFooterZones()['content_gap_mm'])->toBe(15)
+        ->and(array_column($legacyTemplate->printHeaderZones()['rows'][0]['cells'], 'width'))->toBe([20, 80])
+        ->and(array_column($legacyTemplate->printFooterZones()['rows'][0]['cells'], 'width'))->toBe([38, 24, 38]);
 });
 
 it('normalizes configurable table of contents settings', function (): void {
@@ -406,8 +440,13 @@ it('uses the generated pdf measurements and shared partials in the template prev
         ->toContain('width: {{ $pageWidth }}mm')
         ->and($header)
         ->toContain("'preview' => \$preview ?? false")
+        ->toContain('print-table')
+        ->toContain('print-table-row')
         ->and($footer)
-        ->toContain("'preview' => \$preview ?? false");
+        ->toContain("'preview' => \$preview ?? false")
+        ->toContain('print-table')
+        ->toContain('print-table-row')
+        ->toContain("\$footerZones['rows']");
 });
 
 it('repeats configured headers in the reserved print margin', function (): void {

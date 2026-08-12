@@ -110,6 +110,49 @@ final class ReportFieldRegistry
             ->all();
     }
 
+    /** @return list<array{key: string, label: string, group: string, enabled: bool, width: string, hide_when_empty: bool, show_label: bool, show_section_titles: bool, page_break_before: bool}> */
+    public function defaultGmpControlledDocumentFields(): array
+    {
+        $disabledKeys = [
+            'organization',
+            'document_identity',
+            'status',
+            'department',
+            'owner',
+            'effective_date',
+            'review_date',
+            'variables',
+            'audit_reference',
+            'footer',
+        ];
+
+        return collect($this->defaultFields(ReportScope::ControlledDocument))
+            ->map(function (array $field) use ($disabledKeys): array {
+                if (in_array($field['key'], $disabledKeys, true)) {
+                    $field['enabled'] = false;
+
+                    return $field;
+                }
+
+                if ($field['key'] === 'sections') {
+                    $field['enabled'] = true;
+                    $field['show_label'] = false;
+
+                    return $field;
+                }
+
+                if ($field['key'] === 'approvals') {
+                    $field['enabled'] = true;
+                    $field['show_label'] = true;
+
+                    return $field;
+                }
+
+                return $field;
+            })
+            ->all();
+    }
+
     /** @param array<int, mixed> $fields
      * @return list<array{key: string, label: string, group: string, enabled: bool, width: string, hide_when_empty: bool, show_label: bool, show_section_titles: bool, page_break_before: bool}>
      */

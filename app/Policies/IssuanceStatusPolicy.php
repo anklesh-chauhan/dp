@@ -112,19 +112,4 @@ class IssuanceStatusPolicy
         return $authUser->can('Unarchive:IssuanceStatus');
     }
 
-    public function markObsolete(AuthUser $authUser, IssuanceStatus $issuanceStatus): bool
-    {
-        return $authUser->can('MarkObsolete:IssuanceStatus');
-    }
-
-    public function completeRetention(AuthUser $authUser, IssuanceStatus $issuanceStatus): bool
-    {
-        return $authUser->can('CompleteRetention:IssuanceStatus');
-    }
-
-    public function destroy(AuthUser $authUser, IssuanceStatus $issuanceStatus): bool
-    {
-        return $authUser->can('Destroy:IssuanceStatus');
-    }
-
 }
