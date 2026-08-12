@@ -322,7 +322,7 @@ Before selecting **Complete and submit** on an execution record:
 
 For BMR/BPR, the production reviewer must be different from the executor, all material planned/actual quantities must reconcile, and the QA approver must be different from both the executor and production reviewer. A blocked action now identifies the incomplete or unverified field in its notification.
 
-For detailed troubleshooting and readiness checklists, use the [DMS Process Workflow Guide](./DMS_PROCESS_WORKFLOW_GUIDE.md#11-common-validation-messages-and-resolutions).
+For detailed troubleshooting and readiness checklists, use the [DMS Process Workflow Guide](./DMS_PROCESS_WORKFLOW_GUIDE.md#13-common-validation-messages-and-resolutions).
 
 ## 7. QMS Workflow
 
