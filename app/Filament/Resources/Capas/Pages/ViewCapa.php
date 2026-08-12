@@ -7,6 +7,7 @@ namespace App\Filament\Resources\Capas\Pages;
 use App\Domain\QMS\Enums\CapaStatus;
 use App\Domain\QMS\Services\CapaTransitionService;
 use App\Filament\Resources\Capas\CapaResource;
+use App\Filament\Support\ApprovalNarrativeTextarea;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
@@ -42,7 +43,21 @@ final class ViewCapa extends ViewRecord
         string $color = 'primary',
         bool $requiresEffectivenessResult = false,
     ): Action {
-        $schema = [Textarea::make('reason')->required()->maxLength(2_000)];
+        $schema = [
+            ApprovalNarrativeTextarea::decisionRationale(
+                name: 'reason',
+                label: 'Decision reason',
+                helperText: 'Explain what you reviewed and why you are making this decision. This text becomes part of the signed approval record.',
+                context: fn (): array => [
+                    'record_type' => 'CAPA lifecycle decision',
+                    'subject' => $this->record->capa_number ?? (string) $this->record->getKey(),
+                    'decision' => $label,
+                    'extra' => filled($this->record->title)
+                        ? 'Title: '.$this->record->title
+                        : null,
+                ],
+            ),
+        ];
 
         if ($requiresEffectivenessResult) {
             $schema[] = Textarea::make('effectiveness_result')

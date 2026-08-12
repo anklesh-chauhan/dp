@@ -112,7 +112,9 @@ it('submits a draft through the lifecycle service and shows immutable audit hist
 
     Livewire::test(ViewChangeControl::class, ['record' => $changeControl->getKey()])
         ->assertSuccessful()
-        ->callAction('submit')
+        ->callAction('submit', [
+            'reason' => 'Ready for QA review; focus on document impacts and validation rationale.',
+        ])
         ->assertNotified();
 
     expect($changeControl->fresh()?->status)->toBe(ChangeControlStatus::Submitted)

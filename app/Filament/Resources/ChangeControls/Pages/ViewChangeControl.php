@@ -9,12 +9,12 @@ use App\Domain\QMS\Services\ChangeControlTransitionService;
 use App\Domain\Reporting\Enums\ReportFormat;
 use App\Domain\Reporting\Enums\ReportScope;
 use App\Filament\Resources\ChangeControls\ChangeControlResource;
+use App\Filament\Support\ApprovalNarrativeTextarea;
 use App\Models\ReportTemplate;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 
@@ -46,10 +46,24 @@ final class ViewChangeControl extends ViewRecord
                 ->visible(fn (): bool => ChangeControlResource::canEdit($this->record)),
             Action::make('submit')
                 ->label('Submit for Review')
-                ->requiresConfirmation()
+                ->modalHeading('Submit this change control for review?')
+                ->modalSubmitActionLabel('Submit for review')
+                ->schema([
+                    ApprovalNarrativeTextarea::submissionNote(
+                        context: fn (): array => [
+                            'record_type' => 'Change control approval submission',
+                            'subject' => $this->record->change_number ?? (string) $this->record->getKey(),
+                            'department' => $this->record->department?->name,
+                            'decision' => 'Submit for Review',
+                            'extra' => filled($this->record->title)
+                                ? 'Title: '.$this->record->title
+                                : null,
+                        ],
+                    ),
+                ])
                 ->visible(fn (): bool => $this->record->status === ChangeControlStatus::Draft
                     && (bool) auth()->user()?->can('Submit:ChangeControl'))
-                ->action(function (): void {
+                ->action(function (array $data): void {
                     /** @var User $user */
                     $user = auth()->user();
 
@@ -57,7 +71,9 @@ final class ViewChangeControl extends ViewRecord
                         $this->record,
                         ChangeControlStatus::Submitted,
                         $user,
-                        'Submitted through the Change Control workspace.',
+                        $data['reason'],
+                        ipAddress: request()->ip(),
+                        userAgent: request()->userAgent(),
                     );
                     $this->record->refresh();
                     $this->refreshFormData(['status', 'submitted_at']);
@@ -136,9 +152,17 @@ final class ViewChangeControl extends ViewRecord
             ->label($label)
             ->color($color)
             ->schema([
-                Textarea::make('reason')
-                    ->required()
-                    ->maxLength(2_000),
+                ApprovalNarrativeTextarea::decisionRationale(
+                    name: 'reason',
+                    label: 'Decision reason',
+                    helperText: 'Explain what you reviewed and why you are making this decision. This text becomes part of the signed approval record.',
+                    context: fn (): array => [
+                        'record_type' => 'Change control lifecycle decision',
+                        'subject' => $this->record->change_number ?? (string) $this->record->getKey(),
+                        'department' => $this->record->department?->name,
+                        'decision' => $label,
+                    ],
+                ),
             ])
             ->visible(fn (): bool => in_array($this->record->status, $fromStatuses, true)
                 && (bool) auth()->user()?->can($permission))

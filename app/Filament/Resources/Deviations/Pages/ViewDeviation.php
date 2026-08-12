@@ -8,10 +8,10 @@ use App\Domain\QMS\Enums\DeviationStatus;
 use App\Domain\QMS\Services\DeviationApprovalSubmissionService;
 use App\Domain\QMS\Services\DeviationTransitionService;
 use App\Filament\Resources\Deviations\DeviationResource;
+use App\Filament\Support\ApprovalNarrativeTextarea;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
-use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 
@@ -39,7 +39,17 @@ final class ViewDeviation extends ViewRecord
         return Action::make('submit')
             ->label('Submit')
             ->schema([
-                Textarea::make('reason')->required()->maxLength(2_000),
+                ApprovalNarrativeTextarea::submissionNote(
+                    context: fn (): array => [
+                        'record_type' => 'Deviation approval submission',
+                        'subject' => $this->record->deviation_number ?? (string) $this->record->getKey(),
+                        'department' => $this->record->department?->name,
+                        'decision' => 'Submit',
+                        'extra' => filled($this->record->title)
+                            ? 'Title: '.$this->record->title
+                            : null,
+                    ],
+                ),
             ])
             ->visible(fn (): bool => $this->record->status === DeviationStatus::Draft
                 && (bool) auth()->user()?->can('Submit:Deviation'))
@@ -74,7 +84,17 @@ final class ViewDeviation extends ViewRecord
             ->label($label)
             ->color($color)
             ->schema([
-                Textarea::make('reason')->required()->maxLength(2_000),
+                ApprovalNarrativeTextarea::decisionRationale(
+                    name: 'reason',
+                    label: 'Decision reason',
+                    helperText: 'Explain what you reviewed and why you are making this decision. This text becomes part of the signed approval record.',
+                    context: fn (): array => [
+                        'record_type' => 'Deviation lifecycle decision',
+                        'subject' => $this->record->deviation_number ?? (string) $this->record->getKey(),
+                        'department' => $this->record->department?->name,
+                        'decision' => $label,
+                    ],
+                ),
             ])
             ->visible(fn (): bool => in_array($this->record->status, $fromStatuses, true)
                 && (bool) auth()->user()?->can($permission))

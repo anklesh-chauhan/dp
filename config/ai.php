@@ -95,6 +95,18 @@ return [
             'ollama',
         ],
 
+        'approval_submission_note' => [
+            'openai',
+            'gemini',
+            'ollama',
+        ],
+
+        'approval_decision_rationale' => [
+            'openai',
+            'gemini',
+            'ollama',
+        ],
+
     ],
 
 ];

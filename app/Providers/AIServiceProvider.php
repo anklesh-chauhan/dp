@@ -12,7 +12,9 @@ use App\Foundation\AI\Validation\DefaultValidationEngine;
 use App\Foundation\AI\Validation\Pipeline\DefaultRepairPipeline;
 use App\Foundation\AI\Validation\Services\DefaultRepairExecutor;
 use App\Foundation\AI\Validation\Services\DefaultRepairService;
+use App\Services\AI\ApprovalNarrativeAssistant;
 use App\Services\AI\Contracts\AiExecutionRecorder;
+use App\Services\AI\Contracts\ApprovalNarrativeGenerator;
 use App\Services\AI\Contracts\DocumentClassifier;
 use App\Services\AI\Contracts\DocumentDescriptionGenerator;
 use App\Services\AI\Contracts\LLMManagerContract;
@@ -101,6 +103,11 @@ final class AIServiceProvider extends ServiceProvider
         $this->app->bind(
             TemplateGenerator::class,
             TemplateGeneratorService::class,
+        );
+
+        $this->app->bind(
+            ApprovalNarrativeGenerator::class,
+            ApprovalNarrativeAssistant::class,
         );
 
         $this->app->bind(

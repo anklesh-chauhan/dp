@@ -4,17 +4,18 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\DocumentTemplateApprovalInstances\Pages;
 
+use App\Domain\DMS\Enums\TemplateApprovalStatus;
 use App\Domain\DMS\Services\TemplateApprovalDecisionService;
 use App\Domain\Shared\Enums\ApprovalDecisionCode;
 use App\Filament\Concerns\HandlesServiceExceptions;
 use App\Filament\Pages\MyApprovalQueue;
 use App\Filament\Resources\DocumentTemplateApprovalInstances\DocumentTemplateApprovalInstanceResource;
 use App\Filament\Resources\DocumentTemplates\DocumentTemplateResource;
+use App\Filament\Support\ApprovalNarrativeTextarea;
 use App\Models\DocumentTemplateApprovalInstance;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
-use Filament\Forms\Components\Textarea;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Auth;
@@ -112,12 +113,25 @@ class ViewDocumentTemplateApprovalInstance extends ViewRecord
             })
             ->modalSubmitActionLabel($label)
             ->schema([
-                Textarea::make('comments')
-                    ->label('Decision rationale')
-                    ->helperText('Explain what you reviewed and why you are making this decision. This text becomes part of the signed approval record.')
-                    ->rows(4)
-                    ->required()
-                    ->maxLength(2_000),
+                ApprovalNarrativeTextarea::decisionRationale(
+                    context: fn (): array => [
+                        'record_type' => 'Document template approval',
+                        'subject' => trim(implode(' · ', array_filter([
+                            $this->record->templateVersion?->template?->code,
+                            $this->record->templateVersion?->template?->name,
+                            $this->record->templateVersion !== null
+                                ? 'v'.$this->record->templateVersion->version
+                                : null,
+                        ]))),
+                        'department' => $this->record->templateVersion?->template?->department?->name,
+                        'decision' => $label,
+                        'extra' => ($submissionNote = $this->record->templateVersion?->approvalEvents
+                            ?->where('to_status', TemplateApprovalStatus::Submitted)
+                            ->last()?->reason) !== null && filled($submissionNote)
+                            ? 'Submission note: '.$submissionNote
+                            : null,
+                    ],
+                ),
             ])
             ->extraModalFooterActions(function (): array {
                 $template = $this->record->templateVersion?->template;

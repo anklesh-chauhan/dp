@@ -7,10 +7,10 @@ namespace App\Filament\Resources\Investigations\Pages;
 use App\Domain\QMS\Enums\InvestigationStatus;
 use App\Domain\QMS\Services\InvestigationTransitionService;
 use App\Filament\Resources\Investigations\InvestigationResource;
+use App\Filament\Support\ApprovalNarrativeTextarea;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
-use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 
@@ -42,7 +42,26 @@ final class ViewInvestigation extends ViewRecord
         return Action::make($name)
             ->label($label)
             ->color($color)
-            ->schema([Textarea::make('reason')->required()->maxLength(2_000)])
+            ->schema([
+                $name === 'submitReview'
+                    ? ApprovalNarrativeTextarea::submissionNote(
+                        context: fn (): array => [
+                            'record_type' => 'Investigation review submission',
+                            'subject' => $this->record->investigation_number ?? (string) $this->record->getKey(),
+                            'decision' => $label,
+                        ],
+                    )
+                    : ApprovalNarrativeTextarea::decisionRationale(
+                        name: 'reason',
+                        label: 'Decision reason',
+                        helperText: 'Explain what you reviewed and why you are making this decision. This text becomes part of the signed approval record.',
+                        context: fn (): array => [
+                            'record_type' => 'Investigation lifecycle decision',
+                            'subject' => $this->record->investigation_number ?? (string) $this->record->getKey(),
+                            'decision' => $label,
+                        ],
+                    ),
+            ])
             ->visible(fn (): bool => in_array($this->record->status, $fromStatuses, true)
                 && (bool) auth()->user()?->can($permission))
             ->action(function (array $data) use ($toStatus, $label): void {

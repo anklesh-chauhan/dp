@@ -9,11 +9,11 @@ use App\Actions\Sop\RejectDocumentAction;
 use App\Actions\Sop\ReturnDocumentAction;
 use App\Filament\Resources\ControlledDocuments\ControlledDocumentResource;
 use App\Filament\Resources\SopApprovals\Pages\ListSopApprovals;
+use App\Filament\Support\ApprovalNarrativeTextarea;
 use App\Filament\Support\ServiceExceptionHandler;
 use App\Models\ApprovalDecision;
 use App\Models\SopApproval;
 use Filament\Actions\Action;
-use Filament\Forms\Components\Textarea;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -126,7 +126,19 @@ class SopApprovalResource extends Resource
                     ->url(fn (SopApproval $record): string => ControlledDocumentResource::getUrl('view', ['record' => $record->document_id])),
                 Action::make('approve')
                     ->icon(Heroicon::CheckCircle)
-                    ->schema([Textarea::make('comments')])
+                    ->schema(fn (SopApproval $record): array => [
+                        ApprovalNarrativeTextarea::decisionRationale(
+                            required: false,
+                            context: [
+                                'record_type' => 'Controlled document approval',
+                                'subject' => $record->document?->document_number
+                                    ?? $record->document?->title
+                                    ?? (string) $record->document_id,
+                                'department' => $record->document?->department?->name,
+                                'decision' => 'Approve',
+                            ],
+                        ),
+                    ])
                     ->visible(fn (SopApproval $record): bool => Auth::user()?->can('approve', $record) ?? false)
                     ->action(fn (SopApproval $record, array $data): mixed => ServiceExceptionHandler::run(
                         fn () => app(ApproveDocumentAction::class)->execute($record, Auth::user(), $data['comments'] ?? null),
@@ -137,7 +149,19 @@ class SopApprovalResource extends Resource
                     ->label('Return to Maker')
                     ->icon(Heroicon::ArrowUturnLeft)
                     ->color('warning')
-                    ->schema([Textarea::make('comments')->required()])
+                    ->schema(fn (SopApproval $record): array => [
+                        ApprovalNarrativeTextarea::decisionRationale(
+                            label: 'Correction required',
+                            context: [
+                                'record_type' => 'Controlled document approval',
+                                'subject' => $record->document?->document_number
+                                    ?? $record->document?->title
+                                    ?? (string) $record->document_id,
+                                'department' => $record->document?->department?->name,
+                                'decision' => 'Return to Maker',
+                            ],
+                        ),
+                    ])
                     ->visible(fn (SopApproval $record): bool => Auth::user()?->can('approve', $record) ?? false)
                     ->action(fn (SopApproval $record, array $data): mixed => ServiceExceptionHandler::run(
                         fn () => app(ReturnDocumentAction::class)->execute($record, Auth::user(), $data['comments'] ?? null),
@@ -147,7 +171,19 @@ class SopApprovalResource extends Resource
                 Action::make('reject')
                     ->icon(Heroicon::XCircle)
                     ->color('danger')
-                    ->schema([Textarea::make('comments')->required()])
+                    ->schema(fn (SopApproval $record): array => [
+                        ApprovalNarrativeTextarea::decisionRationale(
+                            label: 'Rejection reason',
+                            context: [
+                                'record_type' => 'Controlled document approval',
+                                'subject' => $record->document?->document_number
+                                    ?? $record->document?->title
+                                    ?? (string) $record->document_id,
+                                'department' => $record->document?->department?->name,
+                                'decision' => 'Reject',
+                            ],
+                        ),
+                    ])
                     ->visible(fn (SopApproval $record): bool => Auth::user()?->can('approve', $record) ?? false)
                     ->action(fn (SopApproval $record, array $data): mixed => ServiceExceptionHandler::run(
                         fn () => app(RejectDocumentAction::class)->execute($record, Auth::user(), $data['comments'] ?? null),

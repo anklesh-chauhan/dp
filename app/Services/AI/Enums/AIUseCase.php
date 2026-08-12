@@ -33,4 +33,8 @@ enum AIUseCase: string
     case TEMPLATE_SECTION_GENERATION = 'template_section_generation';
 
     case TEMPLATE_SECTION_COMPLETION = 'template_section_completion';
+
+    case APPROVAL_SUBMISSION_NOTE = 'approval_submission_note';
+
+    case APPROVAL_DECISION_RATIONALE = 'approval_decision_rationale';
 }

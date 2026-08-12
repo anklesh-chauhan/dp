@@ -7,10 +7,10 @@ namespace App\Filament\Resources\DocumentTemplates\RelationManagers;
 use App\Domain\DMS\Services\TemplateApprovalDecisionService;
 use App\Domain\Shared\Contracts\ElectronicSignatureVerifier;
 use App\Domain\Shared\Enums\ApprovalDecisionCode;
+use App\Filament\Support\ApprovalNarrativeTextarea;
 use App\Models\DocumentTemplateApprovalInstance;
 use App\Models\User;
 use Filament\Actions\Action;
-use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;
@@ -64,11 +64,22 @@ class ApprovalInstancesRelationManager extends RelationManager
         return Action::make($name)
             ->label($label)
             ->color($color)
-            ->schema([
-                Textarea::make('comments')
-                    ->label('Decision reason')
-                    ->required()
-                    ->maxLength(2_000),
+            ->schema(fn (DocumentTemplateApprovalInstance $record): array => [
+                ApprovalNarrativeTextarea::decisionRationale(
+                    label: 'Decision reason',
+                    context: [
+                        'record_type' => 'Document template approval',
+                        'subject' => trim(implode(' · ', array_filter([
+                            $record->templateVersion?->template?->code,
+                            $record->templateVersion?->template?->name,
+                            $record->templateVersion !== null
+                                ? 'v'.$record->templateVersion->version
+                                : null,
+                        ]))),
+                        'department' => $record->templateVersion?->template?->department?->name,
+                        'decision' => $label,
+                    ],
+                ),
             ])
             ->visible(function (DocumentTemplateApprovalInstance $record): bool {
                 $user = auth()->user();

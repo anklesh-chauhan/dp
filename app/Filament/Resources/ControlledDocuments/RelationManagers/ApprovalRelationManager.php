@@ -11,12 +11,12 @@ use App\Domain\DMS\Services\SopApprovalDecisionAuthorizationAdapter;
 use App\Exceptions\WorkflowException;
 use App\Filament\Concerns\HandlesServiceExceptions;
 use App\Filament\Concerns\ProvidesControlledDocumentPrintPreviewAction;
+use App\Filament\Support\ApprovalNarrativeTextarea;
 use App\Models\ApprovalDecision;
 use App\Models\ControlledDocument;
 use App\Models\SopApproval;
 use App\Models\User;
 use Filament\Actions\Action;
-use Filament\Forms\Components\Textarea;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -126,11 +126,21 @@ class ApprovalRelationManager extends RelationManager
             ->color($color)
             ->modalHeading($heading)
             ->modalDescription($description)
-            ->schema([
-                Textarea::make('comments')
-                    ->label($commentsLabel)
-                    ->required()
-                    ->maxLength(2_000),
+            ->schema(fn (SopApproval $record): array => [
+                ApprovalNarrativeTextarea::decisionRationale(
+                    label: $commentsLabel,
+                    context: [
+                        'record_type' => 'Controlled document approval',
+                        'subject' => ($document = $this->getOwnerRecord()) instanceof ControlledDocument
+                            ? ($document->document_number ?? $document->title ?? (string) $document->getKey())
+                            : null,
+                        'department' => $document instanceof ControlledDocument
+                            ? $document->department?->name
+                            : null,
+                        'decision' => $label,
+                        'extra' => 'Workflow step '.$record->workflowStep?->step_no,
+                    ],
+                ),
             ])
             ->extraModalFooterActions(function (): array {
                 $document = $this->getOwnerRecord();

@@ -8,12 +8,12 @@ use App\Domain\QMS\Enums\CsvValidationProjectStatus;
 use App\Domain\QMS\Services\CsvValidationProjectService;
 use App\Domain\Reporting\Enums\ReportScope;
 use App\Filament\Resources\CsvValidationProjects\CsvValidationProjectResource;
+use App\Filament\Support\ApprovalNarrativeTextarea;
 use App\Models\ReportTemplate;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Support\Icons\Heroicon;
@@ -110,11 +110,19 @@ final class ViewCsvValidationProject extends ViewRecord
             ->label($label)
             ->color($color)
             ->schema([
-                Textarea::make('reason')
-                    ->label('Decision reason')
-                    ->helperText('This reason is retained with the signed audit event.')
-                    ->required()
-                    ->maxLength(2_000),
+                ApprovalNarrativeTextarea::decisionRationale(
+                    name: 'reason',
+                    label: 'Decision reason',
+                    helperText: 'This reason is retained with the signed audit event.',
+                    context: fn (): array => [
+                        'record_type' => 'CSV validation project decision',
+                        'subject' => $this->record->project_number
+                            ?? $this->record->system_name
+                            ?? (string) $this->record->getKey(),
+                        'department' => $this->record->department?->name,
+                        'decision' => $label,
+                    ],
+                ),
             ])
             ->visible(fn (): bool => (bool) auth()->user()?->can($permission))
             ->action(function (array $data, Action $action) use ($toStatus, $label): void {

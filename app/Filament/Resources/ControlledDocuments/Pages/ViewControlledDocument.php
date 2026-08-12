@@ -22,6 +22,7 @@ use App\Filament\Concerns\HandlesServiceExceptions;
 use App\Filament\Concerns\ProvidesControlledDocumentPrintPreviewAction;
 use App\Filament\Concerns\ProvidesRetentionLifecycleActions;
 use App\Filament\Resources\ControlledDocuments\ControlledDocumentResource;
+use App\Filament\Support\ApprovalNarrativeTextarea;
 use App\Models\DocumentIssuance;
 use App\Models\DocumentStatus;
 use App\Models\ReportTemplate;
@@ -374,12 +375,17 @@ class ViewControlledDocument extends ViewRecord
             })
             ->modalSubmitActionLabel($label)
             ->schema([
-                Textarea::make('comments')
-                    ->label('Decision rationale')
-                    ->helperText('Explain what you reviewed and why you are making this decision. This text becomes part of the signed audit trail.')
-                    ->rows(4)
-                    ->required()
-                    ->maxLength(2_000),
+                ApprovalNarrativeTextarea::decisionRationale(
+                    helperText: 'Explain what you reviewed and why you are making this decision. This text becomes part of the signed audit trail.',
+                    context: fn (): array => [
+                        'record_type' => 'Controlled document approval',
+                        'subject' => $this->record->document_number
+                            ?? $this->record->title
+                            ?? (string) $this->record->getKey(),
+                        'department' => $this->record->department?->name,
+                        'decision' => $label,
+                    ],
+                ),
             ])
             ->extraModalFooterActions(function (): array {
                 $preview = $this->controlledDocumentPrintPreviewModalAction($this->record);

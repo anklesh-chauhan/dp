@@ -12,6 +12,7 @@ use App\Filament\Concerns\HandlesServiceExceptions;
 use App\Filament\Concerns\ProcessesDocumentTemplateMetadataAi;
 use App\Filament\Concerns\ProvidesRetentionLifecycleActions;
 use App\Filament\Resources\DocumentTemplates\DocumentTemplateResource;
+use App\Filament\Support\ApprovalNarrativeTextarea;
 use App\Models\DocumentTemplateVersion;
 use App\Models\TemplateStatus;
 use App\Models\User;
@@ -172,12 +173,17 @@ class ViewDocumentTemplate extends ViewRecord
             ->modalDescription('The draft will be locked for editing and sent through the configured workflow. Assigned reviewers will see each actionable step in My Approval Queue.')
             ->modalSubmitActionLabel('Submit for review')
             ->schema([
-                Textarea::make('reason')
-                    ->label('Submission note')
-                    ->helperText('Tell reviewers what changed and what they should focus on.')
-                    ->rows(4)
-                    ->required()
-                    ->maxLength(2_000),
+                ApprovalNarrativeTextarea::submissionNote(
+                    context: fn (): array => [
+                        'record_type' => 'Document template approval submission',
+                        'subject' => trim(($this->record->code ? "{$this->record->code} · " : '').($this->record->name ?? '')),
+                        'department' => $this->record->department?->name,
+                        'decision' => 'Submit for review',
+                        'extra' => filled($this->record->description)
+                            ? 'Template description: '.$this->record->description
+                            : null,
+                    ],
+                ),
             ])
             ->visible(fn (): bool => ($version = $this->draftVersion()) !== null
                 && in_array($version->approval_status, $from, true)

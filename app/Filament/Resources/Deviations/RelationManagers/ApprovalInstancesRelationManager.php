@@ -7,9 +7,9 @@ namespace App\Filament\Resources\Deviations\RelationManagers;
 use App\Domain\QMS\Models\QualityApprovalInstance;
 use App\Domain\QMS\Services\DeviationApprovalDecisionService;
 use App\Domain\QMS\Services\QualityApprovalDecisionAuthorization;
+use App\Filament\Support\ApprovalNarrativeTextarea;
 use App\Models\User;
 use Filament\Actions\Action;
-use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;
@@ -55,11 +55,18 @@ final class ApprovalInstancesRelationManager extends RelationManager
         return Action::make($name)
             ->label($label)
             ->color($color)
-            ->schema([
-                Textarea::make('comments')
-                    ->label('Decision Reason')
-                    ->required()
-                    ->maxLength(2_000),
+            ->schema(fn (QualityApprovalInstance $record): array => [
+                ApprovalNarrativeTextarea::decisionRationale(
+                    label: 'Decision Reason',
+                    context: [
+                        'record_type' => 'Deviation approval',
+                        'subject' => $this->getOwnerRecord()->deviation_number
+                            ?? (string) $this->getOwnerRecord()->getKey(),
+                        'department' => $this->getOwnerRecord()->department?->name,
+                        'decision' => $label,
+                        'extra' => 'Workflow step '.$record->workflowStep?->step_no,
+                    ],
+                ),
             ])
             ->authorize(fn (QualityApprovalInstance $record): bool => $this->canDecide($record))
             ->visible(fn (QualityApprovalInstance $record): bool => $this->canDecide($record))
