@@ -47,6 +47,12 @@ class DocumentIssuanceService
             ]);
         }
 
+        if (blank($data['issued_to_user_id'] ?? null) && blank($data['issued_to_department_id'] ?? null)) {
+            throw ValidationException::withMessages([
+                'issued_to_user_id' => 'Specify the user or department receiving this controlled copy.',
+            ]);
+        }
+
         try {
             return DB::transaction(function () use ($document, $issuer, $data): DocumentIssuance {
                 $lockedDocument = ControlledDocument::query()

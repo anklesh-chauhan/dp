@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Domain\DMS\Services\ControlledDocumentAccessService;
 use App\Domain\DMS\Services\ControlledDocumentPdfService;
+use App\Domain\DMS\Services\DocumentIssuanceAccessService;
 use App\Domain\Reporting\Enums\ReportFormat;
 use App\Domain\Reporting\Enums\ReportScope;
 use App\Domain\Reporting\Support\PrintLayoutRegistry;
@@ -29,6 +30,7 @@ class ControlledDocumentPrintController extends Controller
         private readonly AuditLogService $auditLogService,
         private readonly ControlledDocumentPdfService $pdfService,
         private readonly ControlledDocumentAccessService $accessService,
+        private readonly DocumentIssuanceAccessService $issuanceAccessService,
     ) {}
 
     public function __invoke(Request $request, ControlledDocument $controlledDocument): StreamedResponse
@@ -46,6 +48,10 @@ class ControlledDocumentPrintController extends Controller
                 ->whereKey($request->integer('issuance'))
                 ->where('document_id', $controlledDocument->id)
                 ->firstOrFail();
+
+            if (! $this->issuanceAccessService->canAccess($request->user(), $issuance)) {
+                throw new AccessDeniedHttpException('You do not have access to this controlled copy.');
+            }
         }
 
         if (! $controlledDocument->canBePrinted($issuance)) {

@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
+use App\Domain\DMS\Services\DocumentIssuanceAccessService;
 use App\Models\DocumentExecution;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
 class DocumentExecutionPolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:DocumentExecution');
@@ -19,7 +20,17 @@ class DocumentExecutionPolicy
 
     public function view(AuthUser $authUser, DocumentExecution $documentExecution): bool
     {
-        return $authUser->can('View:DocumentExecution');
+        if (! $authUser->can('View:DocumentExecution')) {
+            return false;
+        }
+
+        $issuance = $documentExecution->issuance;
+
+        if ($issuance === null) {
+            return false;
+        }
+
+        return app(DocumentIssuanceAccessService::class)->canAccess($authUser, $issuance);
     }
 
     public function create(AuthUser $authUser): bool
@@ -29,7 +40,11 @@ class DocumentExecutionPolicy
 
     public function update(AuthUser $authUser, DocumentExecution $documentExecution): bool
     {
-        return $authUser->can('Update:DocumentExecution');
+        if (! $authUser->can('Update:DocumentExecution')) {
+            return false;
+        }
+
+        return $this->view($authUser, $documentExecution);
     }
 
     public function delete(AuthUser $authUser, DocumentExecution $documentExecution): bool
@@ -111,5 +126,4 @@ class DocumentExecutionPolicy
     {
         return $authUser->can('Unarchive:DocumentExecution');
     }
-
 }

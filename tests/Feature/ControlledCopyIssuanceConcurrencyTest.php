@@ -58,8 +58,8 @@ it('issues sequential unique controlled-copy numbers', function (): void {
     $document = issuableControlledDocument();
     $service = app(DocumentIssuanceService::class);
 
-    $first = $service->issue($document, $this->issuer);
-    $second = $service->issue($document, $this->issuer);
+    $first = $service->issue($document, $this->issuer, ['issued_to_user_id' => $this->issuer->id]);
+    $second = $service->issue($document, $this->issuer, ['issued_to_user_id' => $this->issuer->id]);
 
     expect($first->copy_number)->toBe(1)
         ->and($first->issuance_number)->toBe('DEV-QA-00001-C01')
@@ -81,7 +81,7 @@ it('skips an already reserved issuance number instead of raising a unique constr
         'watermark_code' => 'CC-DEVQA00001-01',
     ]);
 
-    $issuance = app(DocumentIssuanceService::class)->issue($document, $this->issuer);
+    $issuance = app(DocumentIssuanceService::class)->issue($document, $this->issuer, ['issued_to_user_id' => $this->issuer->id]);
 
     expect($issuance->copy_number)->toBe(2)
         ->and($issuance->issuance_number)->toBe('DEV-QA-00001-C02')

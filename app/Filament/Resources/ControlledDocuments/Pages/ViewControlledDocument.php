@@ -23,6 +23,7 @@ use App\Filament\Concerns\ProvidesControlledDocumentPrintPreviewAction;
 use App\Filament\Concerns\ProvidesRetentionLifecycleActions;
 use App\Filament\Resources\ControlledDocuments\ControlledDocumentResource;
 use App\Filament\Support\ApprovalNarrativeTextarea;
+use App\Models\Department;
 use App\Models\DocumentIssuance;
 use App\Models\DocumentStatus;
 use App\Models\ReportTemplate;
@@ -156,7 +157,13 @@ class ViewControlledDocument extends ViewRecord
                     Select::make('issued_to_user_id')
                         ->label('Issue to user')
                         ->options(fn (): array => User::query()->orderBy('name')->pluck('name', 'id')->all())
-                        ->searchable(),
+                        ->searchable()
+                        ->requiredWithout('issued_to_department_id'),
+                    Select::make('issued_to_department_id')
+                        ->label('Issue to department')
+                        ->options(fn (): array => Department::query()->orderBy('name')->pluck('name', 'id')->all())
+                        ->searchable()
+                        ->requiredWithout('issued_to_user_id'),
                     TextInput::make('issued_to_location')->maxLength(255),
                     TextInput::make('batch_number')
                         ->visible(fn (Get $get): bool => ($this->record->documentType?->isBatchRecord() ?? false)

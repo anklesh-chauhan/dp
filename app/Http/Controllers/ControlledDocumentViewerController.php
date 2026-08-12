@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Domain\DMS\Services\ControlledDocumentAccessService;
+use App\Domain\DMS\Services\DocumentIssuanceAccessService;
 use App\Domain\Shared\Services\AuditLogService;
 use App\Models\ControlledDocument;
 use App\Models\DocumentIssuance;
@@ -18,6 +19,7 @@ class ControlledDocumentViewerController extends Controller
 {
     public function __construct(
         private readonly ControlledDocumentAccessService $accessService,
+        private readonly DocumentIssuanceAccessService $issuanceAccessService,
         private readonly AuditLogService $auditLogService,
     ) {}
 
@@ -44,6 +46,10 @@ class ControlledDocumentViewerController extends Controller
         }
 
         $issuance = $this->issuance($request, $controlledDocument);
+
+        if ($issuance !== null && ! $this->issuanceAccessService->canAccess($request->user(), $issuance)) {
+            throw new AccessDeniedHttpException('You do not have access to this controlled copy.');
+        }
 
         if (! $controlledDocument->canBePrinted($issuance)) {
             throw new AccessDeniedHttpException('Only an approved, effective, or actively issued document can be viewed as a controlled PDF.');

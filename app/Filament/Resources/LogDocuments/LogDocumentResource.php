@@ -14,6 +14,7 @@ use App\Filament\Resources\LogDocuments\Pages\EditLogDocument;
 use App\Filament\Resources\LogDocuments\Pages\ListLogDocuments;
 use App\Filament\Resources\LogDocuments\Pages\ViewLogDocument;
 use App\Filament\Resources\LogDocuments\RelationManagers\IssuanceRelationManager;
+use App\Filament\Support\IssueControlledCopyAction;
 use App\Filament\Support\TemplateVariableFieldBuilder;
 use App\Models\ControlledDocument;
 use App\Models\DocumentTemplateVersion;
@@ -171,6 +172,7 @@ class LogDocumentResource extends Resource
                 SelectFilter::make('document_type_id')->relationship('documentType', 'name')->label('Type'),
             ])
             ->recordActions([
+                IssueControlledCopyAction::make(),
                 ActionGroup::make([
                     ViewAction::make(),
                     EditAction::make(),

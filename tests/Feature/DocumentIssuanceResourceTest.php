@@ -55,6 +55,7 @@ it('groups issuance register row actions behind an overflow menu', function (): 
     ]);
     $issuance = DocumentIssuance::factory()->create([
         'document_id' => $document,
+        'issued_to_user_id' => $this->user->id,
         'issuance_type' => DocumentIssuance::TYPE_EXECUTION,
     ]);
 

@@ -6,6 +6,7 @@ namespace App\Filament\Resources\DocumentIssuances;
 
 use App\Domain\DMS\Actions\DestroyIssuanceAction;
 use App\Domain\DMS\Actions\RecallIssuanceAction;
+use App\Domain\DMS\Services\DocumentIssuanceAccessService;
 use App\Filament\Resources\DocumentExecutions\DocumentExecutionResource;
 use App\Filament\Resources\LogDocuments\LogDocumentResource;
 use App\Filament\Support\ServiceExceptionHandler;
@@ -85,6 +86,7 @@ class DocumentIssuanceResource extends Resource
             ])
             ->recordActions([
                 ActionGroup::make([
+
                     Action::make('openExecution')
                         ->label('Open Execution Record')
                         ->icon(Heroicon::PencilSquare)
@@ -149,8 +151,16 @@ class DocumentIssuanceResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()
+        $query = parent::getEloquentQuery()
             ->with(['document', 'issuanceStatus', 'issuedToUser', 'issuer', 'execution']);
+
+        $user = Auth::user();
+
+        if ($user === null) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return app(DocumentIssuanceAccessService::class)->constrainVisibleToUser($query, $user);
     }
 
     public static function canCreate(): bool

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\DocumentExecutions;
 
+use App\Domain\DMS\Services\DocumentIssuanceAccessService;
 use App\Filament\Resources\DocumentExecutions\Pages\EditDocumentExecution;
 use App\Filament\Resources\DocumentExecutions\Pages\ListDocumentExecutions;
 use App\Filament\Resources\DocumentExecutions\Pages\ViewDocumentExecution;
@@ -26,6 +27,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 use UnitEnum;
 
 class DocumentExecutionResource extends Resource
@@ -142,7 +144,15 @@ class DocumentExecutionResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->with(['issuance', 'sections']);
+        $query = parent::getEloquentQuery()->with(['issuance', 'sections']);
+
+        $user = Auth::user();
+
+        if ($user === null) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return app(DocumentIssuanceAccessService::class)->constrainExecutionsVisibleToUser($query, $user);
     }
 
     public static function canCreate(): bool

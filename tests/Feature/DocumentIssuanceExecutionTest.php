@@ -285,7 +285,7 @@ it('opens the structured execution section editor', function (): void {
         ]);
     }
 
-    $execution = app(DocumentIssuanceService::class)->issue($document, $this->issuer)->execution;
+    $execution = app(DocumentIssuanceService::class)->issue($document, $this->issuer, ['issued_to_user_id' => $this->issuer->id])->execution;
     $executionSection = $execution->sections()->firstOrFail();
 
     $this->actingAs($this->issuer);
@@ -360,7 +360,7 @@ it('issues, edits, and prints multiple execution tables within one section', fun
         'is_required' => true,
     ]);
 
-    $execution = app(DocumentIssuanceService::class)->issue($document, $this->issuer)->execution;
+    $execution = app(DocumentIssuanceService::class)->issue($document, $this->issuer, ['issued_to_user_id' => $this->issuer->id])->execution;
     $executionSection = $execution->sections()->with('items')->firstOrFail();
 
     expect($executionSection->items)->toHaveCount(5)
@@ -432,7 +432,7 @@ it('uses execution field names as the issued table headers', function (): void {
         ]);
     }
 
-    $issuance = app(DocumentIssuanceService::class)->issue($document, $this->issuer);
+    $issuance = app(DocumentIssuanceService::class)->issue($document, $this->issuer, ['issued_to_user_id' => $this->issuer->id]);
     $issuedSection = $issuance->execution->sections()->with('items')->firstOrFail();
     $firstRow = $issuedSection->items->where('row_number', 1)->values();
     $executor = User::factory()->create(['name' => 'Execution Operator']);
@@ -483,7 +483,7 @@ it('aligns printed execution values with their headers when column orders are du
         ]);
     }
 
-    $issuance = app(DocumentIssuanceService::class)->issue($document, $this->issuer);
+    $issuance = app(DocumentIssuanceService::class)->issue($document, $this->issuer, ['issued_to_user_id' => $this->issuer->id]);
     $issuedSection = $issuance->execution->sections()->with('items')->firstOrFail();
     $rows = $issuedSection->items->groupBy('row_number');
 
@@ -532,7 +532,7 @@ it('renders execution fields as a vertical field and value form when configured'
         ]);
     }
 
-    $issuance = app(DocumentIssuanceService::class)->issue($document, $this->issuer);
+    $issuance = app(DocumentIssuanceService::class)->issue($document, $this->issuer, ['issued_to_user_id' => $this->issuer->id]);
     $issuedSection = $issuance->execution->sections()->with('items')->firstOrFail();
     $issuedSection->items[0]->update(['response' => '2026-08-09']);
     $issuedSection->items[1]->update(['response' => 'LOT-001']);
@@ -586,7 +586,7 @@ it('snapshots blank master field definitions into each issued copy', function ()
         'is_required' => true,
     ]);
 
-    $issuance = app(DocumentIssuanceService::class)->issue($document, $this->issuer);
+    $issuance = app(DocumentIssuanceService::class)->issue($document, $this->issuer, ['issued_to_user_id' => $this->issuer->id]);
     $issuedSection = $issuance->execution->sections()->with('items')->firstOrFail();
 
     expect($issuance->issuance_type)->toBe(DocumentIssuance::TYPE_EXECUTION)
@@ -605,6 +605,7 @@ it('generates a full day of hourly entries on the issued copy only', function ()
     ]);
 
     $issuance = app(DocumentIssuanceService::class)->issue($document, $this->issuer, [
+        'issued_to_user_id' => $this->issuer->id,
         'log_frequency' => 'hourly',
         'log_period_start' => '2026-08-07',
         'log_period_end' => '2026-08-07',
@@ -627,7 +628,7 @@ it('stores completion and independent verification on issued items without chang
         'value_type' => ControlledDocumentSectionItem::VALUE_BOOLEAN,
         'is_required' => true,
     ]);
-    $issuance = app(DocumentIssuanceService::class)->issue($document, $this->issuer);
+    $issuance = app(DocumentIssuanceService::class)->issue($document, $this->issuer, ['issued_to_user_id' => $this->issuer->id]);
     $verifier = User::factory()->create();
     $issuedItem = $issuance->execution->sections()->firstOrFail()->items()->firstOrFail();
 
@@ -644,6 +645,7 @@ it('never creates a writable record for a reference issuance', function (): void
 
     $issuance = app(DocumentIssuanceService::class)->issue($document, $this->issuer, [
         'issuance_type' => DocumentIssuance::TYPE_REFERENCE,
+        'issued_to_user_id' => $this->issuer->id,
     ]);
 
     expect($issuance->isReference())->toBeTrue()
@@ -704,6 +706,7 @@ it('rejects an unsupported controlled-copy type', function (): void {
     $document = executionMasterDocument();
 
     expect(fn () => app(DocumentIssuanceService::class)->issue($document, $this->issuer, [
+        'issued_to_user_id' => $this->issuer->id,
         'issuance_type' => 'editable_pdf',
     ]))->toThrow(ValidationException::class, 'Select either a read-only reference copy or a writable execution record.');
 });
@@ -721,6 +724,7 @@ it('routes a completed log through independent supervisor review and then locks 
         'is_required' => true,
     ]);
     $issuance = app(DocumentIssuanceService::class)->issue($document, $this->issuer, [
+        'issued_to_user_id' => $this->issuer->id,
         'supervisor_id' => User::factory()->create()->id,
     ]);
     $execution = $issuance->execution;

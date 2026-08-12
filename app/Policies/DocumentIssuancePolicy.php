@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
+use App\Domain\DMS\Services\DocumentIssuanceAccessService;
 use App\Models\DocumentIssuance;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
 class DocumentIssuancePolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:DocumentIssuance');
@@ -19,7 +20,21 @@ class DocumentIssuancePolicy
 
     public function view(AuthUser $authUser, DocumentIssuance $documentIssuance): bool
     {
-        return $authUser->can('View:DocumentIssuance');
+        if (! $authUser->can('View:DocumentIssuance')) {
+            return false;
+        }
+
+        return app(DocumentIssuanceAccessService::class)->canAccess($authUser, $documentIssuance);
+    }
+
+    public function recall(AuthUser $authUser, DocumentIssuance $documentIssuance): bool
+    {
+        return $authUser->can('Recall:DocumentIssuance');
+    }
+
+    public function destroyCopy(AuthUser $authUser, DocumentIssuance $documentIssuance): bool
+    {
+        return $authUser->can('Destroy:DocumentIssuance');
     }
 
     public function create(AuthUser $authUser): bool
@@ -111,5 +126,4 @@ class DocumentIssuancePolicy
     {
         return $authUser->can('Unarchive:DocumentIssuance');
     }
-
 }
