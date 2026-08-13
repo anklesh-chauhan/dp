@@ -186,11 +186,63 @@ it('normalizes safe variable-column header and footer configuration with legacy 
     expect($legacyTemplate->printPageSettings()['paper_size'])->toBe('a4')
         ->and($legacyTemplate->printHeaderZones())->toHaveKeys(['gap_mm', 'show_borders', 'rows'])
         ->and($legacyTemplate->printFooterZones())->toHaveKeys(['gap_mm', 'show_borders', 'rows'])
-        ->and($legacyTemplate->printHeaderZones()['rows'])->toHaveCount(5)
+        ->and($legacyTemplate->printHeaderZones()['rows'])->toHaveCount(6)
         ->and($legacyTemplate->printFooterZones()['rows'])->toHaveCount(1)
         ->and($legacyTemplate->printFooterZones()['content_gap_mm'])->toBe(15)
         ->and(array_column($legacyTemplate->printHeaderZones()['rows'][0]['cells'], 'width'))->toBe([20, 80])
-        ->and(array_column($legacyTemplate->printFooterZones()['rows'][0]['cells'], 'width'))->toBe([38, 24, 38]);
+        ->and(array_column($legacyTemplate->printFooterZones()['rows'][0]['cells'], 'width'))->toBe([38, 24, 38])
+        ->and(collect($legacyTemplate->printHeaderZones()['rows'])->firstWhere('key', 'issuance'))->not->toBeNull()
+        ->and(collect($legacyTemplate->printFooterZones()['rows'][0]['cells'][0]['items'])->pluck('token')->all())
+        ->toContain('issuance_number');
+});
+
+it('exposes issuance number as a header, footer, and body block print field', function (): void {
+    $layoutRegistry = app(PrintLayoutRegistry::class);
+    $fieldRegistry = app(ReportFieldRegistry::class);
+
+    expect($layoutRegistry->tokenOptions())
+        ->toHaveKey('issuance_number')
+        ->and($layoutRegistry->tokenOptions()['issuance_number'])->toBe('Issuance Number')
+        ->and($fieldRegistry->definitions(ReportScope::ControlledDocument))
+        ->toHaveKey('issuance_number')
+        ->and($fieldRegistry->definitions(ReportScope::ControlledDocument)['issuance_number'])
+        ->toMatchArray([
+            'label' => 'Issuance Number',
+            'group' => 'Metadata',
+        ]);
+
+    $normalizedZones = $layoutRegistry->normalizeZones([
+        'rows' => [[
+            'key' => 'issuance',
+            'cells' => [
+                ['key' => 'label', 'width' => 30, 'alignment' => 'left', 'vertical_alignment' => 'center', 'items' => [['token' => 'custom_text', 'custom_text' => 'Issuance No.']]],
+                ['key' => 'value', 'width' => 70, 'alignment' => 'left', 'vertical_alignment' => 'center', 'items' => [['token' => 'issuance_number', 'show_label' => false]]],
+            ],
+        ]],
+    ]);
+
+    expect($normalizedZones['rows'][0]['cells'][1]['items'][0]['token'])->toBe('issuance_number');
+
+    $fields = $fieldRegistry->normalize(ReportScope::ControlledDocument, [
+        ['key' => 'issuance_number', 'enabled' => true, 'show_label' => true],
+    ]);
+
+    expect(collect($fields)->firstWhere('key', 'issuance_number'))
+        ->toMatchArray([
+            'key' => 'issuance_number',
+            'enabled' => true,
+            'label' => 'Issuance Number',
+            'group' => 'Metadata',
+        ]);
+
+    $zone = file_get_contents(resource_path('views/reports/partials/print-zone.blade.php'));
+    $print = file_get_contents(resource_path('views/controlled-documents/print.blade.php'));
+
+    expect($zone)
+        ->toContain("@case('issuance_number')")
+        ->toContain('issuance?->issuance_number')
+        ->and($print)
+        ->toContain("in_array('issuance_number', \$enabledFields, true)");
 });
 
 it('normalizes configurable table of contents settings', function (): void {

@@ -54,6 +54,9 @@
             @case('document_status')
                 <span>{{ ($item['show_label'] ?? true) ? $item['label'].': ' : '' }}{{ $preview ? 'Effective' : $document?->documentStatus?->name }}</span>
                 @break
+            @case('issuance_number')
+                <span>{{ ($item['show_label'] ?? true) ? $item['label'].': ' : '' }}{{ $preview ? 'SOP-QA-001-C01' : ($issuance?->issuance_number ?? '-') }}</span>
+                @break
             @case('department')
                 <span>{{ ($item['show_label'] ?? true) ? $item['label'].': ' : '' }}{{ $preview ? 'Quality Assurance' : ($document?->department?->name ?? '-') }}</span>
                 @break

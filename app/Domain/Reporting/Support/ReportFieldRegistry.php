@@ -25,6 +25,7 @@ final class ReportFieldRegistry
                 'organization' => ['label' => 'Organization Header', 'group' => 'Header'],
                 'document_identity' => ['label' => 'Document Number, Title & Version', 'group' => 'Header'],
                 'status' => ['label' => 'Document Status', 'group' => 'Header'],
+                'issuance_number' => ['label' => 'Issuance Number', 'group' => 'Metadata'],
                 'department' => ['label' => 'Department', 'group' => 'Metadata'],
                 'owner' => ['label' => 'Document Owner', 'group' => 'Metadata'],
                 'effective_date' => ['label' => 'Effective Date', 'group' => 'Metadata'],
@@ -118,6 +119,7 @@ final class ReportFieldRegistry
             'organization',
             'document_identity',
             'status',
+            'issuance_number',
             'department',
             'owner',
             'effective_date',
@@ -138,7 +140,7 @@ final class ReportFieldRegistry
                 if ($field['key'] === 'sections') {
                     $field['enabled'] = true;
                     $field['show_label'] = false;
-
+                    $field['page_break_before'] = true;
                     return $field;
                 }
 

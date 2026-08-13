@@ -546,6 +546,15 @@
         </header>
         @endif
 
+        @if (in_array('issuance_number', $enabledFields, true) && (! ($fieldConfig['issuance_number']['hide_when_empty'] ?? false) || filled($issuance?->issuance_number)))
+            <section class="meta" style="grid-column: {{ ($fieldConfig['issuance_number']['width'] ?? 'full') === 'full' ? '1 / -1' : 'span 1' }}; order: {{ $fieldOrder['issuance_number'] ?? 0 }}; {{ ($fieldConfig['issuance_number']['page_break_before'] ?? false) ? 'break-before: page;' : '' }}">
+                @if ($fieldConfig['issuance_number']['show_label'] ?? true)
+                    <strong>{{ $fieldConfig['issuance_number']['label'] ?? 'Issuance Number' }}:</strong>
+                @endif
+                {{ $issuance?->issuance_number ?? '-' }}
+            </section>
+        @endif
+
         @if ($showToc && $toc['position'] === 'after_identity')
             @include('controlled-documents.partials.table-of-contents')
         @endif

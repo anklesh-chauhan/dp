@@ -22,6 +22,7 @@ final class PrintLayoutRegistry
             'document_number' => 'Document Number',
             'document_version' => 'Version',
             'document_status' => 'Status',
+            'issuance_number' => 'Issuance Number',
             'department' => 'Department',
             'effective_date' => 'Effective Date',
             'review_date' => 'Review Date',
@@ -199,6 +200,20 @@ final class PrintLayoutRegistry
                         $this->item('page_number', showLabel: false),
                     ]),
                 ]),
+                $this->row('issuance', [
+                    $this->column('issuance_number_label', 20, 'left', 'center', [
+                        $this->item('custom_text', customText: 'Issuance No.', emphasized: true),
+                    ]),
+                    $this->column('issuance_number_value', 30, 'left', 'center', [
+                        $this->item('issuance_number', showLabel: false),
+                    ]),
+                    $this->column('copy_status_label', 20, 'left', 'center', [
+                        $this->item('custom_text', customText: 'Copy Status', emphasized: true),
+                    ]),
+                    $this->column('copy_status_value', 30, 'left', 'center', [
+                        $this->item('copy_status', showLabel: false),
+                    ]),
+                ]),
             ],
         ];
     }
@@ -216,6 +231,7 @@ final class PrintLayoutRegistry
                     $this->column('footer_left', 38, 'left', 'center', [
                         $this->item('printed_by'),
                         $this->item('printed_at'),
+                        $this->item('issuance_number'),
                     ]),
                     $this->column('footer_center', 24, 'center', 'center', [
                         $this->item('controlled_notice'),
