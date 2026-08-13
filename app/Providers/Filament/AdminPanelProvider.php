@@ -3,22 +3,28 @@
 namespace App\Providers\Filament;
 
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
+use Filament\Actions\Action;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\NavigationGroup;
-use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
+use Filament\Support\Assets\Js;
 use Filament\Support\Colors\Color;
 use Filament\Support\Icons\Heroicon;
+use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Vite;
+use Illuminate\Support\HtmlString;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Livewire\Component;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -66,6 +72,30 @@ class AdminPanelProvider extends PanelProvider
             ->plugins([
                 FilamentShieldPlugin::make()->navigationGroup('Core · Identity & Access'),
             ])
+            ->assets([
+                Js::make('docupharma-app-guide')->html(new HtmlString(
+                    Vite::withEntryPoints(['resources/js/app-guide.js'])->toHtml()
+                )),
+            ])
+            ->userMenuItems([
+                Action::make('restartAppGuide')
+                    ->label('Restart app guide')
+                    ->icon(Heroicon::OutlinedAcademicCap)
+                    ->visible(fn (): bool => Auth::check())
+                    ->action(function (Component $livewire): void {
+                        Auth::user()?->resetAppGuide();
+
+                        $livewire->js(
+                            'window.dispatchEvent(new CustomEvent("docupharma-app-guide-restart"))'
+                        );
+                    }),
+            ])
+            ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn (): string => Auth::check()
+                    ? view('filament.hooks.app-guide')->render()
+                    : '',
+            )
             ->sidebarCollapsibleOnDesktop()
             ->sidebarWidth('w-64')
             ->authMiddleware([

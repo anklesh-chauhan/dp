@@ -559,7 +559,6 @@
             @include('controlled-documents.partials.table-of-contents')
         @endif
 
-
         @if (in_array('variables', $enabledFields, true) && (! ($fieldConfig['variables']['hide_when_empty'] ?? false) || $document->variables->isNotEmpty()))
             <section style="grid-column: {{ ($fieldConfig['variables']['width'] ?? 'full') === 'full' ? '1 / -1' : 'span 1' }}; order: {{ $fieldOrder['variables'] ?? 0 }}; {{ ($fieldConfig['variables']['page_break_before'] ?? false) ? 'break-before: page;' : '' }}">
         @if ($fieldConfig['variables']['show_label'] ?? true)<h2>{{ $fieldConfig['variables']['label'] ?? 'Variables' }}</h2>@endif
@@ -578,10 +577,18 @@
             </section>
         @endif
 
-        @if (in_array('sections', $enabledFields, true))
         @if ($showToc && $toc['position'] === 'before_sections')
             @include('controlled-documents.partials.table-of-contents')
         @endif
+
+        @if (in_array('approvals', $enabledFields, true) && (! ($fieldConfig['approvals']['hide_when_empty'] ?? false) || $document->approvals->isNotEmpty()))
+            <section style="grid-column: {{ ($fieldConfig['approvals']['width'] ?? 'full') === 'full' ? '1 / -1' : 'span 1' }}; order: {{ $fieldOrder['approvals'] ?? 0 }}; {{ ($fieldConfig['approvals']['page_break_before'] ?? false) ? 'break-before: page;' : '' }}">
+            @if ($fieldConfig['approvals']['show_label'] ?? true)<h2>{{ $fieldConfig['approvals']['label'] ?? 'Approvals' }}</h2>@endif
+            @include('controlled-documents.partials.approval-signatures')
+            </section>
+        @endif
+
+        @if (in_array('sections', $enabledFields, true))
         <section style="grid-column: {{ ($fieldConfig['sections']['width'] ?? 'full') === 'full' ? '1 / -1' : 'span 1' }}; order: {{ $fieldOrder['sections'] ?? 0 }}; {{ ($fieldConfig['sections']['page_break_before'] ?? false) ? 'break-before: page;' : '' }}">
         @if ($fieldConfig['sections']['show_label'] ?? true)<h2>{{ $fieldConfig['sections']['label'] ?? 'Sections' }}</h2>@endif
         @php($printSections = $issuance?->execution?->sections ?? $document->sections)
@@ -604,13 +611,6 @@
             <p class="muted">No sections have been added to this SOP document.</p>
         @endforelse
         </section>
-        @endif
-
-        @if (in_array('approvals', $enabledFields, true) && (! ($fieldConfig['approvals']['hide_when_empty'] ?? false) || $document->approvals->isNotEmpty()))
-            <section style="grid-column: {{ ($fieldConfig['approvals']['width'] ?? 'full') === 'full' ? '1 / -1' : 'span 1' }}; order: {{ $fieldOrder['approvals'] ?? 0 }}; {{ ($fieldConfig['approvals']['page_break_before'] ?? false) ? 'break-before: page;' : '' }}">
-            @if ($fieldConfig['approvals']['show_label'] ?? true)<h2>{{ $fieldConfig['approvals']['label'] ?? 'Approvals' }}</h2>@endif
-            @include('controlled-documents.partials.approval-signatures')
-            </section>
         @endif
 
         @php($printAttachments = $issuance?->execution?->attachments ?? $document->attachments)

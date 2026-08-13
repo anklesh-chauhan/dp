@@ -45,7 +45,7 @@ it('seeds GMP controlled document templates with UI body block defaults and a re
     $sections = collect($gmpTemplate->fields)->firstWhere('key', 'sections');
     $approvals = collect($gmpTemplate->fields)->firstWhere('key', 'approvals');
 
-    expect($enabledKeys)->toBe(['sections', 'approvals'])
+    expect($enabledKeys)->toBe(['approvals', 'sections'])
         ->and($sections)
         ->enabled->toBeTrue()
         ->show_label->toBeFalse()
@@ -62,6 +62,34 @@ it('seeds GMP controlled document templates with UI body block defaults and a re
         ->enabled->toBeTrue()
         ->show_logo->toBeTrue()
         ->page_break_after->toBeTrue();
+});
+
+it('prints approvals after the title page and table of contents', function (): void {
+    $print = file_get_contents(resource_path('views/controlled-documents/print.blade.php'));
+    $titlePos = strpos($print, 'controlled-documents.partials.title-page');
+    $tocAfterIdentityPos = strpos($print, "toc['position'] === 'after_identity'");
+    $tocBeforeSectionsPos = strpos($print, "toc['position'] === 'before_sections'");
+    $approvalsPos = strpos($print, "in_array('approvals', \$enabledFields, true)");
+    $sectionsPos = strpos($print, "in_array('sections', \$enabledFields, true)");
+
+    expect($titlePos)->toBeInt()
+        ->and($tocAfterIdentityPos)->toBeInt()
+        ->and($tocBeforeSectionsPos)->toBeInt()
+        ->and($approvalsPos)->toBeInt()
+        ->and($sectionsPos)->toBeInt()
+        ->and($titlePos)->toBeLessThan($tocAfterIdentityPos)
+        ->and($tocAfterIdentityPos)->toBeLessThan($tocBeforeSectionsPos)
+        ->and($tocBeforeSectionsPos)->toBeLessThan($approvalsPos)
+        ->and($approvalsPos)->toBeLessThan($sectionsPos)
+        ->and(array_column(app(ReportFieldRegistry::class)->defaultGmpControlledDocumentFields(), 'key'))
+        ->toContain('approvals', 'sections');
+
+    $enabledOrder = collect(app(ReportFieldRegistry::class)->defaultGmpControlledDocumentFields())
+        ->filter(fn (array $field): bool => $field['enabled'])
+        ->pluck('key')
+        ->all();
+
+    expect($enabledOrder)->toBe(['approvals', 'sections']);
 });
 
 it('preserves configured field order and rejects unsupported system fields', function (): void {

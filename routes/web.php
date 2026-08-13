@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AppGuideController;
 use App\Http\Controllers\ChangeControlReportController;
 use App\Http\Controllers\ControlledDocumentDraftPreviewController;
 use App\Http\Controllers\ControlledDocumentOriginalArtifactController;
@@ -14,6 +15,14 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::post('/app-guide/complete', [AppGuideController::class, 'complete'])
+    ->middleware(['auth', 'module:dms'])
+    ->name('app-guide.complete');
+
+Route::post('/app-guide/restart', [AppGuideController::class, 'restart'])
+    ->middleware(['auth', 'module:dms'])
+    ->name('app-guide.restart');
 
 Route::get('/controlled-documents/{controlledDocument}/print', ControlledDocumentPrintController::class)
     ->middleware(['auth', 'module:dms', 'can:view,controlledDocument'])

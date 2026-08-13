@@ -14,7 +14,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'email', 'password', 'department_id', 'designation_id'])]
+#[Fillable(['name', 'email', 'password', 'department_id', 'designation_id', 'app_guide_completed_at'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -31,7 +31,27 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'app_guide_completed_at' => 'datetime',
         ];
+    }
+
+    public function hasCompletedAppGuide(): bool
+    {
+        return $this->app_guide_completed_at !== null;
+    }
+
+    public function markAppGuideCompleted(): void
+    {
+        if ($this->hasCompletedAppGuide()) {
+            return;
+        }
+
+        $this->forceFill(['app_guide_completed_at' => now()])->save();
+    }
+
+    public function resetAppGuide(): void
+    {
+        $this->forceFill(['app_guide_completed_at' => null])->save();
     }
 
     public function getFilamentAvatarUrl(): string

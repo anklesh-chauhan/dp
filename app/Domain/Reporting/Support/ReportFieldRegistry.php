@@ -31,8 +31,8 @@ final class ReportFieldRegistry
                 'effective_date' => ['label' => 'Effective Date', 'group' => 'Metadata'],
                 'review_date' => ['label' => 'Review Date', 'group' => 'Metadata'],
                 'variables' => ['label' => 'Template Variables', 'group' => 'Content'],
-                'sections' => ['label' => 'Controlled Sections', 'group' => 'Content'],
                 'approvals' => ['label' => 'Approval Signatures', 'group' => 'Compliance'],
+                'sections' => ['label' => 'Controlled Sections', 'group' => 'Content'],
                 'audit_reference' => ['label' => 'Printed By / Printed At', 'group' => 'Compliance'],
                 'footer' => ['label' => 'Organization Footer', 'group' => 'Footer'],
             ],
@@ -141,6 +141,7 @@ final class ReportFieldRegistry
                     $field['enabled'] = true;
                     $field['show_label'] = false;
                     $field['page_break_before'] = true;
+
                     return $field;
                 }
 
