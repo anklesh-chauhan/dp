@@ -27,14 +27,19 @@ final class ControlledDocumentPrintPreviewService
     public function viewData(ControlledDocument $document, ?int $reportTemplateId = null): array
     {
         $document->loadMissing([
-            'approvals.approver',
+            'approvals.approver.designation',
+            'approvals.approvalDecision',
             'approvals.workflowStep.department',
             'approvals.workflowStep.approvalStepType',
             'attachments',
+            'creator.department',
+            'creator.designation',
             'department',
             'documentStatus',
             'documentType',
             'organization',
+            'owner.department',
+            'owner.designation',
             'sections',
             'template',
             'variables',

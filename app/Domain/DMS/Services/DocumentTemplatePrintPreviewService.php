@@ -160,6 +160,8 @@ final class DocumentTemplatePrintPreviewService
         $document->setRelation('variables', $variables);
         $document->setRelation('approvals', collect());
         $document->setRelation('attachments', collect());
+        $document->setRelation('owner', null);
+        $document->setRelation('creator', null);
 
         return $document;
     }

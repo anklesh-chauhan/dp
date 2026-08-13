@@ -79,14 +79,18 @@ class ControlledDocumentPrintController extends Controller
         }
 
         $controlledDocument->load([
-            'approvals.approver',
+            'approvals.approver.designation',
+            'approvals.approvalDecision',
             'approvals.workflowStep.department',
+            'approvals.workflowStep.approvalStepType',
             'approvals.workflowStep',
-            'creator',
+            'creator.department',
+            'creator.designation',
             'department',
             'documentType',
             'issuances',
-            'owner',
+            'owner.department',
+            'owner.designation',
             'organization',
             'referencedSop',
             'sections.items',

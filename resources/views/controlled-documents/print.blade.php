@@ -95,6 +95,58 @@
             width: 28%;
         }
 
+        .approval-signatures {
+            break-inside: auto;
+            table-layout: fixed;
+        }
+
+        .approval-signatures .signature-group {
+            break-inside: avoid;
+        }
+
+        .approval-signatures th,
+        .approval-signatures td {
+            width: auto;
+        }
+
+        .approval-signatures .signature-group-heading {
+            background: #d1d5db;
+            color: #111827;
+            font-weight: 700;
+            padding: 4px 8px;
+        }
+
+        .approval-signatures .signature-department {
+            background: #fff;
+            font-weight: 600;
+            vertical-align: middle;
+            width: 28%;
+        }
+
+        .approval-signatures .signature-label {
+            background: #fff;
+            font-weight: 600;
+            width: 18%;
+        }
+
+        .approval-signatures .signature-value {
+            min-height: 22px;
+            width: 54%;
+        }
+
+        .approval-signatures .signature-sign {
+            min-height: 36px;
+        }
+
+        .approval-signatures .signature-sign div + div {
+            margin-top: 2px;
+        }
+
+        .signature-manifestation-note {
+            font-size: 0.9em;
+            margin-top: -6px;
+        }
+
         .meta {
             display: grid;
             gap: 12px;
@@ -475,7 +527,7 @@
             <div class="muted">
                 {{ $document->document_number }} | Version {{ $document->version }}
                 @if (in_array('status', $enabledFields, true))
-                    | {{ $document->documentStatus->name }}
+                    | {{ $document->documentStatus?->name ?? '-' }}
                 @endif
             </div>
             @if (filled($issuance?->execution?->batch_number) || filled($issuance?->execution?->product_name))
@@ -548,30 +600,7 @@
         @if (in_array('approvals', $enabledFields, true) && (! ($fieldConfig['approvals']['hide_when_empty'] ?? false) || $document->approvals->isNotEmpty()))
             <section style="grid-column: {{ ($fieldConfig['approvals']['width'] ?? 'full') === 'full' ? '1 / -1' : 'span 1' }}; order: {{ $fieldOrder['approvals'] ?? 0 }}; {{ ($fieldConfig['approvals']['page_break_before'] ?? false) ? 'break-before: page;' : '' }}">
             @if ($fieldConfig['approvals']['show_label'] ?? true)<h2>{{ $fieldConfig['approvals']['label'] ?? 'Approvals' }}</h2>@endif
-            <table>
-                <thead>
-                    <tr>
-                        <th>Step</th>
-                        <th>Department</th>
-                        <th>Decision</th>
-                        <th>Approver</th>
-                        <th>Approved At</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($document->approvals as $approval)
-                        <tr>
-                            <td>{{ $approval->workflowStep?->approvalStepType->name  ?? '-' }}</td>
-                            <td>{{ $approval->workflowStep?->department?->name ?? $document->department?->name ?? '-' }}</td>
-                            <td>{{ $approval->approvalDecision?->name ?? '-' }}</td>
-                            <td>{{ $approval->approver?->name ?? '-' }}</td>
-                            <td>{{ app(\App\Support\Formatting\DateFormatSettings::class)->formatDateTime($approval->approved_at) ?? '-' }}</td>
-                        </tr>
-                    @empty
-                        <tr><td colspan="5">No approval signatures recorded.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
+            @include('controlled-documents.partials.approval-signatures')
             </section>
         @endif
 
