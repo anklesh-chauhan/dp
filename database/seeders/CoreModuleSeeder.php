@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Models\Designation;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -39,6 +40,12 @@ class CoreModuleSeeder extends Seeder
         'RestoreAny:User',
         'Replicate:User',
         'Reorder:User',
+        'ViewAny:Designation',
+        'View:Designation',
+        'Create:Designation',
+        'Update:Designation',
+        'Delete:Designation',
+        'DeleteAny:Designation',
         'ViewAny:ProductLicense',
         'View:ProductLicense',
         'ViewAny:Organization',
@@ -59,5 +66,25 @@ class CoreModuleSeeder extends Seeder
 
         Role::findOrCreate('sop administrator', 'web')
             ->givePermissionTo(self::PERMISSIONS);
+
+        $this->seedDesignations();
+    }
+
+    private function seedDesignations(): void
+    {
+        foreach ([
+            ['code' => 'QA_MGR', 'name' => 'QA Manager'],
+            ['code' => 'QA_OFF', 'name' => 'QA Officer'],
+            ['code' => 'PROD_MGR', 'name' => 'Production Manager'],
+            ['code' => 'PROD_SUP', 'name' => 'Production Supervisor'],
+            ['code' => 'CHEMIST', 'name' => 'Chemist'],
+            ['code' => 'PHARMACIST', 'name' => 'Pharmacist'],
+            ['code' => 'DOC_CTRL', 'name' => 'Document Controller'],
+        ] as $designation) {
+            Designation::query()->firstOrCreate(
+                ['code' => $designation['code']],
+                ['name' => $designation['name']],
+            );
+        }
     }
 }

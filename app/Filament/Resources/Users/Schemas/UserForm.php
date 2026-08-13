@@ -24,6 +24,11 @@ class UserForm
                     ->relationship('department', 'name')
                     ->searchable()
                     ->preload(),
+                Select::make('designation_id')
+                    ->label('Designation')
+                    ->relationship('designation', 'name')
+                    ->searchable()
+                    ->preload(),
                 Select::make('roles')
                     ->relationship('roles', 'name')
                     ->multiple()

@@ -21,6 +21,14 @@ class UsersTable
                 TextColumn::make('email')
                     ->label('Email address')
                     ->searchable(),
+                TextColumn::make('department.name')
+                    ->label('Department')
+                    ->sortable()
+                    ->toggleable(),
+                TextColumn::make('designation.name')
+                    ->label('Designation')
+                    ->sortable()
+                    ->toggleable(),
                 TextColumn::make('email_verified_at')
                     ->dateTime()
                     ->sortable(),

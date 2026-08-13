@@ -14,6 +14,12 @@ class UserInfolist
                 TextEntry::make('name'),
                 TextEntry::make('email')
                     ->label('Email address'),
+                TextEntry::make('department.name')
+                    ->label('Department')
+                    ->placeholder('-'),
+                TextEntry::make('designation.name')
+                    ->label('Designation')
+                    ->placeholder('-'),
                 TextEntry::make('email_verified_at')
                     ->dateTime()
                     ->placeholder('-'),
