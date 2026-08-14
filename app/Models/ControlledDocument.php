@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 class ControlledDocument extends Model implements ApprovableSubject, ControlledDocumentContract
@@ -365,7 +366,31 @@ class ControlledDocument extends Model implements ApprovableSubject, ControlledD
     public function versionHistory(): HasMany
     {
         return $this->hasMany(self::class, 'document_series_id', 'document_series_id')
-            ->orderByDesc('version');
+            ->orderBy('version');
+    }
+
+    public function changeDescription(): string
+    {
+        if (filled($this->revision_reason)) {
+            return (string) $this->revision_reason;
+        }
+
+        return $this->version <= 1 ? 'Initial issue' : '—';
+    }
+
+    /**
+     * @return Collection<int, self>
+     */
+    public function printableChangeHistory(): Collection
+    {
+        $versions = $this->relationLoaded('versionHistory')
+            ? $this->versionHistory
+            : $this->versionHistory()->with(['creator', 'documentStatus'])->get();
+
+        return $versions
+            ->where('version', '<=', $this->version)
+            ->sortBy('version')
+            ->values();
     }
 
     /**

@@ -7,6 +7,7 @@ namespace App\Filament\Resources\LogDocuments;
 use App\Domain\DMS\Services\SopReferenceService;
 use App\Filament\Resources\ControlledDocuments\RelationManagers\ApprovalRelationManager;
 use App\Filament\Resources\ControlledDocuments\RelationManagers\AuditRelationManager;
+use App\Filament\Resources\ControlledDocuments\RelationManagers\ChangeHistoryRelationManager;
 use App\Filament\Resources\ControlledDocuments\RelationManagers\DocumentSectionRelationManager;
 use App\Filament\Resources\ControlledDocuments\RelationManagers\DocumentVariableRelationManager;
 use App\Filament\Resources\LogDocuments\Pages\CreateLogDocument;
@@ -198,6 +199,7 @@ class LogDocumentResource extends Resource
             DocumentSectionRelationManager::class,
             DocumentVariableRelationManager::class,
             ApprovalRelationManager::class,
+            ChangeHistoryRelationManager::class,
             IssuanceRelationManager::class,
             AuditRelationManager::class,
         ];

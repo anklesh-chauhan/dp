@@ -97,6 +97,8 @@ class ControlledDocumentPrintController extends Controller
             'attachments',
             'template',
             'variables',
+            'versionHistory.creator',
+            'versionHistory.documentStatus',
         ]);
 
         $reportTemplate = ReportTemplate::query()

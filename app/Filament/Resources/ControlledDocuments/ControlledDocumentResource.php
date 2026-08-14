@@ -11,6 +11,7 @@ use App\Filament\Resources\ControlledDocuments\Pages\ListControlledDocuments;
 use App\Filament\Resources\ControlledDocuments\Pages\ViewControlledDocument;
 use App\Filament\Resources\ControlledDocuments\RelationManagers\ApprovalRelationManager;
 use App\Filament\Resources\ControlledDocuments\RelationManagers\AuditRelationManager;
+use App\Filament\Resources\ControlledDocuments\RelationManagers\ChangeHistoryRelationManager;
 use App\Filament\Resources\ControlledDocuments\RelationManagers\DocumentSectionRelationManager;
 use App\Filament\Resources\ControlledDocuments\RelationManagers\DocumentVariableRelationManager;
 use App\Filament\Resources\ControlledDocuments\RelationManagers\OriginalArtifactRelationManager;
@@ -253,6 +254,7 @@ class ControlledDocumentResource extends Resource
             OriginalArtifactRelationManager::class,
             QualityAttachmentsRelationManager::class,
             ApprovalRelationManager::class,
+            ChangeHistoryRelationManager::class,
             AuditRelationManager::class,
         ];
     }

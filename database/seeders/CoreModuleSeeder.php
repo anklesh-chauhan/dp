@@ -75,13 +75,19 @@ class CoreModuleSeeder extends Seeder
         foreach ([
             ['code' => 'QA_MGR', 'name' => 'QA Manager'],
             ['code' => 'QA_OFF', 'name' => 'QA Officer'],
+            ['code' => 'QA_REV', 'name' => 'QA Reviewer'],
+            ['code' => 'SOP_MAKER', 'name' => 'SOP Maker'],
+            ['code' => 'SOP_CHK', 'name' => 'SOP Checker'],
+            ['code' => 'SOP_APR', 'name' => 'SOP Approver'],
             ['code' => 'PROD_MGR', 'name' => 'Production Manager'],
             ['code' => 'PROD_SUP', 'name' => 'Production Supervisor'],
+            ['code' => 'GMP_EXEC', 'name' => 'GMP Record Executor'],
+            ['code' => 'LOG_MAKER', 'name' => 'Log Maker'],
             ['code' => 'CHEMIST', 'name' => 'Chemist'],
             ['code' => 'PHARMACIST', 'name' => 'Pharmacist'],
             ['code' => 'DOC_CTRL', 'name' => 'Document Controller'],
         ] as $designation) {
-            Designation::query()->firstOrCreate(
+            Designation::query()->updateOrCreate(
                 ['code' => $designation['code']],
                 ['name' => $designation['name']],
             );

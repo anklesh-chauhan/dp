@@ -45,7 +45,7 @@ it('seeds GMP controlled document templates with UI body block defaults and a re
     $sections = collect($gmpTemplate->fields)->firstWhere('key', 'sections');
     $approvals = collect($gmpTemplate->fields)->firstWhere('key', 'approvals');
 
-    expect($enabledKeys)->toBe(['approvals', 'sections'])
+    expect($enabledKeys)->toBe(['approvals', 'sections', 'change_history'])
         ->and($sections)
         ->enabled->toBeTrue()
         ->show_label->toBeFalse()
@@ -71,25 +71,28 @@ it('prints approvals after the title page and table of contents', function (): v
     $tocBeforeSectionsPos = strpos($print, "toc['position'] === 'before_sections'");
     $approvalsPos = strpos($print, "in_array('approvals', \$enabledFields, true)");
     $sectionsPos = strpos($print, "in_array('sections', \$enabledFields, true)");
+    $changeHistoryPos = strpos($print, "in_array('change_history', \$enabledFields, true)");
 
     expect($titlePos)->toBeInt()
         ->and($tocAfterIdentityPos)->toBeInt()
         ->and($tocBeforeSectionsPos)->toBeInt()
         ->and($approvalsPos)->toBeInt()
         ->and($sectionsPos)->toBeInt()
+        ->and($changeHistoryPos)->toBeInt()
         ->and($titlePos)->toBeLessThan($tocAfterIdentityPos)
         ->and($tocAfterIdentityPos)->toBeLessThan($tocBeforeSectionsPos)
         ->and($tocBeforeSectionsPos)->toBeLessThan($approvalsPos)
         ->and($approvalsPos)->toBeLessThan($sectionsPos)
+        ->and($sectionsPos)->toBeLessThan($changeHistoryPos)
         ->and(array_column(app(ReportFieldRegistry::class)->defaultGmpControlledDocumentFields(), 'key'))
-        ->toContain('approvals', 'sections');
+        ->toContain('approvals', 'sections', 'change_history');
 
     $enabledOrder = collect(app(ReportFieldRegistry::class)->defaultGmpControlledDocumentFields())
         ->filter(fn (array $field): bool => $field['enabled'])
         ->pluck('key')
         ->all();
 
-    expect($enabledOrder)->toBe(['approvals', 'sections']);
+    expect($enabledOrder)->toBe(['approvals', 'sections', 'change_history']);
 });
 
 it('preserves configured field order and rejects unsupported system fields', function (): void {

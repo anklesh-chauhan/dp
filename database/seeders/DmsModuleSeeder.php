@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Models\Department;
+use App\Models\Designation;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
@@ -360,26 +362,39 @@ class DmsModuleSeeder extends Seeder
             'View:KnowledgeGuide',
         ]);
 
+        $this->call(ReportTemplateSeeder::class);
+        $this->call(SopModuleSeeder::class);
+
+        $this->seedQaDemoUsers();
+    }
+
+    private function seedQaDemoUsers(): void
+    {
+        $qaId = Department::query()->where('code', 'QA')->valueOrFail('id');
+
         foreach ([
-            ['Administrator@example.com', 'SOP Administrator', $adminRole],
-            ['Maker@example.com', 'SOP Maker', $makerRole],
-            ['Checker@example.com', 'SOP Checker', $checkerRole],
-            ['Approver@example.com', 'SOP Approver', $approverRole],
-            ['LogMaker@example.com', 'Log Maker', $logMakerRole],
-            ['DocumentController@example.com', 'Document Controller', $documentControllerRole],
-            ['QaReviewer@example.com', 'QA Reviewer', $reviewerRole],
-            ['RecordExecutor@example.com', 'GMP Record Executor', $recordExecutorRole],
-            ['ProductionSupervisor@example.com', 'Production Supervisor', $productionSupervisorRole],
-        ] as [$email, $name, $role]) {
+            ['Administrator@example.com', 'SOP Administrator', 'sop administrator', 'QA_MGR'],
+            ['Maker@example.com', 'SOP Maker', 'sop maker', 'SOP_MAKER'],
+            ['Checker@example.com', 'SOP Checker', 'sop checker', 'SOP_CHK'],
+            ['Approver@example.com', 'SOP Approver', 'sop approver', 'SOP_APR'],
+            ['LogMaker@example.com', 'Log Maker', 'log maker', 'LOG_MAKER'],
+            ['DocumentController@example.com', 'Document Controller', 'document controller', 'DOC_CTRL'],
+            ['QaReviewer@example.com', 'QA Reviewer', 'qa reviewer', 'QA_REV'],
+            ['RecordExecutor@example.com', 'GMP Record Executor', 'gmp record executor', 'GMP_EXEC'],
+            ['ProductionSupervisor@example.com', 'Production Supervisor', 'production supervisor', 'PROD_SUP'],
+        ] as [$email, $name, $roleName, $designationCode]) {
             $user = User::query()->firstOrCreate(
                 ['email' => $email],
                 ['name' => $name, 'password' => 'password'],
             );
 
-            $user->syncRoles([$role]);
-        }
+            $user->forceFill([
+                'name' => $name,
+                'department_id' => $qaId,
+                'designation_id' => Designation::query()->where('code', $designationCode)->valueOrFail('id'),
+            ])->save();
 
-        $this->call(ReportTemplateSeeder::class);
-        $this->call(SopModuleSeeder::class);
+            $user->syncRoles([$roleName]);
+        }
     }
 }

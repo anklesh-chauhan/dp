@@ -142,6 +142,15 @@
             margin-top: 2px;
         }
 
+        .change-history {
+            table-layout: fixed;
+        }
+
+        .change-history th,
+        .change-history td {
+            width: auto;
+        }
+
         .signature-manifestation-note {
             font-size: 0.9em;
             margin-top: -6px;
@@ -611,6 +620,13 @@
             <p class="muted">No sections have been added to this SOP document.</p>
         @endforelse
         </section>
+        @endif
+
+        @if (in_array('change_history', $enabledFields, true) && (! ($fieldConfig['change_history']['hide_when_empty'] ?? false) || $document->printableChangeHistory()->isNotEmpty()))
+            <section style="grid-column: {{ ($fieldConfig['change_history']['width'] ?? 'full') === 'full' ? '1 / -1' : 'span 1' }}; order: {{ $fieldOrder['change_history'] ?? 0 }}; {{ ($fieldConfig['change_history']['page_break_before'] ?? false) ? 'break-before: page;' : '' }}">
+                @if ($fieldConfig['change_history']['show_label'] ?? true)<h2>{{ $fieldConfig['change_history']['label'] ?? 'Change History' }}</h2>@endif
+                @include('controlled-documents.partials.change-history')
+            </section>
         @endif
 
         @php($printAttachments = $issuance?->execution?->attachments ?? $document->attachments)

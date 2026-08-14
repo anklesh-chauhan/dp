@@ -43,6 +43,8 @@ final class ControlledDocumentPrintPreviewService
             'sections',
             'template',
             'variables',
+            'versionHistory.creator',
+            'versionHistory.documentStatus',
         ]);
 
         $reportTemplate = $this->resolveReportTemplate($document, $reportTemplateId);

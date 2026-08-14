@@ -16,7 +16,6 @@ use App\Models\RegulationTag;
 use App\Models\ReportTemplate;
 use App\Models\SopWorkflow;
 use App\Models\TemplateStatus;
-use App\Models\User;
 use App\Models\VariableDataType;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
@@ -333,12 +332,6 @@ class SopModuleSeeder extends Seeder
         $checkerRole = Role::findOrCreate('sop checker', 'web');
         $approverRole = Role::findOrCreate('sop approver', 'web');
 
-        $checker = User::query()->firstOrCreate(
-            ['email' => 'Checker@example.com'],
-            ['name' => 'SOP Checker', 'password' => 'password', 'department_id' => $qa->id],
-        );
-        $checker->assignRole($checkerRole);
-
         $publishedStatusId = TemplateStatus::idFor(TemplateStatus::PUBLISHED);
 
         $template = DocumentTemplate::query()->firstOrCreate([
@@ -363,7 +356,7 @@ class SopModuleSeeder extends Seeder
             'template_status_id' => $publishedStatusId,
         ]);
 
-        foreach (['Purpose', 'Scope', 'Responsibility', 'Procedure', 'Safety', 'References', 'Revision History'] as $order => $title) {
+        foreach (['Purpose', 'Scope', 'Responsibility', 'Procedure', 'Safety', 'References'] as $order => $title) {
             $version->sections()->firstOrCreate([
                 'section_order' => $order + 1,
             ], [

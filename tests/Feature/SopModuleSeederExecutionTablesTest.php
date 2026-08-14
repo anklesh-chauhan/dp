@@ -93,7 +93,7 @@ it('creates related execution tables and field headers from a seeded GMP templat
 
     $template = DocumentTemplate::query()->where('code', 'TPL-BMR-BPR-GMP')->sole();
     $template->documentType()->update(['requires_sop_reference' => false]);
-    $user = User::query()->firstOrFail();
+    $user = User::factory()->create();
 
     $document = app(CreateDocumentFromTemplateAction::class)->execute(new ControlledDocumentData(
         templateId: $template->id,

@@ -33,6 +33,7 @@ final class ReportFieldRegistry
                 'variables' => ['label' => 'Template Variables', 'group' => 'Content'],
                 'approvals' => ['label' => 'Approval Signatures', 'group' => 'Compliance'],
                 'sections' => ['label' => 'Controlled Sections', 'group' => 'Content'],
+                'change_history' => ['label' => 'Change History', 'group' => 'Compliance'],
                 'audit_reference' => ['label' => 'Printed By / Printed At', 'group' => 'Compliance'],
                 'footer' => ['label' => 'Organization Footer', 'group' => 'Footer'],
             ],
@@ -146,6 +147,13 @@ final class ReportFieldRegistry
                 }
 
                 if ($field['key'] === 'approvals') {
+                    $field['enabled'] = true;
+                    $field['show_label'] = true;
+
+                    return $field;
+                }
+
+                if ($field['key'] === 'change_history') {
                     $field['enabled'] = true;
                     $field['show_label'] = true;
 
