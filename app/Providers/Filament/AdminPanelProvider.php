@@ -42,6 +42,7 @@ class AdminPanelProvider extends PanelProvider
             ->navigationGroups([
                 NavigationGroup::make('AI Management')->icon(Heroicon::Sparkles),
                 NavigationGroup::make('DMS')->icon(Heroicon::DocumentText),
+                NavigationGroup::make('DMS · Reports')->icon(Heroicon::OutlinedChartBar),
                 NavigationGroup::make('QMS')->icon(Heroicon::OutlinedClipboardDocumentCheck),
                 NavigationGroup::make('DMS · Help & Knowledge')->icon(Heroicon::OutlinedBookOpen),
                 NavigationGroup::make('DMS · Settings')->icon(Heroicon::OutlinedSquares2x2),

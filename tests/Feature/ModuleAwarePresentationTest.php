@@ -5,6 +5,8 @@ declare(strict_types=1);
 use App\Enums\ProductModule;
 use App\Filament\Clusters\Settings\SettingsCluster;
 use App\Filament\Pages\Dashboard;
+use App\Filament\Pages\Reports\DocumentRegisterReportPage;
+use App\Filament\Pages\Reports\ReportLibrary;
 use App\Filament\Resources\AiExecutions\Widgets\AiExecutionOverview;
 use App\Filament\Resources\AiExecutions\Widgets\AiProviderPerformanceTable;
 use App\Filament\Resources\DocumentTypes\DocumentTypeResource;
@@ -32,7 +34,8 @@ it('declares explicit module ownership for reporting metrics', function (): void
         ->and(PendingApprovalsTable::productModule())->toBe(ProductModule::DMS)
         ->and(RecentAuditActivityTable::productModule())->toBe(ProductModule::DMS)
         ->and(AiExecutionOverview::productModule())->toBe(ProductModule::AI)
-        ->and(AiProviderPerformanceTable::productModule())->toBe(ProductModule::AI);
+        ->and(AiProviderPerformanceTable::productModule())->toBe(ProductModule::AI)
+        ->and(DocumentRegisterReportPage::productModule())->toBe(ProductModule::DMS);
 });
 
 it('enforces AI entitlement directly on AI reporting metrics', function (): void {
@@ -59,6 +62,8 @@ it('blocks DMS dashboard and metrics when DMS is disabled', function (): void {
     config()->set('modules.enabled', []);
 
     expect(Dashboard::canAccess())->toBeFalse()
+        ->and(ReportLibrary::canAccess())->toBeFalse()
+        ->and(DocumentRegisterReportPage::canAccess())->toBeFalse()
         ->and(DocumentStatsOverview::canView())->toBeFalse()
         ->and(DocumentsByStatusChart::canView())->toBeFalse()
         ->and(DocumentsCreatedChart::canView())->toBeFalse()

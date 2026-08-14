@@ -329,6 +329,8 @@ class DmsModuleSeeder extends Seeder
             'View:DocumentExecution',
             'Review:DocumentExecution',
             'Approve:DocumentExecution',
+            'ViewAny:DocumentIssuance',
+            'View:DocumentIssuance',
             'ViewAny:KnowledgeGuide',
             'View:KnowledgeGuide',
         ]);

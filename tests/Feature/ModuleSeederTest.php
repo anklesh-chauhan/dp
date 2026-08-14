@@ -113,6 +113,8 @@ it('keeps QA batch release independent from executor and supervisor', function (
         ->and($executor->id)->not->toBe($supervisor->id)
         ->and($reviewer->can('Approve:DocumentExecution'))->toBeTrue()
         ->and($reviewer->can('Review:DocumentExecution'))->toBeTrue()
+        ->and($reviewer->can('ViewAny:DocumentIssuance'))->toBeTrue()
+        ->and($reviewer->can('View:DocumentIssuance'))->toBeTrue()
         ->and($reviewer->can('Update:DocumentExecution'))->toBeFalse()
         ->and($executor->can('Update:DocumentExecution'))->toBeTrue()
         ->and($executor->can('Submit:DocumentExecution'))->toBeTrue()
