@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 return [
-    'entitlement_source' => env('DOCUPHARMA_ENTITLEMENT_SOURCE', 'environment'),
+    'entitlement_source' => env('QUALIGXP_ENTITLEMENT_SOURCE', env('DOCUPHARMA_ENTITLEMENT_SOURCE', 'environment')),
 
     /*
     |--------------------------------------------------------------------------
@@ -17,12 +17,12 @@ return [
     */
     'enabled' => array_values(array_filter(array_map(
         static fn (string $module): string => strtolower(trim($module)),
-        explode(',', (string) env('DOCUPHARMA_MODULES', 'dms,ai')),
+        explode(',', (string) env('QUALIGXP_MODULES', env('DOCUPHARMA_MODULES', 'dms,ai'))),
     ))),
 
     'license' => [
         'public_keys' => array_filter([
-            (string) env('DOCUPHARMA_LICENSE_KEY_ID', 'default') => env('DOCUPHARMA_LICENSE_PUBLIC_KEY'),
+            (string) env('QUALIGXP_LICENSE_KEY_ID', env('DOCUPHARMA_LICENSE_KEY_ID', 'default')) => env('QUALIGXP_LICENSE_PUBLIC_KEY', env('DOCUPHARMA_LICENSE_PUBLIC_KEY')),
         ]),
     ],
 ];

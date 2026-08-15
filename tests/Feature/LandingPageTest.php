@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-it('renders the DocuPharma landing page', function (): void {
+it('renders the QualiGxP landing page', function (): void {
     $this->get('/')
         ->assertSuccessful()
         ->assertSee('Quality work,')

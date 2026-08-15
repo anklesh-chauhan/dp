@@ -1,9 +1,9 @@
 ---
-name: docupharma-product-modules
-description: Continue or review DocuPharma's incremental split into sellable DMS, QMS, and AI modules. Use when implementing product entitlements, module middleware, license-aware Filament resources, module permissions or seeders, domain boundaries, shared approvals or electronic signatures, QMS bounded contexts, or when resuming the modularization roadmap in a new chat.
+name: qualigxp-product-modules
+description: Continue or review QualiGxP's incremental split into sellable DMS, QMS, and AI modules. Use when implementing product entitlements, module middleware, license-aware Filament resources, module permissions or seeders, domain boundaries, shared approvals or electronic signatures, QMS bounded contexts, or when resuming the modularization roadmap in a new chat.
 ---
 
-# DocuPharma Product Modules
+# QualiGxP Product Modules
 
 Continue the product split without destabilizing the existing pharmaceutical DMS. Keep one codebase and database schema; control commercial access with server-side entitlements.
 
@@ -41,12 +41,12 @@ Do not mark a phase complete if enforcement covers only navigation but not route
 
 ## Commercial configuration
 
-Use `DOCUPHARMA_MODULES` for the current single-install entitlement source:
+Use `QUALIGXP_MODULES` for the current single-install entitlement source:
 
 ```env
-DOCUPHARMA_MODULES=dms
-DOCUPHARMA_MODULES=dms,ai
-DOCUPHARMA_MODULES=dms,qms,ai
+QUALIGXP_MODULES=dms
+QUALIGXP_MODULES=dms,ai
+QUALIGXP_MODULES=dms,qms,ai
 ```
 
 Keep consumers dependent on `ModuleManager`, not directly on environment variables, so signed-license or organization-based providers can replace configuration later.

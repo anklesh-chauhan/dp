@@ -38,7 +38,7 @@ it('records milestones append-only history and signed consequential decisions', 
     $service->transition($this->audit, InternalAuditStatus::InProgress, $this->actor, 'Opening meeting completed.');
     $reporting = $service->transition(
         $this->audit, InternalAuditStatus::Reporting, $this->actor, 'Fieldwork completed.',
-        ipAddress: '203.0.113.55', userAgent: 'DocuPharma-QMS-Test/1.0',
+        ipAddress: '203.0.113.55', userAgent: 'QualiGxP-QMS-Test/1.0',
     );
     $reporting->update(['report_issued_at' => now()]);
     $closed = $service->transition($reporting, InternalAuditStatus::Closed, $this->actor, 'Report accepted; no follow-up required.');

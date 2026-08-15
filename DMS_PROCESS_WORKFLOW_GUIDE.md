@@ -1,12 +1,12 @@
-# DocuPharma DMS Process Workflow Guide
+# QualiGxP DMS Process Workflow Guide
 
 Application-aligned guide for templates, controlled-document masters, approvals, controlled-copy issuance, GMP execution records, revisions, and retention.
 
-Everyday navigation and examples live in the [DocuPharma User Guide](./DOCUPHARMA_USER_GUIDE.md). This document is the detailed process reference.
+Everyday navigation and examples live in the [QualiGxP User Guide](./QUALIGXP_USER_GUIDE.md). This document is the detailed process reference.
 
 ## 1. Purpose and scope
 
-This guide applies to the DocuPharma Document Management System (DMS) and covers:
+This guide applies to the QualiGxP Document Management System (DMS) and covers:
 
 - document templates and controlled-document masters;
 - SOP, policy, manual, form, log, checklist, BMR, BPR, report, protocol, specification, validation, and annexure documents;
@@ -133,7 +133,7 @@ These codes follow the common controlled-master approval, reference issuance, re
 2. Enter name, document type, category, department, and regulation tags.
 3. Add a draft version, sections, and variables.
 4. Select **Submit for Review** and enter an attributable reason.
-5. DocuPharma selects the active workflow for the template’s department, falling back to the active global SOP workflow.
+5. QualiGxP selects the active workflow for the template’s department, falling back to the active global SOP workflow.
 6. Open **DMS → Template Approval Queue** and complete each configured step in order. The actor must hold the step’s role and department access.
 7. The template author or submitter cannot decide any approval step. Every step in a submission cycle must be decided by a different user.
 8. After every mandatory step is approved, a user with `Publish:DocumentTemplate` (typically Document Controller) selects **Publish Approved Version**.

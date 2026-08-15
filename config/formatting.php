@@ -14,8 +14,8 @@ return [
     |
     */
 
-    'date' => env('DOCUPHARMA_DATE_FORMAT', 'd/m/Y'),
-    'datetime' => env('DOCUPHARMA_DATETIME_FORMAT', 'd/m/Y H:i'),
-    'time' => env('DOCUPHARMA_TIME_FORMAT', 'H:i'),
+    'date' => env('QUALIGXP_DATE_FORMAT', env('DOCUPHARMA_DATE_FORMAT', 'd/m/Y')),
+    'datetime' => env('QUALIGXP_DATETIME_FORMAT', env('DOCUPHARMA_DATETIME_FORMAT', 'd/m/Y H:i')),
+    'time' => env('QUALIGXP_TIME_FORMAT', env('DOCUPHARMA_TIME_FORMAT', 'H:i')),
 
 ];

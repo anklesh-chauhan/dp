@@ -3,9 +3,9 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="description" content="DocuPharma brings controlled documents, quality workflows, and compliant collaboration into one focused workspace for life sciences teams.">
+        <meta name="description" content="QualiGxP brings controlled documents, quality workflows, and compliant collaboration into one focused workspace for life sciences teams.">
 
-        <title>DocuPharma — Quality, controlled</title>
+        <title>QualiGxP — Quality, controlled</title>
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
@@ -15,7 +15,7 @@
             <div class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[52rem] bg-[linear-gradient(rgba(15,23,42,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(15,23,42,0.025)_1px,transparent_1px)] bg-[size:42px_42px] [mask-image:linear-gradient(to_bottom,black,transparent)]"></div>
 
             <header class="mx-auto flex max-w-7xl items-center justify-between gap-6 px-6 py-6 lg:px-8">
-                <a href="/" class="group flex items-center gap-3" aria-label="DocuPharma home">
+                <a href="/" class="group flex items-center gap-3" aria-label="QualiGxP home">
                     <span class="grid size-10 place-items-center rounded-xl bg-amber-600 text-white shadow-lg shadow-amber-900/15 transition-transform group-hover:-rotate-3">
                         <svg viewBox="0 0 24 24" fill="none" class="size-6" aria-hidden="true">
                             <path d="M7 4.75h6.5L17 8.25v11H7v-14Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
@@ -23,12 +23,12 @@
                             <path d="m16.25 18.25 1.5 1.5 3-3.25" stroke="#FDE68A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </span>
-                    <span class="text-xl font-semibold tracking-[-0.035em]">Docu<span class="text-amber-600">Pharma</span></span>
+                    <span class="text-xl font-semibold tracking-[-0.035em]">Quali<span class="text-amber-600">GxP</span></span>
                 </a>
 
                 <nav class="hidden items-center gap-8 text-sm font-medium text-slate-600 md:flex" aria-label="Primary navigation">
                     <a href="#platform" class="transition-colors hover:text-amber-700">Platform</a>
-                    <a href="#built-for-quality" class="transition-colors hover:text-amber-700">Why DocuPharma</a>
+                    <a href="#built-for-quality" class="transition-colors hover:text-amber-700">Why QualiGxP</a>
                     <a href="#security" class="transition-colors hover:text-amber-700">Quality & security</a>
                 </nav>
 
@@ -62,7 +62,7 @@
 
                         <div class="mt-9 flex flex-col gap-3 sm:flex-row">
                             <a href="{{ url('/admin') }}" class="inline-flex items-center justify-center gap-2 rounded-full bg-amber-600 px-6 py-3.5 text-sm font-semibold text-white shadow-xl shadow-amber-900/20 transition hover:-translate-y-0.5 hover:bg-amber-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-600">
-                                Enter DocuPharma
+                                Enter QualiGxP
                                 <svg viewBox="0 0 20 20" fill="none" class="size-4" aria-hidden="true">
                                     <path d="M4 10h11m-4-4 4 4-4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
@@ -83,7 +83,7 @@
                                 <div class="flex items-center justify-between border-b border-slate-200 bg-white px-5 py-3">
                                     <div class="flex items-center gap-4">
                                         <div class="flex gap-1.5"><span class="size-2.5 rounded-full bg-red-400"></span><span class="size-2.5 rounded-full bg-amber-400"></span><span class="size-2.5 rounded-full bg-green-400"></span></div>
-                                        <span class="hidden text-[11px] font-medium text-slate-400 sm:block">workspace.docupharma</span>
+                                        <span class="hidden text-[11px] font-medium text-slate-400 sm:block">workspace.qualigxp</span>
                                     </div>
                                     <div class="flex items-center gap-2"><span class="size-7 rounded-full bg-amber-100"></span><span class="hidden text-xs font-medium text-slate-600 sm:block">Quality Admin</span></div>
                                 </div>
@@ -91,8 +91,8 @@
                                 <div class="grid min-h-[420px] grid-cols-[68px_1fr] sm:grid-cols-[150px_1fr]">
                                     <aside class="border-r border-slate-200 bg-white p-3 sm:p-4">
                                         <div class="mb-7 flex items-center gap-2">
-                                            <span class="grid size-7 shrink-0 place-items-center rounded-lg bg-amber-600 text-[10px] font-bold text-white">DP</span>
-                                            <span class="hidden text-xs font-semibold sm:block">DocuPharma</span>
+                                            <span class="grid size-7 shrink-0 place-items-center rounded-lg bg-amber-600 text-[10px] font-bold text-white">QG</span>
+                                            <span class="hidden text-xs font-semibold sm:block">QualiGxP</span>
                                         </div>
                                         <div class="grid gap-2 text-[10px] font-medium text-slate-500">
                                             <div class="flex items-center gap-2 rounded-lg bg-amber-50 p-2 text-amber-800"><span class="size-4 rounded bg-amber-200"></span><span class="hidden sm:block">Overview</span></div>
@@ -193,7 +193,7 @@
                     <div>
                         <p class="text-sm font-semibold uppercase tracking-[0.15em] text-amber-700">Built for quality teams</p>
                         <h2 class="mt-4 text-4xl font-semibold tracking-[-0.045em] sm:text-5xl">Less chasing.<br>More confidence.</h2>
-                        <p class="mt-6 text-lg leading-8 text-slate-600">DocuPharma makes ownership, status, evidence, and history visible at every step—so teams can focus on quality instead of administration.</p>
+                        <p class="mt-6 text-lg leading-8 text-slate-600">QualiGxP makes ownership, status, evidence, and history visible at every step—so teams can focus on quality instead of administration.</p>
                         <div class="mt-10 grid gap-6 sm:grid-cols-2">
                             @foreach ([['Clear accountability', 'Know who owns the next action and what is holding work back.'], ['Connected evidence', 'Keep decisions, signatures, attachments, and changes with the record.'], ['Purpose-built workflows', 'Apply structured quality processes without forcing teams into spreadsheets.'], ['Modular by design', 'Use DMS as the core and add QMS or AI capabilities when needed.']] as [$title, $copy])
                                 <div><span class="mb-3 block size-2 rounded-full bg-amber-600"></span><h3 class="font-semibold text-slate-900">{{ $title }}</h3><p class="mt-2 text-sm leading-6 text-slate-600">{{ $copy }}</p></div>
@@ -214,9 +214,9 @@
 
             <footer class="border-t border-slate-200 bg-white">
                 <div class="mx-auto flex max-w-7xl flex-col items-start justify-between gap-6 px-6 py-8 sm:flex-row sm:items-center lg:px-8">
-                    <div class="flex items-center gap-3"><span class="grid size-8 place-items-center rounded-lg bg-amber-600 text-xs font-bold text-white">DP</span><span class="font-semibold tracking-tight">DocuPharma</span></div>
+                    <div class="flex items-center gap-3"><span class="grid size-8 place-items-center rounded-lg bg-amber-600 text-xs font-bold text-white">QG</span><span class="font-semibold tracking-tight">QualiGxP</span></div>
                     <p class="text-sm text-slate-500">Purpose-built quality operations for life sciences.</p>
-                    <p class="text-xs text-slate-400">© {{ date('Y') }} DocuPharma</p>
+                    <p class="text-xs text-slate-400">© {{ date('Y') }} QualiGxP</p>
                 </div>
             </footer>
         </div>

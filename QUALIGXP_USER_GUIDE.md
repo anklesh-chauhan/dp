@@ -1,8 +1,8 @@
-# DocuPharma User Guide
+# QualiGxP User Guide
 
 ## 1. Purpose
 
-DocuPharma is a pharmaceutical document and quality management application. It is divided into three licensed modules:
+QualiGxP is a pharmaceutical document and quality management application. It is divided into three licensed modules:
 
 
 | Module | Purpose                                                                                | Dependency    |
@@ -16,10 +16,10 @@ The menus visible to a user depend on both the enabled modules and the permissio
 
 ## 2. Signing In
 
-Open the DocuPharma administration panel:
+Open the QualiGxP administration panel:
 
 ```text
-http://docupharma.test/admin
+http://qualigxp.test/admin
 ```
 
 For a local development installation, the default administrator is:
@@ -66,22 +66,22 @@ The current local entitlement source is configured in `.env`.
 Enable DMS only:
 
 ```env
-DOCUPHARMA_ENTITLEMENT_SOURCE=environment
-DOCUPHARMA_MODULES=dms
+QUALIGXP_ENTITLEMENT_SOURCE=environment
+QUALIGXP_MODULES=dms
 ```
 
 Enable DMS and QMS:
 
 ```env
-DOCUPHARMA_ENTITLEMENT_SOURCE=environment
-DOCUPHARMA_MODULES=dms,qms
+QUALIGXP_ENTITLEMENT_SOURCE=environment
+QUALIGXP_MODULES=dms,qms
 ```
 
 Enable all modules:
 
 ```env
-DOCUPHARMA_ENTITLEMENT_SOURCE=environment
-DOCUPHARMA_MODULES=dms,qms,ai
+QUALIGXP_ENTITLEMENT_SOURCE=environment
+QUALIGXP_MODULES=dms,qms,ai
 ```
 
 After changing these values, run:
@@ -157,7 +157,7 @@ These options are available under **Core · Organization**, **DMS Configuration*
 4. Save the template.
 5. Add a draft version, sections, and variables.
 6. Select **Submit for Review** and enter an attributable reason.
-7. DocuPharma selects the active workflow for the template's department, falling back to the active global SOP workflow.
+7. QualiGxP selects the active workflow for the template's department, falling back to the active global SOP workflow.
 8. Open **DMS · Document Control → Template Approval Queue**.
 9. Complete each configured workflow step in order. The user must have the step's assigned role and department access.
 10. A document controller or other user with `Publish:SopTemplate` selects **Publish Approved Version** after every mandatory step is approved.
@@ -256,7 +256,7 @@ The previous version remains traceable.
 
 ### 6.7 GMP document formats and execution controls
 
-DocuPharma supports the following controlled document formats through the existing template, approval, revision, issuance, and audit lifecycle:
+QualiGxP supports the following controlled document formats through the existing template, approval, revision, issuance, and audit lifecycle:
 
 
 | Document type                               | Format profile     | Typical use                                           |
@@ -491,8 +491,8 @@ The test reviewer must be different from the executor. The QA releaser must be d
 #### Example project
 
 ```text
-System identifier: DOCUPHARMA-QMS
-System name: DocuPharma Quality Management System
+System identifier: QUALIGXP-QMS
+System name: QualiGxP Quality Management System
 System version: 1.0.0
 GxP criticality: High
 Intended use:
@@ -521,7 +521,7 @@ Next periodic review date: 30-Sep-2027
 5. Indicate whether the system uses electronic records and electronic signatures.
 6. Save the project.
 
-DocuPharma generates a project number such as:
+QualiGxP generates a project number such as:
 
 ```text
 CSV-2026-4F8A91CD
@@ -745,7 +745,7 @@ AI output is assistance, not an approval decision or a replacement for qualified
 
 ## 9. Table Actions and Pinned Action Menus
 
-DocuPharma tables use a compact row-action layout to keep records readable and make actions easier to find.
+QualiGxP tables use a compact row-action layout to keep records readable and make actions easier to find.
 
 ### 9.1 Three-dot action menu
 
@@ -810,8 +810,8 @@ Then press `Ctrl + F5` in the browser. If the application is being developed con
 Confirm `.env` contains:
 
 ```env
-DOCUPHARMA_ENTITLEMENT_SOURCE=environment
-DOCUPHARMA_MODULES=dms,qms,ai
+QUALIGXP_ENTITLEMENT_SOURCE=environment
+QUALIGXP_MODULES=dms,qms,ai
 ```
 
 Then run:

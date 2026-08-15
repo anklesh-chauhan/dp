@@ -258,7 +258,7 @@ it('activates the document after its final mandatory approval', function (): voi
 
 it('retains the existing DMS action return type for Filament callers', function (): void {
     request()->server->set('REMOTE_ADDR', '203.0.113.42');
-    request()->headers->set('User-Agent', 'DocuPharma Signature Test');
+    request()->headers->set('User-Agent', 'QualiGxP Signature Test');
 
     $result = app(ApproveDocumentAction::class)->execute(
         $this->approval,
@@ -273,7 +273,7 @@ it('retains the existing DMS action return type for Filament callers', function 
         signedAt: $result->approved_at,
         reason: 'Approved through the DMS action.',
         ipAddress: '203.0.113.42',
-        userAgent: 'DocuPharma Signature Test',
+        userAgent: 'QualiGxP Signature Test',
     );
 
     expect($result)->toBe($this->approval)
@@ -282,7 +282,7 @@ it('retains the existing DMS action return type for Filament callers', function 
         ->and($result->signatureHash())->toBe($expectedSignatureHash)
         ->and(app(ElectronicSignatureVerifier::class)->isValid($result))->toBeTrue()
         ->and($result->signatureIpAddress())->toBe('203.0.113.42')
-        ->and($result->signatureUserAgent())->toBe('DocuPharma Signature Test')
+        ->and($result->signatureUserAgent())->toBe('QualiGxP Signature Test')
         ->and($this->document->refresh()->documentStatus?->code)->toBe(DocumentStatus::EFFECTIVE);
 });
 
@@ -292,7 +292,7 @@ it('canonically signs rejected and returned decisions through existing DMS actio
     string $expectedStatus,
 ): void {
     request()->server->set('REMOTE_ADDR', '203.0.113.43');
-    request()->headers->set('User-Agent', 'DocuPharma Terminal Signature Test');
+    request()->headers->set('User-Agent', 'QualiGxP Terminal Signature Test');
     $reason = "Decision recorded as {$decisionCode}.";
 
     $result = app($actionClass)->execute($this->approval, $this->approver, $reason);
@@ -304,7 +304,7 @@ it('canonically signs rejected and returned decisions through existing DMS actio
         signedAt: $result->approved_at,
         reason: $reason,
         ipAddress: '203.0.113.43',
-        userAgent: 'DocuPharma Terminal Signature Test',
+        userAgent: 'QualiGxP Terminal Signature Test',
     );
 
     expect($result)->toBe($this->approval)
@@ -316,7 +316,7 @@ it('canonically signs rejected and returned decisions through existing DMS actio
         ->and($result->signatureHash())->toBe($expectedSignatureHash)
         ->and(app(ElectronicSignatureVerifier::class)->isValid($result))->toBeTrue()
         ->and($result->signatureIpAddress())->toBe('203.0.113.43')
-        ->and($result->signatureUserAgent())->toBe('DocuPharma Terminal Signature Test')
+        ->and($result->signatureUserAgent())->toBe('QualiGxP Terminal Signature Test')
         ->and($this->document->refresh()->documentStatus?->code)->toBe($expectedStatus);
 })->with([
     'rejected' => [

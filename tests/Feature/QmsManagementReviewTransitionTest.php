@@ -47,7 +47,7 @@ it('records scheduling conduct minutes actions approval and completion with sign
         inputSummary: 'Quality metrics, audits, complaints, CAPA, suppliers, risks, resources, and changes were reviewed.',
         decisions: 'Increase data-integrity audit sampling and accelerate supplier requalification.',
         ipAddress: '203.0.113.91',
-        userAgent: 'DocuPharma-QMS-Test/1.0',
+        userAgent: 'QualiGxP-QMS-Test/1.0',
     );
     $actions = $service->transition(
         $minutes,

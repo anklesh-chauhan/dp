@@ -54,7 +54,7 @@ it('records the attributable lifecycle and signs consequential transitions', fun
         $this->actor,
         'Root cause analysis completed.',
         ipAddress: '203.0.113.30',
-        userAgent: 'DocuPharma-QMS-Test/1.0',
+        userAgent: 'QualiGxP-QMS-Test/1.0',
     );
 
     $events = $completed->auditEvents()->orderBy('id')->get();

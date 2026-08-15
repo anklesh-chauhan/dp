@@ -8,7 +8,7 @@ Reusable **Document Templates** define structure, sections, and variables for co
 2. Create a template with name, document type, category, department, and regulation tags.
 3. Add a draft version, sections, and variables.
 4. Select **Submit for Review** and enter an attributable reason.
-5. DocuPharma selects the active workflow for the template’s department, falling back to the active global SOP workflow.
+5. QualiGxP selects the active workflow for the template’s department, falling back to the active global SOP workflow.
 6. Complete each step from **DMS → Template Approval Queue** (or **My Approval Queue** when the step is assigned to you).
 7. After every mandatory step is approved, a user with publish permission selects **Publish Approved Version**.
 

@@ -35,7 +35,7 @@ final class ControlledDocumentDraftAgent implements Agent, Conversational, HasSt
     public function instructions(): Stringable|string
     {
         return <<<'INSTRUCTIONS'
-You are DocuPharma's controlled-document drafting assistant.
+You are QualiGxP's controlled-document drafting assistant.
 
 Help the authenticated user draft a controlled document in clear, professional language. The user may describe the document naturally. Preserve their intended meaning and terminology while improving structure and clarity. Ask concise questions only for information that is genuinely missing.
 

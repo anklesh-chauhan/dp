@@ -47,7 +47,7 @@ it('enforces investigation lifecycle and signs completion', function (): void {
         $this->actor,
         'Root cause and conclusions approved.',
         ipAddress: '203.0.113.31',
-        userAgent: 'DocuPharma-QMS-Test/1.0',
+        userAgent: 'QualiGxP-QMS-Test/1.0',
     );
 
     $events = $completed->auditEvents()->orderBy('id')->get();

@@ -35,6 +35,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->brandName('QualiGxP')
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->colors([
                 'primary' => Color::Amber,
@@ -74,7 +75,7 @@ class AdminPanelProvider extends PanelProvider
                 FilamentShieldPlugin::make()->navigationGroup('Core · Identity & Access'),
             ])
             ->assets([
-                Js::make('docupharma-app-guide')->html(new HtmlString(
+                Js::make('qualigxp-app-guide')->html(new HtmlString(
                     Vite::withEntryPoints(['resources/js/app-guide.js'])->toHtml()
                 )),
             ])
@@ -87,7 +88,7 @@ class AdminPanelProvider extends PanelProvider
                         Auth::user()?->resetAppGuide();
 
                         $livewire->js(
-                            'window.dispatchEvent(new CustomEvent("docupharma-app-guide-restart"))'
+                            'window.dispatchEvent(new CustomEvent("qualigxp-app-guide-restart"))'
                         );
                     }),
             ])

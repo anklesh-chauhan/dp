@@ -50,7 +50,7 @@ final class DocumentImportService
             throw new InvalidArgumentException('The ZIP file could not be found.');
         }
 
-        $zipFile = tempnam(sys_get_temp_dir(), 'docupharma-import-');
+        $zipFile = tempnam(sys_get_temp_dir(), 'qualigxp-import-');
         if ($zipFile === false) {
             throw new RuntimeException('Unable to create a temporary import file.');
         }

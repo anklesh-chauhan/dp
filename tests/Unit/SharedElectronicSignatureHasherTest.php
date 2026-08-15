@@ -16,11 +16,11 @@ it('hashes canonical electronic signature metadata deterministically', function 
         signedAt: $signedAt,
         reason: 'Reviewed and approved.',
         ipAddress: '203.0.113.42',
-        userAgent: 'DocuPharma Signature Test',
+        userAgent: 'QualiGxP Signature Test',
     );
 
     expect($hash)
-        ->toBe('18a1a98b50d370337f218f838c0e2634b8b51ee0ba91fc9c902342abc006cde6')
+        ->toBe('c4d3b787d2e13c5cfdeb4612a0d95a7a03396ee244cb0ae30fc9e801131feea6')
         ->and($hasher->hashFor(
             recordKey: 42,
             meaning: 'approved',
@@ -28,7 +28,7 @@ it('hashes canonical electronic signature metadata deterministically', function 
             signedAt: $signedAt->setTimezone(new DateTimeZone('UTC')),
             reason: 'Reviewed and approved.',
             ipAddress: '203.0.113.42',
-            userAgent: 'DocuPharma Signature Test',
+            userAgent: 'QualiGxP Signature Test',
         ))->toBe($hash);
 });
 
@@ -48,7 +48,7 @@ it('changes the signature hash when attributable metadata changes', function (
         signedAt: $signedAt,
         reason: 'Reviewed and approved.',
         ipAddress: '203.0.113.42',
-        userAgent: 'DocuPharma Signature Test',
+        userAgent: 'QualiGxP Signature Test',
     );
 
     expect($hasher->hashFor(
@@ -61,10 +61,10 @@ it('changes the signature hash when attributable metadata changes', function (
         userAgent: $userAgent,
     ))->not->toBe($baselineHash);
 })->with([
-    'meaning' => ['rejected', 21, 'Reviewed and approved.', '203.0.113.42', 'DocuPharma Signature Test'],
-    'signer' => ['approved', 22, 'Reviewed and approved.', '203.0.113.42', 'DocuPharma Signature Test'],
-    'reason' => ['approved', 21, 'Approved with a different reason.', '203.0.113.42', 'DocuPharma Signature Test'],
-    'IP address' => ['approved', 21, 'Reviewed and approved.', '203.0.113.43', 'DocuPharma Signature Test'],
+    'meaning' => ['rejected', 21, 'Reviewed and approved.', '203.0.113.42', 'QualiGxP Signature Test'],
+    'signer' => ['approved', 22, 'Reviewed and approved.', '203.0.113.42', 'QualiGxP Signature Test'],
+    'reason' => ['approved', 21, 'Approved with a different reason.', '203.0.113.42', 'QualiGxP Signature Test'],
+    'IP address' => ['approved', 21, 'Reviewed and approved.', '203.0.113.43', 'QualiGxP Signature Test'],
     'user agent' => ['approved', 21, 'Reviewed and approved.', '203.0.113.42', 'Another Client'],
 ]);
 

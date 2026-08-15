@@ -1,6 +1,6 @@
 # Getting Started with DMS
 
-DocuPharma DMS is the required core module for controlled pharmaceutical documents. Use it to manage templates, controlled-document masters, approvals, controlled-copy issuance, GMP execution records, revisions, and retention.
+QualiGxP DMS is the required core module for controlled pharmaceutical documents. Use it to manage templates, controlled-document masters, approvals, controlled-copy issuance, GMP execution records, revisions, and retention.
 
 This knowledge library currently covers **DMS only**. QMS and AI topics appear here only when those modules are licensed and guides are published for them.
 

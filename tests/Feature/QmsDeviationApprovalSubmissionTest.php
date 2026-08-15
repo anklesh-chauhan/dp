@@ -74,7 +74,7 @@ it('creates pending Shared approval instances atomically when a workflow is conf
         $this->submitter,
         'Submit for independent quality review.',
         '203.0.113.40',
-        'DocuPharma-QMS-Test/1.0',
+        'QualiGxP-QMS-Test/1.0',
     );
 
     $instances = $submitted->approvalInstances()->orderBy('workflow_step_id')->get();

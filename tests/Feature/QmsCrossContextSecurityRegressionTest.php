@@ -135,7 +135,7 @@ it('enforces append-only history and detects stored signature tampering across e
     $occurredAt = now()->startOfSecond();
     $reason = 'Cross-context signature regression.';
     $ipAddress = '203.0.113.101';
-    $userAgent = 'DocuPharma-QMS-Security-Matrix/1.0';
+    $userAgent = 'QualiGxP-QMS-Security-Matrix/1.0';
     $hasher = app(ElectronicSignatureHasher::class);
     $verifier = app(ElectronicSignatureVerifier::class);
     $eventDefinitions = [

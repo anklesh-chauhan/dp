@@ -18,7 +18,7 @@ it('adapts existing SOP approval signature data to Shared electronic signature m
         'comments' => 'I approve this controlled document.',
         'signature_hash' => 'signature-hash',
         'signature_ip_address' => '203.0.113.42',
-        'signature_user_agent' => 'DocuPharma Contract Test',
+        'signature_user_agent' => 'QualiGxP Contract Test',
     ]);
     $approval->setRawAttributes([
         ...$approval->getAttributes(),
@@ -34,7 +34,7 @@ it('adapts existing SOP approval signature data to Shared electronic signature m
         ->and($approval->signatureHash())->toBe('signature-hash')
         ->and($approval->signatureReason())->toBe('I approve this controlled document.')
         ->and($approval->signatureIpAddress())->toBe('203.0.113.42')
-        ->and($approval->signatureUserAgent())->toBe('DocuPharma Contract Test');
+        ->and($approval->signatureUserAgent())->toBe('QualiGxP Contract Test');
 });
 
 it('exposes unsigned SOP approvals as empty electronic signature metadata', function (): void {

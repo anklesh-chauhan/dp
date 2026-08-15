@@ -49,7 +49,7 @@ it('enforces the CAPA lifecycle and signs effectiveness and closure decisions', 
         'Effectiveness verified.',
         'No recurrence during the verification period.',
         ipAddress: '203.0.113.32',
-        userAgent: 'DocuPharma-QMS-Test/1.0',
+        userAgent: 'QualiGxP-QMS-Test/1.0',
     );
     $closed = $service->transition($this->capa, CapaStatus::Closed, $this->actor, 'CAPA closed.');
 

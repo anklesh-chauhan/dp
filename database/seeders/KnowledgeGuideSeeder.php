@@ -118,6 +118,6 @@ class KnowledgeGuideSeeder extends Seeder
             return Str::limit($line, 500);
         }
 
-        return 'DocuPharma DMS knowledge guide.';
+        return 'QualiGxP DMS knowledge guide.';
     }
 }

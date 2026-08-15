@@ -1,6 +1,6 @@
 # Document Types & Classification
 
-Use this guide when creating a **Document Template** or **Controlled Document** so you select the correct DocuPharma DMS document type and format profile.
+Use this guide when creating a **Document Template** or **Controlled Document** so you select the correct QualiGxP DMS document type and format profile.
 
 Classification affects issuance options, whether a writable execution record is available, and which completion checks apply.
 

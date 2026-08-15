@@ -22,7 +22,7 @@ class AppGuide
         $steps = [
             [
                 'id' => 'welcome',
-                'title' => 'Welcome to DocuPharma',
+                'title' => 'Welcome to QualiGxP',
                 'description' => 'This short tour shows where the main menus live and what each area is for. You can restart it anytime from your user menu.',
                 'groupLabel' => null,
                 'itemLabel' => null,

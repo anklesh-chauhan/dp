@@ -138,7 +138,7 @@ it('releases only a complete traceable package with an independent signed QA dec
         $this->qualityReleaser,
         'QA confirms the approved baseline is fit for intended GxP use.',
         ipAddress: '203.0.113.20',
-        userAgent: 'DocuPharma-CSV-Test/1.0',
+        userAgent: 'QualiGxP-CSV-Test/1.0',
     );
     $event = $released->auditEvents()->sole();
 

@@ -17,7 +17,7 @@ it('verifies canonical electronic signature metadata', function (): void {
         signedAt: $signedAt,
         reason: 'Reviewed and approved.',
         ipAddress: '203.0.113.42',
-        userAgent: 'DocuPharma Signature Test',
+        userAgent: 'QualiGxP Signature Test',
     );
     $signature = electronicSignatureRecord(
         signedAt: $signedAt,
@@ -37,7 +37,7 @@ it('rejects tampered electronic signature metadata', function (): void {
         signedAt: $signedAt,
         reason: 'Reviewed and approved.',
         ipAddress: '203.0.113.42',
-        userAgent: 'DocuPharma Signature Test',
+        userAgent: 'QualiGxP Signature Test',
     );
     $signature = electronicSignatureRecord(
         signedAt: $signedAt,
@@ -123,7 +123,7 @@ function electronicSignatureRecord(
 
         public function signatureUserAgent(): string
         {
-            return 'DocuPharma Signature Test';
+            return 'QualiGxP Signature Test';
         }
     };
 }

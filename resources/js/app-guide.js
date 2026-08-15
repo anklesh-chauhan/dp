@@ -1,9 +1,9 @@
 import { driver } from 'driver.js';
 import 'driver.js/dist/driver.css';
 
-const ROOT_ID = 'docupharma-app-guide';
-const CONFIG_ID = 'docupharma-app-guide-config';
-const RESTART_EVENT = 'docupharma-app-guide-restart';
+const ROOT_ID = 'qualigxp-app-guide';
+const CONFIG_ID = 'qualigxp-app-guide-config';
+const RESTART_EVENT = 'qualigxp-app-guide-restart';
 
 function csrfToken() {
     return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
@@ -19,7 +19,7 @@ function readConfig() {
     try {
         return JSON.parse(configEl.textContent || '{}');
     } catch (error) {
-        console.error('DocuPharma app guide config is invalid.', error);
+        console.error('QualiGxP app guide config is invalid.', error);
 
         return null;
     }
@@ -120,20 +120,20 @@ async function postJson(url) {
 }
 
 function ensureWelcomeModal() {
-    let modal = document.getElementById('docupharma-app-guide-welcome');
+    let modal = document.getElementById('qualigxp-app-guide-welcome');
 
     if (modal) {
         return modal;
     }
 
     modal = document.createElement('div');
-    modal.id = 'docupharma-app-guide-welcome';
+    modal.id = 'qualigxp-app-guide-welcome';
     modal.setAttribute('role', 'dialog');
     modal.setAttribute('aria-modal', 'true');
     modal.innerHTML = `
         <div class="dp-app-guide-backdrop" data-app-guide-dismiss></div>
         <div class="dp-app-guide-panel">
-            <h2 class="dp-app-guide-title">Welcome to DocuPharma</h2>
+            <h2 class="dp-app-guide-title">Welcome to QualiGxP</h2>
             <p class="dp-app-guide-copy">
                 Take a short tour of the menus, open the Knowledge Library, or skip and explore on your own.
                 You can restart this guide anytime from your user menu.
@@ -146,11 +146,11 @@ function ensureWelcomeModal() {
         </div>
     `;
 
-    if (!document.getElementById('docupharma-app-guide-welcome-style')) {
+    if (!document.getElementById('qualigxp-app-guide-welcome-style')) {
         const style = document.createElement('style');
-        style.id = 'docupharma-app-guide-welcome-style';
+        style.id = 'qualigxp-app-guide-welcome-style';
         style.textContent = `
-            #docupharma-app-guide-welcome {
+            #qualigxp-app-guide-welcome {
                 position: fixed;
                 inset: 0;
                 z-index: 10000;
@@ -159,7 +159,7 @@ function ensureWelcomeModal() {
                 justify-content: center;
                 padding: 1.5rem;
             }
-            #docupharma-app-guide-welcome.is-open { display: flex; }
+            #qualigxp-app-guide-welcome.is-open { display: flex; }
             .dp-app-guide-backdrop {
                 position: absolute;
                 inset: 0;
@@ -373,7 +373,7 @@ function bootAppGuide({ forceOpen = false } = {}) {
     }
 
     const api = createGuideApi(boot);
-    window.DocuPharmaAppGuide = api;
+    window.QualiGxPAppGuide = api;
 
     if (forceOpen || boot.autoStart) {
         requestAnimationFrame(() => {
@@ -385,10 +385,10 @@ function bootAppGuide({ forceOpen = false } = {}) {
 }
 
 function onRestartEvent() {
-    const api = window.DocuPharmaAppGuide ?? bootAppGuide();
+    const api = window.QualiGxPAppGuide ?? bootAppGuide();
 
     if (!api) {
-        console.error('DocuPharma app guide could not start. Hard-refresh the page and try again.');
+        console.error('QualiGxP app guide could not start. Hard-refresh the page and try again.');
 
         return;
     }

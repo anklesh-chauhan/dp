@@ -52,7 +52,7 @@ it('records an attributable timeline and signs consequential complaint decisions
         'Complaint response issued and case closed.',
         ['signature' => 'must-not-be-recorded', 'channel' => 'email'],
         '203.0.113.41',
-        'DocuPharma-QMS-Test/1.0',
+        'QualiGxP-QMS-Test/1.0',
     );
 
     $events = $closed->auditEvents()->orderBy('id')->get();

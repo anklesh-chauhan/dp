@@ -47,7 +47,7 @@ it('records approval mitigation residual monitoring and closure with signed hist
         $this->actor,
         'Initial risk assessment approved.',
         ipAddress: '203.0.113.71',
-        userAgent: 'DocuPharma-QMS-Test/1.0',
+        userAgent: 'QualiGxP-QMS-Test/1.0',
     );
     $service->transition(
         $approved,

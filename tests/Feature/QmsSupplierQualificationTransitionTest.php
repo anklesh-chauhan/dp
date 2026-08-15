@@ -62,7 +62,7 @@ it('records assessment audit qualification suspension and reinstatement with sig
         'Audit evidence accepted.',
         'Quality system and site controls meet approved requirements.',
         ipAddress: '203.0.113.81',
-        userAgent: 'DocuPharma-QMS-Test/1.0',
+        userAgent: 'QualiGxP-QMS-Test/1.0',
     );
     $suspended = $service->transition(
         $qualified,

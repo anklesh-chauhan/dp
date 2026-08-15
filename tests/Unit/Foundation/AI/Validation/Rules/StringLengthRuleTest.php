@@ -8,7 +8,7 @@ use App\Foundation\AI\Validation\ValueObjects\ValidationContext;
 
 it('returns the rule code', function (): void {
     $rule = new StringLengthRule(
-        new ArtifactAccessor(),
+        new ArtifactAccessor,
         'title',
     );
 
@@ -18,14 +18,14 @@ it('returns the rule code', function (): void {
 
 it('passes when the string length is within the configured range', function (): void {
     $rule = new StringLengthRule(
-        new ArtifactAccessor(),
+        new ArtifactAccessor,
         'title',
         minimumLength: 3,
         maximumLength: 20,
     );
 
     $issues = $rule->validate(
-        ['title' => 'DocuPharma'],
+        ['title' => 'QualiGxP'],
         new ValidationContext('generic_artifact'),
     );
 
@@ -34,7 +34,7 @@ it('passes when the string length is within the configured range', function (): 
 
 it('reports a string that is shorter than the minimum length', function (): void {
     $rule = new StringLengthRule(
-        new ArtifactAccessor(),
+        new ArtifactAccessor,
         'title',
         minimumLength: 5,
     );
@@ -52,7 +52,7 @@ it('reports a string that is shorter than the minimum length', function (): void
 
 it('reports a string that exceeds the maximum length', function (): void {
     $rule = new StringLengthRule(
-        new ArtifactAccessor(),
+        new ArtifactAccessor,
         'title',
         maximumLength: 5,
     );
@@ -70,7 +70,7 @@ it('reports a string that exceeds the maximum length', function (): void {
 
 it('ignores missing fields', function (): void {
     $rule = new StringLengthRule(
-        new ArtifactAccessor(),
+        new ArtifactAccessor,
         'title',
         minimumLength: 5,
     );
@@ -85,7 +85,7 @@ it('ignores missing fields', function (): void {
 
 it('ignores null values', function (): void {
     $rule = new StringLengthRule(
-        new ArtifactAccessor(),
+        new ArtifactAccessor,
         'title',
         minimumLength: 5,
     );
@@ -100,7 +100,7 @@ it('ignores null values', function (): void {
 
 it('ignores non-string values', function (): void {
     $rule = new StringLengthRule(
-        new ArtifactAccessor(),
+        new ArtifactAccessor,
         'title',
         minimumLength: 5,
     );
@@ -115,14 +115,14 @@ it('ignores non-string values', function (): void {
 
 it('supports minimum length only validation', function (): void {
     $rule = new StringLengthRule(
-        new ArtifactAccessor(),
+        new ArtifactAccessor,
         'title',
         minimumLength: 5,
     );
 
     expect(
         $rule->validate(
-            ['title' => 'DocuPharma'],
+            ['title' => 'QualiGxP'],
             new ValidationContext('generic_artifact'),
         ),
     )->toBeEmpty();
@@ -130,14 +130,14 @@ it('supports minimum length only validation', function (): void {
 
 it('supports maximum length only validation', function (): void {
     $rule = new StringLengthRule(
-        new ArtifactAccessor(),
+        new ArtifactAccessor,
         'title',
         maximumLength: 50,
     );
 
     expect(
         $rule->validate(
-            ['title' => 'DocuPharma'],
+            ['title' => 'QualiGxP'],
             new ValidationContext('generic_artifact'),
         ),
     )->toBeEmpty();
@@ -145,7 +145,7 @@ it('supports maximum length only validation', function (): void {
 
 it('throws when the minimum length is negative', function (): void {
     expect(fn () => new StringLengthRule(
-        new ArtifactAccessor(),
+        new ArtifactAccessor,
         'title',
         minimumLength: -1,
     ))->toThrow(InvalidArgumentException::class);
@@ -153,7 +153,7 @@ it('throws when the minimum length is negative', function (): void {
 
 it('throws when the maximum length is negative', function (): void {
     expect(fn () => new StringLengthRule(
-        new ArtifactAccessor(),
+        new ArtifactAccessor,
         'title',
         maximumLength: -1,
     ))->toThrow(InvalidArgumentException::class);
@@ -161,7 +161,7 @@ it('throws when the maximum length is negative', function (): void {
 
 it('throws when the minimum length exceeds the maximum length', function (): void {
     expect(fn () => new StringLengthRule(
-        new ArtifactAccessor(),
+        new ArtifactAccessor,
         'title',
         minimumLength: 10,
         maximumLength: 5,

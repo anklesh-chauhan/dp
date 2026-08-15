@@ -8,7 +8,7 @@ use App\Foundation\AI\Validation\ValueObjects\ValidationContext;
 
 it('returns the rule code', function (): void {
     $rule = new EmptyValueRule(
-        new ArtifactAccessor(),
+        new ArtifactAccessor,
         'title',
     );
 
@@ -18,12 +18,12 @@ it('returns the rule code', function (): void {
 
 it('passes for a non empty string', function (): void {
     $rule = new EmptyValueRule(
-        new ArtifactAccessor(),
+        new ArtifactAccessor,
         'title',
     );
 
     $issues = $rule->validate(
-        ['title' => 'DocuPharma'],
+        ['title' => 'QualiGxP'],
         new ValidationContext('generic_artifact'),
     );
 
@@ -32,7 +32,7 @@ it('passes for a non empty string', function (): void {
 
 it('reports a null value', function (): void {
     $rule = new EmptyValueRule(
-        new ArtifactAccessor(),
+        new ArtifactAccessor,
         'title',
     );
 
@@ -49,7 +49,7 @@ it('reports a null value', function (): void {
 
 it('reports an empty string', function (): void {
     $rule = new EmptyValueRule(
-        new ArtifactAccessor(),
+        new ArtifactAccessor,
         'title',
     );
 
@@ -63,7 +63,7 @@ it('reports an empty string', function (): void {
 
 it('reports a whitespace only string', function (): void {
     $rule = new EmptyValueRule(
-        new ArtifactAccessor(),
+        new ArtifactAccessor,
         'title',
     );
 
@@ -77,7 +77,7 @@ it('reports a whitespace only string', function (): void {
 
 it('reports an empty array', function (): void {
     $rule = new EmptyValueRule(
-        new ArtifactAccessor(),
+        new ArtifactAccessor,
         'sections',
     );
 
@@ -91,7 +91,7 @@ it('reports an empty array', function (): void {
 
 it('ignores missing fields', function (): void {
     $rule = new EmptyValueRule(
-        new ArtifactAccessor(),
+        new ArtifactAccessor,
         'title',
     );
 
@@ -105,7 +105,7 @@ it('ignores missing fields', function (): void {
 
 it('accepts false as a valid value', function (): void {
     $rule = new EmptyValueRule(
-        new ArtifactAccessor(),
+        new ArtifactAccessor,
         'enabled',
     );
 
@@ -119,7 +119,7 @@ it('accepts false as a valid value', function (): void {
 
 it('accepts zero as a valid value', function (): void {
     $rule = new EmptyValueRule(
-        new ArtifactAccessor(),
+        new ArtifactAccessor,
         'count',
     );
 
@@ -133,7 +133,7 @@ it('accepts zero as a valid value', function (): void {
 
 it('accepts string zero as a valid value', function (): void {
     $rule = new EmptyValueRule(
-        new ArtifactAccessor(),
+        new ArtifactAccessor,
         'count',
     );
 

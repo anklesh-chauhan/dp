@@ -49,7 +49,7 @@ it('creates a reproducible Shared electronic signature for approval decisions', 
         $this->approver,
         'Benefits outweigh the controlled risks.',
         ipAddress: '203.0.113.25',
-        userAgent: 'DocuPharma-QMS-Test/1.0',
+        userAgent: 'QualiGxP-QMS-Test/1.0',
     );
 
     $events = $changeControl->auditEvents()->orderBy('id')->get();
@@ -63,7 +63,7 @@ it('creates a reproducible Shared electronic signature for approval decisions', 
         ->and($approvalEvent->signatureSignerId())->toBe($this->approver->id)
         ->and($approvalEvent->signatureReason())->toBe('Benefits outweigh the controlled risks.')
         ->and($approvalEvent->signatureIpAddress())->toBe('203.0.113.25')
-        ->and($approvalEvent->signatureUserAgent())->toBe('DocuPharma-QMS-Test/1.0')
+        ->and($approvalEvent->signatureUserAgent())->toBe('QualiGxP-QMS-Test/1.0')
         ->and(app(ElectronicSignatureVerifier::class)->isValid($approvalEvent))->toBeTrue();
 
     DB::table('change_control_audit_events')

@@ -1,4 +1,4 @@
-# DocuPharma product modularization roadmap
+# QualiGxP product modularization roadmap
 
 ## Verified checkpoint
 
@@ -46,7 +46,7 @@
 - Dormant product-license persistence now stores issuer key identity, exact signed payloads, detached signatures, and lifecycle timestamps; a contract-bound OpenSSL RSA/SHA-256 verifier rejects tampering, malformed signatures, and unknown keys while environment configuration remains the active entitlement source.
 - Signed-license activation now verifies issuer authenticity before validating versioned UUID, module, issue, expiry, and grace claims; invalid dependency sets and malformed lifecycles leave no persisted license, while valid claims derive stored lifecycle timestamps.
 - Product-license lifecycle evaluation now re-verifies the stored signature and classifies exact active, grace, expired, revoked, and invalid states, including expiry/grace boundaries and scheduled revocation timing, without changing live entitlements.
-- `ModuleManager` now consumes a module-entitlement provider contract; the bound configuration provider preserves `DOCUPHARMA_MODULES` normalization and dependency behavior exactly while allowing a signed-license provider to be introduced without changing consumers.
+- `ModuleManager` now consumes a module-entitlement provider contract; the bound configuration provider preserves `QUALIGXP_MODULES` normalization and dependency behavior exactly while allowing a signed-license provider to be introduced without changing consumers.
 - An unbound signed-license entitlement provider now selects the newest verified active or grace-period license with valid dependency-complete module claims, falls back to an older usable license when appropriate, and returns no entitlements for invalid, revoked, expired, malformed, unknown, or duplicate claims.
 - Entitlement sourcing is now explicitly configurable: environment mode remains the default, signed-license mode is opt-in, unknown sources fail closed, and `ModuleManager` plus direct module middleware enforce active, grace, expired, revoked, and invalid license outcomes.
 - Product-license activation, verification failures, grace entry, expiry, and revocation now write idempotent append-only audit transitions with explicit state history; signed payloads and signatures are excluded, and revocation is atomic with its audit event.

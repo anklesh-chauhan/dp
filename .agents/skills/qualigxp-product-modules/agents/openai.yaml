@@ -1,4 +1,4 @@
 interface:
-  display_name: "DocuPharma Product Modules"
+  display_name: "QualiGxP Product Modules"
   short_description: "Continue the DMS, QMS, and AI product split"
-  default_prompt: "Use $docupharma-product-modules to continue the next verified phase of the DocuPharma modularization roadmap."
+  default_prompt: "Use $qualigxp-product-modules to continue the next verified phase of the QualiGxP modularization roadmap."

@@ -47,7 +47,7 @@ it('records response verification and closure with signed append-only history', 
         'Corrective response submitted.',
         response: 'Procedure revised and affected personnel retrained.',
         ipAddress: '203.0.113.61',
-        userAgent: 'DocuPharma-QMS-Test/1.0',
+        userAgent: 'QualiGxP-QMS-Test/1.0',
     );
     $accepted = $service->transition(
         $submitted,

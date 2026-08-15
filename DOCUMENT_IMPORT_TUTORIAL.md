@@ -1,6 +1,6 @@
-# DocuPharma Document Import Tutorial
+# QualiGxP Document Import Tutorial
 
-Use document import to bring existing customer SOPs, policies, manuals, and records into DocuPharma without recreating them manually.
+Use document import to bring existing customer SOPs, policies, manuals, and records into QualiGxP without recreating them manually.
 
 ## Before importing
 
@@ -20,7 +20,7 @@ Prepare the customer files:
 4. Select one or more PDF or Word files.
 5. Select **Import**.
 
-DocuPharma stores the original files privately and creates an import batch. Each file is processed independently, so a problem with one file does not stop the remaining files.
+QualiGxP stores the original files privately and creates an import batch. Each file is processed independently, so a problem with one file does not stop the remaining files.
 
 ## Import a ZIP batch
 
@@ -30,7 +30,7 @@ DocuPharma stores the original files privately and creates an import batch. Each
 4. Select the ZIP archive.
 5. Select **Import**.
 
-The ZIP should contain the customer documents at any folder level. DocuPharma ignores folders and imports supported PDF, DOC, and DOCX files.
+The ZIP should contain the customer documents at any folder level. QualiGxP ignores folders and imports supported PDF, DOC, and DOCX files.
 
 Do not include executable files or confidential files that are not intended for migration.
 
@@ -77,7 +77,7 @@ Processing occurs in the background. You may leave the page while the import con
 3. Correct or replace any source files that caused the failure.
 4. Monitor the batch until it completes.
 
-DocuPharma automatically retries temporary processing failures up to three times. The manual retry action is useful for files that were missing, unsupported, or corrupted.
+QualiGxP automatically retries temporary processing failures up to three times. The manual retry action is useful for files that were missing, unsupported, or corrupted.
 
 ## After import
 
@@ -89,9 +89,9 @@ For each document:
 2. Confirm document type, category, department, owner, revision, and dates.
 3. Verify that the original file opens correctly.
 4. Confirm that the content is current and complete.
-5. Submit the document through the normal DocuPharma review and approval workflow.
+5. Submit the document through the normal QualiGxP review and approval workflow.
 
-An imported document must not be treated as approved merely because it was approved in the customer’s previous system. Its DocuPharma approval history begins when it is reviewed and approved inside DocuPharma.
+An imported document must not be treated as approved merely because it was approved in the customer’s previous system. Its QualiGxP approval history begins when it is reviewed and approved inside QualiGxP.
 
 ## Troubleshooting
 
@@ -101,4 +101,4 @@ An imported document must not be treated as approved merely because it was appro
 
 **A batch has errors:** Open the batch, review the failed items, correct the source files, and use **Retry Failed Items**.
 
-**A document is not active:** This is expected until its metadata and content have been verified and it completes the DocuPharma approval workflow.
+**A document is not active:** This is expected until its metadata and content have been verified and it completes the QualiGxP approval workflow.

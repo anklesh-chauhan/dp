@@ -21,9 +21,9 @@ it('renders the app guide bootstrap markup for authenticated panel users', funct
     $html = view('filament.hooks.app-guide')->render();
 
     expect($html)
-        ->toContain('id="docupharma-app-guide"')
+        ->toContain('id="qualigxp-app-guide"')
         ->toContain('data-auto-start="1"')
-        ->toContain('id="docupharma-app-guide-config"')
+        ->toContain('id="qualigxp-app-guide-config"')
         ->toContain('app-guide\\/complete');
 });
 

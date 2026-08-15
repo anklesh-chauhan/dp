@@ -21,11 +21,11 @@ $autoStart = ! $user->hasCompletedAppGuide();
 ?>
 
 <div
-    id="docupharma-app-guide"
+    id="qualigxp-app-guide"
     data-auto-start="{{ $autoStart ? '1' : '0' }}"
     hidden
 >
-    <script type="application/json" id="docupharma-app-guide-config">
+    <script type="application/json" id="qualigxp-app-guide-config">
         {!! json_encode($config, JSON_THROW_ON_ERROR | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}
     </script>
 </div>
