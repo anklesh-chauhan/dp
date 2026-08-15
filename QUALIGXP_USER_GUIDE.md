@@ -35,8 +35,19 @@ After signing in, use the navigation menu to open the DMS, QMS, AI, and administ
 
 ## 3. First-Time Local Setup
 
-For Mamaging the pdf
-start the : docker run --rm -p 3000:3000 gotenberg/gotenberg:8
+Step-by-step Windows PC setup (Herd, PHP 8.4, PostgreSQL, Docker, Gotenberg, queue worker, and first login) is in [WINDOWS_INSTALLATION.md](./WINDOWS_INSTALLATION.md).
+
+For managing PDFs, start Gotenberg from the project folder:
+
+```powershell
+docker compose up -d
+```
+
+Or:
+
+```powershell
+docker run --rm -p 3000:3000 gotenberg/gotenberg:8.34.0-chromium
+```
 
 Run the following commands from the project directory after installing the application or pulling new migrations:
 
