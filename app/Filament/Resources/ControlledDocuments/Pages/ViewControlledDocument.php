@@ -13,12 +13,13 @@ use App\Domain\DMS\Actions\IssueDocumentAction;
 use App\Domain\DMS\Actions\LockDocumentAction;
 use App\Domain\DMS\Actions\UnlockDocumentAction;
 use App\Domain\DMS\Services\ControlledDocumentAccessService;
-use App\Domain\DMS\Services\SopApprovalDecisionAuthorizationAdapter;
+use App\Domain\DMS\Services\ControlledDocumentSectionReviewService;
 use App\Domain\Reporting\Enums\ReportFormat;
 use App\Domain\Reporting\Enums\ReportScope;
 use App\Domain\Shared\Services\AuditLogService;
 use App\Exceptions\WorkflowException;
 use App\Filament\Concerns\HandlesServiceExceptions;
+use App\Filament\Concerns\PresentsSectionReviewAttention;
 use App\Filament\Concerns\ProvidesControlledDocumentPrintPreviewAction;
 use App\Filament\Concerns\ProvidesRetentionLifecycleActions;
 use App\Filament\Resources\ControlledDocuments\ControlledDocumentResource;
@@ -49,6 +50,7 @@ use Illuminate\Support\Facades\DB;
 class ViewControlledDocument extends ViewRecord
 {
     use HandlesServiceExceptions;
+    use PresentsSectionReviewAttention;
     use ProvidesControlledDocumentPrintPreviewAction;
     use ProvidesRetentionLifecycleActions;
 
@@ -66,20 +68,20 @@ class ViewControlledDocument extends ViewRecord
         if ($approval instanceof SopApproval) {
             $step = $approval->workflowStep;
 
-            return "Action required: Step {$step->step_no} · {$step->approvalStepType->name}. Review the document and record your signed decision.";
+            return $this->withSectionReviewAttention("Action required: Step {$step->step_no} · {$step->approvalStepType->name}. Review the document and record your signed decision.");
         }
 
         if ($this->record->documentStatus?->hasCode(DocumentStatus::UNDER_REVIEW)) {
             $pending = $this->record->currentPendingApprovalStep();
 
             if ($pending !== null) {
-                return "Under review · Waiting at {$pending->label()}.";
+                return $this->withSectionReviewAttention("Under review · Waiting at {$pending->label()}.");
             }
 
-            return 'Under review · Waiting for the next assigned workflow step.';
+            return $this->withSectionReviewAttention('Under review · Waiting for the next assigned workflow step.');
         }
 
-        return "Status: {$status}";
+        return $this->withSectionReviewAttention("Status: {$status}");
     }
 
     protected function getActions(): array
@@ -92,7 +94,16 @@ class ViewControlledDocument extends ViewRecord
                 ->color('success')
                 ->requiresConfirmation()
                 ->modalHeading('Start document approval workflow?')
-                ->modalDescription('The document will be locked for editing and sent to the first eligible reviewer. You can follow each signed decision in Approval History.')
+                ->modalDescription(function (): string {
+                    $description = 'The document will be locked for editing and sent to the first eligible reviewer. You can follow each signed decision in Approval History.';
+                    $attention = $this->record->sectionReviewAttentionSummary();
+
+                    if ($attention === null) {
+                        return $description;
+                    }
+
+                    return $description.' '.$attention.' Confirm those sections have been updated before submitting.';
+                })
                 ->modalSubmitActionLabel('Submit for approval')
                 ->visible(fn (): bool => $this->record->documentStatus?->hasCode(DocumentStatus::DRAFT)
                     && Auth::user()?->can('submit', $this->record))
@@ -452,26 +463,7 @@ class ViewControlledDocument extends ViewRecord
             return null;
         }
 
-        return $this->resolvedCurrentApproval = $this->record->approvals()
-            ->actionableFor($user)
-            ->with([
-                'approvalDecision',
-                'document.approvals.approvalDecision',
-                'document.approvals.workflowStep',
-                'workflowStep.approvalStepType',
-                'workflowStep.department',
-                'workflowStep.role',
-            ])
-            ->get()
-            ->sortBy('workflowStep.step_no')
-            ->first(function (SopApproval $approval) use ($user): bool {
-                try {
-                    app(SopApprovalDecisionAuthorizationAdapter::class)->authorizeDecision($approval, $user);
-
-                    return true;
-                } catch (WorkflowException) {
-                    return false;
-                }
-            });
+        return $this->resolvedCurrentApproval = app(ControlledDocumentSectionReviewService::class)
+            ->actionableApprovalFor($this->record, $user);
     }
 }

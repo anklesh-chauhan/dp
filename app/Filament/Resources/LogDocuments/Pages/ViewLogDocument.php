@@ -8,6 +8,7 @@ use App\Actions\Sop\SubmitDocumentAction;
 use App\Domain\DMS\Actions\LockDocumentAction;
 use App\Domain\DMS\Actions\UnlockDocumentAction;
 use App\Filament\Concerns\HandlesServiceExceptions;
+use App\Filament\Concerns\PresentsSectionReviewAttention;
 use App\Filament\Concerns\ProvidesControlledDocumentPrintPreviewAction;
 use App\Filament\Concerns\ProvidesRetentionLifecycleActions;
 use App\Filament\Resources\LogDocuments\LogDocumentResource;
@@ -22,6 +23,7 @@ use Illuminate\Support\Facades\Auth;
 class ViewLogDocument extends ViewRecord
 {
     use HandlesServiceExceptions;
+    use PresentsSectionReviewAttention;
     use ProvidesControlledDocumentPrintPreviewAction;
     use ProvidesRetentionLifecycleActions;
 
@@ -35,13 +37,13 @@ class ViewLogDocument extends ViewRecord
             $pending = $this->record->currentPendingApprovalStep();
 
             if ($pending !== null) {
-                return "Under review · Waiting at {$pending->label()}.";
+                return $this->withSectionReviewAttention("Under review · Waiting at {$pending->label()}.");
             }
 
-            return 'Under review · Waiting for the next assigned workflow step.';
+            return $this->withSectionReviewAttention('Under review · Waiting for the next assigned workflow step.');
         }
 
-        return "Status: {$status}";
+        return $this->withSectionReviewAttention("Status: {$status}");
     }
 
     protected function getActions(): array

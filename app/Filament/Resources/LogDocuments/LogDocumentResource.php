@@ -10,6 +10,7 @@ use App\Filament\Resources\ControlledDocuments\RelationManagers\AuditRelationMan
 use App\Filament\Resources\ControlledDocuments\RelationManagers\ChangeHistoryRelationManager;
 use App\Filament\Resources\ControlledDocuments\RelationManagers\DocumentSectionRelationManager;
 use App\Filament\Resources\ControlledDocuments\RelationManagers\DocumentVariableRelationManager;
+use App\Filament\Resources\ControlledDocuments\RelationManagers\SectionReviewCommentsRelationManager;
 use App\Filament\Resources\LogDocuments\Pages\CreateLogDocument;
 use App\Filament\Resources\LogDocuments\Pages\EditLogDocument;
 use App\Filament\Resources\LogDocuments\Pages\ListLogDocuments;
@@ -197,6 +198,7 @@ class LogDocumentResource extends Resource
     {
         return [
             DocumentSectionRelationManager::class,
+            SectionReviewCommentsRelationManager::class,
             DocumentVariableRelationManager::class,
             ApprovalRelationManager::class,
             ChangeHistoryRelationManager::class,

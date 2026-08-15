@@ -71,6 +71,10 @@ class SopAuditLog extends Model
 
     public const ACTION_SECTION_EXECUTION_UPDATED = 'section_execution_updated';
 
+    public const ACTION_SECTION_REVIEW_COMMENTED = 'section_review_commented';
+
+    public const ACTION_SECTION_REVIEW_COMMENT_RESOLVED = 'section_review_comment_resolved';
+
     public $timestamps = true;
 
     protected $fillable = [

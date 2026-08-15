@@ -43,7 +43,7 @@ class RecentAuditActivityTable extends TableWidget
                     ->color(fn (string $state): string => match (true) {
                         in_array($state, [SopAuditLog::ACTION_APPROVED, SopAuditLog::ACTION_PUBLISHED, SopAuditLog::ACTION_VERSION_PUBLISHED], true) => 'success',
                         in_array($state, [SopAuditLog::ACTION_REJECTED, SopAuditLog::ACTION_DESTROYED, SopAuditLog::ACTION_COPY_DESTROYED], true) => 'danger',
-                        in_array($state, [SopAuditLog::ACTION_RETURNED, SopAuditLog::ACTION_RECALLED], true) => 'warning',
+                        in_array($state, [SopAuditLog::ACTION_RETURNED, SopAuditLog::ACTION_RECALLED, SopAuditLog::ACTION_SECTION_REVIEW_COMMENTED], true) => 'warning',
                         default => 'gray',
                     }),
                 TextColumn::make('user.name')

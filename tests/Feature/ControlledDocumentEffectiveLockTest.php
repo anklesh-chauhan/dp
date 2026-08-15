@@ -75,7 +75,8 @@ it('locks effective controlled documents from editing and only allows creating a
         'pageClass' => ViewControlledDocument::class,
     ])
         ->assertActionHidden(TestAction::make('create')->table())
-        ->assertActionHidden(TestAction::make('edit')->table($document->sections()->first()));
+        ->assertActionHidden(TestAction::make('edit')->table($document->sections()->first()))
+        ->assertActionVisible(TestAction::make('view')->table($document->sections()->first()));
 
     $revision = app(CreateDocumentRevisionAction::class)->execute(
         $document,

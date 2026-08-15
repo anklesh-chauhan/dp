@@ -68,4 +68,34 @@ class ControlledDocumentSection extends Model
             ->orderBy('table_order')
             ->orderBy('id');
     }
+
+    /** @return HasMany<ControlledDocumentSectionReviewComment, $this> */
+    public function reviewComments(): HasMany
+    {
+        return $this->hasMany(ControlledDocumentSectionReviewComment::class, 'section_id')->latest();
+    }
+
+    /** @return HasMany<ControlledDocumentSectionReviewComment, $this> */
+    public function openReviewComments(): HasMany
+    {
+        return $this->reviewComments()->open();
+    }
+
+    public function hasReviewComments(): bool
+    {
+        if ($this->relationLoaded('reviewComments')) {
+            return $this->reviewComments->isNotEmpty();
+        }
+
+        return $this->reviewComments()->exists();
+    }
+
+    public function reviewCommentsMarkdown(): string
+    {
+        $this->loadMissing('reviewComments.author');
+
+        return $this->reviewComments
+            ->map(fn (ControlledDocumentSectionReviewComment $comment): string => $comment->attentionMarkdown())
+            ->implode("\n\n---\n\n");
+    }
 }

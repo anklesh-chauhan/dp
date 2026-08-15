@@ -475,6 +475,43 @@ class ControlledDocument extends Model implements ApprovableSubject, ControlledD
         return $this->hasMany(ControlledDocumentSection::class, 'document_id')->orderBy('section_order');
     }
 
+    /** @return HasMany<ControlledDocumentSectionReviewComment, $this> */
+    public function sectionReviewComments(): HasMany
+    {
+        return $this->hasMany(ControlledDocumentSectionReviewComment::class, 'document_id')->latest();
+    }
+
+    /** @return HasMany<ControlledDocumentSectionReviewComment, $this> */
+    public function openSectionReviewComments(): HasMany
+    {
+        return $this->sectionReviewComments()->open();
+    }
+
+    public function sectionReviewAttentionSummary(): ?string
+    {
+        $comments = $this->relationLoaded('openSectionReviewComments')
+            ? $this->openSectionReviewComments
+            : $this->openSectionReviewComments()->with('section')->get();
+
+        if ($comments->isEmpty()) {
+            return null;
+        }
+
+        $count = $comments->count();
+        $commentLabel = $count === 1 ? '1 reviewer comment' : "{$count} reviewer comments";
+        $sections = $comments
+            ->pluck('section.title')
+            ->filter(fn (mixed $title): bool => filled($title))
+            ->unique()
+            ->values();
+
+        if ($sections->isEmpty()) {
+            return "Reviewer attention: {$commentLabel} need updates.";
+        }
+
+        return "Reviewer attention: {$commentLabel} in ".$sections->implode(', ').'.';
+    }
+
     /**
      * @return HasMany<ControlledDocumentVariable, $this>
      */

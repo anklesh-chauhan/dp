@@ -15,6 +15,7 @@ use App\Filament\Resources\ControlledDocuments\RelationManagers\ChangeHistoryRel
 use App\Filament\Resources\ControlledDocuments\RelationManagers\DocumentSectionRelationManager;
 use App\Filament\Resources\ControlledDocuments\RelationManagers\DocumentVariableRelationManager;
 use App\Filament\Resources\ControlledDocuments\RelationManagers\OriginalArtifactRelationManager;
+use App\Filament\Resources\ControlledDocuments\RelationManagers\SectionReviewCommentsRelationManager;
 use App\Filament\Resources\Shared\RelationManagers\QualityAttachmentsRelationManager;
 use App\Filament\Support\DocumentClassificationFormFields;
 use App\Filament\Support\TemplateVariableFieldBuilder;
@@ -250,6 +251,7 @@ class ControlledDocumentResource extends Resource
     {
         return [
             DocumentSectionRelationManager::class,
+            SectionReviewCommentsRelationManager::class,
             DocumentVariableRelationManager::class,
             OriginalArtifactRelationManager::class,
             QualityAttachmentsRelationManager::class,

@@ -4,29 +4,42 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\ControlledDocuments\RelationManagers;
 
+use App\Domain\DMS\Actions\AddSectionReviewCommentAction;
+use App\Domain\DMS\Services\ControlledDocumentSectionReviewService;
+use App\Filament\Concerns\HandlesServiceExceptions;
 use App\Filament\Concerns\ManagesEditableDocuments;
 use App\Filament\Support\ContentAiAssist;
+use App\Models\ControlledDocument;
 use App\Models\ControlledDocumentSection;
 use App\Models\ControlledDocumentSectionItem;
 use App\Models\DocumentTemplateSection;
+use App\Models\User;
 use App\Services\AI\Enums\ContentAssistFormat;
+use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\Width;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 
 class DocumentSectionRelationManager extends RelationManager
 {
+    use HandlesServiceExceptions;
     use ManagesEditableDocuments;
 
     protected static string $relationship = 'sections';
@@ -34,6 +47,20 @@ class DocumentSectionRelationManager extends RelationManager
     public function form(Schema $schema): Schema
     {
         return $schema->columns(1)->components([
+            Section::make('Reviewer attention')
+                ->description('The current reviewer asked for changes in this section. Update the content below, then mark the comments as addressed.')
+                ->icon(Heroicon::ExclamationTriangle)
+                ->schema([
+                    TextEntry::make('reviewer_comments')
+                        ->hiddenLabel()
+                        ->state(fn (?ControlledDocumentSection $record): string => $record?->exists
+                            ? $record->reviewCommentsMarkdown()
+                            : '')
+                        ->markdown()
+                        ->placeholder('No reviewer comments on this section.'),
+                ])
+                ->visible(fn (?ControlledDocumentSection $record): bool => $record?->exists && $record->hasReviewComments())
+                ->columnSpanFull(),
             TextInput::make('title')
                 ->label('Title')
                 ->required(),
@@ -155,10 +182,21 @@ class DocumentSectionRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn (Builder $query): Builder => $query->withCount(['items', 'executionTables']))
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query
+                ->with(['reviewComments.author'])
+                ->withCount(['items', 'executionTables', 'openReviewComments']))
             ->columns([
                 TextColumn::make('section_order')->sortable(),
                 TextColumn::make('title')->searchable(),
+                TextColumn::make('open_review_comments_count')
+                    ->label('Reviewer notes')
+                    ->badge()
+                    ->state(fn (ControlledDocumentSection $record): int => (int) $record->getAttribute('open_review_comments_count'))
+                    ->formatStateUsing(fn (int $state): string => $state > 0 ? "{$state} open" : '—')
+                    ->color(fn (int $state): string => $state > 0 ? 'warning' : 'gray')
+                    ->description(fn (ControlledDocumentSection $record): ?string => ((int) $record->getAttribute('open_review_comments_count')) > 0
+                        ? 'Maker should update this section'
+                        : null),
                 TextColumn::make('field_definitions')
                     ->label('Execution fields')
                     ->state(fn (ControlledDocumentSection $record): string => $record->requiresFieldDefinitions()
@@ -182,7 +220,40 @@ class DocumentSectionRelationManager extends RelationManager
                     ->visible(fn (): bool => $this->canManageDocumentRecord()),
             ])
             ->recordActions([
+                ViewAction::make()
+                    ->label('View')
+                    ->modalHeading(fn (ControlledDocumentSection $record): string => "Section: {$record->title}")
+                    ->modalWidth(Width::FiveExtraLarge),
+                Action::make('addReviewComment')
+                    ->label('Comment')
+                    ->icon(Heroicon::ChatBubbleLeftEllipsis)
+                    ->color('warning')
+                    ->modalHeading(fn (ControlledDocumentSection $record): string => "Comment on {$record->title}")
+                    ->modalDescription('Tell the maker what to change in this section. They will see this as an attention point after the document is returned.')
+                    ->modalSubmitActionLabel('Add comment')
+                    ->schema([
+                        Textarea::make('body')
+                            ->label('What should the maker change?')
+                            ->helperText('Be specific about the wording, values, or steps that need to be updated in this section.')
+                            ->required()
+                            ->maxLength(5000)
+                            ->rows(4),
+                    ])
+                    ->visible(fn (): bool => $this->canCommentOnSections())
+                    ->action(function (ControlledDocumentSection $record, array $data): void {
+                        $this->runServiceAction(
+                            fn () => app(AddSectionReviewCommentAction::class)->execute(
+                                $record,
+                                Auth::user(),
+                                (string) $data['body'],
+                            ),
+                            failureTitle: 'Could not add comment',
+                            successTitle: 'Comment added for the maker',
+                            successBody: "The maker will see this attention point on {$record->title}.",
+                        );
+                    }),
                 EditAction::make()
+                    ->modalWidth(Width::FiveExtraLarge)
                     ->visible(fn (): bool => $this->canManageDocumentRecord()),
             ]);
     }
@@ -190,5 +261,15 @@ class DocumentSectionRelationManager extends RelationManager
     public static function canViewForRecord(object $ownerRecord, string $pageClass): bool
     {
         return true;
+    }
+
+    private function canCommentOnSections(): bool
+    {
+        $owner = $this->getOwnerRecord();
+        $user = Auth::user();
+
+        return $owner instanceof ControlledDocument
+            && $user instanceof User
+            && app(ControlledDocumentSectionReviewService::class)->canComment($owner, $user);
     }
 }
