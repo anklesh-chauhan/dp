@@ -10,6 +10,7 @@ use App\Domain\DMS\Actions\UnlockDocumentAction;
 use App\Filament\Concerns\HandlesServiceExceptions;
 use App\Filament\Concerns\PresentsSectionReviewAttention;
 use App\Filament\Concerns\ProvidesControlledDocumentPrintPreviewAction;
+use App\Filament\Concerns\ProvidesDocumentEffectivenessActions;
 use App\Filament\Concerns\ProvidesRetentionLifecycleActions;
 use App\Filament\Resources\LogDocuments\LogDocumentResource;
 use App\Filament\Support\IssueControlledCopyAction;
@@ -25,6 +26,7 @@ class ViewLogDocument extends ViewRecord
     use HandlesServiceExceptions;
     use PresentsSectionReviewAttention;
     use ProvidesControlledDocumentPrintPreviewAction;
+    use ProvidesDocumentEffectivenessActions;
     use ProvidesRetentionLifecycleActions;
 
     protected static string $resource = LogDocumentResource::class;
@@ -43,6 +45,12 @@ class ViewLogDocument extends ViewRecord
             return $this->withSectionReviewAttention('Under review · Waiting for the next assigned workflow step.');
         }
 
+        $approvedHeading = $this->approvedEffectivenessSubheading();
+
+        if ($approvedHeading !== null) {
+            return $this->withSectionReviewAttention($approvedHeading);
+        }
+
         return $this->withSectionReviewAttention("Status: {$status}");
     }
 
@@ -51,6 +59,8 @@ class ViewLogDocument extends ViewRecord
         return [
             ...$this->getDocumentRetentionLifecycleActions(),
             $this->controlledDocumentPrintPreviewAction(),
+            $this->assignDocumentTrainingAction(),
+            $this->makeDocumentEffectiveAction(),
             Action::make('submitForApproval')
                 ->label('Submit for Approval')
                 ->icon(Heroicon::PaperAirplane)

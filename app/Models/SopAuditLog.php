@@ -39,6 +39,16 @@ class SopAuditLog extends Model
 
     public const ACTION_APPROVED = 'approved';
 
+    public const ACTION_TRAINING_ASSIGNED = 'training_assigned';
+
+    public const ACTION_TRAINING_COMPLETED = 'training_completed';
+
+    public const ACTION_TRAINING_REMOVED = 'training_removed';
+
+    public const ACTION_EFFECTIVENESS_RELEASED = 'effectiveness_released';
+
+    public const ACTION_MADE_EFFECTIVE = 'made_effective';
+
     public const ACTION_REJECTED = 'rejected';
 
     public const ACTION_RETURNED = 'returned';

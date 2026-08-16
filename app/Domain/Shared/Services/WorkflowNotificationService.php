@@ -227,7 +227,7 @@ class WorkflowNotificationService implements WorkflowDecisionNotifier
                 $actor,
                 Notification::make()
                     ->title('Document approved')
-                    ->body($this->documentLabel($document).' completed approval.')
+                    ->body($this->approvedDocumentBody($document))
                     ->icon(Heroicon::CheckBadge)
                     ->success()
                     ->actions($this->dispatcher->openActions($this->documentUrl($document))),
@@ -246,6 +246,65 @@ class WorkflowNotificationService implements WorkflowDecisionNotifier
                 ->info()
                 ->actions($this->dispatcher->openActions($this->documentUrl($document), 'Review')),
         );
+    }
+
+    public function notifyDocumentTrainingAssigned(ControlledDocument $document, User $trainee, User $actor): void
+    {
+        $document->loadMissing(['documentType']);
+
+        $this->dispatcher->send(
+            collect([$trainee]),
+            $actor,
+            Notification::make()
+                ->title('Training assigned')
+                ->body('Complete required training on '.$this->documentLabel($document).' before it can become effective.')
+                ->icon(Heroicon::AcademicCap)
+                ->info()
+                ->actions($this->dispatcher->openActions($this->documentUrl($document), 'Open')),
+        );
+    }
+
+    public function notifyDocumentEffectivenessScheduled(ControlledDocument $document, User $actor): void
+    {
+        $document->loadMissing(['documentStatus', 'documentType']);
+
+        $this->dispatcher->send(
+            $this->recipients->documentStakeholders($document),
+            $actor,
+            Notification::make()
+                ->title('Effective date confirmed')
+                ->body($this->documentLabel($document).' will become effective on '.$document->effective_date?->toDateString().'.')
+                ->icon(Heroicon::CalendarDays)
+                ->info()
+                ->actions($this->dispatcher->openActions($this->documentUrl($document))),
+        );
+    }
+
+    public function notifyDocumentMadeEffective(ControlledDocument $document, User $actor): void
+    {
+        $document->refresh()->loadMissing(['documentStatus', 'documentType']);
+
+        $this->dispatcher->send(
+            $this->recipients->documentStakeholders($document),
+            $actor,
+            Notification::make()
+                ->title('Document is now effective')
+                ->body($this->documentLabel($document).' is effective and ready for controlled use.')
+                ->icon(Heroicon::CheckBadge)
+                ->success()
+                ->actions($this->dispatcher->openActions($this->documentUrl($document))),
+        );
+    }
+
+    private function approvedDocumentBody(ControlledDocument $document): string
+    {
+        $label = $this->documentLabel($document);
+
+        if ($document->documentType?->requiresTrainingBeforeEffective() ?? true) {
+            return $label.' completed approval. Required training must be completed before Document Control can set the effective date.';
+        }
+
+        return $label.' completed approval. Document Control can now confirm the effective date.';
     }
 
     private function notifyTemplateApproved(DocumentTemplateVersion $version, User $actor): void

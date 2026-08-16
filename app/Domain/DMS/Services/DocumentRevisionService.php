@@ -70,6 +70,8 @@ class DocumentRevisionService
                 'document_status_id',
                 'effective_date',
                 'review_date',
+                'released_for_effectiveness_at',
+                'released_for_effectiveness_by',
                 'locked_by',
                 'locked_at',
             ]);
@@ -81,6 +83,8 @@ class DocumentRevisionService
                 'document_status_id' => DocumentStatus::idFor(DocumentStatus::DRAFT),
                 'effective_date' => null,
                 'review_date' => null,
+                'released_for_effectiveness_at' => null,
+                'released_for_effectiveness_by' => null,
                 'created_by' => $user->id,
                 'locked_by' => null,
                 'locked_at' => null,

@@ -154,6 +154,11 @@ class LookupTableSeeder extends Seeder
                     'execution_workflow' => $this->executionWorkflowFor($type['code']),
                     'requires_sop_reference' => $type['requires_sop_reference'],
                     'is_issuable' => $type['is_issuable'],
+                    'requires_training_before_effective' => in_array(
+                        $type['code'],
+                        DocumentType::defaultCodesRequiringTrainingBeforeEffective(),
+                        true,
+                    ),
                 ],
             );
         }

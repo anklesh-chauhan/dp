@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">QualiGxp document check logo</title>
+  <desc id="desc">Minimal amber outline of a document with a folded corner, three text lines, a Q and checkmark.</desc>
+
+  <g fill="none" stroke="#F59E0B" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Document outline -->
+    <path d="M245 110
+             H650
+             L825 285
+             V735"
+          stroke-width="58"/>
+    <path d="M245 110
+             Q185 110 185 170
+             V805
+             Q185 865 245 865
+             H360"
+          stroke-width="58"/>
+
+    <!-- Folded corner -->
+    <path d="M650 110 V245
+             Q650 285 690 285
+             H825"
+          stroke-width="58"/>
+
+    <!-- Document lines -->
+    <path d="M330 335 H565" stroke-width="34"/>
+    <path d="M330 430 H565" stroke-width="34"/>
+    <path d="M330 525 H565" stroke-width="34"/>
+
+    <!-- Q -->
+    <circle cx="510" cy="735" r="165" stroke-width="58"/>
+    <path d="M560 790 L685 915" stroke-width="58"/>
+
+    <!-- Check mark -->
+    <path d="M650 845 L735 930 L930 690" stroke-width="58"/>
+  </g>
+</svg>

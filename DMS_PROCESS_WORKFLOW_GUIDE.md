@@ -59,7 +59,10 @@ flowchart LR
     D --> E[Configured review and approval steps]
     E -->|Returned| B
     E -->|Rejected| R[Rejected]
-    E -->|All mandatory steps approved| F[Effective]
+    E -->|All mandatory steps approved| P[Approved]
+    P --> T[Required training]
+    T --> DC[Document Control confirms effective date]
+    DC --> F[Effective]
     F --> G[Issue controlled copy]
     G -->|Reference copy| H[Controlled read-only use]
     G -->|Execution copy| I[Writable GMP execution]
@@ -78,14 +81,14 @@ flowchart LR
 |---|---|---|
 | Draft | Editable authoring version. | Complete the master and submit for approval. |
 | Under review | Approval workflow is active; editing is locked. Intermediate step approvals keep this status. | Assigned reviewers approve, return, or reject. |
-| Effective | All mandatory workflow steps are approved; version is active. | Issue controlled copies or create a revision. |
+| Approved | All mandatory workflow steps are approved. Training and Document Control release are still required before operational use. | Assign/complete required training, then confirm the effective date. |
+| Effective | Document Control confirmed the effective date after approval and required training. | Issue controlled copies or create a revision. |
 | Rejected | Approval was rejected. | Follow the organization’s correction/recreation procedure. |
 | Superseded | A newer version in the same document series became effective. | Archive after operational withdrawal is complete. |
 | Obsolete | Withdrawn without replacement or no longer applicable. | Archive. |
 | Archived | Preserved for the defined retention period. | Complete retention when the period expires. |
 | Retention completed | Retention obligations are complete. | Destroy with an approved reason. |
 | Destroyed | Final lifecycle state. | No further use. |
-| Approved | Retained status used for some print, revision, and obsolete eligibility checks. The live approval path does not stop here: mandatory completion activates the document as **Effective**. | Revise, obsolete, or print when the document type and policy allow. |
 
 While a document is under review, lists and the record subheading show the pending workflow step (role / step type).
 
@@ -155,7 +158,7 @@ Published templates follow their own retention path: **Published → Obsolete �
 ### Step 2: Create the controlled-document master
 
 1. Open **DMS → Controlled Documents** (or **Issuable Documents** for issuable types) and create the document from the selected template.
-2. Enter the title, department, category, owner, effective/review dates, and required variables.
+2. Enter the title, department, category, owner, proposed effective/review dates, and required variables.
 3. For every document type except SOP, POLICY, and MANUAL, select an effective referenced SOP when the type requires one.
 4. Confirm the generated document number and version.
 
@@ -194,7 +197,18 @@ Before selecting **Submit for Approval**, verify:
    - **Approve**: advance the required approval path; the document stays **Under review** until every mandatory step is approved;
    - **Return for Correction**: send the document back to Draft;
    - **Reject Submission**: place the document in Rejected status.
-7. When all mandatory steps are approved, the document becomes **Effective**. A prior effective version in the same series becomes **Superseded**.
+7. When all mandatory steps are approved, the document becomes **Approved**.
+
+### Step 6: Complete training and make effective
+
+1. Open the **Approved** document. Status stays Approved until the effective date is confirmed.
+2. If the document type requires training before effectiveness (SOP, Policy, and Manual by default), Document Control assigns the required trainees from **Required training**.
+3. Each assigned trainee completes a read-and-understand acknowledgement.
+4. After required training is complete, a Document Controller selects **Make Effective**, confirms the effective date, and records a reason.
+5. If the effective date is today, the document becomes **Effective** immediately. If it is a future date, the document stays Approved until that date, then becomes Effective.
+6. A prior effective version in the same series becomes **Superseded** when the new version becomes Effective.
+
+Document types can turn the training gate on or off in **DMS · Settings → Document Types**. Seeded defaults require training only for SOP, Policy, and Manual. Those documents still require Document Control to confirm the effective date after approval.
 
 ## 8. Type-specific master guidance
 
@@ -204,7 +218,7 @@ Use for controlled procedural instructions.
 
 Recommended sections: purpose, scope, responsibilities, definitions, procedure, records, references, revision history, and approvals.
 
-Workflow: **Draft → Under review → Effective → Revision/Superseded → Archived → Retention completed → Destroyed**.
+Workflow: **Draft → Under review → Approved → Training → Effective → Revision/Superseded → Archived → Retention completed → Destroyed**.
 
 SOPs do not require another SOP reference. Issue them as controlled reference copies.
 

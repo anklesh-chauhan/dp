@@ -11,6 +11,7 @@ use App\Filament\Resources\ControlledDocuments\RelationManagers\ChangeHistoryRel
 use App\Filament\Resources\ControlledDocuments\RelationManagers\DocumentSectionRelationManager;
 use App\Filament\Resources\ControlledDocuments\RelationManagers\DocumentVariableRelationManager;
 use App\Filament\Resources\ControlledDocuments\RelationManagers\SectionReviewCommentsRelationManager;
+use App\Filament\Resources\ControlledDocuments\RelationManagers\TrainingAssignmentsRelationManager;
 use App\Filament\Resources\LogDocuments\Pages\CreateLogDocument;
 use App\Filament\Resources\LogDocuments\Pages\EditLogDocument;
 use App\Filament\Resources\LogDocuments\Pages\ListLogDocuments;
@@ -140,7 +141,9 @@ class LogDocumentResource extends Resource
                                     : null,
                             ],
                         ),
-                        DatePicker::make('effective_date'),
+                        DatePicker::make('effective_date')
+                            ->label('Proposed effective date')
+                            ->helperText('Document Control confirms the actual effective date after approval and required training.'),
                         DatePicker::make('review_date'),
                     ]),
                 ])
@@ -199,6 +202,7 @@ class LogDocumentResource extends Resource
         return [
             DocumentSectionRelationManager::class,
             SectionReviewCommentsRelationManager::class,
+            TrainingAssignmentsRelationManager::class,
             DocumentVariableRelationManager::class,
             ApprovalRelationManager::class,
             ChangeHistoryRelationManager::class,

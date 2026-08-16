@@ -51,6 +51,14 @@ class DocumentType extends Model
         'execution_workflow',
         'requires_sop_reference',
         'is_issuable',
+        'requires_training_before_effective',
+    ];
+
+    /**
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'requires_training_before_effective' => false,
     ];
 
     protected function casts(): array
@@ -58,6 +66,7 @@ class DocumentType extends Model
         return [
             'requires_sop_reference' => 'boolean',
             'is_issuable' => 'boolean',
+            'requires_training_before_effective' => 'boolean',
             'execution_workflow' => 'array',
         ];
     }
@@ -94,6 +103,25 @@ class DocumentType extends Model
     public function isIssuableType(): bool
     {
         return $this->is_issuable;
+    }
+
+    public function requiresTrainingBeforeEffective(): bool
+    {
+        return (bool) $this->requires_training_before_effective;
+    }
+
+    /**
+     * Instructional types that require read-and-understand training before the document can become effective.
+     *
+     * @return list<string>
+     */
+    public static function defaultCodesRequiringTrainingBeforeEffective(): array
+    {
+        return [
+            self::SOP,
+            self::POLICY,
+            self::MANUAL,
+        ];
     }
 
     public function requiresExecutionRecord(): bool

@@ -24,6 +24,7 @@ class DocumentTypeFactory extends Factory
             'code' => 'SOP',
             'requires_sop_reference' => false,
             'is_issuable' => false,
+            'requires_training_before_effective' => true,
         ];
     }
 }

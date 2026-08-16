@@ -297,7 +297,7 @@ An approved master may define annexure requirements or include controlled refere
 All document types use the common controlled-master lifecycle:
 
 ```text
-Draft → Under review → Effective → Revision/Superseded or Obsolete → Archived → Retention completed → Destroyed
+Draft → Under review → Approved → Training (SOP, Policy, and Manual by default) → Effective → Revision/Superseded or Obsolete → Archived → Retention completed → Destroyed
 ```
 
 The issued-copy workflow depends on the document type:

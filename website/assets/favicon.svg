@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="QualiGxP">
+  <rect width="64" height="64" rx="14" fill="#d97706"/>
+  <path d="M18 14h18l10 10v26H18V14Z" fill="none" stroke="#fff" stroke-width="3.2" stroke-linejoin="round"/>
+  <path d="M36 14v10h10" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M24 32h16M24 39h16" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/>
+  <path d="m41 46 4 4 8-9" fill="none" stroke="#fde68a" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

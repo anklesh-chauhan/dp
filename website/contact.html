@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Request information — QualiGxP</title>
+    <meta name="description" content="Request QualiGxP product information for pharmaceutical document control, quality management, and optional AI. No public demo is required.">
+    <link rel="canonical" href="https://qualigxp.com/contact.html">
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,ital,wght@8..60,0,500;8..60,0,600;8..60,1,600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header" data-header>
+        <div class="container header-bar">
+            <a class="brand" href="index.html" aria-label="QualiGxP home">
+                <img src="assets/QualiGxp-logo.svg" alt="QualiGxP logo" width="50" height="50">
+                Quali<span>GxP</span>
+            </a>
+            <button class="nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-controls="site-nav">Menu</button>
+            <nav id="site-nav" class="site-nav" data-nav aria-label="Primary">
+                <a href="index.html">Platform</a>
+                <a href="dms.html">DMS</a>
+                <a href="qms.html">QMS</a>
+                <a href="ai.html">AI</a>
+                <a href="compliance.html">Compliance</a>
+                <a class="btn btn-primary" href="contact.html" aria-current="page">Request information</a>
+            </nav>
+        </div>
+    </header>
+
+    <main id="main">
+        <section class="page-hero">
+            <div class="container split">
+                <div>
+                    <p class="crumbs"><a href="index.html">Home</a> / Contact</p>
+                    <p class="eyebrow">Talk to QualiGxP</p>
+                    <h1>Request product information.</h1>
+                    <p class="lede">Tell us about your site, document set, and quality processes. We will respond with module scope and next steps. There is no public login or online demo on this website.</p>
+                    <p class="section-copy">Email <a href="mailto:contact@qualigxp.com">contact@qualigxp.com</a> if you prefer not to use the form.</p>
+                </div>
+                <div class="form-card">
+                    <div class="notice" data-form-notice hidden tabindex="-1">Thank you. Your message has been sent. We will reply to the email you provided.</div>
+                    <form action="contact.php" method="post">
+                        <label>Name
+                            <input type="text" name="name" autocomplete="name" required maxlength="120">
+                        </label>
+                        <label>Organization
+                            <input type="text" name="organization" autocomplete="organization" required maxlength="160">
+                        </label>
+                        <label>Role
+                            <input type="text" name="role" maxlength="120" placeholder="QA Manager, Document Controller, IT">
+                        </label>
+                        <label>Work email
+                            <input type="email" name="email" autocomplete="email" required maxlength="160">
+                        </label>
+                        <label>Phone
+                            <input type="tel" name="phone" autocomplete="tel" maxlength="40">
+                        </label>
+                        <fieldset style="border:0;padding:0;margin:0">
+                            <legend style="font-size:0.92rem;font-weight:650;margin-bottom:0.5rem">Modules of interest</legend>
+                            <div class="choices">
+                                <label><input type="checkbox" name="modules[]" value="DMS"> DMS</label>
+                                <label><input type="checkbox" name="modules[]" value="QMS"> QMS</label>
+                                <label><input type="checkbox" name="modules[]" value="AI"> AI</label>
+                            </div>
+                        </fieldset>
+                        <label>How can we help?
+                            <textarea name="message" required maxlength="4000" placeholder="Document types, number of users, current system, and any validation requirements."></textarea>
+                        </label>
+                        <label class="hp" aria-hidden="true">Website
+                            <input type="text" name="website" tabindex="-1" autocomplete="off">
+                        </label>
+                        <button class="btn btn-primary" type="submit">Send message</button>
+                        <p class="fine">By sending this form you agree that QualiGxP may use these details to respond to your enquiry. We do not use this page as a live product login.</p>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-grid">
+            <div>
+                <a class="brand" href="index.html">Quali<span>GxP</span></a>
+                <p class="fine" style="margin-top:0.6rem">Pharmaceutical document and quality management.</p>
+            </div>
+            <nav aria-label="Footer">
+                <a href="dms.html">DMS</a>
+                <a href="qms.html">QMS</a>
+                <a href="ai.html">AI</a>
+                <a href="compliance.html">Compliance</a>
+                <a href="contact.html">Contact</a>
+            </nav>
+            <p class="fine">© <span data-year>2026</span> QualiGxP</p>
+        </div>
+    </footer>
+    <script src="assets/js/main.js"></script>
+</body>
+</html>

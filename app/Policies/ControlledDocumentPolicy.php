@@ -107,6 +107,16 @@ class ControlledDocumentPolicy
         return $authUser->can('Revise:ControlledDocument');
     }
 
+    public function assignTraining(AuthUser $authUser, ControlledDocument $controlledDocument): bool
+    {
+        return $authUser->can('AssignTraining:ControlledDocument');
+    }
+
+    public function makeEffective(AuthUser $authUser, ControlledDocument $controlledDocument): bool
+    {
+        return $authUser->can('MakeEffective:ControlledDocument');
+    }
+
     public function archive(AuthUser $authUser, ControlledDocument $controlledDocument): bool
     {
         return $authUser->can('Archive:ControlledDocument');

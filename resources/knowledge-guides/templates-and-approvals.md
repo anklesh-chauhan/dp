@@ -30,7 +30,7 @@ Template editing is frozen after submission. A rejected or returned version beco
    - **Approve** — advance the path; status stays Under review until every mandatory step is approved.
    - **Return for Correction** — send the document back to Draft.
    - **Reject Submission** — place the document in Rejected status.
-5. When all mandatory steps are approved, the document becomes **Effective**. A prior effective version in the same series becomes **Superseded**.
+5. When all mandatory steps are approved, the document becomes **Approved**. Required training must be completed, then Document Control confirms the effective date and the document becomes **Effective**. A prior effective version in the same series becomes **Superseded**.
 
 ## Separation of duties
 

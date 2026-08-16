@@ -238,7 +238,7 @@ it('keeps the document under review while awaiting remaining mandatory approvals
         ]);
 });
 
-it('activates the document after its final mandatory approval', function (): void {
+it('marks the document approved after its final mandatory approval', function (): void {
     $this->approval->update([
         'approval_decision_id' => ApprovalDecision::idFor(ApprovalDecision::APPROVED),
     ]);
@@ -249,7 +249,7 @@ it('activates the document after its final mandatory approval', function (): voi
         $this->approver,
     );
 
-    expect($this->document->refresh()->documentStatus?->code)->toBe(DocumentStatus::EFFECTIVE)
+    expect($this->document->refresh()->documentStatus?->code)->toBe(DocumentStatus::APPROVED)
         ->and(SopAuditLog::query()
             ->where('document_id', $this->document->id)
             ->where('action', SopAuditLog::ACTION_APPROVED)
@@ -283,7 +283,7 @@ it('retains the existing DMS action return type for Filament callers', function 
         ->and(app(ElectronicSignatureVerifier::class)->isValid($result))->toBeTrue()
         ->and($result->signatureIpAddress())->toBe('203.0.113.42')
         ->and($result->signatureUserAgent())->toBe('QualiGxP Signature Test')
-        ->and($this->document->refresh()->documentStatus?->code)->toBe(DocumentStatus::EFFECTIVE);
+        ->and($this->document->refresh()->documentStatus?->code)->toBe(DocumentStatus::APPROVED);
 });
 
 it('canonically signs rejected and returned decisions through existing DMS actions', function (

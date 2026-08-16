@@ -18,7 +18,6 @@ class SopApprovalDecisionOutcomeAdapter implements ApprovalDecisionOutcome
 {
     public function __construct(
         private readonly AuditLogService $auditLogService,
-        private readonly DocumentActivationService $documentActivationService,
     ) {}
 
     public function applyOutcome(
@@ -65,10 +64,13 @@ class SopApprovalDecisionOutcomeAdapter implements ApprovalDecisionOutcome
         if ($mandatoryApprovals->every(
             fn (SopApproval $item): bool => $item->approvalDecision?->hasCode(ApprovalDecision::APPROVED)
         )) {
-            $this->documentActivationService->activate($document, $decidedBy);
+            $document->update([
+                'document_status_id' => DocumentStatus::idFor(DocumentStatus::APPROVED),
+            ]);
         }
         // Intermediate step approvals leave the document under review until every
-        // mandatory workflow step has been signed.
+        // mandatory workflow step has been signed. Final approval sets Approved;
+        // required training and Document Control release happen before Effective.
 
         $this->auditLogService->log(
             action: SopAuditLog::ACTION_APPROVED,

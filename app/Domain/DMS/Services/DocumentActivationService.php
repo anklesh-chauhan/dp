@@ -22,6 +22,7 @@ class DocumentActivationService
             $supersededStatusId = DocumentStatus::idFor(DocumentStatus::SUPERSEDED);
 
             $activatingDocument = ControlledDocument::query()
+                ->with('documentStatus')
                 ->lockForUpdate()
                 ->findOrFail($document->id);
 
@@ -33,7 +34,22 @@ class DocumentActivationService
                 ->lockForUpdate()
                 ->get();
 
+            $previousStatus = $activatingDocument->documentStatus?->code;
+
             $activatingDocument->update(['document_status_id' => $effectiveStatusId]);
+
+            $this->auditLogService->log(
+                action: SopAuditLog::ACTION_MADE_EFFECTIVE,
+                oldValues: [
+                    'status' => $previousStatus,
+                ],
+                newValues: [
+                    'status' => DocumentStatus::EFFECTIVE,
+                    'effective_date' => $activatingDocument->effective_date?->toDateString(),
+                ],
+                userId: $user->id,
+                document: $activatingDocument,
+            );
 
             foreach ($priorEffectiveVersions as $priorVersion) {
                 $priorVersion->update([

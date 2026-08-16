@@ -16,6 +16,7 @@ use App\Filament\Resources\ControlledDocuments\RelationManagers\DocumentSectionR
 use App\Filament\Resources\ControlledDocuments\RelationManagers\DocumentVariableRelationManager;
 use App\Filament\Resources\ControlledDocuments\RelationManagers\OriginalArtifactRelationManager;
 use App\Filament\Resources\ControlledDocuments\RelationManagers\SectionReviewCommentsRelationManager;
+use App\Filament\Resources\ControlledDocuments\RelationManagers\TrainingAssignmentsRelationManager;
 use App\Filament\Resources\Shared\RelationManagers\QualityAttachmentsRelationManager;
 use App\Filament\Support\DocumentClassificationFormFields;
 use App\Filament\Support\TemplateVariableFieldBuilder;
@@ -143,7 +144,9 @@ class ControlledDocumentResource extends Resource
                             ->dehydrated(false)
                             ->required(fn ($livewire): bool => ! ($livewire instanceof CreateControlledDocument)),
                         Select::make('owner_id')->relationship('owner', 'name')->searchable()->preload()->required(),
-                        DatePicker::make('effective_date'),
+                        DatePicker::make('effective_date')
+                            ->label('Proposed effective date')
+                            ->helperText('Document Control confirms the actual effective date after approval and required training.'),
                         DatePicker::make('review_date'),
                     ]),
                 ])
@@ -252,6 +255,7 @@ class ControlledDocumentResource extends Resource
         return [
             DocumentSectionRelationManager::class,
             SectionReviewCommentsRelationManager::class,
+            TrainingAssignmentsRelationManager::class,
             DocumentVariableRelationManager::class,
             OriginalArtifactRelationManager::class,
             QualityAttachmentsRelationManager::class,

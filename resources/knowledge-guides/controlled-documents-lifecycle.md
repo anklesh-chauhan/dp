@@ -6,7 +6,7 @@ This guide covers controlled-document masters from draft through effective use, 
 
 1. Open **DMS → Controlled Documents** (or **Issuable Documents** for issuable types).
 2. Create the document from a **published** template.
-3. Enter title, department, category, owner, effective/review dates, and required variables.
+3. Enter title, department, category, owner, proposed effective/review dates, and required variables.
 4. For every document type except SOP, POLICY, and MANUAL, select an effective referenced SOP when required.
 5. Confirm the generated document number and version.
 
@@ -26,7 +26,8 @@ Master execution fields define what must be captured later. Actual observations,
 | --- | --- | --- |
 | Draft | Editable authoring version. | Complete the master and submit for approval. |
 | Under review | Approval workflow is active; editing is locked. | Assigned reviewers approve, return, or reject. |
-| Effective | All mandatory workflow steps are approved; version is active. | Issue controlled copies or create a revision. |
+| Approved | All mandatory workflow steps are approved. Training and Document Control release are still required before operational use. | Assign/complete required training, then confirm the effective date. |
+| Effective | Document Control confirmed the effective date after approval and required training. | Issue controlled copies or create a revision. |
 | Rejected | Approval was rejected. | Correct/recreate per site procedure. |
 | Superseded | A newer version in the same series became effective. | Archive after operational withdrawal. |
 | Obsolete | Withdrawn without replacement or no longer applicable. | Archive. |
@@ -35,6 +36,15 @@ Master execution fields define what must be captured later. Actual observations,
 | Destroyed | Final lifecycle state. | No further use. |
 
 While a document is under review, lists and the record subheading show the pending workflow step.
+
+## Training and effectiveness
+
+1. After every mandatory approval step is signed, the document becomes **Approved**. It is not yet available for operational use.
+2. If the document type requires training before effectiveness (SOP, Policy, and Manual by default), Document Control assigns trainees on **Required training**.
+3. Each assigned trainee completes a read-and-understand acknowledgement.
+4. Document Control selects **Make Effective** and confirms the effective date.
+5. If the date is today, the document becomes **Effective** immediately. A future date stays Approved until that date arrives.
+6. Issuance of controlled copies starts only after the document is Effective.
 
 ## Revision
 

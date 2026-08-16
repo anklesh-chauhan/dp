@@ -156,7 +156,7 @@ it('places signed controlled-document decisions at the top of the review page', 
 
     expect($this->documentApproval->refresh()->approvalDecision?->code)->toBe(ApprovalDecision::APPROVED)
         ->and($this->documentApproval->signature_hash)->not->toBeNull()
-        ->and($this->document->refresh()->documentStatus?->code)->toBe(DocumentStatus::EFFECTIVE);
+        ->and($this->document->refresh()->documentStatus?->code)->toBe(DocumentStatus::APPROVED);
 });
 
 it('shows print preview on log documents under review', function (): void {

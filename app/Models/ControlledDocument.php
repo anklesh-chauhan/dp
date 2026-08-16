@@ -56,6 +56,8 @@ class ControlledDocument extends Model implements ApprovableSubject, ControlledD
         'document_status_id',
         'effective_date',
         'review_date',
+        'released_for_effectiveness_at',
+        'released_for_effectiveness_by',
         'owner_id',
         'created_by',
         'submitted_by',
@@ -68,6 +70,7 @@ class ControlledDocument extends Model implements ApprovableSubject, ControlledD
         return [
             'effective_date' => 'date',
             'review_date' => 'date',
+            'released_for_effectiveness_at' => 'datetime',
             'referenced_sop_effective_date' => 'date',
             'version' => 'integer',
             'referenced_sop_version' => 'integer',
@@ -471,6 +474,14 @@ class ControlledDocument extends Model implements ApprovableSubject, ControlledD
     /**
      * @return BelongsTo<User, $this>
      */
+    public function releasedForEffectivenessBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'released_for_effectiveness_by');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function submitter(): BelongsTo
     {
         return $this->belongsTo(User::class, 'submitted_by');
@@ -535,6 +546,14 @@ class ControlledDocument extends Model implements ApprovableSubject, ControlledD
     public function approvals(): HasMany
     {
         return $this->hasMany(SopApproval::class, 'document_id');
+    }
+
+    /**
+     * @return HasMany<ControlledDocumentTrainingAssignment, $this>
+     */
+    public function trainingAssignments(): HasMany
+    {
+        return $this->hasMany(ControlledDocumentTrainingAssignment::class, 'document_id')->latest('assigned_at');
     }
 
     /**

@@ -21,6 +21,7 @@ use App\Exceptions\WorkflowException;
 use App\Filament\Concerns\HandlesServiceExceptions;
 use App\Filament\Concerns\PresentsSectionReviewAttention;
 use App\Filament\Concerns\ProvidesControlledDocumentPrintPreviewAction;
+use App\Filament\Concerns\ProvidesDocumentEffectivenessActions;
 use App\Filament\Concerns\ProvidesRetentionLifecycleActions;
 use App\Filament\Resources\ControlledDocuments\ControlledDocumentResource;
 use App\Filament\Support\ApprovalNarrativeTextarea;
@@ -52,6 +53,7 @@ class ViewControlledDocument extends ViewRecord
     use HandlesServiceExceptions;
     use PresentsSectionReviewAttention;
     use ProvidesControlledDocumentPrintPreviewAction;
+    use ProvidesDocumentEffectivenessActions;
     use ProvidesRetentionLifecycleActions;
 
     protected static string $resource = ControlledDocumentResource::class;
@@ -79,6 +81,12 @@ class ViewControlledDocument extends ViewRecord
             }
 
             return $this->withSectionReviewAttention('Under review · Waiting for the next assigned workflow step.');
+        }
+
+        $approvedHeading = $this->approvedEffectivenessSubheading();
+
+        if ($approvedHeading !== null) {
+            return $this->withSectionReviewAttention($approvedHeading);
         }
 
         return $this->withSectionReviewAttention("Status: {$status}");
@@ -126,6 +134,8 @@ class ViewControlledDocument extends ViewRecord
             ),
 
             $this->controlledDocumentPrintPreviewAction(),
+            $this->assignDocumentTrainingAction(),
+            $this->makeDocumentEffectiveAction(),
 
             Action::make('printPdf')
                 ->label('View Controlled PDF')
@@ -258,13 +268,13 @@ class ViewControlledDocument extends ViewRecord
                 }),
 
             $this->approvalDecisionAction(
-                    name: 'returnCurrentStep',
-                    label: 'Return',
-                    decision: 'return',
-                    color: 'warning',
-                    icon: Heroicon::ArrowUturnLeft,
-                    tooltip: 'The document will return to Draft and unlock for correction. The maker can revise and submit it again.',
-                ),
+                name: 'returnCurrentStep',
+                label: 'Return',
+                decision: 'return',
+                color: 'warning',
+                icon: Heroicon::ArrowUturnLeft,
+                tooltip: 'The document will return to Draft and unlock for correction. The maker can revise and submit it again.',
+            ),
 
             ActionGroup::make([
                 ...$this->getDocumentRetentionLifecycleActions(),

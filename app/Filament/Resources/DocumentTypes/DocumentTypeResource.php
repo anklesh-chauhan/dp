@@ -55,6 +55,10 @@ class DocumentTypeResource extends LookupResource
                 ->required(),
             Toggle::make('requires_sop_reference'),
             Toggle::make('is_issuable'),
+            Toggle::make('requires_training_before_effective')
+                ->label('Require training before effective')
+                ->helperText('Enable for instructional types such as SOP, Policy, and Manual. Leave off for reports, annexures, and most records.')
+                ->default(false),
             Select::make('regulationTags')
                 ->relationship('regulationTags', 'name')
                 ->multiple()
@@ -72,6 +76,9 @@ class DocumentTypeResource extends LookupResource
                 TextColumn::make('format_profile')->label('Format')->badge(),
                 IconColumn::make('requires_sop_reference')->boolean(),
                 IconColumn::make('is_issuable')->boolean(),
+                IconColumn::make('requires_training_before_effective')
+                    ->label('Training gate')
+                    ->boolean(),
                 TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
