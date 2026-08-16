@@ -58,6 +58,7 @@ class ControlledDocument extends Model implements ApprovableSubject, ControlledD
         'review_date',
         'owner_id',
         'created_by',
+        'submitted_by',
         'locked_by',
         'locked_at',
     ];
@@ -465,6 +466,14 @@ class ControlledDocument extends Model implements ApprovableSubject, ControlledD
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function submitter(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'submitted_by');
     }
 
     /**

@@ -257,16 +257,17 @@ class ViewControlledDocument extends ViewRecord
                     );
                 }),
 
-            ActionGroup::make([
-                ...$this->getDocumentRetentionLifecycleActions(),
-
-                $this->approvalDecisionAction(
+            $this->approvalDecisionAction(
                     name: 'returnCurrentStep',
-                    label: 'Return for Correction',
+                    label: 'Return',
                     decision: 'return',
                     color: 'warning',
                     icon: Heroicon::ArrowUturnLeft,
+                    tooltip: 'The document will return to Draft and unlock for correction. The maker can revise and submit it again.',
                 ),
+
+            ActionGroup::make([
+                ...$this->getDocumentRetentionLifecycleActions(),
 
                 $this->approvalDecisionAction(
                     name: 'rejectCurrentStep',
@@ -380,11 +381,13 @@ class ViewControlledDocument extends ViewRecord
         string $decision,
         string $color,
         Heroicon $icon,
+        string $tooltip = '',
     ): Action {
         return Action::make($name)
             ->label($label)
             ->icon($icon)
             ->color($color)
+            ->tooltip($tooltip)
             ->modalHeading(fn (): string => $this->approvalDecisionHeading($label))
             ->modalDescription(match ($decision) {
                 'approve' => 'Your decision will be electronically signed. If this is the final mandatory step, the controlled document will become effective.',

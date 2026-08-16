@@ -12,6 +12,7 @@ use App\Domain\Shared\Contracts\ApprovalSubmissionLifecycle;
 use App\Domain\Shared\Contracts\ApprovalWorkflowDefinition;
 use App\Domain\Shared\Contracts\ApprovalWorkflowDefinitionSelector;
 use App\Domain\Shared\Contracts\ApprovalWorkflowStepDefinition;
+use App\Domain\Shared\Contracts\WorkflowDecisionNotifier;
 use App\Domain\Shared\Enums\ApprovalDecisionCode;
 use App\Domain\Shared\Services\ApprovalWorkflowEngineService;
 use App\Models\ApprovalDecision;
@@ -91,6 +92,7 @@ arch('Shared workflow contracts are interfaces')
         ApprovalWorkflowDefinition::class,
         ApprovalWorkflowDefinitionSelector::class,
         ApprovalWorkflowStepDefinition::class,
+        WorkflowDecisionNotifier::class,
     ])
     ->toBeInterfaces();
 
@@ -106,6 +108,7 @@ arch('Shared workflow contracts do not depend on product modules')
         ApprovalWorkflowDefinition::class,
         ApprovalWorkflowDefinitionSelector::class,
         ApprovalWorkflowStepDefinition::class,
+        WorkflowDecisionNotifier::class,
     ])
     ->not->toUse([
         'App\Domain\AI',

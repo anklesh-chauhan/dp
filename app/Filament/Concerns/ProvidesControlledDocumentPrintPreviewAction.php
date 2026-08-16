@@ -15,7 +15,7 @@ trait ProvidesControlledDocumentPrintPreviewAction
         string $name = 'previewWithPrintTemplate',
     ): Action {
         return Action::make($name)
-            ->label('Print Preview')
+            ->label('Preview')
             ->icon(Heroicon::Eye)
             ->color('gray')
             ->tooltip('Opens the print layout for review. This is not controlled printing.')

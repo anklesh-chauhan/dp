@@ -9,6 +9,7 @@ use App\Domain\Shared\Contracts\ApprovalDecisionOutcome;
 use App\Domain\Shared\Contracts\ApprovalDecisionPersistence;
 use App\Domain\Shared\Contracts\ApprovalInstance;
 use App\Domain\Shared\Contracts\ElectronicSignatureHasher;
+use App\Domain\Shared\Contracts\WorkflowDecisionNotifier;
 use App\Domain\Shared\Enums\ApprovalDecisionCode;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -22,6 +23,7 @@ class ApprovalDecisionService
         private readonly ApprovalDecisionPersistence $approvalDecisionPersistence,
         private readonly ElectronicSignatureHasher $electronicSignatureHasher,
         private readonly Request $request,
+        private readonly WorkflowDecisionNotifier $workflowNotifications,
     ) {}
 
     public function approve(
@@ -81,11 +83,15 @@ class ApprovalDecisionService
                 signatureUserAgent: $signatureUserAgent,
             );
 
-            return $this->approvalDecisionOutcome->applyOutcome(
+            $approval = $this->approvalDecisionOutcome->applyOutcome(
                 approval: $approval,
                 decisionCode: $decisionCode->value,
                 decidedBy: $approver,
             );
+
+            $this->workflowNotifications->notifyDecision($approval, $approver, $decisionCode);
+
+            return $approval;
         });
     }
 }

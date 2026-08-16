@@ -35,6 +35,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->databaseNotifications()
             ->brandName('QualiGxP')
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->colors([

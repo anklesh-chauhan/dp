@@ -7,6 +7,7 @@ namespace App\Domain\DMS\Services;
 use App\Domain\DMS\Enums\TemplateApprovalStatus;
 use App\Domain\Shared\Contracts\ElectronicSignatureHasher;
 use App\Domain\Shared\Enums\ApprovalDecisionCode;
+use App\Domain\Shared\Services\WorkflowNotificationService;
 use App\Enums\ProductModule;
 use App\Exceptions\WorkflowException;
 use App\Models\DocumentTemplateApprovalInstance;
@@ -21,6 +22,7 @@ class TemplateApprovalDecisionService
     public function __construct(
         private readonly ModuleManager $moduleManager,
         private readonly ElectronicSignatureHasher $electronicSignatureHasher,
+        private readonly WorkflowNotificationService $workflowNotifications,
     ) {}
 
     public function decide(
@@ -89,7 +91,10 @@ class TemplateApprovalDecisionService
                 default => null,
             };
 
-            return $instance->refresh();
+            $instance = $instance->refresh();
+            $this->workflowNotifications->notifyTemplateDecision($instance, $actor, $decision);
+
+            return $instance;
         });
     }
 

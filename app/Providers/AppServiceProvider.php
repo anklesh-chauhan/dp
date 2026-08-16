@@ -15,6 +15,7 @@ use App\Domain\QMS\Services\DeviationApprovalDecisionService;
 use App\Domain\QMS\Services\QualityApprovalDecisionAuthorization;
 use App\Domain\QMS\Services\QualityApprovalDecisionOutcome;
 use App\Domain\QMS\Services\QualityApprovalDecisionPersistence;
+use App\Domain\QMS\Services\QualityWorkflowNotificationService;
 use App\Domain\Shared\Contracts\ApprovalDecisionAuthorization;
 use App\Domain\Shared\Contracts\ApprovalDecisionOutcome;
 use App\Domain\Shared\Contracts\ApprovalDecisionPersistence;
@@ -25,9 +26,11 @@ use App\Domain\Shared\Contracts\ApprovalWorkflowDefinitionSelector;
 use App\Domain\Shared\Contracts\ContentIntegrityHasher;
 use App\Domain\Shared\Contracts\ElectronicSignatureHasher;
 use App\Domain\Shared\Contracts\ElectronicSignatureVerifier;
+use App\Domain\Shared\Contracts\WorkflowDecisionNotifier;
 use App\Domain\Shared\Services\CanonicalElectronicSignatureVerifier;
 use App\Domain\Shared\Services\Sha256ContentIntegrityHasher;
 use App\Domain\Shared\Services\Sha256ElectronicSignatureHasher;
+use App\Domain\Shared\Services\WorkflowNotificationService;
 use App\Models\DocumentType;
 use App\Observers\DocumentTypeObserver;
 use App\Support\Formatting\DateFormatSettings;
@@ -79,6 +82,10 @@ class AppServiceProvider extends ServiceProvider
         $this->app->when(DeviationApprovalDecisionService::class)
             ->needs(ApprovalDecisionPersistence::class)
             ->give(QualityApprovalDecisionPersistence::class);
+        $this->app->bind(WorkflowDecisionNotifier::class, WorkflowNotificationService::class);
+        $this->app->when(DeviationApprovalDecisionService::class)
+            ->needs(WorkflowDecisionNotifier::class)
+            ->give(QualityWorkflowNotificationService::class);
         $this->app->bind(ElectronicSignatureHasher::class, Sha256ElectronicSignatureHasher::class);
         $this->app->bind(ElectronicSignatureVerifier::class, CanonicalElectronicSignatureVerifier::class);
         $this->app->bind(ContentIntegrityHasher::class, Sha256ContentIntegrityHasher::class);

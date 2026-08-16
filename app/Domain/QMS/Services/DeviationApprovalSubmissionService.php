@@ -22,6 +22,7 @@ final class DeviationApprovalSubmissionService
         private readonly QualityApprovalInstancePersistence $approvalPersistence,
         private readonly DeviationSubmissionAuthorization $submissionAuthorization,
         private readonly DeviationTransitionService $transitionService,
+        private readonly QualityWorkflowNotificationService $workflowNotifications,
     ) {}
 
     public function submit(
@@ -52,7 +53,7 @@ final class DeviationApprovalSubmissionService
                 $this->approvalPersistence->initializeFor($deviation, $workflow);
             }
 
-            return $this->transitionService->transition(
+            $submitted = $this->transitionService->transition(
                 $deviation,
                 DeviationStatus::Open,
                 $submitter,
@@ -60,6 +61,10 @@ final class DeviationApprovalSubmissionService
                 ipAddress: $ipAddress,
                 userAgent: $userAgent,
             );
+
+            $this->workflowNotifications->notifyDeviationSubmitted($submitted, $submitter);
+
+            return $submitted;
         });
     }
 }

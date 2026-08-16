@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Domain\Shared\Contracts\WorkflowDecisionNotifier;
 use App\Domain\Shared\Services\AuditLogService;
+use App\Domain\Shared\Services\WorkflowNotificationService;
 use App\Models\ControlledDocument;
 use App\Models\DocumentStatus;
 use App\Models\DocumentTemplate;
@@ -68,3 +70,11 @@ arch('Shared domain code does not depend on optional modules')
         'App\Foundation\AI',
         'App\Services\AI',
     ]);
+
+arch('Shared workflow decision notifier is a reusable contract')
+    ->expect(WorkflowDecisionNotifier::class)
+    ->toBeInterface();
+
+arch('Shared workflow notifications implement the reusable decision notifier')
+    ->expect(WorkflowNotificationService::class)
+    ->toImplement(WorkflowDecisionNotifier::class);

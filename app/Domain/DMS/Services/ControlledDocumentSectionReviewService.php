@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\DMS\Services;
 
 use App\Domain\Shared\Services\AuditLogService;
+use App\Domain\Shared\Services\WorkflowNotificationService;
 use App\Exceptions\WorkflowException;
 use App\Models\ControlledDocument;
 use App\Models\ControlledDocumentSection;
@@ -21,6 +22,7 @@ class ControlledDocumentSectionReviewService
     public function __construct(
         private readonly SopApprovalDecisionAuthorizationAdapter $approvalAuthorization,
         private readonly AuditLogService $auditLogService,
+        private readonly WorkflowNotificationService $workflowNotifications,
     ) {}
 
     public function actionableApprovalFor(ControlledDocument $document, User $user): ?SopApproval
@@ -109,6 +111,8 @@ class ControlledDocumentSectionReviewService
                 document: $document,
             );
 
+            $this->workflowNotifications->notifySectionCommentAdded($comment, $reviewer);
+
             return $comment;
         });
     }
@@ -151,7 +155,10 @@ class ControlledDocumentSectionReviewService
                 document: $document,
             );
 
-            return $comment->refresh();
+            $resolved = $comment->refresh();
+            $this->workflowNotifications->notifySectionCommentResolved($resolved, $user);
+
+            return $resolved;
         });
     }
 }

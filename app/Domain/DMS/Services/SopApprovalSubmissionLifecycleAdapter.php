@@ -63,6 +63,7 @@ class SopApprovalSubmissionLifecycleAdapter implements ApprovalSubmissionLifecyc
 
         $document->update([
             'document_status_id' => DocumentStatus::idFor(DocumentStatus::UNDER_REVIEW),
+            'submitted_by' => $submitter->id,
         ]);
 
         $this->auditLogService->log(

@@ -23,6 +23,7 @@ class ApprovalWorkflowEngineService
         private readonly ApprovalSubmissionAuthorization $approvalSubmissionAuthorization,
         private readonly ApprovalSubmissionLifecycle $approvalSubmissionLifecycle,
         private readonly ApprovalDecisionService $approvalDecisionService,
+        private readonly WorkflowNotificationService $workflowNotifications,
     ) {}
 
     public function start(ApprovableSubject $subject, User $submitter, ?ApprovalWorkflowDefinition $workflow = null): void
@@ -48,6 +49,8 @@ class ApprovalWorkflowEngineService
             $this->approvalInstancePersistence->initializeFor($subject, $workflow);
             $this->approvalSubmissionLifecycle->markSubmitted($subject, $workflow, $submitter);
         });
+
+        $this->workflowNotifications->notifySubjectSubmitted($subject, $submitter);
     }
 
     public function approve(ApprovalInstance $approval, User $approver, ?string $comments = null): ApprovalInstance

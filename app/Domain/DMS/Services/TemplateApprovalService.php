@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\DMS\Services;
 
 use App\Domain\DMS\Enums\TemplateApprovalStatus;
+use App\Domain\Shared\Services\WorkflowNotificationService;
 use App\Enums\ProductModule;
 use App\Models\DocumentTemplate;
 use App\Models\DocumentTemplateApprovalEvent;
@@ -25,6 +26,7 @@ class TemplateApprovalService
     public function __construct(
         private readonly ModuleManager $moduleManager,
         private readonly SopWorkflowDefinitionSelector $workflowSelector,
+        private readonly WorkflowNotificationService $workflowNotifications,
     ) {}
 
     public function submit(
@@ -125,7 +127,10 @@ class TemplateApprovalService
                 'occurred_at' => $occurredAt,
             ]);
 
-            return $version->refresh();
+            $version = $version->refresh();
+            $this->workflowNotifications->notifyTemplateSubmitted($version, $actor);
+
+            return $version;
         });
     }
 }
