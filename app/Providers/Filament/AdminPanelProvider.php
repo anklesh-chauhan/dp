@@ -11,7 +11,6 @@ use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
 use Filament\PanelProvider;
-use Filament\Support\Assets\Js;
 use Filament\Support\Colors\Color;
 use Filament\Support\Icons\Heroicon;
 use Filament\View\PanelsRenderHook;
@@ -22,7 +21,6 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Vite;
-use Illuminate\Support\HtmlString;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Livewire\Component;
 
@@ -75,11 +73,6 @@ class AdminPanelProvider extends PanelProvider
             ->plugins([
                 FilamentShieldPlugin::make()->navigationGroup('Core · Identity & Access'),
             ])
-            ->assets([
-                Js::make('qualigxp-app-guide')->html(new HtmlString(
-                    Vite::withEntryPoints(['resources/js/app-guide.js'])->toHtml()
-                )),
-            ])
             ->userMenuItems([
                 Action::make('restartAppGuide')
                     ->label('Restart app guide')
@@ -93,6 +86,12 @@ class AdminPanelProvider extends PanelProvider
                         );
                     }),
             ])
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn (): string => Auth::check()
+                    ? Vite::withEntryPoints(['resources/js/app-guide.js'])->toHtml()
+                    : '',
+            )
             ->renderHook(
                 PanelsRenderHook::BODY_END,
                 fn (): string => Auth::check()
