@@ -11,6 +11,9 @@ use App\Domain\DMS\Services\SopApprovalPersistenceAdapter;
 use App\Domain\DMS\Services\SopApprovalSubmissionAuthorizationAdapter;
 use App\Domain\DMS\Services\SopApprovalSubmissionLifecycleAdapter;
 use App\Domain\DMS\Services\SopWorkflowDefinitionSelector;
+use App\Domain\QMS\Adapters\QmsTrainingCompetencyRefresherAdapter;
+use App\Domain\QMS\Services\CalibrationGate;
+use App\Domain\QMS\Services\CompetencyGate;
 use App\Domain\QMS\Services\DeviationApprovalDecisionService;
 use App\Domain\QMS\Services\QualityApprovalDecisionAuthorization;
 use App\Domain\QMS\Services\QualityApprovalDecisionOutcome;
@@ -23,14 +26,21 @@ use App\Domain\Shared\Contracts\ApprovalInstancePersistence;
 use App\Domain\Shared\Contracts\ApprovalSubmissionAuthorization;
 use App\Domain\Shared\Contracts\ApprovalSubmissionLifecycle;
 use App\Domain\Shared\Contracts\ApprovalWorkflowDefinitionSelector;
+use App\Domain\Shared\Contracts\CalibrationReadinessGate;
+use App\Domain\Shared\Contracts\CompetencyActionGate;
 use App\Domain\Shared\Contracts\ContentIntegrityHasher;
 use App\Domain\Shared\Contracts\ElectronicSignatureHasher;
 use App\Domain\Shared\Contracts\ElectronicSignatureVerifier;
+use App\Domain\Shared\Contracts\TrainingCompetencyRefresher;
 use App\Domain\Shared\Contracts\WorkflowDecisionNotifier;
 use App\Domain\Shared\Services\CanonicalElectronicSignatureVerifier;
+use App\Domain\Shared\Services\NullCalibrationReadinessGate;
+use App\Domain\Shared\Services\NullCompetencyActionGate;
+use App\Domain\Shared\Services\NullTrainingCompetencyRefresher;
 use App\Domain\Shared\Services\Sha256ContentIntegrityHasher;
 use App\Domain\Shared\Services\Sha256ElectronicSignatureHasher;
 use App\Domain\Shared\Services\WorkflowNotificationService;
+use App\Enums\ProductModule;
 use App\Models\DocumentType;
 use App\Observers\DocumentTypeObserver;
 use App\Support\Formatting\DateFormatSettings;
@@ -44,6 +54,7 @@ use App\Support\Modules\Contracts\ProductLicenseStateResolver;
 use App\Support\Modules\Contracts\SignedLicenseActivator;
 use App\Support\Modules\Contracts\SignedLicenseVerifier;
 use App\Support\Modules\EloquentLicenseAuditRecorder;
+use App\Support\Modules\ModuleManager;
 use App\Support\Modules\OpenSslSignedLicenseVerifier;
 use App\Support\Modules\SignedLicenseEntitlementProvider;
 use App\Support\Modules\ValidatedSignedLicenseActivator;
@@ -83,6 +94,27 @@ class AppServiceProvider extends ServiceProvider
             ->needs(ApprovalDecisionPersistence::class)
             ->give(QualityApprovalDecisionPersistence::class);
         $this->app->bind(WorkflowDecisionNotifier::class, WorkflowNotificationService::class);
+        $this->app->bind(CompetencyActionGate::class, function (Application $app): CompetencyActionGate {
+            if ($app->make(ModuleManager::class)->enabled(ProductModule::QMS)) {
+                return $app->make(CompetencyGate::class);
+            }
+
+            return $app->make(NullCompetencyActionGate::class);
+        });
+        $this->app->bind(CalibrationReadinessGate::class, function (Application $app): CalibrationReadinessGate {
+            if ($app->make(ModuleManager::class)->enabled(ProductModule::QMS)) {
+                return $app->make(CalibrationGate::class);
+            }
+
+            return $app->make(NullCalibrationReadinessGate::class);
+        });
+        $this->app->bind(TrainingCompetencyRefresher::class, function (Application $app): TrainingCompetencyRefresher {
+            if ($app->make(ModuleManager::class)->enabled(ProductModule::QMS)) {
+                return $app->make(QmsTrainingCompetencyRefresherAdapter::class);
+            }
+
+            return $app->make(NullTrainingCompetencyRefresher::class);
+        });
         $this->app->when(DeviationApprovalDecisionService::class)
             ->needs(WorkflowDecisionNotifier::class)
             ->give(QualityWorkflowNotificationService::class);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\ChangeControls\Schemas;
 
+use App\Domain\QMS\Enums\ChangeImpactClassification;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -23,6 +24,11 @@ final class ChangeControlForm
                         TextInput::make('title')->required()->maxLength(255)->live(onBlur: true)->columnSpanFull(),
                         Textarea::make('description')->required()->rows(5)->live(onBlur: true)->columnSpanFull(),
                         Textarea::make('rationale')->required()->rows(4)->live(onBlur: true)->columnSpanFull(),
+                        Select::make('impact_classification')
+                            ->options(ChangeImpactClassification::class)
+                            ->required()
+                            ->default(ChangeImpactClassification::Minor->value)
+                            ->live(),
                     ])
                     ->columnSpanFull(),
                 Section::make('Responsibility and Planning')

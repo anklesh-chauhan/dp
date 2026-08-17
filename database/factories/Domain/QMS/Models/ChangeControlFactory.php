@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Database\Factories\Domain\QMS\Models;
 
 use App\Domain\QMS\Enums\ChangeControlStatus;
+use App\Domain\QMS\Enums\ChangeImpactClassification;
 use App\Domain\QMS\Models\ChangeControl;
 use App\Models\Department;
 use App\Models\User;
@@ -29,6 +30,7 @@ class ChangeControlFactory extends Factory
             'title' => fake()->sentence(5),
             'description' => fake()->paragraph(),
             'rationale' => fake()->paragraph(),
+            'impact_classification' => ChangeImpactClassification::Minor,
             'status' => ChangeControlStatus::Draft,
             'department_id' => Department::factory(),
             'requested_by' => User::factory(),

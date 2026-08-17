@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Domain\DMS\Services;
 
+use App\Domain\Shared\Contracts\CalibrationReadinessGate;
+use App\Domain\Shared\Contracts\CompetencyActionGate;
+use App\Domain\Shared\Support\CompetencyGateKey;
 use App\Models\ControlledDocumentSection;
 use App\Models\DocumentExecution;
 use App\Models\DocumentExecutionSection;
@@ -15,6 +18,11 @@ use Illuminate\Validation\ValidationException;
 
 class DocumentExecutionService
 {
+    public function __construct(
+        private readonly CompetencyActionGate $competencyGate,
+        private readonly CalibrationReadinessGate $calibrationGate,
+    ) {}
+
     /**
      * @param  array{batch_number?: string|null, product_name?: string|null, log_frequency?: string|null, log_period_start?: string|null, log_period_end?: string|null, supervisor_id?: int|null}  $data
      */
@@ -197,6 +205,9 @@ class DocumentExecutionService
         if (in_array($approver->id, [$execution->completed_by, $execution->reviewed_by], true)) {
             throw ValidationException::withMessages(['approver' => 'The QA approver must be independent of execution and production review.']);
         }
+
+        $this->competencyGate->assert($approver, CompetencyGateKey::DOCUMENT_EXECUTION_QA);
+        $this->calibrationGate->assertNoOverdueCriticalCalibrations($approver);
 
         $execution->update([
             'status' => DocumentExecution::STATUS_CLOSED,

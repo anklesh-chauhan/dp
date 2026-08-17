@@ -17,6 +17,7 @@ use App\Filament\Resources\Deviations\Schemas\DeviationForm;
 use App\Filament\Resources\Deviations\Schemas\DeviationInfolist;
 use App\Filament\Resources\Deviations\Tables\DeviationsTable;
 use App\Filament\Resources\Shared\RelationManagers\QualityAttachmentsRelationManager;
+use App\Filament\Resources\Shared\RelationManagers\RiskAssessmentsRelationManager;
 use App\Support\Modules\ModuleManager;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -70,6 +71,7 @@ final class DeviationResource extends Resource
     public static function getRelations(): array
     {
         return [
+            RiskAssessmentsRelationManager::class,
             QualityAttachmentsRelationManager::class,
             ApprovalInstancesRelationManager::class,
             AuditEventsRelationManager::class,

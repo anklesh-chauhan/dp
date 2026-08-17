@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Domain\QMS\Models;
 
+use App\Domain\QMS\Concerns\LinksRiskAssessments;
 use App\Domain\QMS\Enums\ComplaintSource;
 use App\Domain\QMS\Enums\ComplaintStatus;
 use App\Domain\QMS\Enums\ComplaintType;
+use App\Domain\QMS\Policies\ComplaintPolicy;
 use App\Models\Department;
 use App\Models\User;
 use Database\Factories\Domain\QMS\Models\ComplaintFactory;
+use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -17,10 +20,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Str;
 
+#[UsePolicy(ComplaintPolicy::class)]
 final class Complaint extends Model
 {
     /** @use HasFactory<ComplaintFactory> */
     use HasFactory;
+
+    use LinksRiskAssessments;
 
     protected $fillable = [
         'complaint_number',

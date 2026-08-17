@@ -66,7 +66,7 @@ it('persists supplier identity scope risk responsibility audit and qualification
         ->and($qualification->next_review_at?->toDateString())->toBe('2027-02-20');
 });
 
-it('owns supplier qualification permissions without exposing an incomplete resource', function (): void {
+it('owns supplier qualification permissions and exposes the Filament resource', function (): void {
     expect(QmsModuleSeeder::PERMISSIONS)
         ->toContain(
             'ViewAny:SupplierQualification',
@@ -82,5 +82,5 @@ it('owns supplier qualification permissions without exposing an incomplete resou
             'Manage:SupplierQualification',
         )
         ->and(class_exists('App\\Filament\\Resources\\SupplierQualifications\\SupplierQualificationResource'))
-        ->toBeFalse();
+        ->toBeTrue();
 });

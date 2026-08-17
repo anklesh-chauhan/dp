@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\QMS\Models;
 
+use App\Domain\QMS\Concerns\LinksRiskAssessments;
 use App\Domain\QMS\Enums\DeviationSeverity;
 use App\Domain\QMS\Enums\DeviationStatus;
 use App\Domain\Shared\Contracts\ApprovableSubject;
@@ -22,6 +23,8 @@ final class Deviation extends Model implements ApprovableSubject
 {
     /** @use HasFactory<DeviationFactory> */
     use HasFactory;
+
+    use LinksRiskAssessments;
 
     protected $fillable = [
         'complaint_id',

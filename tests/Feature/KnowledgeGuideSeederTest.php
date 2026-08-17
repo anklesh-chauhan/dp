@@ -52,3 +52,36 @@ it('keeps classification guide helper available after seeding', function (): voi
         ->product_module->toBe(ProductModule::DMS)
         ->is_published->toBeTrue();
 });
+
+it('seeds published QMS Schedule M knowledge guides with module ownership', function (): void {
+    KnowledgeGuide::factory()->create([
+        'slug' => 'legacy-qms-gap-note',
+        'title' => 'Legacy QMS gap note',
+        'product_module' => ProductModule::QMS,
+        'is_published' => true,
+        'content' => '# Legacy',
+    ]);
+
+    app(KnowledgeGuideSeeder::class)->seedQmsGuides();
+
+    $guides = KnowledgeGuide::query()
+        ->where('product_module', ProductModule::QMS)
+        ->published()
+        ->ordered()
+        ->get();
+
+    expect($guides->pluck('slug')->all())->toBe([
+        'qms-complaint-handling',
+        'qms-self-inspection',
+        'qms-product-quality-review',
+        'qms-product-recall-and-returns',
+        'qms-laboratory-oos',
+        'qms-schedule-m-gap-assessment',
+    ])
+        ->and($guides->every(fn (KnowledgeGuide $guide): bool => $guide->product_module === ProductModule::QMS))->toBeTrue()
+        ->and($guides->firstWhere('slug', 'qms-complaint-handling')?->title)->toBe('Complaint Handling')
+        ->and($guides->firstWhere('slug', 'qms-schedule-m-gap-assessment')?->content)
+        ->toContain('Premises')
+        ->toContain('Inspector Evidence Pack')
+        ->and(KnowledgeGuide::query()->where('slug', 'legacy-qms-gap-note')->value('is_published'))->toBeFalse();
+});

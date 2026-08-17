@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\DMS\Services;
 
+use App\Domain\Shared\Contracts\TrainingCompetencyRefresher;
 use App\Domain\Shared\Services\AuditLogService;
 use App\Domain\Shared\Services\WorkflowNotificationService;
 use App\Models\ControlledDocument;
@@ -17,7 +18,11 @@ use Illuminate\Validation\ValidationException;
 
 class DocumentTrainingService
 {
-    public function __construct(private readonly AuditLogService $auditLogService, private readonly WorkflowNotificationService $workflowNotificationService) {}
+    public function __construct(
+        private readonly AuditLogService $auditLogService,
+        private readonly WorkflowNotificationService $workflowNotificationService,
+        private readonly TrainingCompetencyRefresher $trainingCompetencyRefresher,
+    ) {}
 
     public function requiresTraining(ControlledDocument $document): bool
     {
@@ -170,6 +175,8 @@ class DocumentTrainingService
                 userId: $actor->id,
                 document: $document,
             );
+
+            $this->trainingCompetencyRefresher->refreshForUserDocument($actor, (int) $document->getKey());
 
             return $assignment->refresh();
         });

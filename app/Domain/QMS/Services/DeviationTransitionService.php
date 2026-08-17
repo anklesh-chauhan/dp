@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\QMS\Services;
 
 use App\Domain\QMS\Enums\CapaStatus;
+use App\Domain\QMS\Enums\DeviationSeverity;
 use App\Domain\QMS\Enums\DeviationStatus;
 use App\Domain\QMS\Enums\InvestigationStatus;
 use App\Domain\QMS\Models\Deviation;
@@ -69,6 +70,16 @@ final class DeviationTransitionService
                 throw ValidationException::withMessages([
                     'investigations' => 'All linked investigations must be completed before the deviation can leave investigation.',
                 ]);
+            }
+
+            if (
+                in_array($toStatus, [
+                    DeviationStatus::InvestigationComplete,
+                    DeviationStatus::CapaRequired,
+                ], true)
+                && $record->severity === DeviationSeverity::Critical
+            ) {
+                $this->assertCriticalDeviationRiskGate($record);
             }
 
             if (
@@ -194,5 +205,14 @@ final class DeviationTransitionService
         unset($context['signature'], $context['payload']);
 
         return $context;
+    }
+
+    private function assertCriticalDeviationRiskGate(Deviation $record): void
+    {
+        if (! $record->riskAssessments()->exists()) {
+            throw ValidationException::withMessages([
+                'risk_assessments' => 'Critical deviations require a linked risk assessment before investigation completion.',
+            ]);
+        }
     }
 }

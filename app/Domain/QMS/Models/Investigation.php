@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\QMS\Models;
 
+use App\Domain\QMS\Concerns\LinksRiskAssessments;
 use App\Domain\QMS\Enums\InvestigationStatus;
 use App\Models\User;
 use Database\Factories\Domain\QMS\Models\InvestigationFactory;
@@ -18,6 +19,8 @@ final class Investigation extends Model
 {
     /** @use HasFactory<InvestigationFactory> */
     use HasFactory;
+
+    use LinksRiskAssessments;
 
     protected $fillable = [
         'investigation_number',

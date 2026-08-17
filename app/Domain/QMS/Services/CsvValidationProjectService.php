@@ -8,6 +8,7 @@ use App\Domain\QMS\Enums\CsvCriticality;
 use App\Domain\QMS\Enums\CsvExecutionResult;
 use App\Domain\QMS\Enums\CsvRequirementStatus;
 use App\Domain\QMS\Enums\CsvValidationProjectStatus;
+use App\Domain\QMS\Enums\DeviationStatus;
 use App\Domain\QMS\Models\CsvValidationProject;
 use App\Domain\Shared\Contracts\ElectronicSignatureHasher;
 use App\Enums\ProductModule;
@@ -51,7 +52,12 @@ final class CsvValidationProjectService
             $project, $toStatus, $actor, $reason, $context, $ipAddress, $userAgent,
         ): CsvValidationProject {
             $record = CsvValidationProject::query()
-                ->with(['requirements.testCases.executions', 'risks', 'specifications'])
+                ->with([
+                    'requirements.testCases.executions.deviation',
+                    'testExecutions.deviation',
+                    'risks',
+                    'specifications',
+                ])
                 ->lockForUpdate()
                 ->findOrFail($project->getKey());
             $fromStatus = $record->status;
@@ -60,6 +66,13 @@ final class CsvValidationProjectService
                 throw ValidationException::withMessages([
                     'status' => "CSV validation cannot transition from {$fromStatus->value} to {$toStatus->value}.",
                 ]);
+            }
+
+            if (in_array($toStatus, [
+                CsvValidationProjectStatus::ValidationReview,
+                CsvValidationProjectStatus::Released,
+            ], true)) {
+                $this->assertFailedExecutionsResolved($record);
             }
 
             if ($toStatus === CsvValidationProjectStatus::Released) {
@@ -137,6 +150,40 @@ final class CsvValidationProjectService
             CsvValidationProjectStatus::PeriodicReview => 'PeriodicReview:CsvValidationProject',
             CsvValidationProjectStatus::Retired, CsvValidationProjectStatus::Cancelled, CsvValidationProjectStatus::Draft => 'Manage:CsvValidationProject',
         };
+    }
+
+    private function assertFailedExecutionsResolved(CsvValidationProject $project): void
+    {
+        $errors = [];
+
+        foreach ($project->testExecutions as $execution) {
+            if ($execution->completed_at === null) {
+                continue;
+            }
+
+            if (! in_array($execution->result, [
+                CsvExecutionResult::Failed,
+                CsvExecutionResult::Blocked,
+            ], true)) {
+                continue;
+            }
+
+            if ($execution->deviation_id === null) {
+                $errors["test_executions.{$execution->id}.deviation_id"] =
+                    "Failed or blocked execution {$execution->execution_uuid} must be linked to a closed deviation.";
+
+                continue;
+            }
+
+            if ($execution->deviation?->status !== DeviationStatus::Closed) {
+                $errors["test_executions.{$execution->id}.deviation"] =
+                    "Failed or blocked execution {$execution->execution_uuid} requires a closed linked deviation.";
+            }
+        }
+
+        if ($errors !== []) {
+            throw ValidationException::withMessages($errors);
+        }
     }
 
     private function validateRelease(CsvValidationProject $project, User $actor): void

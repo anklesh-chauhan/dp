@@ -68,7 +68,7 @@ class AppGuide
             $steps[] = [
                 'id' => 'qms',
                 'title' => 'Quality Management (QMS)',
-                'description' => 'Deviations, investigations, CAPA, change control, and related quality records live under QMS.',
+                'description' => 'Deviations, CAPA, change control, complaints, audits, PQR, recall, OOS, equipment/VMP, competency, Schedule M gap tools, and CSV live under QMS. Open QMS guides in the Knowledge Library when published.',
                 'groupLabel' => 'QMS',
                 'itemLabel' => null,
             ];

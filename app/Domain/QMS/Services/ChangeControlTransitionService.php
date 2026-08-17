@@ -6,6 +6,7 @@ namespace App\Domain\QMS\Services;
 
 use App\Domain\QMS\Enums\ChangeControlStatus;
 use App\Domain\QMS\Models\ChangeControl;
+use App\Domain\QMS\Models\CompetencyCurriculum;
 use App\Domain\Shared\Contracts\ElectronicSignatureHasher;
 use App\Enums\ProductModule;
 use App\Models\User;
@@ -21,6 +22,7 @@ final class ChangeControlTransitionService
     public function __construct(
         private readonly ModuleManager $moduleManager,
         private readonly ElectronicSignatureHasher $electronicSignatureHasher,
+        private readonly CompetencyGate $competencyGate,
     ) {}
 
     /**
@@ -58,6 +60,11 @@ final class ChangeControlTransitionService
                 throw ValidationException::withMessages([
                     'status' => "Change control cannot transition from {$fromStatus->value} to {$toStatus->value}.",
                 ]);
+            }
+
+            if ($toStatus === ChangeControlStatus::Approved) {
+                $this->assertMajorChangeRiskGate($record);
+                $this->competencyGate->assert($actor, CompetencyCurriculum::GATE_CHANGE_CONTROL_APPROVE);
             }
 
             $occurredAt = now();
@@ -180,5 +187,22 @@ final class ChangeControlTransitionService
         unset($context['signature'], $context['payload']);
 
         return $context;
+    }
+
+    private function assertMajorChangeRiskGate(ChangeControl $record): void
+    {
+        if (! $record->requiresAcceptedRiskAssessment()) {
+            return;
+        }
+
+        $hasAcceptedRisk = $record->riskAssessments()
+            ->get()
+            ->contains(fn ($assessment): bool => $assessment->satisfiesEventRiskGate());
+
+        if (! $hasAcceptedRisk) {
+            throw ValidationException::withMessages([
+                'risk_assessments' => 'Major and critical changes require at least one linked risk assessment in Approved, Monitoring, or Closed status with accepted residual risk.',
+            ]);
+        }
     }
 }

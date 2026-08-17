@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\QMS\Models;
 
+use App\Domain\QMS\Concerns\LinksRiskAssessments;
 use App\Domain\QMS\Enums\CsvCriticality;
 use App\Domain\QMS\Enums\CsvValidationProjectStatus;
 use App\Models\ControlledDocument;
@@ -20,6 +21,8 @@ final class CsvValidationProject extends Model
 {
     /** @use HasFactory<CsvValidationProjectFactory> */
     use HasFactory;
+
+    use LinksRiskAssessments;
 
     protected $fillable = [
         'project_uuid', 'project_number', 'system_identifier', 'system_name', 'system_version',
@@ -140,5 +143,10 @@ final class CsvValidationProject extends Model
     public function auditEvents(): HasMany
     {
         return $this->hasMany(CsvValidationProjectEvent::class);
+    }
+
+    public function signedDecisions(): HasMany
+    {
+        return $this->hasMany(CsvSignedDecision::class);
     }
 }

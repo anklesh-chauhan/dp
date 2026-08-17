@@ -89,7 +89,7 @@ it('keeps unassessed complaint safety and reportability decisions unknown', func
         ->and($complaint->regulatory_reportable)->toBeNull();
 });
 
-it('owns complaint permissions without exposing an incomplete resource', function (): void {
+it('owns complaint permissions and exposes the Filament resource', function (): void {
     expect(QmsModuleSeeder::PERMISSIONS)
         ->toContain(
             'ViewAny:Complaint',
@@ -103,5 +103,5 @@ it('owns complaint permissions without exposing an incomplete resource', functio
             'Manage:Complaint',
         )
         ->and(class_exists('App\\Filament\\Resources\\Complaints\\ComplaintResource'))
-        ->toBeFalse();
+        ->toBeTrue();
 });

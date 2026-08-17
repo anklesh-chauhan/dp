@@ -72,7 +72,7 @@ it('persists audit classification scope schedule attribution and reporting miles
         ->and($audit->follow_up_due_at?->toDateString())->toBe('2026-09-15');
 });
 
-it('owns internal audit permissions without exposing an incomplete resource', function (): void {
+it('owns internal audit permissions and exposes the Filament resource', function (): void {
     expect(QmsModuleSeeder::PERMISSIONS)
         ->toContain(
             'ViewAny:InternalAudit',
@@ -87,5 +87,5 @@ it('owns internal audit permissions without exposing an incomplete resource', fu
             'Manage:InternalAudit',
         )
         ->and(class_exists('App\\Filament\\Resources\\InternalAudits\\InternalAuditResource'))
-        ->toBeFalse();
+        ->toBeTrue();
 });

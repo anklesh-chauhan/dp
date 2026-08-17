@@ -6,16 +6,20 @@ namespace App\Domain\QMS\Models;
 
 use App\Domain\QMS\Enums\RiskAssessmentStatus;
 use App\Domain\QMS\Enums\RiskAssessmentType;
+use App\Domain\QMS\Policies\RiskAssessmentPolicy;
 use App\Models\Department;
 use App\Models\User;
 use Database\Factories\Domain\QMS\Models\RiskAssessmentFactory;
+use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Support\Str;
 
+#[UsePolicy(RiskAssessmentPolicy::class)]
 final class RiskAssessment extends Model
 {
     /** @use HasFactory<RiskAssessmentFactory> */
@@ -81,6 +85,28 @@ final class RiskAssessment extends Model
             * $this->residual_detectability;
     }
 
+    /**
+     * Whether this assessment satisfies a quality-event residual-risk gate.
+     */
+    public function satisfiesEventRiskGate(): bool
+    {
+        if (! in_array($this->status, [
+            RiskAssessmentStatus::Approved,
+            RiskAssessmentStatus::Monitoring,
+            RiskAssessmentStatus::Closed,
+        ], true)) {
+            return false;
+        }
+
+        $residualRpn = $this->residualRiskPriorityNumber();
+
+        if ($residualRpn === null) {
+            return $this->status === RiskAssessmentStatus::Approved;
+        }
+
+        return $residualRpn <= $this->initialRiskPriorityNumber();
+    }
+
     /** @return BelongsTo<Department, $this> */
     public function department(): BelongsTo
     {
@@ -109,6 +135,75 @@ final class RiskAssessment extends Model
     public function auditEvents(): HasMany
     {
         return $this->hasMany(RiskAssessmentEvent::class);
+    }
+
+    /** @return HasMany<RiskAssessmentLink, $this> */
+    public function links(): HasMany
+    {
+        return $this->hasMany(RiskAssessmentLink::class);
+    }
+
+    /** @return MorphToMany<ChangeControl, $this, RiskAssessmentLink> */
+    public function changeControls(): MorphToMany
+    {
+        return $this->morphedByMany(ChangeControl::class, 'linkable', 'risk_assessment_links')
+            ->using(RiskAssessmentLink::class)
+            ->withPivot(['id', 'link_role'])
+            ->withTimestamps();
+    }
+
+    /** @return MorphToMany<Deviation, $this, RiskAssessmentLink> */
+    public function deviations(): MorphToMany
+    {
+        return $this->morphedByMany(Deviation::class, 'linkable', 'risk_assessment_links')
+            ->using(RiskAssessmentLink::class)
+            ->withPivot(['id', 'link_role'])
+            ->withTimestamps();
+    }
+
+    /** @return MorphToMany<Capa, $this, RiskAssessmentLink> */
+    public function capas(): MorphToMany
+    {
+        return $this->morphedByMany(Capa::class, 'linkable', 'risk_assessment_links')
+            ->using(RiskAssessmentLink::class)
+            ->withPivot(['id', 'link_role'])
+            ->withTimestamps();
+    }
+
+    /** @return MorphToMany<Complaint, $this, RiskAssessmentLink> */
+    public function complaints(): MorphToMany
+    {
+        return $this->morphedByMany(Complaint::class, 'linkable', 'risk_assessment_links')
+            ->using(RiskAssessmentLink::class)
+            ->withPivot(['id', 'link_role'])
+            ->withTimestamps();
+    }
+
+    /** @return MorphToMany<AuditFinding, $this, RiskAssessmentLink> */
+    public function auditFindings(): MorphToMany
+    {
+        return $this->morphedByMany(AuditFinding::class, 'linkable', 'risk_assessment_links')
+            ->using(RiskAssessmentLink::class)
+            ->withPivot(['id', 'link_role'])
+            ->withTimestamps();
+    }
+
+    /** @return MorphToMany<CsvValidationProject, $this, RiskAssessmentLink> */
+    public function csvValidationProjects(): MorphToMany
+    {
+        return $this->morphedByMany(CsvValidationProject::class, 'linkable', 'risk_assessment_links')
+            ->using(RiskAssessmentLink::class)
+            ->withPivot(['id', 'link_role'])
+            ->withTimestamps();
+    }
+
+    /** @return MorphToMany<Investigation, $this, RiskAssessmentLink> */
+    public function investigations(): MorphToMany
+    {
+        return $this->morphedByMany(Investigation::class, 'linkable', 'risk_assessment_links')
+            ->using(RiskAssessmentLink::class)
+            ->withPivot(['id', 'link_role'])
+            ->withTimestamps();
     }
 
     /** @return MorphMany<QualityAttachment, $this> */

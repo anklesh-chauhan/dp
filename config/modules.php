@@ -25,4 +25,19 @@ return [
             (string) env('QUALIGXP_LICENSE_KEY_ID', env('DOCUPHARMA_LICENSE_KEY_ID', 'default')) => env('QUALIGXP_LICENSE_PUBLIC_KEY', env('DOCUPHARMA_LICENSE_PUBLIC_KEY')),
         ]),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Calibration Gate
+    |--------------------------------------------------------------------------
+    |
+    | When enabled, DocumentExecution QA approval is blocked if any critical
+    | equipment asset has an overdue calibration (scheduled/in progress past
+    | due_at). Fail-open when no critical assets exist.
+    |
+    */
+    'calibration_gate' => filter_var(
+        env('QUALIGXP_CALIBRATION_GATE', env('DOCUPHARMA_CALIBRATION_GATE', true)),
+        FILTER_VALIDATE_BOOL,
+    ),
 ];

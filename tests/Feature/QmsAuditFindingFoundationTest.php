@@ -64,7 +64,7 @@ it('persists audit linkage classification evidence ownership response and verifi
         ->and($finding->verified_at?->format('Y-m-d H:i:s'))->toBe('2026-08-22 09:15:00');
 });
 
-it('owns audit finding permissions without exposing an incomplete resource', function (): void {
+it('owns audit finding permissions and exposes the Filament resource', function (): void {
     expect(QmsModuleSeeder::PERMISSIONS)
         ->toContain(
             'ViewAny:AuditFinding',
@@ -77,5 +77,5 @@ it('owns audit finding permissions without exposing an incomplete resource', fun
             'Manage:AuditFinding',
         )
         ->and(class_exists('App\\Filament\\Resources\\AuditFindings\\AuditFindingResource'))
-        ->toBeFalse();
+        ->toBeTrue();
 });

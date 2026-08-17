@@ -16,6 +16,7 @@ use App\Filament\Resources\ChangeControls\RelationManagers\DocumentImpactsRelati
 use App\Filament\Resources\ChangeControls\Schemas\ChangeControlForm;
 use App\Filament\Resources\ChangeControls\Schemas\ChangeControlInfolist;
 use App\Filament\Resources\ChangeControls\Tables\ChangeControlsTable;
+use App\Filament\Resources\Shared\RelationManagers\RiskAssessmentsRelationManager;
 use App\Support\Modules\ModuleManager;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -69,6 +70,7 @@ final class ChangeControlResource extends Resource
     {
         return [
             DocumentImpactsRelationManager::class,
+            RiskAssessmentsRelationManager::class,
             AuditEventsRelationManager::class,
         ];
     }

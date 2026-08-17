@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\QMS\Models;
 
+use App\Domain\QMS\Concerns\LinksRiskAssessments;
 use App\Domain\QMS\Enums\CapaStatus;
 use App\Domain\QMS\Enums\CapaType;
 use App\Models\User;
@@ -20,6 +21,8 @@ final class Capa extends Model
 {
     /** @use HasFactory<CapaFactory> */
     use HasFactory;
+
+    use LinksRiskAssessments;
 
     protected $fillable = [
         'capa_number',

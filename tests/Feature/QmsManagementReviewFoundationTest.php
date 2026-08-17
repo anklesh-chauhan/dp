@@ -71,7 +71,7 @@ it('persists review period schedule responsibilities required inputs outputs and
         ->and($review->completed_at?->format('Y-m-d H:i:s'))->toBe('2026-07-18 11:05:00');
 });
 
-it('owns management review permissions without exposing an incomplete resource', function (): void {
+it('owns management review permissions and exposes the Filament resource', function (): void {
     expect(QmsModuleSeeder::PERMISSIONS)
         ->toContain(
             'ViewAny:ManagementReview',
@@ -86,5 +86,5 @@ it('owns management review permissions without exposing an incomplete resource',
             'Manage:ManagementReview',
         )
         ->and(class_exists('App\\Filament\\Resources\\ManagementReviews\\ManagementReviewResource'))
-        ->toBeFalse();
+        ->toBeTrue();
 });

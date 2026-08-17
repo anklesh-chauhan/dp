@@ -7,9 +7,11 @@ namespace App\Domain\QMS\Models;
 use App\Domain\QMS\Enums\SupplierCategory;
 use App\Domain\QMS\Enums\SupplierQualificationStatus;
 use App\Domain\QMS\Enums\SupplierRiskLevel;
+use App\Domain\QMS\Policies\SupplierQualificationPolicy;
 use App\Models\Department;
 use App\Models\User;
 use Database\Factories\Domain\QMS\Models\SupplierQualificationFactory;
+use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -17,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Str;
 
+#[UsePolicy(SupplierQualificationPolicy::class)]
 final class SupplierQualification extends Model
 {
     /** @use HasFactory<SupplierQualificationFactory> */

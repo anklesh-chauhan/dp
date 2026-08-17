@@ -8,12 +8,14 @@ use App\Domain\QMS\Enums\CsvRequirementStatus;
 use App\Domain\QMS\Enums\CsvSpecificationType;
 use App\Domain\QMS\Enums\CsvTestType;
 use App\Domain\QMS\Enums\CsvValidationProjectStatus;
+use App\Domain\QMS\Enums\DeviationStatus;
 use App\Domain\QMS\Models\CsvRequirement;
 use App\Domain\QMS\Models\CsvRiskAssessment;
 use App\Domain\QMS\Models\CsvSpecification;
 use App\Domain\QMS\Models\CsvTestCase;
 use App\Domain\QMS\Models\CsvTestExecution;
 use App\Domain\QMS\Models\CsvValidationProject;
+use App\Domain\QMS\Models\Deviation;
 use App\Domain\QMS\Services\CsvValidationProjectService;
 use App\Domain\Shared\Contracts\ElectronicSignatureVerifier;
 use App\Filament\Resources\CsvValidationProjects\Pages\ViewCsvValidationProject;
@@ -213,6 +215,86 @@ it('locks a reviewed test execution against later alteration', function (): void
 
     expect(fn () => $execution->update(['actual_result' => 'Altered after review.']))
         ->toThrow(LogicException::class);
+});
+
+it('blocks release when a failed execution deviation remains open', function (): void {
+    Permission::findOrCreate('Review:CsvValidationProject', 'web');
+    $this->qualityReleaser->givePermissionTo('Review:CsvValidationProject');
+
+    $project = releaseReadyCsvProject($this->creator, $this->executor, $this->reviewer);
+    $openDeviation = Deviation::factory()->create([
+        'status' => DeviationStatus::Open,
+    ]);
+    $testCase = $project->testCases()->sole();
+    CsvTestExecution::query()->create([
+        'csv_validation_project_id' => $project->id,
+        'csv_test_case_id' => $testCase->id,
+        'execution_no' => 2,
+        'environment' => 'Validation',
+        'application_version' => '1.0.0',
+        'step_results' => [['step' => 1, 'result' => 'failed', 'actual_result' => 'Failed']],
+        'result' => CsvExecutionResult::Failed,
+        'actual_result' => 'Failed outcome.',
+        'deviation_id' => $openDeviation->id,
+        'executed_by' => $this->executor->id,
+        'started_at' => now()->subHour(),
+        'completed_at' => now()->subMinutes(20),
+    ]);
+
+    expect(fn () => app(CsvValidationProjectService::class)->transition(
+        $project,
+        CsvValidationProjectStatus::Released,
+        $this->qualityReleaser,
+        'Attempt release with open deviation.',
+    ))->toThrow(ValidationException::class);
+});
+
+it('allows release when failed-execution deviations are closed', function (): void {
+    $project = releaseReadyCsvProject($this->creator, $this->executor, $this->reviewer);
+    $closedDeviation = Deviation::factory()->create([
+        'status' => DeviationStatus::Closed,
+        'closed_at' => now(),
+    ]);
+    $ancillaryTest = CsvTestCase::query()->create([
+        'csv_validation_project_id' => $project->id,
+        'test_identifier' => 'OQ-FAIL-RESOLVED',
+        'version' => 1,
+        'type' => CsvTestType::OperationalQualification,
+        'title' => 'Ancillary failure resolved via deviation',
+        'objective' => 'Demonstrate closed deviation gate.',
+        'steps' => [['step' => 'Execute', 'expected_result' => 'Pass']],
+        'criticality' => CsvCriticality::Low,
+        'status' => CsvRequirementStatus::Approved,
+        'approved_by' => $this->reviewer->id,
+        'approved_at' => now(),
+    ]);
+    CsvTestExecution::query()->create([
+        'csv_validation_project_id' => $project->id,
+        'csv_test_case_id' => $ancillaryTest->id,
+        'execution_no' => 1,
+        'environment' => 'Validation',
+        'application_version' => '1.0.0',
+        'step_results' => [['step' => 1, 'result' => 'failed', 'actual_result' => 'Failed then resolved']],
+        'result' => CsvExecutionResult::Failed,
+        'actual_result' => 'Failed outcome resolved via deviation.',
+        'deviation_id' => $closedDeviation->id,
+        'executed_by' => $this->executor->id,
+        'reviewed_by' => $this->reviewer->id,
+        'started_at' => now()->subHour(),
+        'completed_at' => now()->subMinutes(20),
+        'reviewed_at' => now()->subMinutes(5),
+    ]);
+
+    $released = app(CsvValidationProjectService::class)->transition(
+        $project,
+        CsvValidationProjectStatus::Released,
+        $this->qualityReleaser,
+        'QA confirms closed deviation resolution before release.',
+        ipAddress: '203.0.113.21',
+        userAgent: 'QualiGxP-CSV-Test/1.0',
+    );
+
+    expect($released->status)->toBe(CsvValidationProjectStatus::Released);
 });
 
 it('shows the release-gate errors instead of silently ignoring QA release', function (): void {

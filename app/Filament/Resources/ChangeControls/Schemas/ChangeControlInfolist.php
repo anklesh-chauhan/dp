@@ -24,6 +24,7 @@ final class ChangeControlInfolist
                             TextEntry::make('title')->columnSpanFull(),
                             TextEntry::make('description')->columnSpanFull(),
                             TextEntry::make('rationale')->columnSpanFull(),
+                            TextEntry::make('impact_classification')->badge()->label('Impact Classification'),
                             TextEntry::make('requester.name')->label('Requested By')->placeholder('—'),
                             TextEntry::make('owner.name')->label('Owner')->placeholder('—'),
                         ]),

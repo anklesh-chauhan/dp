@@ -6,9 +6,11 @@ namespace App\Domain\QMS\Models;
 
 use App\Domain\QMS\Enums\InternalAuditStatus;
 use App\Domain\QMS\Enums\InternalAuditType;
+use App\Domain\QMS\Policies\InternalAuditPolicy;
 use App\Models\Department;
 use App\Models\User;
 use Database\Factories\Domain\QMS\Models\InternalAuditFactory;
+use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Str;
 
+#[UsePolicy(InternalAuditPolicy::class)]
 final class InternalAudit extends Model
 {
     /** @use HasFactory<InternalAuditFactory> */

@@ -72,7 +72,7 @@ it('keeps residual risk unknown until every residual factor is assessed', functi
     expect($assessment->residualRiskPriorityNumber())->toBeNull();
 });
 
-it('owns risk assessment permissions without exposing an incomplete resource', function (): void {
+it('owns risk assessment permissions and exposes the Filament resource', function (): void {
     expect(QmsModuleSeeder::PERMISSIONS)
         ->toContain(
             'ViewAny:RiskAssessment',
@@ -87,5 +87,5 @@ it('owns risk assessment permissions without exposing an incomplete resource', f
             'Manage:RiskAssessment',
         )
         ->and(class_exists('App\\Filament\\Resources\\RiskAssessments\\RiskAssessmentResource'))
-        ->toBeFalse();
+        ->toBeTrue();
 });

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Domain\QMS\Models;
 
+use App\Domain\QMS\Concerns\LinksRiskAssessments;
 use App\Domain\QMS\Enums\ChangeControlStatus;
+use App\Domain\QMS\Enums\ChangeImpactClassification;
 use App\Domain\QMS\Policies\ChangeControlPolicy;
 use App\Domain\Shared\Contracts\ApprovableSubject;
 use App\Models\Department;
@@ -23,11 +25,14 @@ final class ChangeControl extends Model implements ApprovableSubject
     /** @use HasFactory<ChangeControlFactory> */
     use HasFactory;
 
+    use LinksRiskAssessments;
+
     protected $fillable = [
         'change_number',
         'title',
         'description',
         'rationale',
+        'impact_classification',
         'status',
         'department_id',
         'requested_by',
@@ -57,6 +62,7 @@ final class ChangeControl extends Model implements ApprovableSubject
     {
         return [
             'status' => ChangeControlStatus::class,
+            'impact_classification' => ChangeImpactClassification::class,
             'submitted_at' => 'immutable_datetime',
             'approved_at' => 'immutable_datetime',
             'implementation_due_at' => 'immutable_date',
@@ -65,6 +71,11 @@ final class ChangeControl extends Model implements ApprovableSubject
             'effectiveness_verified_at' => 'immutable_datetime',
             'closed_at' => 'immutable_datetime',
         ];
+    }
+
+    public function requiresAcceptedRiskAssessment(): bool
+    {
+        return $this->impact_classification?->requiresAcceptedRiskAssessment() ?? false;
     }
 
     /** @return BelongsTo<Department, $this> */
