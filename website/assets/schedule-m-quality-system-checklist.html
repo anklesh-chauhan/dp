@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en-IN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Schedule M quality-system checklist — QualiGxP</title>
+    <style>
+        :root {
+            --ink: #0f172a;
+            --ink-soft: #334155;
+            --muted: #64748b;
+            --paper: #faf8f3;
+            --line: #e2e0d8;
+            --amber: #d97706;
+            --amber-deep: #92400e;
+            --amber-soft: #fff7ed;
+            --white: #ffffff;
+        }
+        * { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; }
+        body {
+            background: var(--paper);
+            color: var(--ink);
+            font-family: "Segoe UI", "Calibri", "Helvetica Neue", sans-serif;
+            font-size: 10.5pt;
+            line-height: 1.45;
+        }
+        @page {
+            size: A4;
+            margin: 12mm 12mm 14mm;
+        }
+        .page { max-width: 210mm; margin: 0 auto; padding: 18px 22px 28px; }
+        header.cover {
+            border-bottom: 3px solid var(--amber);
+            padding-bottom: 16px;
+            margin-bottom: 18px;
+        }
+        .brand-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 15pt;
+            letter-spacing: -0.03em;
+        }
+        .brand span { color: var(--amber); }
+        .meta {
+            color: var(--muted);
+            font-size: 8.5pt;
+            text-align: right;
+        }
+        h1 {
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: 22pt;
+            font-weight: 600;
+            letter-spacing: -0.03em;
+            line-height: 1.15;
+            margin: 18px 0 8px;
+        }
+        .lede { color: var(--ink-soft); font-size: 11pt; max-width: 62ch; }
+        h2 {
+            font-size: 12pt;
+            margin: 18px 0 8px;
+            color: var(--amber-deep);
+            letter-spacing: -0.02em;
+        }
+        h3 {
+            font-size: 10.5pt;
+            margin: 0;
+            letter-spacing: -0.02em;
+        }
+        p { margin: 0 0 8px; }
+        .notice {
+            background: var(--amber-soft);
+            border: 1px solid #fde68a;
+            padding: 10px 12px;
+            margin: 14px 0;
+            font-size: 9.5pt;
+        }
+        .plant {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 14px;
+            border: 1px solid var(--line);
+            background: var(--white);
+            padding: 12px;
+            margin: 12px 0 16px;
+        }
+        .field label {
+            display: block;
+            font-size: 7.5pt;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+        .line {
+            border-bottom: 1px solid var(--line);
+            min-height: 18px;
+        }
+        .key {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            font-size: 9pt;
+            color: var(--ink-soft);
+            margin: 8px 0 14px;
+        }
+        .box {
+            display: inline-block;
+            width: 9px;
+            height: 9px;
+            border: 1px solid var(--ink);
+            margin-right: 4px;
+            vertical-align: -1px;
+        }
+        .topic {
+            border: 1px solid var(--line);
+            background: var(--white);
+            padding: 9px 11px 8px;
+            margin: 0 0 8px;
+            page-break-inside: avoid;
+        }
+        .topic-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+        .ref {
+            font-size: 8pt;
+            font-weight: 700;
+            color: var(--amber-deep);
+            letter-spacing: 0.04em;
+            white-space: nowrap;
+        }
+        ul {
+            margin: 0 0 6px;
+            padding-left: 16px;
+        }
+        li { margin: 0 0 3px; }
+        .status {
+            font-size: 8.5pt;
+            color: var(--ink-soft);
+            white-space: nowrap;
+        }
+        .foot-fields {
+            display: grid;
+            grid-template-columns: 1.4fr 0.8fr 0.7fr;
+            gap: 8px;
+            font-size: 8.5pt;
+            color: var(--muted);
+            margin-top: 4px;
+        }
+        .map {
+            font-size: 8pt;
+            color: var(--muted);
+            font-style: italic;
+            margin: 0;
+        }
+        .split {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .panel {
+            border: 1px solid var(--line);
+            background: var(--white);
+            padding: 10px 12px;
+            page-break-inside: avoid;
+        }
+        footer.doc-foot {
+            margin-top: 16px;
+            padding-top: 10px;
+            border-top: 1px solid var(--line);
+            font-size: 8pt;
+            color: var(--muted);
+        }
+        a { color: var(--amber-deep); }
+        @media print {
+            body { background: white; }
+            .page { padding: 0; max-width: none; }
+            a { text-decoration: none; color: inherit; }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <header class="cover">
+            <div class="brand-row">
+                <div class="brand">Quali<span>GxP</span></div>
+                <div class="meta">
+                    Quality-system self-assessment<br>
+                    Revised Schedule M / CDSCO · 2026
+                </div>
+            </div>
+            <h1>Schedule M quality-system checklist</h1>
+            <p class="lede">For small and mid-size Indian pharmaceutical plants. Use this to see whether Part I quality-system records are current — not assembled the week before inspection. This is not gazette text and not a certificate of Premises or Plant compliance.</p>
+        </header>
+
+        <div class="notice">
+            <strong>Scope.</strong> Schedule M still requires suitable Premises, Plant, utilities, and equipment in the physical facility. This checklist covers the pharmaceutical quality system inspectors ask to see in records: documents, events, reviews, signatures, and evidence. QualiGxP does not certify a facility as Schedule M compliant. The site remains responsible for validated intended use and for the building.
+        </div>
+
+        <h2>Plant</h2>
+        <div class="plant">
+            <div class="field"><label>Legal entity / plant name</label><div class="line"></div></div>
+            <div class="field"><label>Site type (formulation / API / both)</label><div class="line"></div></div>
+            <div class="field"><label>Own manufacturing / contract / loan-licence</label><div class="line"></div></div>
+            <div class="field"><label>Inspection type (CDSCO / state / WHO / customer)</label><div class="line"></div></div>
+            <div class="field"><label>Assessor</label><div class="line"></div></div>
+            <div class="field"><label>Date</label><div class="line"></div></div>
+        </div>
+
+        <h2>How to mark each topic</h2>
+        <div class="key">
+            <span><span class="box"></span>In place — procedure and current records</span>
+            <span><span class="box"></span>Partial — SOP exists, records lag</span>
+            <span><span class="box"></span>Gap — cannot show it this week</span>
+            <span><span class="box"></span>N/A — justified in the Site Master File</span>
+        </div>
+        <p>Tick a box only if you can retrieve the record without rebuilding it. “We have an SOP” is not the same as “we can show the last three signed events.”</p>
+
+        <h2>Part I quality-system topics</h2>
+        <p class="map">Topic codes I.1–I.22 match QualiGxP’s Schedule M gap-assessment checklist (key Part I subjects, not a substitute for the official Schedule).</p>
+
+        <article class="topic">
+            <div class="topic-head">
+                <h3><span class="ref">I.1</span> Pharmaceutical Quality System (PQS)</h3>
+                <div class="status"><span class="box"></span>In place <span class="box"></span>Partial <span class="box"></span>Gap <span class="box"></span>N/A</div>
+            </div>
+            <ul>
+                <li>A current description of the PQS exists (quality manual or equivalent) and names the quality unit’s independence.</li>
+                <li>Management review of PQS performance happens on a defined cycle, with minutes and actions — not only an SOP that says it should.</li>
+                <li>Open quality-event counts, overdue work, and inspection findings feed that review.</li>
+            </ul>
+            <p class="map">QualiGxP: management review, quality metrics, Schedule M readiness view (QMS).</p>
+            <div class="foot-fields"><div>Evidence / location</div><div>Owner</div><div>Due</div></div>
+            <div class="foot-fields"><div class="line"></div><div class="line"></div><div class="line"></div></div>
+        </article>
+
+        <article class="topic">
+            <div class="topic-head">
+                <h3><span class="ref">I.2</span> Quality Risk Management (QRM)</h3>
+                <div class="status"><span class="box"></span>In place <span class="box"></span>Partial <span class="box"></span>Gap <span class="box"></span>N/A</div>
+            </div>
+            <ul>
+                <li>Risk assessments are used for changes, deviations, complaints, audit findings, investigations, and computerised systems — not a standalone binder.</li>
+                <li>Initial and residual risk are scored, with a named owner and a reason for acceptance.</li>
+                <li>Major and critical changes cannot be approved without residual-risk review where your procedure requires it.</li>
+            </ul>
+            <p class="map">QualiGxP: QRM linked to change, deviation, CAPA, complaint, audit finding, investigation, and CSV.</p>
+            <div class="foot-fields"><div>Evidence / location</div><div>Owner</div><div>Due</div></div>
+            <div class="foot-fields"><div class="line"></div><div class="line"></div><div class="line"></div></div>
+        </article>
+
+        <article class="topic">
+            <div class="topic-head">
+                <h3><span class="ref">I.3</span> Product Quality Review (PQR)</h3>
+                <div class="status"><span class="box"></span>In place <span class="box"></span>Partial <span class="box"></span>Gap <span class="box"></span>N/A</div>
+            </div>
+            <ul>
+                <li>Each product (or justified group) has a PQR for the defined period.</li>
+                <li>Inputs include complaints, deviations, changes, recalls, laboratory events, and process performance — not a narrative written from memory.</li>
+                <li>Completion is signed. Where the review requires it, CAPA or change control is raised and traced.</li>
+            </ul>
+            <p class="map">QualiGxP: Product Quality Reviews with signed completion and spawn to CAPA or change control.</p>
+            <div class="foot-fields"><div>Evidence / location</div><div>Owner</div><div>Due</div></div>
+            <div class="foot-fields"><div class="line"></div><div class="line"></div><div class="line"></div></div>
+        </article>
+
+        <article class="topic">
+            <div class="topic-head">
+                <h3><span class="ref">I.4</span> Change Control</h3>
+                <div class="status"><span class="box"></span>In place <span class="box"></span>Partial <span class="box"></span>Gap <span class="box"></span>N/A</div>
+            </div>
+            <ul>
+                <li>GMP-relevant changes are logged and assessed before they are made.</li>
+                <li>Impact on controlled documents, validation, training, and equipment is recorded.</li>
+                <li>Implementation and effectiveness review are signed. Affected SOPs are revised through document control, not a side copy.</li>
+            </ul>
+            <p class="map">QualiGxP: Change Control with document-impact tracing into DMS revisions.</p>
+            <div class="foot-fields"><div>Evidence / location</div><div>Owner</div><div>Due</div></div>
+            <div class="foot-fields"><div class="line"></div><div class="line"></div><div class="line"></div></div>
+        </article>
+
+        <article class="topic">
+            <div class="topic-head">
+                <h3><span class="ref">I.5</span> Deviation Management</h3>
+                <div class="status"><span class="box"></span>In place <span class="box"></span>Partial <span class="box"></span>Gap <span class="box"></span>N/A</div>
+            </div>
+            <ul>
+                <li>Unplanned departures are recorded contemporaneously, with facts, product/batch where relevant, and a named owner.</li>
+                <li>Investigation and root cause are completed before closure. Critical events have linked risk assessment where required.</li>
+                <li>You can retrieve the last three closed deviations and show who signed each gate.</li>
+            </ul>
+            <p class="map">QualiGxP: Deviations with linked investigations, signatures, and private evidence.</p>
+            <div class="foot-fields"><div>Evidence / location</div><div>Owner</div><div>Due</div></div>
+            <div class="foot-fields"><div class="line"></div><div class="line"></div><div class="line"></div></div>
+        </article>
+
+        <article class="topic">
+            <div class="topic-head">
+                <h3><span class="ref">I.6</span> Corrective and Preventive Action (CAPA)</h3>
+                <div class="status"><span class="box"></span>In place <span class="box"></span>Partial <span class="box"></span>Gap <span class="box"></span>N/A</div>
+            </div>
+            <ul>
+                <li>Corrective and preventive actions are planned, owned, and dated — not a sentence at the bottom of a deviation.</li>
+                <li>Effectiveness is checked before close. Failed checks reopen the plan; they are not overwritten.</li>
+                <li>Overdue CAPAs are visible to QA without opening every spreadsheet.</li>
+            </ul>
+            <p class="map">QualiGxP: CAPA lifecycle with effectiveness milestones linked to deviations and investigations.</p>
+            <div class="foot-fields"><div>Evidence / location</div><div>Owner</div><div>Due</div></div>
+            <div class="foot-fields"><div class="line"></div><div class="line"></div><div class="line"></div></div>
+        </article>
+
+        <article class="topic">
+            <div class="topic-head">
+                <h3><span class="ref">I.7</span> Validation and Qualification</h3>
+                <div class="status"><span class="box"></span>In place <span class="box"></span>Partial <span class="box"></span>Gap <span class="box"></span>N/A</div>
+            </div>
+            <ul>
+                <li>A Validation Master Plan is current and lists GxP equipment, processes, and computerised systems in scope.</li>
+                <li>DQ / IQ / OQ / PQ (or equivalent) and process / cleaning qualification exist for assets your procedures require.</li>
+                <li>Failed or incomplete qualification is visible; it is not filed as “done” without a signed close.</li>
+            </ul>
+            <p class="map">QualiGxP: VMP, equipment assets, and qualification records — distinct from CSV of computerised systems. Facility Premises qualification remains a site engineering responsibility.</p>
+            <div class="foot-fields"><div>Evidence / location</div><div>Owner</div><div>Due</div></div>
+            <div class="foot-fields"><div class="line"></div><div class="line"></div><div class="line"></div></div>
+        </article>
+
+        <article class="topic">
+            <div class="topic-head">
+                <h3><span class="ref">I.8</span> Self-inspection / Internal Audit</h3>
+                <div class="status"><span class="box"></span>In place <span class="box"></span>Partial <span class="box"></span>Gap <span class="box"></span>N/A</div>
+            </div>
+            <ul>
+                <li>A defined internal-audit programme covers PQS processes on a cycle you can show.</li>
+                <li>Findings are tracked. Actionable nonconformities spawn CAPA. An audit is not closed while findings remain open.</li>
+                <li>Last audit report, findings, and CAPA status can be produced together.</li>
+            </ul>
+            <p class="map">QualiGxP: self-inspection with findings and CAPA handoff.</p>
+            <div class="foot-fields"><div>Evidence / location</div><div>Owner</div><div>Due</div></div>
+            <div class="foot-fields"><div class="line"></div><div class="line"></div><div class="line"></div></div>
+        </article>
+
+        <article class="topic">
+            <div class="topic-head">
+                <h3><span class="ref">I.9</span> Complaints Handling</h3>
+                <div class="status"><span class="box"></span>In place <span class="box"></span>Partial <span class="box"></span>Gap <span class="box"></span>N/A</div>
+            </div>
+            <ul>
+                <li>Every market complaint is logged with product and batch (or a justified reason they are unknown).</li>
+                <li>Assessed product-quality complaints hand off to a deviation; recall-worthy complaints hand off to recall.</li>
+                <li>Complaint trends appear in PQR and management review.</li>
+            </ul>
+            <p class="map">QualiGxP: complaint intake with deviation and recall handoff.</p>
+            <div class="foot-fields"><div>Evidence / location</div><div>Owner</div><div>Due</div></div>
+            <div class="foot-fields"><div class="line"></div><div class="line"></div><div class="line"></div></div>
+        </article>
+
+        <article class="topic">
+            <div class="topic-head">
+                <h3><span class="ref">I.10</span> Product Recalls</h3>
+                <div class="status"><span class="box"></span>In place <span class="box"></span>Partial <span class="box"></span>Gap <span class="box"></span>N/A</div>
+            </div>
+            <ul>
+                <li>A current recall procedure exists. A mock recall has been run and the report is signed.</li>
+                <li>Product recall is distinct from recalling a controlled document copy.</li>
+                <li>Complaint linkage and reconciliation of returned packs can be shown.</li>
+            </ul>
+            <p class="map">QualiGxP: product recall (including mock-recall) and returns with QA disposition.</p>
+            <div class="foot-fields"><div>Evidence / location</div><div>Owner</div><div>Due</div></div>
+            <div class="foot-fields"><div class="line"></div><div class="line"></div><div class="line"></div></div>
+        </article>
+
+        <article class="topic">
+            <div class="topic-head">
+                <h3><span class="ref">I.11</span> Documentation and Document Control</h3>
+                <div class="status"><span class="box"></span>In place <span class="box"></span>Partial <span class="box"></span>Gap <span class="box"></span>N/A</div>
+            </div>
+            <ul>
+                <li>There is one current master list of SOPs, BMR/BPR, logs, and forms. Effective is not the same as approved.</li>
+                <li>Issued copies carry a number and watermark. Obsolete copies are recalled; they cannot still be printed or used on the line.</li>
+                <li>Required training is complete before a document becomes operational. Retention, archival, and destruction are controlled states.</li>
+            </ul>
+            <p class="map">QualiGxP DMS (required core): templates, masters, approval, training, issuance, execution copies, revision, retention.</p>
+            <div class="foot-fields"><div>Evidence / location</div><div>Owner</div><div>Due</div></div>
+            <div class="foot-fields"><div class="line"></div><div class="line"></div><div class="line"></div></div>
+        </article>
+
+        <article class="topic">
+            <div class="topic-head">
+                <h3><span class="ref">I.12</span> Computerized Systems</h3>
+                <div class="status"><span class="box"></span>In place <span class="box"></span>Partial <span class="box"></span>Gap <span class="box"></span>N/A</div>
+            </div>
+            <ul>
+                <li>GxP computerised systems are inventoried with intended use.</li>
+                <li>CSV exists: requirements, tests, executions, residual risk, independent QA release, periodic review.</li>
+                <li>Access control, audit trails, and backup/restore are described and evidenced. Shared approval logins are not used.</li>
+            </ul>
+            <p class="map">QualiGxP: CSV Validation Projects with signed decisions and printable ALCOA+ traceability.</p>
+            <div class="foot-fields"><div>Evidence / location</div><div>Owner</div><div>Due</div></div>
+            <div class="foot-fields"><div class="line"></div><div class="line"></div><div class="line"></div></div>
+        </article>
+
+        <article class="topic">
+            <div class="topic-head">
+                <h3><span class="ref">I.13</span> Personnel and Training</h3>
+                <div class="status"><span class="box"></span>In place <span class="box"></span>Partial <span class="box"></span>Gap <span class="box"></span>N/A</div>
+            </div>
+            <ul>
+                <li>Role curricula are tied to effective SOPs, not to a one-time induction pack.</li>
+                <li>People do not execute or independently verify work they are not trained for. Requalification is defined.</li>
+                <li>A training sample for a named role can be produced for an inspector pack.</li>
+            </ul>
+            <p class="map">QualiGxP: competency matrix linked to effective SOPs; optional gates on execution and change-control approval.</p>
+            <div class="foot-fields"><div>Evidence / location</div><div>Owner</div><div>Due</div></div>
+            <div class="foot-fields"><div class="line"></div><div class="line"></div><div class="line"></div></div>
+        </article>
+
+        <article class="topic">
+            <div class="topic-head">
+                <h3><span class="ref">I.14</span> Premises and Equipment</h3>
+                <div class="status"><span class="box"></span>In place <span class="box"></span>Partial <span class="box"></span>Gap <span class="box"></span>N/A</div>
+            </div>
+            <ul>
+                <li><strong>Records you should hold:</strong> equipment list, qualification status, calibration and preventive-maintenance schedules, out-of-tolerance linked to a deviation, overdue calibration visible to QA.</li>
+                <li><strong>Not a software certificate:</strong> building layout, HVAC performance, utilities, and physical Plant suitability remain the site’s responsibility.</li>
+                <li>Critical assets cannot be treated as in-use when calibration is overdue, if your procedure says they cannot.</li>
+            </ul>
+            <p class="map">QualiGxP: equipment, calibration, and PM records. QualiGxP does not certify Premises, HVAC, or plant layout.</p>
+            <div class="foot-fields"><div>Evidence / location</div><div>Owner</div><div>Due</div></div>
+            <div class="foot-fields"><div class="line"></div><div class="line"></div><div class="line"></div></div>
+        </article>
+
+        <article class="topic">
+            <div class="topic-head">
+                <h3><span class="ref">I.15</span> Materials Management</h3>
+                <div class="status"><span class="box"></span>In place <span class="box"></span>Partial <span class="box"></span>Gap <span class="box"></span>N/A</div>
+            </div>
+            <ul>
+                <li>Receipt, quarantine, sampling, and release procedures are controlled documents, and status is visible in the batch record.</li>
+                <li>Critical material suppliers are qualified, with periodic review and signed decisions.</li>
+                <li>Traceability from material lot to batch can be shown without reconstructing email.</li>
+            </ul>
+            <p class="map">QualiGxP: controlled procedures and supplier qualification; warehouse execution remains a site process supported by issued records.</p>
+            <div class="foot-fields"><div>Evidence / location</div><div>Owner</div><div>Due</div></div>
+            <div class="foot-fields"><div class="line"></div><div class="line"></div><div class="line"></div></div>
+        </article>
+
+        <article class="topic">
+            <div class="topic-head">
+                <h3><span class="ref">I.16</span> Production Operations</h3>
+                <div class="status"><span class="box"></span>In place <span class="box"></span>Partial <span class="box"></span>Gap <span class="box"></span>N/A</div>
+            </div>
+            <ul>
+                <li>The copy on the line is an issued BMR/BPR or log, not a photocopy of the last batch.</li>
+                <li>Independent verification and line clearance are captured where required. Incomplete steps block QA disposition.</li>
+                <li>Yield, reconciliation, and contemporaneous entries match ALCOA+ expectations in your procedures.</li>
+            </ul>
+            <p class="map">QualiGxP DMS: issued writable execution copies for BMR, BPR, logs, forms, and checklists.</p>
+            <div class="foot-fields"><div>Evidence / location</div><div>Owner</div><div>Due</div></div>
+            <div class="foot-fields"><div class="line"></div><div class="line"></div><div class="line"></div></div>
+        </article>
+
+        <article class="topic">
+            <div class="topic-head">
+                <h3><span class="ref">I.17</span> Quality Control Laboratory</h3>
+                <div class="status"><span class="box"></span>In place <span class="box"></span>Partial <span class="box"></span>Gap <span class="box"></span>N/A</div>
+            </div>
+            <ul>
+                <li>Specifications and methods are controlled documents. Unofficial printouts are not in use.</li>
+                <li>OOS / OOT follow Phase I and Phase II rules. Confirmed events gate to investigation and deviation.</li>
+                <li>You can show the last confirmed OOS through to deviation and CAPA without a gap in dates.</li>
+            </ul>
+            <p class="map">QualiGxP: laboratory OOS/OOT with investigation and deviation gates.</p>
+            <div class="foot-fields"><div>Evidence / location</div><div>Owner</div><div>Due</div></div>
+            <div class="foot-fields"><div class="line"></div><div class="line"></div><div class="line"></div></div>
+        </article>
+
+        <article class="topic">
+            <div class="topic-head">
+                <h3><span class="ref">I.18</span> Contract Manufacture and Analysis</h3>
+                <div class="status"><span class="box"></span>In place <span class="box"></span>Partial <span class="box"></span>Gap <span class="box"></span>N/A</div>
+            </div>
+            <ul>
+                <li>Quality agreements exist for contract manufacturers and laboratories, with defined PQS responsibilities.</li>
+                <li>Oversight (audits, result review, deviation flow-back) is documented.</li>
+                <li>Contract work appears in PQR and, where relevant, in change control and complaints.</li>
+            </ul>
+            <p class="map">QualiGxP: supplier qualification and quality-event records that receive contract-site inputs. The agreement itself remains a site document.</p>
+            <div class="foot-fields"><div>Evidence / location</div><div>Owner</div><div>Due</div></div>
+            <div class="foot-fields"><div class="line"></div><div class="line"></div><div class="line"></div></div>
+        </article>
+
+        <article class="topic">
+            <div class="topic-head">
+                <h3><span class="ref">I.19</span> Batch Release</h3>
+                <div class="status"><span class="box"></span>In place <span class="box"></span>Partial <span class="box"></span>Gap <span class="box"></span>N/A</div>
+            </div>
+            <ul>
+                <li>QA / authorised-person release is a signed decision against a complete batch record.</li>
+                <li>Open deviations, OOS, and missing issuance or verification are visible at the point of release.</li>
+                <li>Release cannot be performed against an incomplete or recalled execution copy.</li>
+            </ul>
+            <p class="map">QualiGxP: QA disposition on issued execution records; quality-event status remains in QMS.</p>
+            <div class="foot-fields"><div>Evidence / location</div><div>Owner</div><div>Due</div></div>
+            <div class="foot-fields"><div class="line"></div><div class="line"></div><div class="line"></div></div>
+        </article>
+
+        <article class="topic">
+            <div class="topic-head">
+                <h3><span class="ref">I.20</span> Ongoing Stability Programme</h3>
+                <div class="status"><span class="box"></span>In place <span class="box"></span>Partial <span class="box"></span>Gap <span class="box"></span>N/A</div>
+            </div>
+            <ul>
+                <li>Marketed products have an ongoing stability programme described in a controlled procedure.</li>
+                <li>Stability OOS / OOT are handled under laboratory and deviation rules.</li>
+                <li>Stability conclusions feed PQR. Missing pulls are explained, not omitted.</li>
+            </ul>
+            <p class="map">QualiGxP: controlled procedures, laboratory events, PQR inputs. Chamber mapping and pull execution remain site operations.</p>
+            <div class="foot-fields"><div>Evidence / location</div><div>Owner</div><div>Due</div></div>
+            <div class="foot-fields"><div class="line"></div><div class="line"></div><div class="line"></div></div>
+        </article>
+
+        <article class="topic">
+            <div class="topic-head">
+                <h3><span class="ref">I.21</span> Retention Samples</h3>
+                <div class="status"><span class="box"></span>In place <span class="box"></span>Partial <span class="box"></span>Gap <span class="box"></span>N/A</div>
+            </div>
+            <ul>
+                <li>Quantity, storage conditions, identification, and retrieval are in a controlled procedure.</li>
+                <li>Reconciliation of retention samples can be shown for recent batches.</li>
+                <li>Use of a retention sample (complaint, investigation) is recorded and linked to the quality event.</li>
+            </ul>
+            <p class="map">QualiGxP: controlled procedures and quality-event linkage. Physical sample stores remain a site responsibility.</p>
+            <div class="foot-fields"><div>Evidence / location</div><div>Owner</div><div>Due</div></div>
+            <div class="foot-fields"><div class="line"></div><div class="line"></div><div class="line"></div></div>
+        </article>
+
+        <article class="topic">
+            <div class="topic-head">
+                <h3><span class="ref">I.22</span> Returns and Reprocessing</h3>
+                <div class="status"><span class="box"></span>In place <span class="box"></span>Partial <span class="box"></span>Gap <span class="box"></span>N/A</div>
+            </div>
+            <ul>
+                <li>Returned product has QA disposition (release, reject, reprocess) with a reason and signature.</li>
+                <li>Reprocessing or reworking runs only under change control or a justified deviation — not an undocumented line decision.</li>
+                <li>Returns appear in recall, complaint, and PQR inputs where relevant.</li>
+            </ul>
+            <p class="map">QualiGxP: product returns with QA disposition, linked to recall and complaints.</p>
+            <div class="foot-fields"><div>Evidence / location</div><div>Owner</div><div>Due</div></div>
+            <div class="foot-fields"><div class="line"></div><div class="line"></div><div class="line"></div></div>
+        </article>
+
+        <h2>Inspector pack — can you produce this without a late-night binder?</h2>
+        <div class="split">
+            <div class="panel">
+                <h3>Documents</h3>
+                <ul>
+                    <li><span class="box"></span> Effective SOP index and a sample of current masters</li>
+                    <li><span class="box"></span> Issued-copy register (who holds what)</li>
+                    <li><span class="box"></span> Signed Site Master File (current version)</li>
+                    <li><span class="box"></span> Training sample for one shop-floor role and one QA role</li>
+                </ul>
+            </div>
+            <div class="panel">
+                <h3>Quality system</h3>
+                <ul>
+                    <li><span class="box"></span> Open deviation, CAPA, and change-control counts</li>
+                    <li><span class="box"></span> Schedule M gap summary with clause status</li>
+                    <li><span class="box"></span> CSV project counts and release status</li>
+                    <li><span class="box"></span> Overdue calibration / critical findings</li>
+                </ul>
+            </div>
+        </div>
+        <p class="map" style="margin-top:8px">QualiGxP QMS can export an entitlement-gated inspector evidence pack (SOP sample, open-event counts, gap summary, CSV counts, training sample). Use it as a start; your site still owns Premises evidence and physical walkthroughs.</p>
+
+        <h2>After you score</h2>
+        <div class="panel">
+            <ul>
+                <li>Anything marked <strong>Gap</strong> needs an owner and a date before the next inspection window — not a promise to “update the SOP.”</li>
+                <li>Anything marked <strong>Partial</strong> usually means the procedure exists and the last three records do not. Fix the records first.</li>
+                <li>Start software with document control if issuance and obsolete copies are the finding. Add the quality-event workspace when CAPA and deviations live in spreadsheets.</li>
+            </ul>
+        </div>
+
+        <footer class="doc-foot">
+            QualiGxP is pharmaceutical DMS and QMS software for small and mid-size Indian plants.
+            Topic list I.1–I.22 is QualiGxP’s Part I gap-assessment checklist (key subjects, not official gazette wording).
+            This document does not certify Premises, Plant, HVAC, or Schedule M compliance.
+            Request information: <a href="https://qualigxp.com/contact.html">qualigxp.com/contact.html</a>
+            · Schedule M page: <a href="https://qualigxp.com/schedule-m.html">qualigxp.com/schedule-m.html</a>
+            · contact@qualigxp.com
+        </footer>
+    </div>
+</body>
+</html>
