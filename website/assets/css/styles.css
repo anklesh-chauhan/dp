@@ -356,6 +356,12 @@ textarea:focus-visible {
     color: var(--ink-soft);
 }
 
+.section-copy a,
+.card p a,
+.feature p a {
+    color: var(--amber-dark);
+}
+
 .band {
     background: color-mix(in srgb, var(--white) 72%, transparent);
     border-block: 1px solid var(--line);
@@ -860,6 +866,73 @@ textarea {
     padding: 1.5rem;
 }
 
+.note-card {
+    margin-top: 1.4rem;
+    padding: 1.1rem 1.25rem;
+    border: 1px solid var(--amber-line);
+    border-left: 3px solid var(--amber);
+    border-radius: 1rem;
+    background: color-mix(in srgb, var(--amber-soft) 70%, white);
+}
+
+.note-card p {
+    color: var(--ink-soft);
+    font-size: 0.95rem;
+}
+
+.pillars {
+    display: grid;
+    gap: 0.85rem;
+    margin-top: 1.5rem;
+}
+
+.pillar {
+    display: grid;
+    grid-template-columns: 2.6rem 1fr;
+    gap: 0.85rem;
+    align-items: start;
+    padding: 1.15rem 1.2rem;
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 1.1rem;
+}
+
+.pillar > span {
+    display: grid;
+    place-items: center;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 0.75rem;
+    background: var(--amber-soft);
+    color: var(--amber-deep);
+    font-size: 0.72rem;
+    font-weight: 800;
+}
+
+.pillar h3 {
+    margin: 0;
+    font-size: 1.08rem;
+}
+
+.pillar p {
+    margin-top: 0.35rem;
+    color: var(--ink-soft);
+    font-size: 0.95rem;
+}
+
+.fit-list {
+    display: grid;
+    gap: 0.9rem;
+    margin-top: 1.5rem;
+}
+
+.fit-list .feature {
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--line);
+    border-radius: 1rem;
+    background: var(--white);
+}
+
 @media (min-width: 760px) {
     .hero-grid,
     .split,
@@ -871,6 +944,12 @@ textarea {
     .cards.three,
     .stats {
         grid-template-columns: repeat(3, 1fr);
+    }
+
+    .cards.four,
+    .pillars,
+    .fit-list {
+        grid-template-columns: repeat(2, 1fr);
     }
 
     .mock-body {
@@ -899,30 +978,6 @@ textarea {
         box-shadow: var(--shadow);
     }
 
-    .nav-toggle {
-        display: none;
-    }
-
-    .site-nav {
-        display: flex;
-        align-items: center;
-        gap: 0.2rem;
-        position: static;
-        padding: 0;
-        border: 0;
-        background: transparent;
-        box-shadow: none;
-    }
-
-    .site-nav a {
-        padding: 0.45rem 0.75rem;
-    }
-
-    .site-nav .btn-primary {
-        margin-left: 0.4rem;
-        padding-inline: 1rem;
-    }
-
     .footer-grid {
         grid-template-columns: 1.2fr 1fr auto;
         align-items: center;
@@ -934,6 +989,35 @@ textarea {
         grid-template-columns: 0.9fr 1.1fr;
         align-items: center;
         gap: 3rem;
+    }
+
+    .cards.four {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .nav-toggle {
+        display: none;
+    }
+
+    .site-nav {
+        display: flex;
+        align-items: center;
+        gap: 0.1rem;
+        position: static;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        box-shadow: none;
+    }
+
+    .site-nav a {
+        padding: 0.45rem 0.6rem;
+        font-size: 0.9rem;
+    }
+
+    .site-nav .btn-primary {
+        margin-left: 0.35rem;
+        padding-inline: 0.95rem;
     }
 
     .container {

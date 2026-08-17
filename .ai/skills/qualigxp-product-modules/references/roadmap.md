@@ -264,6 +264,7 @@ Always verify these statements against the worktree before relying on them.
 24. **Schedule M — website and knowledge alignment — completed**
     Update website QMS/compliance copy and in-app guides to match only shipped Schedule M capabilities; retain intended-use disclaimer.
     - Completed: Updated `website/qms.html`, `website/compliance.html`, and `website/index.html` with Schedule M / CDSCO readiness copy limited to shipped QMS processes (no facility engineering claims); Phase 25 aligned copy to include calibration and preventive maintenance; seeded six QMS-owned knowledge guides (complaints, self-inspection, PQR, recall/returns, OOS, gap/SMF/inspector pack) via `KnowledgeGuideSeeder::seedQmsGuides()` from `QmsModuleSeeder`; refreshed AppGuide QMS tour wording; retained customer validated-intended-use and Premises/Plant responsibility disclaimers.
+    - Follow-up: Repositioned the public website for Indian small- and mid-size pharmaceutical plants (Schedule M first, SME fit, ordered PQS pillars including CSV, dormant-Phase-11 UIs, QRM, PQR, recall/returns, OOS, equipment/VMP, calibration, competency, gap/SMF/inspector packs, and readiness reporting). Added `website/schedule-m.html`.
 
 25. **Schedule M — programme release validation — completed**
     Empty-database migration replay; idempotent QMS seeders; extended security regression matrix; disabled-module route coverage; full Pest suite; Pint.
