@@ -7,6 +7,7 @@ namespace Database\Seeders;
 use App\Models\Department;
 use App\Models\Designation;
 use App\Models\User;
+use BezhanSalleh\FilamentShield\Support\Utils;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -170,6 +171,10 @@ class DmsModuleSeeder extends Seeder
         'View:KnowledgeGuide',
         'Create:KnowledgeGuide',
         'Update:KnowledgeGuide',
+        'ViewAny:KnowledgeLesson',
+        'View:KnowledgeLesson',
+        'Create:KnowledgeLesson',
+        'Update:KnowledgeLesson',
         'Delete:KnowledgeGuide',
         'DeleteAny:KnowledgeGuide',
         'ForceDelete:KnowledgeGuide',
@@ -400,7 +405,10 @@ class DmsModuleSeeder extends Seeder
                 'designation_id' => Designation::query()->where('code', $designationCode)->valueOrFail('id'),
             ])->save();
 
-            $user->syncRoles([$roleName]);
+            $user->syncRoles([
+                $roleName,
+                Role::findOrCreate(Utils::getPanelUserRoleName(), 'web')->name,
+            ]);
         }
     }
 }

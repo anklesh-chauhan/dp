@@ -68,10 +68,10 @@ final class EquipmentCalibrationTransitionService
             $occurredAt = now();
             $eventUuid = (string) Str::uuid();
             $signatureHash = $this->requiresSignature($toStatus)
-                ? $this->electronicSignatureHasher->hashFor(
+                ? $this->electronicSignatureHasher->issueFor(
+                    signer: $actor,
                     recordKey: $eventUuid,
                     meaning: $toStatus->value,
-                    signerId: $actor->getKey(),
                     signedAt: $occurredAt,
                     reason: $normalizedReason,
                     ipAddress: $ipAddress,
@@ -148,10 +148,10 @@ final class EquipmentCalibrationTransitionService
 
             $occurredAt = now();
             $eventUuid = (string) Str::uuid();
-            $signatureHash = $this->electronicSignatureHasher->hashFor(
+            $signatureHash = $this->electronicSignatureHasher->issueFor(
+                signer: $actor,
                 recordKey: $eventUuid,
                 meaning: 'verified',
-                signerId: $actor->getKey(),
                 signedAt: $occurredAt,
                 reason: $normalizedReason,
                 ipAddress: $ipAddress,

@@ -276,17 +276,17 @@ it('enforces QMS entitlement on competency filament resources', function (): voi
         ->and(UserCompetencyResource::shouldRegisterNavigation())->toBeFalse();
 });
 
-it('seeds inactive default gate curricula', function (): void {
+it('seeds active default gate curricula that fail open until required SOPs are linked', function (): void {
     $this->seed(QmsModuleSeeder::class);
 
     $executionGate = CompetencyCurriculum::query()->where('code', 'GMP_EXECUTION')->first();
     $changeGate = CompetencyCurriculum::query()->where('code', 'CHANGE_CONTROL_APPROVE')->first();
 
     expect($executionGate)->not->toBeNull()
-        ->and($executionGate->is_active)->toBeFalse()
+        ->and($executionGate->is_active)->toBeTrue()
         ->and($executionGate->gate_key)->toBe(CompetencyCurriculum::GATE_DOCUMENT_EXECUTION_QA)
         ->and($changeGate)->not->toBeNull()
-        ->and($changeGate->is_active)->toBeFalse()
+        ->and($changeGate->is_active)->toBeTrue()
         ->and($changeGate->gate_key)->toBe(CompetencyCurriculum::GATE_CHANGE_CONTROL_APPROVE);
 
     app(CompetencyGate::class)->assert($this->actor, CompetencyCurriculum::GATE_DOCUMENT_EXECUTION_QA);

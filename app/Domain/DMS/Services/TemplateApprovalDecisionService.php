@@ -6,7 +6,9 @@ namespace App\Domain\DMS\Services;
 
 use App\Domain\DMS\Enums\TemplateApprovalStatus;
 use App\Domain\Shared\Contracts\ElectronicSignatureHasher;
+use App\Domain\Shared\Contracts\ProvidesElectronicSignatureContent;
 use App\Domain\Shared\Enums\ApprovalDecisionCode;
+use App\Domain\Shared\Services\ElectronicSignatureContentDigester;
 use App\Domain\Shared\Services\WorkflowNotificationService;
 use App\Enums\ProductModule;
 use App\Exceptions\WorkflowException;
@@ -22,6 +24,7 @@ class TemplateApprovalDecisionService
     public function __construct(
         private readonly ModuleManager $moduleManager,
         private readonly ElectronicSignatureHasher $electronicSignatureHasher,
+        private readonly ElectronicSignatureContentDigester $contentDigester,
         private readonly WorkflowNotificationService $workflowNotifications,
     ) {}
 
@@ -58,14 +61,19 @@ class TemplateApprovalDecisionService
             $this->authorize($instance, $actor);
 
             $decidedAt = now();
-            $signatureHash = $this->electronicSignatureHasher->hashFor(
+            $version = $instance->templateVersion;
+            $contentDigest = $version instanceof ProvidesElectronicSignatureContent
+                ? $this->contentDigester->digest($version->electronicSignatureContentPayload())
+                : null;
+            $signatureHash = $this->electronicSignatureHasher->issueFor(
+                signer: $actor,
                 recordKey: $instance->instance_uuid,
                 meaning: $decision->value,
-                signerId: $actor->id,
                 signedAt: $decidedAt,
                 reason: $comments,
                 ipAddress: $ipAddress,
                 userAgent: $userAgent,
+                contentDigest: $contentDigest,
             );
 
             $instance->update([

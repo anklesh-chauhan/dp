@@ -6,13 +6,16 @@ namespace App\Models;
 
 use App\Domain\DMS\Enums\TemplateApprovalStatus;
 use App\Domain\Shared\Contracts\ElectronicSignatureRecord;
+use App\Domain\Shared\Contracts\HasSignatureContentDigest;
+use App\Domain\Shared\Contracts\ProvidesElectronicSignatureContent;
+use App\Domain\Shared\Services\ElectronicSignatureContentDigester;
 use Database\Factories\DocumentTemplateApprovalEventFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use LogicException;
 
-class DocumentTemplateApprovalEvent extends Model implements ElectronicSignatureRecord
+class DocumentTemplateApprovalEvent extends Model implements ElectronicSignatureRecord, HasSignatureContentDigest
 {
     /** @use HasFactory<DocumentTemplateApprovalEventFactory> */
     use HasFactory;
@@ -98,5 +101,28 @@ class DocumentTemplateApprovalEvent extends Model implements ElectronicSignature
     public function signatureUserAgent(): ?string
     {
         return $this->signature_user_agent;
+    }
+
+    public function signatureContentDigest(): ?string
+    {
+        if (blank($this->signature_hash)) {
+            return null;
+        }
+
+        $version = $this->templateVersion;
+
+        if (! $version instanceof DocumentTemplateVersion) {
+            return null;
+        }
+
+        return app(ElectronicSignatureContentDigester::class)->digest(
+            $version instanceof ProvidesElectronicSignatureContent
+                ? $version->electronicSignatureContentPayload()
+                : [
+                    'key' => $version->approvalSubjectKey(),
+                    'reference' => $version->approvalSubjectReference(),
+                    'title' => $version->approvalSubjectTitle(),
+                ],
+        );
     }
 }

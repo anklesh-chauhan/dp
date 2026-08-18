@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Domain\DMS\Enums\TemplateApprovalStatus;
 use App\Domain\Shared\Contracts\ApprovableSubject;
+use App\Domain\Shared\Contracts\ProvidesElectronicSignatureContent;
 use Database\Factories\DocumentTemplateVersionFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class DocumentTemplateVersion extends Model implements ApprovableSubject
+class DocumentTemplateVersion extends Model implements ApprovableSubject, ProvidesElectronicSignatureContent
 {
     /** @use HasFactory<DocumentTemplateVersionFactory> */
     use HasFactory, SoftDeletes;
@@ -115,6 +116,27 @@ class DocumentTemplateVersion extends Model implements ApprovableSubject
     public function approvalSubjectTitle(): string
     {
         return $this->template->name;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function electronicSignatureContentPayload(): array
+    {
+        return [
+            'template_version_id' => $this->getKey(),
+            'version' => $this->version,
+            'content_json' => $this->content_json,
+            'sections' => $this->sections()
+                ->orderBy('section_order')
+                ->get(['section_order', 'title', 'content'])
+                ->map(fn (DocumentTemplateSection $section): array => [
+                    'section_order' => $section->section_order,
+                    'title' => $section->title,
+                    'content' => $section->content,
+                ])
+                ->all(),
+        ];
     }
 
     public function approvalSubjectDepartmentId(): ?int

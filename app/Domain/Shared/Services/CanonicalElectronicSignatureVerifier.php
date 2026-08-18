@@ -7,6 +7,7 @@ namespace App\Domain\Shared\Services;
 use App\Domain\Shared\Contracts\ElectronicSignatureHasher;
 use App\Domain\Shared\Contracts\ElectronicSignatureRecord;
 use App\Domain\Shared\Contracts\ElectronicSignatureVerifier;
+use App\Domain\Shared\Contracts\HasSignatureContentDigest;
 
 class CanonicalElectronicSignatureVerifier implements ElectronicSignatureVerifier
 {
@@ -23,7 +24,30 @@ class CanonicalElectronicSignatureVerifier implements ElectronicSignatureVerifie
             return false;
         }
 
+        $contentDigest = $signature instanceof HasSignatureContentDigest
+            ? $signature->signatureContentDigest()
+            : null;
+
         $expectedHash = $this->electronicSignatureHasher->hashFor(
+            recordKey: $signature->signatureRecordKey(),
+            meaning: $meaning,
+            signerId: $signerId,
+            signedAt: $signedAt,
+            reason: $signature->signatureReason(),
+            ipAddress: $signature->signatureIpAddress(),
+            userAgent: $signature->signatureUserAgent(),
+            contentDigest: $contentDigest,
+        );
+
+        if (hash_equals($expectedHash, $storedHash)) {
+            return true;
+        }
+
+        if ($contentDigest === null) {
+            return false;
+        }
+
+        $legacyHash = $this->electronicSignatureHasher->hashFor(
             recordKey: $signature->signatureRecordKey(),
             meaning: $meaning,
             signerId: $signerId,
@@ -33,6 +57,6 @@ class CanonicalElectronicSignatureVerifier implements ElectronicSignatureVerifie
             userAgent: $signature->signatureUserAgent(),
         );
 
-        return hash_equals($expectedHash, $storedHash);
+        return hash_equals($legacyHash, $storedHash);
     }
 }

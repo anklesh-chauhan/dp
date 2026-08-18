@@ -2,13 +2,13 @@
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
 class UserPolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:User');
@@ -31,12 +31,12 @@ class UserPolicy
 
     public function delete(AuthUser $authUser): bool
     {
-        return $authUser->can('Delete:User');
+        return false;
     }
 
     public function deleteAny(AuthUser $authUser): bool
     {
-        return $authUser->can('DeleteAny:User');
+        return false;
     }
 
     public function restore(AuthUser $authUser): bool
@@ -46,12 +46,12 @@ class UserPolicy
 
     public function forceDelete(AuthUser $authUser): bool
     {
-        return $authUser->can('ForceDelete:User');
+        return false;
     }
 
     public function forceDeleteAny(AuthUser $authUser): bool
     {
-        return $authUser->can('ForceDeleteAny:User');
+        return false;
     }
 
     public function restoreAny(AuthUser $authUser): bool
@@ -108,5 +108,4 @@ class UserPolicy
     {
         return $authUser->can('Unarchive:User');
     }
-
 }

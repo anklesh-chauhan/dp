@@ -7,6 +7,7 @@ namespace App\Domain\Shared\Services;
 use App\Models\ControlledDocument;
 use App\Models\DocumentTemplate;
 use App\Models\SopAuditLog;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Request;
 
@@ -24,10 +25,17 @@ class AuditLogService
         ?ControlledDocument $document = null,
         ?DocumentTemplate $template = null,
     ): SopAuditLog {
+        $actorId = $userId ?? Auth::id();
+        $actor = $actorId !== null
+            ? User::query()->find($actorId)
+            : Auth::user();
+
         return SopAuditLog::query()->create([
             'document_id' => $document?->id,
             'document_template_id' => $template?->id ?? $document?->template_id,
-            'user_id' => $userId ?? Auth::id(),
+            'user_id' => $actorId,
+            'actor_name' => $actor?->name,
+            'actor_email' => $actor?->email,
             'action' => $action,
             'old_values' => $oldValues,
             'new_values' => $newValues,

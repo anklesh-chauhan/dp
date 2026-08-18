@@ -12,7 +12,9 @@ use App\Models\DocumentTemplateVersion;
 use App\Models\SopAuditLog;
 use App\Models\TemplateStatus;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 
 uses(RefreshDatabase::class);
 
@@ -53,9 +55,19 @@ it('preserves attributable SOP audit persistence', function (): void {
     expect($auditLog->document_id)->toBe($document->id)
         ->and($auditLog->document_template_id)->toBe($document->template_id)
         ->and($auditLog->user_id)->toBe($user->id)
+        ->and($auditLog->actor_name)->toBe($user->name)
+        ->and($auditLog->actor_email)->toBe($user->email)
         ->and($auditLog->action)->toBe(SopAuditLog::ACTION_UPDATED)
         ->and($auditLog->old_values)->toBe(['title' => 'Old title'])
         ->and($auditLog->new_values)->toBe(['title' => 'New title']);
+
+    expect(fn () => $auditLog->update(['action' => 'tampered']))
+        ->toThrow(LogicException::class)
+        ->and(fn () => $auditLog->delete())
+        ->toThrow(LogicException::class);
+
+    expect(fn () => DB::table('sop_audit_logs')->where('id', $auditLog->id)->update(['action' => 'tampered']))
+        ->toThrow(QueryException::class, 'append-only');
 });
 
 arch('Shared services are classes')

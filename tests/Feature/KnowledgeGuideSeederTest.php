@@ -77,6 +77,7 @@ it('seeds published QMS Schedule M knowledge guides with module ownership', func
         'qms-product-recall-and-returns',
         'qms-laboratory-oos',
         'qms-schedule-m-gap-assessment',
+        'qms-computerized-system-operations',
     ])
         ->and($guides->every(fn (KnowledgeGuide $guide): bool => $guide->product_module === ProductModule::QMS))->toBeTrue()
         ->and($guides->firstWhere('slug', 'qms-complaint-handling')?->title)->toBe('Complaint Handling')

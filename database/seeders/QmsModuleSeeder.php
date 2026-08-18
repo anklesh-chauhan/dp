@@ -223,6 +223,20 @@ class QmsModuleSeeder extends Seeder
         'Retire:SiteMasterFile',
         'Manage:SiteMasterFile',
         'Export:InspectorEvidencePack',
+        'ViewAny:ComputerizedSystemIncident',
+        'View:ComputerizedSystemIncident',
+        'Create:ComputerizedSystemIncident',
+        'Update:ComputerizedSystemIncident',
+        'Investigate:ComputerizedSystemIncident',
+        'Close:ComputerizedSystemIncident',
+        'Manage:ComputerizedSystemIncident',
+        'ViewAny:BatchRelease',
+        'View:BatchRelease',
+        'Create:BatchRelease',
+        'Update:BatchRelease',
+        'Review:BatchRelease',
+        'Release:BatchRelease',
+        'Manage:BatchRelease',
     ];
 
     public function run(): void

@@ -87,10 +87,10 @@ final class AuditFindingTransitionService
             }
 
             $signatureHash = $this->requiresSignature($toDisposition, $fromDisposition)
-                ? $this->electronicSignatureHasher->hashFor(
+                ? $this->electronicSignatureHasher->issueFor(
+                    signer: $actor,
                     recordKey: $eventUuid,
                     meaning: $toDisposition->value,
-                    signerId: $actor->getKey(),
                     signedAt: $occurredAt,
                     reason: $normalizedReason,
                     ipAddress: $ipAddress,

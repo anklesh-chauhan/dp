@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\QMS\Services;
 
 use App\Domain\QMS\Models\CompetencyCurriculum;
+use App\Domain\QMS\Models\CompetencyCurriculumItem;
 use App\Domain\Shared\Contracts\CompetencyActionGate;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -32,6 +33,16 @@ final class CompetencyGate implements CompetencyActionGate
         }
 
         foreach ($curricula as $curriculum) {
+            $curriculum->loadMissing('items');
+
+            $hasRequiredItems = $curriculum->items->contains(
+                fn (CompetencyCurriculumItem $item): bool => $item->is_required,
+            );
+
+            if (! $hasRequiredItems) {
+                continue;
+            }
+
             $this->competencyService->assertCompetent($user, $curriculum);
         }
     }

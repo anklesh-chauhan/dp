@@ -8,6 +8,7 @@ use App\Concerns\Lockable;
 use App\Domain\DMS\Contracts\ControlledDocument as ControlledDocumentContract;
 use App\Domain\QMS\Models\QualityAttachment;
 use App\Domain\Shared\Contracts\ApprovableSubject;
+use App\Domain\Shared\Contracts\ProvidesElectronicSignatureContent;
 use App\Domain\Shared\Services\CurrentPendingApprovalStepResolver;
 use App\Domain\Shared\Support\PendingApprovalStep;
 use Database\Factories\ControlledDocumentFactory;
@@ -22,7 +23,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
-class ControlledDocument extends Model implements ApprovableSubject, ControlledDocumentContract
+class ControlledDocument extends Model implements ApprovableSubject, ControlledDocumentContract, ProvidesElectronicSignatureContent
 {
     /** @use HasFactory<ControlledDocumentFactory> */
     use HasFactory, Lockable, SoftDeletes;
@@ -124,6 +125,27 @@ class ControlledDocument extends Model implements ApprovableSubject, ControlledD
     public function approvalSubjectOwnerId(): ?int
     {
         return $this->owner_id === null ? null : (int) $this->owner_id;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function electronicSignatureContentPayload(): array
+    {
+        return [
+            'document_id' => $this->getKey(),
+            'version' => $this->version,
+            'title' => $this->title,
+            'sections' => $this->sections()
+                ->orderBy('section_order')
+                ->get(['section_order', 'title', 'content'])
+                ->map(fn (ControlledDocumentSection $section): array => [
+                    'section_order' => $section->section_order,
+                    'title' => $section->title,
+                    'content' => $section->content,
+                ])
+                ->all(),
+        ];
     }
 
     public function isEditable(): bool

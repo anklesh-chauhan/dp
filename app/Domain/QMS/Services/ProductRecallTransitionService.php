@@ -66,10 +66,10 @@ final class ProductRecallTransitionService
             $occurredAt = now();
             $eventUuid = (string) Str::uuid();
             $signatureHash = $this->requiresSignature($toStatus)
-                ? $this->electronicSignatureHasher->hashFor(
+                ? $this->electronicSignatureHasher->issueFor(
+                    signer: $actor,
                     recordKey: $eventUuid,
                     meaning: $toStatus->value,
-                    signerId: $actor->getKey(),
                     signedAt: $occurredAt,
                     reason: $normalizedReason,
                     ipAddress: $ipAddress,

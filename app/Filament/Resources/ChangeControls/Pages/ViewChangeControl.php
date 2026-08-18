@@ -10,6 +10,7 @@ use App\Domain\Reporting\Enums\ReportFormat;
 use App\Domain\Reporting\Enums\ReportScope;
 use App\Filament\Resources\ChangeControls\ChangeControlResource;
 use App\Filament\Support\ApprovalNarrativeTextarea;
+use App\Filament\Support\CaptureKnowledgeLessonAction;
 use App\Models\ReportTemplate;
 use App\Models\User;
 use Filament\Actions\Action;
@@ -17,6 +18,7 @@ use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
+use Illuminate\Database\Eloquent\Model;
 
 final class ViewChangeControl extends ViewRecord
 {
@@ -134,6 +136,7 @@ final class ViewChangeControl extends ViewRecord
                 'Close:ChangeControl',
                 'success',
             ),
+            CaptureKnowledgeLessonAction::make(fn (): Model => $this->record),
         ];
     }
 

@@ -9,6 +9,7 @@ use App\Domain\Shared\Contracts\ApprovalDecisionOutcome;
 use App\Domain\Shared\Contracts\ApprovalDecisionPersistence;
 use App\Domain\Shared\Contracts\ApprovalInstance;
 use App\Domain\Shared\Contracts\ElectronicSignatureHasher;
+use App\Domain\Shared\Contracts\ProvidesElectronicSignatureContent;
 use App\Domain\Shared\Contracts\WorkflowDecisionNotifier;
 use App\Domain\Shared\Enums\ApprovalDecisionCode;
 use App\Models\User;
@@ -22,6 +23,7 @@ class ApprovalDecisionService
         private readonly ApprovalDecisionOutcome $approvalDecisionOutcome,
         private readonly ApprovalDecisionPersistence $approvalDecisionPersistence,
         private readonly ElectronicSignatureHasher $electronicSignatureHasher,
+        private readonly ElectronicSignatureContentDigester $contentDigester,
         private readonly Request $request,
         private readonly WorkflowDecisionNotifier $workflowNotifications,
     ) {}
@@ -61,14 +63,19 @@ class ApprovalDecisionService
         $decidedAt = now();
         $signatureIpAddress = $this->request->ip();
         $signatureUserAgent = $this->request->userAgent();
-        $signatureHash = $this->electronicSignatureHasher->hashFor(
+        $subject = $approval->approvalInstanceSubject();
+        $contentDigest = $subject instanceof ProvidesElectronicSignatureContent
+            ? $this->contentDigester->digest($subject->electronicSignatureContentPayload())
+            : null;
+        $signatureHash = $this->electronicSignatureHasher->issueFor(
+            signer: $approver,
             recordKey: $approval->approvalInstanceKey(),
             meaning: $decisionCode->value,
-            signerId: $approver->id,
             signedAt: $decidedAt,
             reason: $comments,
             ipAddress: $signatureIpAddress,
             userAgent: $signatureUserAgent,
+            contentDigest: $contentDigest,
         );
 
         return DB::transaction(function () use ($approval, $approver, $decisionCode, $comments, $decidedAt, $signatureHash, $signatureIpAddress, $signatureUserAgent): ApprovalInstance {

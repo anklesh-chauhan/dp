@@ -2,8 +2,12 @@
 
 namespace App\Providers\Filament;
 
+use App\Http\Middleware\EnsureGxpAccountIsActive;
+use App\Http\Middleware\ForcePasswordChange;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Actions\Action;
+use Filament\Auth\MultiFactor\App\AppAuthentication;
+use Filament\Auth\Pages\EditProfile;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -33,6 +37,11 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->profile(EditProfile::class)
+            ->multiFactorAuthentication(
+                AppAuthentication::make()->recoverable(),
+                isRequired: fn (): bool => (bool) config('gxp.mfa_required'),
+            )
             ->databaseNotifications()
             ->brandName(config('app.name'))
             ->viteTheme('resources/css/filament/admin/theme.css')
@@ -69,6 +78,8 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+                EnsureGxpAccountIsActive::class,
+                ForcePasswordChange::class,
             ])
             ->plugins([
                 FilamentShieldPlugin::make()->navigationGroup('Core · Identity & Access'),

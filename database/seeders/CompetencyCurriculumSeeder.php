@@ -16,10 +16,10 @@ final class CompetencyCurriculumSeeder extends Seeder
             [
                 'name' => 'GMP document execution QA',
                 'role_name' => 'QA Approver',
-                'description' => 'Competency required before QA approval of document executions. Inactive by default — activate after linking required SOPs.',
+                'description' => 'Competency required before QA approval of document executions. Active by default; the gate remains fail-open until required SOPs are linked.',
                 'requalification_months' => 12,
                 'gate_key' => CompetencyCurriculum::GATE_DOCUMENT_EXECUTION_QA,
-                'is_active' => false,
+                'is_active' => true,
             ],
         );
 
@@ -28,10 +28,10 @@ final class CompetencyCurriculumSeeder extends Seeder
             [
                 'name' => 'Change control approval',
                 'role_name' => 'Change Control Approver',
-                'description' => 'Competency required before approving change controls. Inactive by default — activate after linking required SOPs.',
+                'description' => 'Competency required before approving change controls. Active by default; the gate remains fail-open until required SOPs are linked.',
                 'requalification_months' => 12,
                 'gate_key' => CompetencyCurriculum::GATE_CHANGE_CONTROL_APPROVE,
-                'is_active' => false,
+                'is_active' => true,
             ],
         );
     }

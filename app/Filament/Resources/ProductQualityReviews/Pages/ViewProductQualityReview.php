@@ -8,12 +8,14 @@ use App\Domain\QMS\Enums\ProductQualityReviewStatus;
 use App\Domain\QMS\Services\ProductQualityReviewTransitionService;
 use App\Filament\Resources\ProductQualityReviews\ProductQualityReviewResource;
 use App\Filament\Support\ApprovalNarrativeTextarea;
+use App\Filament\Support\CaptureKnowledgeLessonAction;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
+use Illuminate\Database\Eloquent\Model;
 
 final class ViewProductQualityReview extends ViewRecord
 {
@@ -23,6 +25,7 @@ final class ViewProductQualityReview extends ViewRecord
     {
         return [
             EditAction::make()->visible(fn (): bool => ProductQualityReviewResource::canEdit($this->record)),
+            CaptureKnowledgeLessonAction::make(fn (): Model => $this->record),
             $this->transitionAction(
                 'begin',
                 'Begin Review',

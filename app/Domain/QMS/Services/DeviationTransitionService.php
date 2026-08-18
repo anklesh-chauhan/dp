@@ -104,10 +104,10 @@ final class DeviationTransitionService
             $eventUuid = (string) Str::uuid();
             $normalizedReason = filled($reason) ? trim((string) $reason) : null;
             $signatureHash = $this->requiresSignature($toStatus)
-                ? $this->electronicSignatureHasher->hashFor(
+                ? $this->electronicSignatureHasher->issueFor(
+                    signer: $actor,
                     recordKey: $eventUuid,
                     meaning: $toStatus->value,
-                    signerId: $actor->getKey(),
                     signedAt: $occurredAt,
                     reason: $normalizedReason,
                     ipAddress: $ipAddress,

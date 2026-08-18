@@ -83,10 +83,10 @@ final class CsvValidationProjectService
             $eventUuid = (string) Str::uuid();
             $normalizedReason = trim($reason);
             $signatureHash = $this->requiresSignature($toStatus)
-                ? $this->electronicSignatureHasher->hashFor(
+                ? $this->electronicSignatureHasher->issueFor(
+                    signer: $actor,
                     recordKey: $eventUuid,
                     meaning: $toStatus->value,
-                    signerId: $actor->getKey(),
                     signedAt: $occurredAt,
                     reason: $normalizedReason,
                     ipAddress: $ipAddress,

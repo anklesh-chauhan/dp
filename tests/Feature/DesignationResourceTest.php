@@ -85,7 +85,7 @@ it('assigns a designation when creating a user', function (): void {
         ->fillForm([
             'name' => 'Jane Chemist',
             'email' => 'jane.chemist@example.com',
-            'password' => 'password',
+            'password' => 'Temporary12!x',
             'designation_id' => $designation->id,
             'roles' => [$role->id],
         ])
@@ -118,7 +118,6 @@ it('updates a user designation', function (): void {
             'email' => $user->email,
             'designation_id' => $designation->id,
             'roles' => [$role->id],
-            'password' => 'password',
         ])
         ->call('save')
         ->assertHasNoFormErrors()

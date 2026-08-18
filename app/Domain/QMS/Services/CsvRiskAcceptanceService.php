@@ -64,10 +64,10 @@ final class CsvRiskAcceptanceService
             $occurredAt = now();
             $decisionUuid = (string) Str::uuid();
             $normalizedReason = trim($reason);
-            $signatureHash = $this->electronicSignatureHasher->hashFor(
+            $signatureHash = $this->electronicSignatureHasher->issueFor(
+                signer: $actor,
                 recordKey: $decisionUuid,
                 meaning: 'accepted',
-                signerId: $actor->getKey(),
                 signedAt: $occurredAt,
                 reason: $normalizedReason,
                 ipAddress: $ipAddress,

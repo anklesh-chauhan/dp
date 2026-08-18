@@ -81,10 +81,10 @@ final class CsvTestExecutionReviewService
             $normalizedReason = trim($reason);
             $fromState = $record->result?->value;
             $toState = 'reviewed';
-            $signatureHash = $this->electronicSignatureHasher->hashFor(
+            $signatureHash = $this->electronicSignatureHasher->issueFor(
+                signer: $actor,
                 recordKey: $decisionUuid,
                 meaning: 'reviewed',
-                signerId: $actor->getKey(),
                 signedAt: $occurredAt,
                 reason: $normalizedReason,
                 ipAddress: $ipAddress,

@@ -8,12 +8,14 @@ use App\Domain\QMS\Enums\CapaStatus;
 use App\Domain\QMS\Services\CapaTransitionService;
 use App\Filament\Resources\Capas\CapaResource;
 use App\Filament\Support\ApprovalNarrativeTextarea;
+use App\Filament\Support\CaptureKnowledgeLessonAction;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
+use Illuminate\Database\Eloquent\Model;
 
 final class ViewCapa extends ViewRecord
 {
@@ -30,6 +32,7 @@ final class ViewCapa extends ViewRecord
             $this->transitionAction('markIneffective', 'Mark Ineffective', CapaStatus::Ineffective, [CapaStatus::PendingEffectiveness], 'VerifyEffectiveness:Capa', 'danger', true),
             $this->transitionAction('close', 'Close', CapaStatus::Closed, [CapaStatus::Effective], 'Close:Capa', 'success'),
             $this->transitionAction('cancel', 'Cancel', CapaStatus::Cancelled, [CapaStatus::Draft, CapaStatus::Planned, CapaStatus::InProgress, CapaStatus::PendingEffectiveness, CapaStatus::Ineffective], 'Manage:Capa', 'danger'),
+            CaptureKnowledgeLessonAction::make(fn (): Model => $this->record),
         ];
     }
 

@@ -32,6 +32,43 @@ it('hashes canonical electronic signature metadata deterministically', function 
         ))->toBe($hash);
 });
 
+it('includes an optional content digest in the canonical signature hash', function (): void {
+    $hasher = new Sha256ElectronicSignatureHasher;
+    $signedAt = new DateTimeImmutable('2026-07-25T05:00:00Z');
+    $withoutDigest = $hasher->hashFor(
+        recordKey: 42,
+        meaning: 'approved',
+        signerId: 21,
+        signedAt: $signedAt,
+        reason: 'Reviewed and approved.',
+        ipAddress: '203.0.113.42',
+        userAgent: 'QualiGxP Signature Test',
+    );
+    $withDigest = $hasher->hashFor(
+        recordKey: 42,
+        meaning: 'approved',
+        signerId: 21,
+        signedAt: $signedAt,
+        reason: 'Reviewed and approved.',
+        ipAddress: '203.0.113.42',
+        userAgent: 'QualiGxP Signature Test',
+        contentDigest: hash('sha256', 'section-payload'),
+    );
+
+    expect($withDigest)
+        ->not->toBe($withoutDigest)
+        ->and($hasher->hashFor(
+            recordKey: 42,
+            meaning: 'approved',
+            signerId: 21,
+            signedAt: $signedAt,
+            reason: 'Reviewed and approved.',
+            ipAddress: '203.0.113.42',
+            userAgent: 'QualiGxP Signature Test',
+            contentDigest: hash('sha256', 'section-payload-changed'),
+        ))->not->toBe($withDigest);
+});
+
 it('changes the signature hash when attributable metadata changes', function (
     string $meaning,
     int $signerId,

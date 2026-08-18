@@ -2,8 +2,9 @@
 
 namespace App\Filament\Resources\Users\Pages;
 
+use App\Domain\Shared\Services\UserAccessService;
 use App\Filament\Resources\Users\UserResource;
-use Filament\Actions\DeleteAction;
+use App\Models\User;
 use Filament\Actions\ViewAction;
 use Filament\Resources\Pages\EditRecord;
 
@@ -15,7 +16,20 @@ class EditUser extends EditRecord
     {
         return [
             ViewAction::make(),
-            DeleteAction::make(),
         ];
+    }
+
+    protected function afterSave(): void
+    {
+        $actor = auth()->user();
+        $record = $this->record;
+
+        if ($actor instanceof User && $record instanceof User) {
+            app(UserAccessService::class)->recordRoleChange(
+                $actor,
+                $record,
+                $record->roles()->pluck('name')->all(),
+            );
+        }
     }
 }

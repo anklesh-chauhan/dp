@@ -6,15 +6,27 @@ use App\Filament\Support\ApprovalNarrativeTextarea;
 use App\Services\AI\Enums\ApprovalNarrativeKind;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Group;
 
 it('adds create polish and shorten hint actions when ai is enabled', function (): void {
     config()->set('modules.enabled', ['dms', 'ai']);
 
-    $field = ApprovalNarrativeTextarea::decisionRationale();
+    $group = ApprovalNarrativeTextarea::decisionRationale();
+    $children = $group->getDefaultChildComponents();
+    $field = collect($children)->first(
+        fn (mixed $component): bool => $component instanceof Textarea,
+    );
+    $password = collect($children)->first(
+        fn (mixed $component): bool => $component instanceof TextInput,
+    );
 
-    expect($field)->toBeInstanceOf(Textarea::class)
+    expect($group)->toBeInstanceOf(Group::class)
+        ->and($field)->toBeInstanceOf(Textarea::class)
         ->and($field->getLabel())->toBe('Decision rationale')
-        ->and($field->isRequired())->toBeTrue();
+        ->and($field->isRequired())->toBeTrue()
+        ->and($password)->toBeInstanceOf(TextInput::class)
+        ->and($password->getName())->toBe('signature_password');
 
     $actions = $field->getHintActions();
 

@@ -34,6 +34,7 @@ use App\Domain\Shared\Contracts\ElectronicSignatureVerifier;
 use App\Domain\Shared\Contracts\TrainingCompetencyRefresher;
 use App\Domain\Shared\Contracts\WorkflowDecisionNotifier;
 use App\Domain\Shared\Services\CanonicalElectronicSignatureVerifier;
+use App\Domain\Shared\Services\ElectronicSignatureAuthenticator;
 use App\Domain\Shared\Services\NullCalibrationReadinessGate;
 use App\Domain\Shared\Services\NullCompetencyActionGate;
 use App\Domain\Shared\Services\NullTrainingCompetencyRefresher;
@@ -41,6 +42,7 @@ use App\Domain\Shared\Services\Sha256ContentIntegrityHasher;
 use App\Domain\Shared\Services\Sha256ElectronicSignatureHasher;
 use App\Domain\Shared\Services\WorkflowNotificationService;
 use App\Enums\ProductModule;
+use App\Listeners\ConfirmElectronicSignatureFromAction;
 use App\Models\DocumentType;
 use App\Observers\DocumentTypeObserver;
 use App\Support\Formatting\DateFormatSettings;
@@ -61,11 +63,13 @@ use App\Support\Modules\ValidatedSignedLicenseActivator;
 use App\Support\Modules\VerifiedLicenseLifecycleEvaluator;
 use App\Support\Modules\VerifiedProductLicenseStateResolver;
 use App\Support\Sop\VariableTypes\VariableTypeRegistry;
+use Filament\Actions\Events\ActionCalling;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use InvalidArgumentException;
 
@@ -120,6 +124,7 @@ class AppServiceProvider extends ServiceProvider
             ->give(QualityWorkflowNotificationService::class);
         $this->app->bind(ElectronicSignatureHasher::class, Sha256ElectronicSignatureHasher::class);
         $this->app->bind(ElectronicSignatureVerifier::class, CanonicalElectronicSignatureVerifier::class);
+        $this->app->singleton(ElectronicSignatureAuthenticator::class);
         $this->app->bind(ContentIntegrityHasher::class, Sha256ContentIntegrityHasher::class);
         $this->app->bind(SignedLicenseVerifier::class, OpenSslSignedLicenseVerifier::class);
         $this->app->bind(SignedLicenseActivator::class, ValidatedSignedLicenseActivator::class);
@@ -149,6 +154,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         DocumentType::observe(DocumentTypeObserver::class);
+
+        Event::listen(ActionCalling::class, ConfirmElectronicSignatureFromAction::class);
 
         $this->configureFilamentDateFormats();
     }

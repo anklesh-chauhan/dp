@@ -54,10 +54,10 @@ final class CsvTestCaseApprovalService
             $normalizedReason = trim($reason);
             $fromState = $record->status->value;
             $toState = CsvRequirementStatus::Approved->value;
-            $signatureHash = $this->electronicSignatureHasher->hashFor(
+            $signatureHash = $this->electronicSignatureHasher->issueFor(
+                signer: $actor,
                 recordKey: $decisionUuid,
                 meaning: 'approved',
-                signerId: $actor->getKey(),
                 signedAt: $occurredAt,
                 reason: $normalizedReason,
                 ipAddress: $ipAddress,

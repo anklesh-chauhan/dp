@@ -274,6 +274,7 @@ it('retains the existing DMS action return type for Filament callers', function 
         reason: 'Approved through the DMS action.',
         ipAddress: '203.0.113.42',
         userAgent: 'QualiGxP Signature Test',
+        contentDigest: $result->signatureContentDigest(),
     );
 
     expect($result)->toBe($this->approval)
@@ -305,6 +306,7 @@ it('canonically signs rejected and returned decisions through existing DMS actio
         reason: $reason,
         ipAddress: '203.0.113.43',
         userAgent: 'QualiGxP Terminal Signature Test',
+        contentDigest: $result->signatureContentDigest(),
     );
 
     expect($result)->toBe($this->approval)

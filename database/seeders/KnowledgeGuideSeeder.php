@@ -103,6 +103,13 @@ class KnowledgeGuideSeeder extends Seeder
             'title' => 'Schedule M Gap Assessment',
             'summary' => 'Run Part I clause gap assessments, maintain Site Master Files, and export entitlement-gated inspector evidence packs.',
         ],
+        [
+            'slug' => 'qms-computerized-system-operations',
+            'file' => 'qms-computerized-system-operations.md',
+            'sort_order' => 107,
+            'title' => 'Computerized System Operations',
+            'summary' => 'Annex 11 operational controls: backup, clock sync, TLS, disaster recovery, IT incidents, idle timeout, and optional MFA.',
+        ],
     ];
 
     public function run(): void

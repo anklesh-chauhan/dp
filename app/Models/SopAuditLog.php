@@ -6,6 +6,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use LogicException;
 
 class SopAuditLog extends Model
 {
@@ -87,10 +88,18 @@ class SopAuditLog extends Model
 
     public $timestamps = true;
 
+    protected static function booted(): void
+    {
+        self::updating(fn () => throw new LogicException('SOP audit logs are append-only.'));
+        self::deleting(fn () => throw new LogicException('SOP audit logs are append-only.'));
+    }
+
     protected $fillable = [
         'document_id',
         'document_template_id',
         'user_id',
+        'actor_name',
+        'actor_email',
         'action',
         'old_values',
         'new_values',

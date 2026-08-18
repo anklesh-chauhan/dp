@@ -30,6 +30,10 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            'identity_uuid' => (string) Str::uuid(),
+            'password_changed_at' => now(),
+            'must_change_password' => false,
+            'failed_login_attempts' => 0,
         ];
     }
 
@@ -41,5 +45,22 @@ class UserFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
         ]);
+    }
+
+    public function deactivated(): static
+    {
+        return $this->afterCreating(function (User $user): void {
+            $user->forceFill(['deactivated_at' => now()])->save();
+        });
+    }
+
+    public function locked(): static
+    {
+        return $this->afterCreating(function (User $user): void {
+            $user->forceFill([
+                'locked_at' => now(),
+                'failed_login_attempts' => (int) config('gxp.lockout_attempts', 5),
+            ])->save();
+        });
     }
 }

@@ -1,6 +1,8 @@
 <?php
 
 declare(strict_types=1);
+use App\Filament\Resources\ControlledDocuments\ControlledDocumentResource;
+use App\Filament\Resources\DocumentIssuances\DocumentIssuanceResource;
 use BezhanSalleh\FilamentShield\Resources\Roles\RoleResource;
 use Filament\Pages\Dashboard;
 use Filament\Widgets\AccountWidget;
@@ -120,12 +122,17 @@ return [
     | When merge is enabled, the methods below will be combined with any
     | resource-specific methods you define in the resources section.
     |
+    | Policy file generation is disabled. `php artisan shield:generate --all`
+    | overwrites custom authorization (effective-document lock, assignTraining,
+    | issuance access, user deactivation instead of delete). Generate permissions
+    | only, or pass `--ignore-existing-policies` if you re-enable generation.
+    |
     */
 
     'policies' => [
         'path' => app_path('Policies'),
         'merge' => true,
-        'generate' => true,
+        'generate' => false,
         'methods' => [
             'viewAny', 'view', 'create', 'update', 'delete', 'deleteAny', 'restore',
             'forceDelete', 'forceDeleteAny', 'restoreAny', 'replicate', 'reorder', 'approve',
@@ -178,6 +185,19 @@ return [
                 'create',
                 'update',
                 'delete',
+            ],
+            ControlledDocumentResource::class => [
+                'viewAny', 'view', 'create', 'update', 'delete', 'deleteAny', 'restore',
+                'forceDelete', 'forceDeleteAny', 'restoreAny', 'replicate', 'reorder', 'approve',
+                'submit', 'review', 'publish', 'unpublish', 'revise', 'archive', 'unarchive',
+                'assignTraining',
+                'makeEffective',
+            ],
+            DocumentIssuanceResource::class => [
+                'viewAny', 'view', 'create', 'update', 'delete', 'deleteAny', 'restore',
+                'forceDelete', 'forceDeleteAny', 'restoreAny', 'replicate', 'reorder', 'approve',
+                'submit', 'review', 'publish', 'unpublish', 'revise', 'archive', 'unarchive',
+                'recall',
             ],
         ],
         'exclude' => [

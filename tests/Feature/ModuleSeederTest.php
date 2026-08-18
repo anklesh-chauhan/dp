@@ -10,7 +10,9 @@ use Database\Seeders\CoreModuleSeeder;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\DmsModuleSeeder;
 use Database\Seeders\QmsModuleSeeder;
+use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
@@ -71,6 +73,24 @@ it('seeds only core and DMS permissions for a DMS installation', function (): vo
         ->toBeTrue()
         ->and(User::query()->where('email', 'ProductionSupervisor@example.com')->firstOrFail()->hasRole('production supervisor'))
         ->toBeTrue();
+});
+
+it('lets the local bootstrap administrator and demo users access the Filament panel', function (): void {
+    config()->set('modules.enabled', ['dms']);
+
+    $this->seed(DatabaseSeeder::class);
+
+    $panel = Filament::getPanel('admin');
+    $admin = User::query()->where('email', 'admin@example.com')->firstOrFail();
+    $maker = User::query()->where('email', 'Maker@example.com')->firstOrFail();
+
+    expect($admin->hasRole('super_admin'))->toBeTrue()
+        ->and($admin->hasRole('sop administrator'))->toBeTrue()
+        ->and($admin->hasRole('panel_user'))->toBeTrue()
+        ->and(Hash::check('password', $admin->password))->toBeTrue()
+        ->and($admin->canAccessPanel($panel))->toBeTrue()
+        ->and($maker->hasRole('panel_user'))->toBeTrue()
+        ->and($maker->canAccessPanel($panel))->toBeTrue();
 });
 
 it('assigns QA department and demo designations to distinct DMS users', function (): void {

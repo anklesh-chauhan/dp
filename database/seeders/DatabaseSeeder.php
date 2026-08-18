@@ -6,8 +6,10 @@ use App\Enums\ProductModule;
 use App\Models\SopRole;
 use App\Models\User;
 use App\Support\Modules\ModuleManager;
+use BezhanSalleh\FilamentShield\Support\Utils;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 
 class DatabaseSeeder extends Seeder
@@ -38,11 +40,21 @@ class DatabaseSeeder extends Seeder
         }
 
         if (app()->environment(['local', 'testing'])) {
-            $user = User::firstOrCreate(['email' => 'admin@example.com'], ['name' => 'Super Admin', 'password' => bcrypt('password')]);
+            $user = User::firstOrCreate(
+                ['email' => 'admin@example.com'],
+                ['name' => 'Super Admin', 'password' => 'password'],
+            );
+
+            $roles = [
+                Role::findOrCreate(Utils::getSuperAdminName(), 'web')->name,
+                Role::findOrCreate(Utils::getPanelUserRoleName(), 'web')->name,
+            ];
 
             if ($moduleManager->enabled(ProductModule::DMS)) {
-                $user->assignRole(SopRole::ADMINISTRATOR);
+                $roles[] = SopRole::ADMINISTRATOR;
             }
+
+            $user->syncRoles($roles);
         }
     }
 }

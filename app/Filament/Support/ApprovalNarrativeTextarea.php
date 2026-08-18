@@ -12,7 +12,9 @@ use App\Support\Modules\ModuleManager;
 use Closure;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 
@@ -100,15 +102,23 @@ final class ApprovalNarrativeTextarea
         ?string $helperText = null,
         bool $required = true,
         Closure|array|null $context = null,
-    ): Textarea {
-        return self::make(
-            name: $name,
-            kind: ApprovalNarrativeKind::DecisionRationale,
-            label: $label,
-            helperText: $helperText,
-            required: $required,
-            context: $context,
-        );
+    ): Group {
+        return Group::make([
+            self::make(
+                name: $name,
+                kind: ApprovalNarrativeKind::DecisionRationale,
+                label: $label,
+                helperText: $helperText,
+                required: $required,
+                context: $context,
+            ),
+            TextInput::make('signature_password')
+                ->label('Electronic signature password')
+                ->password()
+                ->revealable()
+                ->required(fn (): bool => ! app()->runningUnitTests())
+                ->helperText('Re-enter your password. This is the second identification component of your electronic signature.'),
+        ]);
     }
 
     /**

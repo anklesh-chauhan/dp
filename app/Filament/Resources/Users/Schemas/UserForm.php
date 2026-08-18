@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Users\Schemas;
 
-use Filament\Forms\Components\DateTimePicker;
+use App\Domain\Shared\Support\PasswordRules;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
@@ -18,7 +18,8 @@ class UserForm
                 TextInput::make('email')
                     ->label('Email address')
                     ->email()
-                    ->required(),
+                    ->required()
+                    ->unique(ignoreRecord: true),
                 Select::make('department_id')
                     ->label('Department')
                     ->relationship('department', 'name')
@@ -34,10 +35,13 @@ class UserForm
                     ->multiple()
                     ->preload()
                     ->required(),
-                DateTimePicker::make('email_verified_at'),
                 TextInput::make('password')
                     ->password()
-                    ->required(),
+                    ->revealable()
+                    ->required()
+                    ->rule(PasswordRules::required())
+                    ->visibleOn('create')
+                    ->helperText('Minimum 12 characters with mixed case, a number, and a symbol. The user must keep this password confidential.'),
             ]);
     }
 }

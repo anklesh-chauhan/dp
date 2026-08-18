@@ -8,6 +8,9 @@ use App\Domain\Shared\Contracts\ApprovableSubject;
 use App\Domain\Shared\Contracts\ApprovalDecisionAuthorization;
 use App\Domain\Shared\Contracts\ApprovalInstance;
 use App\Domain\Shared\Contracts\ApprovalWorkflowStepDefinition;
+use App\Domain\Shared\Contracts\HasSignatureContentDigest;
+use App\Domain\Shared\Contracts\ProvidesElectronicSignatureContent;
+use App\Domain\Shared\Services\ElectronicSignatureContentDigester;
 use Database\Factories\SopApprovalFactory;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
@@ -15,7 +18,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class SopApproval extends Model implements ApprovalInstance
+class SopApproval extends Model implements ApprovalInstance, HasSignatureContentDigest
 {
     /** @use HasFactory<SopApprovalFactory> */
     use HasFactory;
@@ -119,6 +122,25 @@ class SopApproval extends Model implements ApprovalInstance
     public function signatureUserAgent(): ?string
     {
         return $this->signature_user_agent;
+    }
+
+    public function signatureContentDigest(): ?string
+    {
+        if (blank($this->signature_hash)) {
+            return null;
+        }
+
+        $subject = $this->approvalInstanceSubject();
+
+        return app(ElectronicSignatureContentDigester::class)->digest(
+            $subject instanceof ProvidesElectronicSignatureContent
+                ? $subject->electronicSignatureContentPayload()
+                : [
+                    'key' => $subject->approvalSubjectKey(),
+                    'reference' => $subject->approvalSubjectReference(),
+                    'title' => $subject->approvalSubjectTitle(),
+                ],
+        );
     }
 
     /**
