@@ -3,6 +3,7 @@
 declare(strict_types=1);
 use App\Filament\Resources\ControlledDocuments\ControlledDocumentResource;
 use App\Filament\Resources\DocumentIssuances\DocumentIssuanceResource;
+use App\Filament\Resources\SecurityAuditEvents\SecurityAuditEventResource;
 use BezhanSalleh\FilamentShield\Resources\Roles\RoleResource;
 use Filament\Pages\Dashboard;
 use Filament\Widgets\AccountWidget;
@@ -198,6 +199,10 @@ return [
                 'forceDelete', 'forceDeleteAny', 'restoreAny', 'replicate', 'reorder', 'approve',
                 'submit', 'review', 'publish', 'unpublish', 'revise', 'archive', 'unarchive',
                 'recall',
+            ],
+            SecurityAuditEventResource::class => [
+                'viewAny',
+                'view',
             ],
         ],
         'exclude' => [

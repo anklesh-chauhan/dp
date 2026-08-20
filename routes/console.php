@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('documents:activate-due')->daily()->withoutOverlapping();
+Schedule::command('gxp:backup-create --sync')->daily()->withoutOverlapping();

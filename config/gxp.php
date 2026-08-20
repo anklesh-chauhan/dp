@@ -11,4 +11,9 @@ return [
     'mfa_required' => filter_var(env('GXP_MFA_REQUIRED', false), FILTER_VALIDATE_BOOL),
     'password_history_count' => (int) env('GXP_PASSWORD_HISTORY_COUNT', 12),
     'test_factory_signature_password' => 'password',
+    'backup' => [
+        'retain_count' => (int) env('GXP_BACKUP_RETAIN_COUNT', 12),
+        'pgsql_bin' => env('GXP_BACKUP_PGSQL_BIN'),
+        'disks' => ['local', 'public'],
+    ],
 ];

@@ -84,5 +84,11 @@ it('seeds published QMS Schedule M knowledge guides with module ownership', func
         ->and($guides->firstWhere('slug', 'qms-schedule-m-gap-assessment')?->content)
         ->toContain('Premises')
         ->toContain('Inspector Evidence Pack')
+        ->and($guides->firstWhere('slug', 'qms-computerized-system-operations')?->content)
+        ->toContain('integrity-checked')
+        ->toContain('not certified')
+        ->toContain('queue worker')
+        ->toContain('Security Audit')
+        ->not->toContain('The product does not run backups for you.')
         ->and(KnowledgeGuide::query()->where('slug', 'legacy-qms-gap-note')->value('is_published'))->toBeFalse();
 });

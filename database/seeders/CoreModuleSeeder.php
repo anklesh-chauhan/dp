@@ -54,6 +54,11 @@ class CoreModuleSeeder extends Seeder
         'Update:Organization',
         'Delete:Organization',
         'DeleteAny:Organization',
+        'ViewAny:SystemBackup',
+        'Create:SystemBackup',
+        'Restore:SystemBackup',
+        'ViewAny:SecurityAuditEvent',
+        'View:SecurityAuditEvent',
     ];
 
     public function run(): void
