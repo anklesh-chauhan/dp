@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Domain\QMS\Models;
 
+use App\Domain\QMS\Concerns\ProvidesNarrativeSignatureContent;
 use App\Domain\QMS\Enums\CsvCriticality;
 use App\Domain\QMS\Enums\CsvRequirementStatus;
 use App\Domain\QMS\Enums\CsvTestType;
+use App\Domain\Shared\Contracts\ProvidesElectronicSignatureContent;
 use App\Models\User;
 use Database\Factories\Domain\QMS\Models\CsvTestCaseFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,10 +17,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-final class CsvTestCase extends Model
+final class CsvTestCase extends Model implements ProvidesElectronicSignatureContent
 {
     /** @use HasFactory<CsvTestCaseFactory> */
     use HasFactory;
+
+    use ProvidesNarrativeSignatureContent;
 
     protected $fillable = [
         'csv_validation_project_id', 'test_identifier', 'version', 'type', 'title',

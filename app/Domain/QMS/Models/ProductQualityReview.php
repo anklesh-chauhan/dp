@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Domain\QMS\Models;
 
+use App\Domain\QMS\Concerns\ProvidesNarrativeSignatureContent;
 use App\Domain\QMS\Enums\ProductQualityReviewStatus;
 use App\Domain\QMS\Enums\ProductQualityReviewType;
 use App\Domain\QMS\Policies\ProductQualityReviewPolicy;
+use App\Domain\Shared\Contracts\ProvidesElectronicSignatureContent;
 use App\Models\User;
 use Database\Factories\Domain\QMS\Models\ProductQualityReviewFactory;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
@@ -18,10 +20,12 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Str;
 
 #[UsePolicy(ProductQualityReviewPolicy::class)]
-final class ProductQualityReview extends Model
+final class ProductQualityReview extends Model implements ProvidesElectronicSignatureContent
 {
     /** @use HasFactory<ProductQualityReviewFactory> */
     use HasFactory;
+
+    use ProvidesNarrativeSignatureContent;
 
     protected $fillable = [
         'review_number', 'type', 'status', 'title', 'product_name', 'product_code', 'dosage_form',

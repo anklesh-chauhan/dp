@@ -73,9 +73,10 @@ it('records an attributable timeline signs approvals and links deviations on fai
 
     expect($result->status)->toBe(EquipmentQualificationStatus::Failed)
         ->and($result->deviation_id)->toBe($deviation->getKey())
-        ->and($result->auditEvents()->latest('id')->first()?->context)->toBe([
+        ->and($result->auditEvents()->latest('id')->first()?->context)->toMatchArray([
             'deviation_id' => $deviation->getKey(),
-        ]);
+        ])
+        ->and($result->auditEvents()->latest('id')->first()?->signatureContentDigest())->not->toBeNull();
 });
 
 it('rejects missing reasons unauthorized invalid and disabled transitions without events', function (): void {

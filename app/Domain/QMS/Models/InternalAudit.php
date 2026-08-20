@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Domain\QMS\Models;
 
+use App\Domain\QMS\Concerns\ProvidesNarrativeSignatureContent;
 use App\Domain\QMS\Enums\InternalAuditStatus;
 use App\Domain\QMS\Enums\InternalAuditType;
 use App\Domain\QMS\Policies\InternalAuditPolicy;
+use App\Domain\Shared\Contracts\ProvidesElectronicSignatureContent;
 use App\Models\Department;
 use App\Models\User;
 use Database\Factories\Domain\QMS\Models\InternalAuditFactory;
@@ -19,10 +21,12 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Str;
 
 #[UsePolicy(InternalAuditPolicy::class)]
-final class InternalAudit extends Model
+final class InternalAudit extends Model implements ProvidesElectronicSignatureContent
 {
     /** @use HasFactory<InternalAuditFactory> */
     use HasFactory;
+
+    use ProvidesNarrativeSignatureContent;
 
     protected $fillable = [
         'audit_number',

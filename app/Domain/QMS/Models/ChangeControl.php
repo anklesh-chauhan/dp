@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Domain\QMS\Models;
 
 use App\Domain\QMS\Concerns\LinksRiskAssessments;
+use App\Domain\QMS\Concerns\ProvidesNarrativeSignatureContent;
 use App\Domain\QMS\Enums\ChangeControlStatus;
 use App\Domain\QMS\Enums\ChangeImpactClassification;
 use App\Domain\QMS\Policies\ChangeControlPolicy;
 use App\Domain\Shared\Contracts\ApprovableSubject;
+use App\Domain\Shared\Contracts\ProvidesElectronicSignatureContent;
 use App\Models\Department;
 use App\Models\User;
 use Database\Factories\Domain\QMS\Models\ChangeControlFactory;
@@ -20,12 +22,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 #[UsePolicy(ChangeControlPolicy::class)]
-final class ChangeControl extends Model implements ApprovableSubject
+final class ChangeControl extends Model implements ApprovableSubject, ProvidesElectronicSignatureContent
 {
     /** @use HasFactory<ChangeControlFactory> */
     use HasFactory;
 
     use LinksRiskAssessments;
+    use ProvidesNarrativeSignatureContent;
 
     protected $fillable = [
         'change_number',

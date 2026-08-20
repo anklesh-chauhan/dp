@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Domain\QMS\Models;
 
 use App\Domain\QMS\Concerns\LinksRiskAssessments;
+use App\Domain\QMS\Concerns\ProvidesNarrativeSignatureContent;
 use App\Domain\QMS\Enums\AuditFindingClassification;
 use App\Domain\QMS\Enums\AuditFindingDisposition;
 use App\Domain\QMS\Enums\AuditFindingSeverity;
 use App\Domain\QMS\Policies\AuditFindingPolicy;
+use App\Domain\Shared\Contracts\ProvidesElectronicSignatureContent;
 use App\Models\Department;
 use App\Models\User;
 use Database\Factories\Domain\QMS\Models\AuditFindingFactory;
@@ -21,12 +23,13 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Str;
 
 #[UsePolicy(AuditFindingPolicy::class)]
-final class AuditFinding extends Model
+final class AuditFinding extends Model implements ProvidesElectronicSignatureContent
 {
     /** @use HasFactory<AuditFindingFactory> */
     use HasFactory;
 
     use LinksRiskAssessments;
+    use ProvidesNarrativeSignatureContent;
 
     protected $fillable = [
         'finding_number', 'internal_audit_id', 'severity', 'classification', 'disposition',

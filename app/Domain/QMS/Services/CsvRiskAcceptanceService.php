@@ -6,7 +6,7 @@ namespace App\Domain\QMS\Services;
 
 use App\Domain\QMS\Models\CsvRiskAssessment;
 use App\Domain\QMS\Models\CsvSignedDecision;
-use App\Domain\Shared\Contracts\ElectronicSignatureHasher;
+use App\Domain\Shared\Services\ContentBoundElectronicSignatureIssuer;
 use App\Enums\ProductModule;
 use App\Models\User;
 use App\Support\Modules\ModuleManager;
@@ -19,7 +19,7 @@ final class CsvRiskAcceptanceService
 {
     public function __construct(
         private readonly ModuleManager $moduleManager,
-        private readonly ElectronicSignatureHasher $electronicSignatureHasher,
+        private readonly ContentBoundElectronicSignatureIssuer $contentBoundSignatures,
     ) {}
 
     public function accept(
@@ -64,14 +64,21 @@ final class CsvRiskAcceptanceService
             $occurredAt = now();
             $decisionUuid = (string) Str::uuid();
             $normalizedReason = trim($reason);
-            $signatureHash = $this->electronicSignatureHasher->issueFor(
+            $eventContext = $this->sanitize([
+                'risk_identifier' => $record->risk_identifier,
+                'initial_rpn' => $record->initialRiskPriorityNumber(),
+                'residual_rpn' => $residualRpn,
+            ]);
+            [$signatureHash, $eventContext] = $this->contentBoundSignatures->issue(
                 signer: $actor,
+                subject: $record,
                 recordKey: $decisionUuid,
                 meaning: 'accepted',
                 signedAt: $occurredAt,
                 reason: $normalizedReason,
                 ipAddress: $ipAddress,
                 userAgent: $userAgent,
+                context: $eventContext,
             );
 
             $record->update([
@@ -92,11 +99,7 @@ final class CsvRiskAcceptanceService
                 'to_state' => 'accepted',
                 'actor_id' => $actor->getKey(),
                 'reason' => $normalizedReason,
-                'context' => $this->sanitize([
-                    'risk_identifier' => $record->risk_identifier,
-                    'initial_rpn' => $record->initialRiskPriorityNumber(),
-                    'residual_rpn' => $residualRpn,
-                ]),
+                'context' => $eventContext,
                 'signature_hash' => $signatureHash,
                 'signature_ip_address' => $ipAddress,
                 'signature_user_agent' => $userAgent,

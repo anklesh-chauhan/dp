@@ -6,7 +6,7 @@ namespace App\Domain\QMS\Services;
 
 use App\Domain\QMS\Enums\BatchReleaseStatus;
 use App\Domain\QMS\Models\BatchRelease;
-use App\Domain\Shared\Contracts\ElectronicSignatureHasher;
+use App\Domain\Shared\Services\ContentBoundElectronicSignatureIssuer;
 use App\Enums\ProductModule;
 use App\Models\User;
 use App\Support\Modules\ModuleManager;
@@ -19,7 +19,7 @@ final class BatchReleaseTransitionService
 {
     public function __construct(
         private readonly ModuleManager $moduleManager,
-        private readonly ElectronicSignatureHasher $electronicSignatureHasher,
+        private readonly ContentBoundElectronicSignatureIssuer $contentBoundSignatures,
     ) {}
 
     /**
@@ -66,17 +66,21 @@ final class BatchReleaseTransitionService
 
             $occurredAt = now();
             $eventUuid = (string) Str::uuid();
-            $signatureHash = $this->requiresSignature($toStatus)
-                ? $this->electronicSignatureHasher->issueFor(
+            $eventContext = $this->sanitize($context);
+            $signatureHash = null;
+            if ($this->requiresSignature($toStatus)) {
+                [$signatureHash, $eventContext] = $this->contentBoundSignatures->issue(
                     signer: $actor,
+                    subject: $record,
                     recordKey: $eventUuid,
                     meaning: $toStatus->value,
                     signedAt: $occurredAt,
                     reason: $normalizedReason,
                     ipAddress: $ipAddress,
                     userAgent: $userAgent,
-                )
-                : null;
+                    context: $eventContext,
+                );
+            }
 
             $milestones = match ($toStatus) {
                 BatchReleaseStatus::Released => [
@@ -101,7 +105,7 @@ final class BatchReleaseTransitionService
                 'to_status' => $toStatus,
                 'actor_id' => $actor->getKey(),
                 'reason' => $normalizedReason,
-                'context' => $context === [] ? null : $context,
+                'context' => $eventContext === [] ? null : $eventContext,
                 'signature_hash' => $signatureHash,
                 'signature_ip_address' => $signatureHash === null ? null : $ipAddress,
                 'signature_user_agent' => $signatureHash === null ? null : $userAgent,
@@ -143,5 +147,16 @@ final class BatchReleaseTransitionService
             BatchReleaseStatus::Cancelled => 'Manage:BatchRelease',
             default => 'Update:BatchRelease',
         };
+    }
+
+    /**
+     * @param  array<string, mixed>  $context
+     * @return array<string, mixed>
+     */
+    private function sanitize(array $context): array
+    {
+        unset($context['signature'], $context['payload']);
+
+        return $context;
     }
 }

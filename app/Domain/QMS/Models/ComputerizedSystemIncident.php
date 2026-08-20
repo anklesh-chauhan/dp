@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Domain\QMS\Models;
 
+use App\Domain\QMS\Concerns\ProvidesNarrativeSignatureContent;
 use App\Domain\QMS\Enums\ComputerizedSystemIncidentSeverity;
 use App\Domain\QMS\Enums\ComputerizedSystemIncidentStatus;
 use App\Domain\QMS\Policies\ComputerizedSystemIncidentPolicy;
+use App\Domain\Shared\Contracts\ProvidesElectronicSignatureContent;
 use App\Models\User;
 use Database\Factories\Domain\QMS\Models\ComputerizedSystemIncidentFactory;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
@@ -17,10 +19,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 #[UsePolicy(ComputerizedSystemIncidentPolicy::class)]
-final class ComputerizedSystemIncident extends Model
+final class ComputerizedSystemIncident extends Model implements ProvidesElectronicSignatureContent
 {
     /** @use HasFactory<ComputerizedSystemIncidentFactory> */
     use HasFactory;
+
+    use ProvidesNarrativeSignatureContent;
 
     protected static function newFactory(): ComputerizedSystemIncidentFactory
     {

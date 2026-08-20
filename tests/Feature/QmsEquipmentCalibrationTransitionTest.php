@@ -84,9 +84,10 @@ it('records an attributable timeline signs completions and requires deviation fo
     expect($result->status)->toBe(EquipmentCalibrationStatus::OutOfTolerance)
         ->and($result->result)->toBe(EquipmentCalibrationResult::OutOfTolerance)
         ->and($result->deviation_id)->toBe($deviation->getKey())
-        ->and($result->auditEvents()->latest('id')->first()?->context)->toBe([
+        ->and($result->auditEvents()->latest('id')->first()?->context)->toMatchArray([
             'deviation_id' => $deviation->getKey(),
-        ]);
+        ])
+        ->and($result->auditEvents()->latest('id')->first()?->signatureContentDigest())->not->toBeNull();
 });
 
 it('rejects missing reasons unauthorized invalid and disabled transitions without events', function (): void {

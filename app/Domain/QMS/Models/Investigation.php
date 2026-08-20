@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Domain\QMS\Models;
 
 use App\Domain\QMS\Concerns\LinksRiskAssessments;
+use App\Domain\QMS\Concerns\ProvidesNarrativeSignatureContent;
 use App\Domain\QMS\Enums\InvestigationStatus;
+use App\Domain\Shared\Contracts\ProvidesElectronicSignatureContent;
 use App\Models\User;
 use Database\Factories\Domain\QMS\Models\InvestigationFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,12 +17,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Str;
 
-final class Investigation extends Model
+final class Investigation extends Model implements ProvidesElectronicSignatureContent
 {
     /** @use HasFactory<InvestigationFactory> */
     use HasFactory;
 
     use LinksRiskAssessments;
+    use ProvidesNarrativeSignatureContent;
 
     protected $fillable = [
         'investigation_number',

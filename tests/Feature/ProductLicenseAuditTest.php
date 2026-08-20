@@ -11,7 +11,9 @@ use App\Support\Modules\Contracts\LicenseLifecycleEvaluator;
 use App\Support\Modules\Contracts\ProductLicenseRevoker;
 use App\Support\Modules\Contracts\SignedLicenseVerifier;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 
 uses(RefreshDatabase::class);
 
@@ -44,6 +46,11 @@ it('records secret-safe append-only license events', function (): void {
         ->toThrow(LogicException::class, 'append-only');
     expect(fn () => $event?->delete())
         ->toThrow(LogicException::class, 'append-only');
+    expect(function () use ($event): void {
+        DB::transaction(function () use ($event): void {
+            DB::table('product_license_audit_events')->where('id', $event?->id)->delete();
+        });
+    })->toThrow(QueryException::class, 'append-only');
 });
 
 it('does not duplicate an unchanged lifecycle state', function (): void {

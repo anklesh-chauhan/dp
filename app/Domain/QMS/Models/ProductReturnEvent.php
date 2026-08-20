@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Domain\QMS\Models;
 
+use App\Domain\QMS\Concerns\StoresSignatureContentDigest;
 use App\Domain\QMS\Enums\ProductReturnStatus;
 use App\Domain\Shared\Contracts\ElectronicSignatureRecord;
+use App\Domain\Shared\Contracts\HasSignatureContentDigest;
 use App\Models\User;
 use Database\Factories\Domain\QMS\Models\ProductReturnEventFactory;
 use DateTimeInterface;
@@ -14,10 +16,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use LogicException;
 
-final class ProductReturnEvent extends Model implements ElectronicSignatureRecord
+final class ProductReturnEvent extends Model implements ElectronicSignatureRecord, HasSignatureContentDigest
 {
     /** @use HasFactory<ProductReturnEventFactory> */
     use HasFactory;
+
+    use StoresSignatureContentDigest;
 
     public const UPDATED_AT = null;
 

@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Domain\QMS\Models;
 
+use App\Domain\QMS\Concerns\StoresSignatureContentDigest;
 use App\Domain\QMS\Enums\RiskAssessmentStatus;
 use App\Domain\Shared\Contracts\ElectronicSignatureRecord;
+use App\Domain\Shared\Contracts\HasSignatureContentDigest;
 use App\Models\User;
 use Database\Factories\Domain\QMS\Models\RiskAssessmentEventFactory;
 use DateTimeInterface;
@@ -14,10 +16,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use LogicException;
 
-final class RiskAssessmentEvent extends Model implements ElectronicSignatureRecord
+final class RiskAssessmentEvent extends Model implements ElectronicSignatureRecord, HasSignatureContentDigest
 {
     /** @use HasFactory<RiskAssessmentEventFactory> */
     use HasFactory;
+
+    use StoresSignatureContentDigest;
 
     public const UPDATED_AT = null;
 

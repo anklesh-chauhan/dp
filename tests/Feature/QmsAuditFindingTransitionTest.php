@@ -127,7 +127,8 @@ it('preserves rejected verification evidence in the rework event', function (): 
 
     expect($rework->verification_notes)->toBeNull()
         ->and($rework->auditEvents()->sole()->context)
-        ->toBe(['verification_notes' => 'Evidence was incomplete.']);
+        ->toMatchArray(['verification_notes' => 'Evidence was incomplete.'])
+        ->and($rework->auditEvents()->sole()->signatureContentDigest())->not->toBeNull();
 });
 
 it('rejects unauthorized invalid and disabled transitions without events', function (): void {

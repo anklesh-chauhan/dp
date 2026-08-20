@@ -53,6 +53,7 @@ use App\Domain\Shared\Contracts\ElectronicSignatureVerifier;
 use App\Exceptions\ModuleNotEnabledException;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 
@@ -178,11 +179,16 @@ it('enforces append-only history and detects stored signature tampering across e
             ->toThrow(LogicException::class);
         expect(fn () => $event->delete())
             ->toThrow(LogicException::class);
+        expect(function () use ($event): void {
+            DB::transaction(function () use ($event): void {
+                DB::table($event->getTable())
+                    ->where('id', $event->getKey())
+                    ->update(['reason' => 'storage tampering']);
+            });
+        })->toThrow(QueryException::class, 'append-only');
 
-        DB::table($event->getTable())
-            ->where('id', $event->getKey())
-            ->update(['reason' => 'storage tampering']);
+        $event->reason = 'storage tampering';
 
-        expect($verifier->isValid($event->refresh()))->toBeFalse();
+        expect($verifier->isValid($event))->toBeFalse();
     }
 });

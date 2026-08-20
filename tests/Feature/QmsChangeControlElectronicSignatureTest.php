@@ -8,6 +8,7 @@ use App\Domain\QMS\Services\ChangeControlTransitionService;
 use App\Domain\Shared\Contracts\ElectronicSignatureRecord;
 use App\Domain\Shared\Contracts\ElectronicSignatureVerifier;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
@@ -66,10 +67,16 @@ it('creates a reproducible Shared electronic signature for approval decisions', 
         ->and($approvalEvent->signatureUserAgent())->toBe('QualiGxP-QMS-Test/1.0')
         ->and(app(ElectronicSignatureVerifier::class)->isValid($approvalEvent))->toBeTrue();
 
-    DB::table('change_control_audit_events')
-        ->where('id', $approvalEvent->id)
-        ->update(['reason' => 'Tampered reason']);
+    expect(function () use ($approvalEvent): void {
+        DB::transaction(function () use ($approvalEvent): void {
+            DB::table('change_control_audit_events')
+                ->where('id', $approvalEvent->id)
+                ->update(['reason' => 'Tampered reason']);
+        });
+    })->toThrow(QueryException::class, 'append-only');
 
-    expect(app(ElectronicSignatureVerifier::class)->isValid($approvalEvent->fresh()))
+    $approvalEvent->reason = 'Tampered reason';
+
+    expect(app(ElectronicSignatureVerifier::class)->isValid($approvalEvent))
         ->toBeFalse();
 });

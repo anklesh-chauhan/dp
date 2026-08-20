@@ -8,7 +8,7 @@ use App\Domain\QMS\Enums\EquipmentCalibrationResult;
 use App\Domain\QMS\Enums\EquipmentCalibrationStatus;
 use App\Domain\QMS\Models\Deviation;
 use App\Domain\QMS\Models\EquipmentCalibration;
-use App\Domain\Shared\Contracts\ElectronicSignatureHasher;
+use App\Domain\Shared\Services\ContentBoundElectronicSignatureIssuer;
 use App\Enums\ProductModule;
 use App\Models\User;
 use App\Support\Modules\ModuleManager;
@@ -21,7 +21,7 @@ final class EquipmentCalibrationTransitionService
 {
     public function __construct(
         private readonly ModuleManager $moduleManager,
-        private readonly ElectronicSignatureHasher $electronicSignatureHasher,
+        private readonly ContentBoundElectronicSignatureIssuer $contentBoundSignatures,
         private readonly CalibrationGate $calibrationGate,
     ) {}
 
@@ -67,17 +67,21 @@ final class EquipmentCalibrationTransitionService
             $attributes = $this->attributesFor($record, $toStatus, $actor, $context);
             $occurredAt = now();
             $eventUuid = (string) Str::uuid();
-            $signatureHash = $this->requiresSignature($toStatus)
-                ? $this->electronicSignatureHasher->issueFor(
+            $eventContext = $this->sanitize($context);
+            $signatureHash = null;
+            if ($this->requiresSignature($toStatus)) {
+                [$signatureHash, $eventContext] = $this->contentBoundSignatures->issue(
                     signer: $actor,
+                    subject: $record,
                     recordKey: $eventUuid,
                     meaning: $toStatus->value,
                     signedAt: $occurredAt,
                     reason: $normalizedReason,
                     ipAddress: $ipAddress,
                     userAgent: $userAgent,
-                )
-                : null;
+                    context: $eventContext,
+                );
+            }
 
             $record->update([
                 'status' => $toStatus,
@@ -89,7 +93,7 @@ final class EquipmentCalibrationTransitionService
                 'to_status' => $toStatus,
                 'actor_id' => $actor->getKey(),
                 'reason' => $normalizedReason,
-                'context' => $this->sanitize($context),
+                'context' => $eventContext,
                 'signature_hash' => $signatureHash,
                 'signature_ip_address' => $signatureHash === null ? null : $ipAddress,
                 'signature_user_agent' => $signatureHash === null ? null : $userAgent,
@@ -148,14 +152,20 @@ final class EquipmentCalibrationTransitionService
 
             $occurredAt = now();
             $eventUuid = (string) Str::uuid();
-            $signatureHash = $this->electronicSignatureHasher->issueFor(
+            $eventContext = [
+                ...$this->sanitize($context),
+                'action' => 'verified',
+            ];
+            [$signatureHash, $eventContext] = $this->contentBoundSignatures->issue(
                 signer: $actor,
+                subject: $record,
                 recordKey: $eventUuid,
                 meaning: 'verified',
                 signedAt: $occurredAt,
                 reason: $normalizedReason,
                 ipAddress: $ipAddress,
                 userAgent: $userAgent,
+                context: $eventContext,
             );
 
             $record->update([
@@ -167,10 +177,7 @@ final class EquipmentCalibrationTransitionService
                 'to_status' => $record->status,
                 'actor_id' => $actor->getKey(),
                 'reason' => $normalizedReason,
-                'context' => [
-                    ...$this->sanitize($context),
-                    'action' => 'verified',
-                ],
+                'context' => $eventContext,
                 'signature_hash' => $signatureHash,
                 'signature_ip_address' => $ipAddress,
                 'signature_user_agent' => $userAgent,

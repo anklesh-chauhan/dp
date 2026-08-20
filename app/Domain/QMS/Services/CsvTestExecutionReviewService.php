@@ -7,7 +7,7 @@ namespace App\Domain\QMS\Services;
 use App\Domain\QMS\Enums\CsvExecutionResult;
 use App\Domain\QMS\Models\CsvSignedDecision;
 use App\Domain\QMS\Models\CsvTestExecution;
-use App\Domain\Shared\Contracts\ElectronicSignatureHasher;
+use App\Domain\Shared\Services\ContentBoundElectronicSignatureIssuer;
 use App\Enums\ProductModule;
 use App\Models\User;
 use App\Support\Modules\ModuleManager;
@@ -20,7 +20,7 @@ final class CsvTestExecutionReviewService
 {
     public function __construct(
         private readonly ModuleManager $moduleManager,
-        private readonly ElectronicSignatureHasher $electronicSignatureHasher,
+        private readonly ContentBoundElectronicSignatureIssuer $contentBoundSignatures,
     ) {}
 
     public function review(
@@ -81,14 +81,22 @@ final class CsvTestExecutionReviewService
             $normalizedReason = trim($reason);
             $fromState = $record->result?->value;
             $toState = 'reviewed';
-            $signatureHash = $this->electronicSignatureHasher->issueFor(
+            $eventContext = $this->sanitize([
+                'execution_uuid' => $record->execution_uuid,
+                'execution_no' => $record->execution_no,
+                'result' => $record->result?->value,
+                'deviation_id' => $record->deviation_id,
+            ]);
+            [$signatureHash, $eventContext] = $this->contentBoundSignatures->issue(
                 signer: $actor,
+                subject: $record,
                 recordKey: $decisionUuid,
                 meaning: 'reviewed',
                 signedAt: $occurredAt,
                 reason: $normalizedReason,
                 ipAddress: $ipAddress,
                 userAgent: $userAgent,
+                context: $eventContext,
             );
 
             $record->update([
@@ -106,12 +114,7 @@ final class CsvTestExecutionReviewService
                 'to_state' => $toState,
                 'actor_id' => $actor->getKey(),
                 'reason' => $normalizedReason,
-                'context' => $this->sanitize([
-                    'execution_uuid' => $record->execution_uuid,
-                    'execution_no' => $record->execution_no,
-                    'result' => $record->result?->value,
-                    'deviation_id' => $record->deviation_id,
-                ]),
+                'context' => $eventContext,
                 'signature_hash' => $signatureHash,
                 'signature_ip_address' => $ipAddress,
                 'signature_user_agent' => $userAgent,

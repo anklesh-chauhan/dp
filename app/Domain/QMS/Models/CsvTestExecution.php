@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Domain\QMS\Models;
 
+use App\Domain\QMS\Concerns\ProvidesNarrativeSignatureContent;
 use App\Domain\QMS\Enums\CsvExecutionResult;
+use App\Domain\Shared\Contracts\ProvidesElectronicSignatureContent;
 use App\Models\User;
 use Database\Factories\Domain\QMS\Models\CsvTestExecutionFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,10 +17,12 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use LogicException;
 
-final class CsvTestExecution extends Model
+final class CsvTestExecution extends Model implements ProvidesElectronicSignatureContent
 {
     /** @use HasFactory<CsvTestExecutionFactory> */
     use HasFactory;
+
+    use ProvidesNarrativeSignatureContent;
 
     protected $fillable = [
         'execution_uuid', 'csv_validation_project_id', 'csv_test_case_id', 'execution_no',

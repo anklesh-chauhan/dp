@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Domain\QMS\Models;
 
+use App\Domain\QMS\Concerns\ProvidesNarrativeSignatureContent;
 use App\Domain\QMS\Enums\BatchReleaseStatus;
 use App\Domain\QMS\Policies\BatchReleasePolicy;
+use App\Domain\Shared\Contracts\ProvidesElectronicSignatureContent;
 use App\Models\DocumentExecution;
 use App\Models\User;
 use Database\Factories\Domain\QMS\Models\BatchReleaseFactory;
@@ -17,10 +19,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 #[UsePolicy(BatchReleasePolicy::class)]
-final class BatchRelease extends Model
+final class BatchRelease extends Model implements ProvidesElectronicSignatureContent
 {
     /** @use HasFactory<BatchReleaseFactory> */
     use HasFactory;
+
+    use ProvidesNarrativeSignatureContent;
 
     protected static function newFactory(): BatchReleaseFactory
     {

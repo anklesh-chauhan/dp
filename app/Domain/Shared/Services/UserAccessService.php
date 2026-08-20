@@ -143,22 +143,30 @@ class UserAccessService
 
     public function resetPassword(User $actor, User $user, string $temporaryPassword, string $reason): User
     {
-        $user->forceFill([
-            'password' => $temporaryPassword,
-            'must_change_password' => true,
-            'password_changed_at' => now(),
-            'failed_login_attempts' => 0,
-            'locked_at' => null,
-        ])->save();
+        return DB::transaction(function () use ($actor, $user, $temporaryPassword, $reason): User {
+            $record = User::query()->lockForUpdate()->findOrFail($user->getKey());
+            $this->assertPasswordNotReused($record, $temporaryPassword);
+            $this->rememberCurrentPassword($record);
 
-        $this->securityAuditRecorder->record(
-            type: SecurityAuditEventType::PasswordReset,
-            actor: $actor,
-            subject: $user,
-            reason: $reason,
-        );
+            $record->forceFill([
+                'password' => $temporaryPassword,
+                'must_change_password' => true,
+                'password_changed_at' => now(),
+                'failed_login_attempts' => 0,
+                'locked_at' => null,
+            ])->save();
 
-        return $user->refresh();
+            $this->prunePasswordHistory($record);
+
+            $this->securityAuditRecorder->record(
+                type: SecurityAuditEventType::PasswordReset,
+                actor: $actor,
+                subject: $record,
+                reason: $reason,
+            );
+
+            return $record->refresh();
+        });
     }
 
     public function changeOwnPassword(User $user, string $currentPassword, string $newPassword): User
@@ -169,20 +177,28 @@ class UserAccessService
             ]);
         }
 
-        $user->forceFill([
-            'password' => $newPassword,
-            'must_change_password' => false,
-            'password_changed_at' => now(),
-        ])->save();
+        return DB::transaction(function () use ($user, $newPassword): User {
+            $record = User::query()->lockForUpdate()->findOrFail($user->getKey());
+            $this->assertPasswordNotReused($record, $newPassword);
+            $this->rememberCurrentPassword($record);
 
-        $this->securityAuditRecorder->record(
-            type: SecurityAuditEventType::PasswordChanged,
-            actor: $user,
-            subject: $user,
-            reason: 'User changed their own password.',
-        );
+            $record->forceFill([
+                'password' => $newPassword,
+                'must_change_password' => false,
+                'password_changed_at' => now(),
+            ])->save();
 
-        return $user->refresh();
+            $this->prunePasswordHistory($record);
+
+            $this->securityAuditRecorder->record(
+                type: SecurityAuditEventType::PasswordChanged,
+                actor: $record,
+                subject: $record,
+                reason: 'User changed their own password.',
+            );
+
+            return $record->refresh();
+        });
     }
 
     public function recordRoleChange(User $actor, User $user, array $roleNames): void
@@ -194,6 +210,46 @@ class UserAccessService
             reason: 'Assigned roles were updated.',
             context: ['roles' => array_values($roleNames)],
         );
+    }
+
+    private function assertPasswordNotReused(User $user, string $newPassword): void
+    {
+        $limit = max(1, (int) config('gxp.password_history_count', 12));
+        $hashes = collect([(string) $user->getAuthPassword()])
+            ->merge($user->passwordHistories()->latest('id')->limit($limit)->pluck('password'))
+            ->filter()
+            ->unique()
+            ->values();
+
+        foreach ($hashes as $hash) {
+            if (Hash::check($newPassword, (string) $hash)) {
+                throw ValidationException::withMessages([
+                    'password' => 'This password was used recently and cannot be reused.',
+                ]);
+            }
+        }
+    }
+
+    private function rememberCurrentPassword(User $user): void
+    {
+        $hash = (string) $user->getAuthPassword();
+        $latest = $user->passwordHistories()->latest('id')->value('password');
+
+        if ($latest === $hash) {
+            return;
+        }
+
+        $user->passwordHistories()->create([
+            'password' => $hash,
+        ]);
+    }
+
+    private function prunePasswordHistory(User $user): void
+    {
+        $limit = max(1, (int) config('gxp.password_history_count', 12));
+        $keepIds = $user->passwordHistories()->latest('id')->limit($limit)->pluck('id');
+
+        $user->passwordHistories()->whereNotIn('id', $keepIds)->delete();
     }
 
     private function incrementFailure(User $user, string $reason): void

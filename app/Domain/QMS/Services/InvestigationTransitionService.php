@@ -6,7 +6,7 @@ namespace App\Domain\QMS\Services;
 
 use App\Domain\QMS\Enums\InvestigationStatus;
 use App\Domain\QMS\Models\Investigation;
-use App\Domain\Shared\Contracts\ElectronicSignatureHasher;
+use App\Domain\Shared\Services\ContentBoundElectronicSignatureIssuer;
 use App\Enums\ProductModule;
 use App\Models\User;
 use App\Support\Modules\ModuleManager;
@@ -20,7 +20,7 @@ final class InvestigationTransitionService
 {
     public function __construct(
         private readonly ModuleManager $moduleManager,
-        private readonly ElectronicSignatureHasher $electronicSignatureHasher,
+        private readonly ContentBoundElectronicSignatureIssuer $contentBoundSignatures,
     ) {}
 
     /**
@@ -68,17 +68,21 @@ final class InvestigationTransitionService
             $occurredAt = now();
             $eventUuid = (string) Str::uuid();
             $normalizedReason = filled($reason) ? trim((string) $reason) : null;
-            $signatureHash = $this->requiresSignature($toStatus)
-                ? $this->electronicSignatureHasher->issueFor(
+            $eventContext = $this->sanitize($context);
+            $signatureHash = null;
+            if ($this->requiresSignature($toStatus)) {
+                [$signatureHash, $eventContext] = $this->contentBoundSignatures->issue(
                     signer: $actor,
+                    subject: $record,
                     recordKey: $eventUuid,
                     meaning: $toStatus->value,
                     signedAt: $occurredAt,
                     reason: $normalizedReason,
                     ipAddress: $ipAddress,
                     userAgent: $userAgent,
-                )
-                : null;
+                    context: $eventContext,
+                );
+            }
 
             $record->update([
                 'status' => $toStatus,
@@ -90,7 +94,7 @@ final class InvestigationTransitionService
                 'to_status' => $toStatus,
                 'actor_id' => $actor->getKey(),
                 'reason' => $normalizedReason,
-                'context' => $this->sanitize($context),
+                'context' => $eventContext,
                 'signature_hash' => $signatureHash,
                 'signature_ip_address' => $signatureHash === null ? null : $ipAddress,
                 'signature_user_agent' => $signatureHash === null ? null : $userAgent,

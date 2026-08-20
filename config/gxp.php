@@ -9,5 +9,6 @@ return [
     'lockout_minutes' => (int) env('GXP_LOCKOUT_MINUTES', 30),
     'idle_timeout_minutes' => (int) env('GXP_SESSION_LIFETIME', env('SESSION_LIFETIME', 20)),
     'mfa_required' => filter_var(env('GXP_MFA_REQUIRED', false), FILTER_VALIDATE_BOOL),
+    'password_history_count' => (int) env('GXP_PASSWORD_HISTORY_COUNT', 12),
     'test_factory_signature_password' => 'password',
 ];

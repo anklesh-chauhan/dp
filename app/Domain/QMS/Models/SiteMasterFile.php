@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Domain\QMS\Models;
 
+use App\Domain\QMS\Concerns\ProvidesNarrativeSignatureContent;
 use App\Domain\QMS\Enums\SiteMasterFileStatus;
 use App\Domain\QMS\Policies\SiteMasterFilePolicy;
+use App\Domain\Shared\Contracts\ProvidesElectronicSignatureContent;
 use App\Models\User;
 use Database\Factories\Domain\QMS\Models\SiteMasterFileFactory;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
@@ -17,10 +19,12 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Str;
 
 #[UsePolicy(SiteMasterFilePolicy::class)]
-final class SiteMasterFile extends Model
+final class SiteMasterFile extends Model implements ProvidesElectronicSignatureContent
 {
     /** @use HasFactory<SiteMasterFileFactory> */
     use HasFactory;
+
+    use ProvidesNarrativeSignatureContent;
 
     protected $fillable = [
         'smf_number',

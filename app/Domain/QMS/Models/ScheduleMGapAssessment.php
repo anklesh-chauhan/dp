@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Domain\QMS\Models;
 
+use App\Domain\QMS\Concerns\ProvidesNarrativeSignatureContent;
 use App\Domain\QMS\Enums\ScheduleMGapAssessmentStatus;
 use App\Domain\QMS\Policies\ScheduleMGapAssessmentPolicy;
+use App\Domain\Shared\Contracts\ProvidesElectronicSignatureContent;
 use App\Models\User;
 use Database\Factories\Domain\QMS\Models\ScheduleMGapAssessmentFactory;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
@@ -17,10 +19,12 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Str;
 
 #[UsePolicy(ScheduleMGapAssessmentPolicy::class)]
-final class ScheduleMGapAssessment extends Model
+final class ScheduleMGapAssessment extends Model implements ProvidesElectronicSignatureContent
 {
     /** @use HasFactory<ScheduleMGapAssessmentFactory> */
     use HasFactory;
+
+    use ProvidesNarrativeSignatureContent;
 
     protected $fillable = [
         'assessment_number',

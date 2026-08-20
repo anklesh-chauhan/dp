@@ -84,7 +84,8 @@ it('records an attributable timeline and signs consequential product recall deci
         ->and($signedClose->signatureMeaning())->toBe(ProductRecallStatus::Closed->value)
         ->and($signedClose->signatureSignerId())->toBe($this->actor->id)
         ->and($signedClose->signatureIpAddress())->toBe('203.0.113.50')
-        ->and($signedClose->context)->toBe(['channel' => 'qa'])
+        ->and($signedClose->context)->toMatchArray(['channel' => 'qa'])
+        ->and($signedClose->signatureContentDigest())->not->toBeNull()
         ->and(app(ElectronicSignatureVerifier::class)->isValid($signedClose))->toBeTrue();
 
     expect(fn () => $signedClose->update(['reason' => 'tampered']))

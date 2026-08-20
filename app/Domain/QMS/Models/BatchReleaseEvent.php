@@ -4,15 +4,19 @@ declare(strict_types=1);
 
 namespace App\Domain\QMS\Models;
 
+use App\Domain\QMS\Concerns\StoresSignatureContentDigest;
 use App\Domain\QMS\Enums\BatchReleaseStatus;
 use App\Domain\Shared\Contracts\ElectronicSignatureRecord;
+use App\Domain\Shared\Contracts\HasSignatureContentDigest;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use LogicException;
 
-final class BatchReleaseEvent extends Model implements ElectronicSignatureRecord
+final class BatchReleaseEvent extends Model implements ElectronicSignatureRecord, HasSignatureContentDigest
 {
+    use StoresSignatureContentDigest;
+
     public $timestamps = false;
 
     protected $fillable = [

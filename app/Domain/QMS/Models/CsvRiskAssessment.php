@@ -4,16 +4,20 @@ declare(strict_types=1);
 
 namespace App\Domain\QMS\Models;
 
+use App\Domain\QMS\Concerns\ProvidesNarrativeSignatureContent;
+use App\Domain\Shared\Contracts\ProvidesElectronicSignatureContent;
 use App\Models\User;
 use Database\Factories\Domain\QMS\Models\CsvRiskAssessmentFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-final class CsvRiskAssessment extends Model
+final class CsvRiskAssessment extends Model implements ProvidesElectronicSignatureContent
 {
     /** @use HasFactory<CsvRiskAssessmentFactory> */
     use HasFactory;
+
+    use ProvidesNarrativeSignatureContent;
 
     protected $fillable = [
         'csv_validation_project_id', 'csv_requirement_id', 'risk_identifier', 'hazard',

@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Domain\QMS\Models;
 
+use App\Domain\QMS\Concerns\ProvidesNarrativeSignatureContent;
 use App\Domain\QMS\Enums\LaboratoryOosPhaseOutcome;
 use App\Domain\QMS\Enums\LaboratoryOosStatus;
 use App\Domain\QMS\Enums\LaboratoryOosType;
 use App\Domain\QMS\Policies\LaboratoryOosEventPolicy;
+use App\Domain\Shared\Contracts\ProvidesElectronicSignatureContent;
 use App\Models\Department;
 use App\Models\User;
 use Database\Factories\Domain\QMS\Models\LaboratoryOosEventFactory;
@@ -21,10 +23,12 @@ use Illuminate\Support\Str;
 use LogicException;
 
 #[UsePolicy(LaboratoryOosEventPolicy::class)]
-final class LaboratoryOosEvent extends Model
+final class LaboratoryOosEvent extends Model implements ProvidesElectronicSignatureContent
 {
     /** @use HasFactory<LaboratoryOosEventFactory> */
     use HasFactory;
+
+    use ProvidesNarrativeSignatureContent;
 
     protected $fillable = [
         'event_number',

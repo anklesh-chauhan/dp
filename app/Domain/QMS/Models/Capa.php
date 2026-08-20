@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Domain\QMS\Models;
 
 use App\Domain\QMS\Concerns\LinksRiskAssessments;
+use App\Domain\QMS\Concerns\ProvidesNarrativeSignatureContent;
 use App\Domain\QMS\Enums\CapaStatus;
 use App\Domain\QMS\Enums\CapaType;
+use App\Domain\Shared\Contracts\ProvidesElectronicSignatureContent;
 use App\Models\User;
 use Database\Factories\Domain\QMS\Models\CapaFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -17,12 +19,13 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Str;
 use LogicException;
 
-final class Capa extends Model
+final class Capa extends Model implements ProvidesElectronicSignatureContent
 {
     /** @use HasFactory<CapaFactory> */
     use HasFactory;
 
     use LinksRiskAssessments;
+    use ProvidesNarrativeSignatureContent;
 
     protected $fillable = [
         'capa_number',

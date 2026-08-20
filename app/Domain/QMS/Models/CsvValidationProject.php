@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Domain\QMS\Models;
 
 use App\Domain\QMS\Concerns\LinksRiskAssessments;
+use App\Domain\QMS\Concerns\ProvidesNarrativeSignatureContent;
 use App\Domain\QMS\Enums\CsvCriticality;
 use App\Domain\QMS\Enums\CsvValidationProjectStatus;
+use App\Domain\Shared\Contracts\ProvidesElectronicSignatureContent;
 use App\Models\ControlledDocument;
 use App\Models\Department;
 use App\Models\User;
@@ -17,12 +19,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
-final class CsvValidationProject extends Model
+final class CsvValidationProject extends Model implements ProvidesElectronicSignatureContent
 {
     /** @use HasFactory<CsvValidationProjectFactory> */
     use HasFactory;
 
     use LinksRiskAssessments;
+    use ProvidesNarrativeSignatureContent;
 
     protected $fillable = [
         'project_uuid', 'project_number', 'system_identifier', 'system_name', 'system_version',

@@ -6,7 +6,7 @@ namespace App\Domain\QMS\Services;
 
 use App\Domain\QMS\Enums\AuditFindingDisposition;
 use App\Domain\QMS\Models\AuditFinding;
-use App\Domain\Shared\Contracts\ElectronicSignatureHasher;
+use App\Domain\Shared\Services\ContentBoundElectronicSignatureIssuer;
 use App\Enums\ProductModule;
 use App\Models\User;
 use App\Support\Modules\ModuleManager;
@@ -19,7 +19,7 @@ final class AuditFindingTransitionService
 {
     public function __construct(
         private readonly ModuleManager $moduleManager,
-        private readonly ElectronicSignatureHasher $electronicSignatureHasher,
+        private readonly ContentBoundElectronicSignatureIssuer $contentBoundSignatures,
     ) {}
 
     /**
@@ -86,17 +86,20 @@ final class AuditFindingTransitionService
                 $eventContext['verification_notes'] = $record->verification_notes;
             }
 
-            $signatureHash = $this->requiresSignature($toDisposition, $fromDisposition)
-                ? $this->electronicSignatureHasher->issueFor(
+            $signatureHash = null;
+            if ($this->requiresSignature($toDisposition, $fromDisposition)) {
+                [$signatureHash, $eventContext] = $this->contentBoundSignatures->issue(
                     signer: $actor,
+                    subject: $record,
                     recordKey: $eventUuid,
                     meaning: $toDisposition->value,
                     signedAt: $occurredAt,
                     reason: $normalizedReason,
                     ipAddress: $ipAddress,
                     userAgent: $userAgent,
-                )
-                : null;
+                    context: $eventContext,
+                );
+            }
 
             $record->update([
                 'disposition' => $toDisposition,

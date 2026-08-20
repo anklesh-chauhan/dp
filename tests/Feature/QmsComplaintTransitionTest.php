@@ -66,7 +66,8 @@ it('records an attributable timeline and signs consequential complaint decisions
         ->and($signedEvent->signatureMeaning())->toBe(ComplaintStatus::Closed->value)
         ->and($signedEvent->signatureSignerId())->toBe($this->actor->id)
         ->and($signedEvent->signatureIpAddress())->toBe('203.0.113.41')
-        ->and($signedEvent->context)->toBe(['channel' => 'email'])
+        ->and($signedEvent->context)->toMatchArray(['channel' => 'email'])
+        ->and($signedEvent->signatureContentDigest())->not->toBeNull()
         ->and(app(ElectronicSignatureVerifier::class)->isValid($signedEvent))->toBeTrue();
 
     expect(fn () => $signedEvent->update(['reason' => 'tampered']))

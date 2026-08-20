@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Domain\QMS\Models;
 
+use App\Domain\QMS\Concerns\ProvidesNarrativeSignatureContent;
 use App\Domain\QMS\Enums\CsvCriticality;
 use App\Domain\QMS\Enums\CsvRequirementStatus;
+use App\Domain\Shared\Contracts\ProvidesElectronicSignatureContent;
 use App\Models\User;
 use Database\Factories\Domain\QMS\Models\CsvRequirementFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,10 +16,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-final class CsvRequirement extends Model
+final class CsvRequirement extends Model implements ProvidesElectronicSignatureContent
 {
     /** @use HasFactory<CsvRequirementFactory> */
     use HasFactory;
+
+    use ProvidesNarrativeSignatureContent;
 
     protected $fillable = [
         'csv_validation_project_id', 'requirement_identifier', 'version', 'category',

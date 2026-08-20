@@ -60,7 +60,8 @@ it('records an attributable timeline and signs activate retire and cancel decisi
         ->and($events)->toHaveCount(3)
         ->and($signedActivate?->signature_hash)->not->toBeNull()
         ->and($signedActivate?->signatureIpAddress())->toBe('203.0.113.70')
-        ->and($signedActivate?->context)->toBe([])
+        ->and(collect($signedActivate?->context)->except('content_digest')->all())->toBe([])
+        ->and($signedActivate?->signatureContentDigest())->not->toBeNull()
         ->and(app(ElectronicSignatureVerifier::class)->isValid($signedActivate))->toBeTrue();
 
     expect(fn () => $signedActivate->update(['reason' => 'tampered']))

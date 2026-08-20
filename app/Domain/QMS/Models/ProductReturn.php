@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Domain\QMS\Models;
 
+use App\Domain\QMS\Concerns\ProvidesNarrativeSignatureContent;
 use App\Domain\QMS\Enums\ProductReturnDisposition;
 use App\Domain\QMS\Enums\ProductReturnStatus;
 use App\Domain\QMS\Policies\ProductReturnPolicy;
+use App\Domain\Shared\Contracts\ProvidesElectronicSignatureContent;
 use App\Models\User;
 use Database\Factories\Domain\QMS\Models\ProductReturnFactory;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
@@ -18,10 +20,12 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Str;
 
 #[UsePolicy(ProductReturnPolicy::class)]
-final class ProductReturn extends Model
+final class ProductReturn extends Model implements ProvidesElectronicSignatureContent
 {
     /** @use HasFactory<ProductReturnFactory> */
     use HasFactory;
+
+    use ProvidesNarrativeSignatureContent;
 
     protected $fillable = [
         'return_number',

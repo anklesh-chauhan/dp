@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
@@ -31,6 +32,16 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
         static::creating(function (User $user): void {
             $user->identity_uuid ??= (string) Str::uuid();
             $user->password_changed_at ??= now();
+        });
+
+        static::created(function (User $user): void {
+            if (blank($user->password)) {
+                return;
+            }
+
+            $user->passwordHistories()->create([
+                'password' => $user->getAuthPassword(),
+            ]);
         });
 
         static::updating(function (User $user): void {
@@ -166,5 +177,13 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     public function designation(): BelongsTo
     {
         return $this->belongsTo(Designation::class);
+    }
+
+    /**
+     * @return HasMany<PasswordHistory, $this>
+     */
+    public function passwordHistories(): HasMany
+    {
+        return $this->hasMany(PasswordHistory::class);
     }
 }

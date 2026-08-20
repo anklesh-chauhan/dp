@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Domain\QMS\Models;
 
+use App\Domain\QMS\Concerns\StoresSignatureContentDigest;
 use App\Domain\Shared\Contracts\ElectronicSignatureRecord;
+use App\Domain\Shared\Contracts\HasSignatureContentDigest;
 use App\Models\User;
 use Database\Factories\Domain\QMS\Models\CsvSignedDecisionFactory;
 use DateTimeInterface;
@@ -14,10 +16,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use LogicException;
 
-final class CsvSignedDecision extends Model implements ElectronicSignatureRecord
+final class CsvSignedDecision extends Model implements ElectronicSignatureRecord, HasSignatureContentDigest
 {
     /** @use HasFactory<CsvSignedDecisionFactory> */
     use HasFactory;
+
+    use StoresSignatureContentDigest;
 
     public $timestamps = false;
 

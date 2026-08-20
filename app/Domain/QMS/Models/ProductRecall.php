@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Domain\QMS\Models;
 
+use App\Domain\QMS\Concerns\ProvidesNarrativeSignatureContent;
 use App\Domain\QMS\Enums\ProductRecallClassification;
 use App\Domain\QMS\Enums\ProductRecallStatus;
 use App\Domain\QMS\Enums\ProductRecallType;
 use App\Domain\QMS\Policies\ProductRecallPolicy;
+use App\Domain\Shared\Contracts\ProvidesElectronicSignatureContent;
 use App\Models\User;
 use Database\Factories\Domain\QMS\Models\ProductRecallFactory;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
@@ -19,10 +21,12 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Str;
 
 #[UsePolicy(ProductRecallPolicy::class)]
-final class ProductRecall extends Model
+final class ProductRecall extends Model implements ProvidesElectronicSignatureContent
 {
     /** @use HasFactory<ProductRecallFactory> */
     use HasFactory;
+
+    use ProvidesNarrativeSignatureContent;
 
     protected $fillable = [
         'recall_number',

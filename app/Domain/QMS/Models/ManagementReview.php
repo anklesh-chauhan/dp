@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Domain\QMS\Models;
 
+use App\Domain\QMS\Concerns\ProvidesNarrativeSignatureContent;
 use App\Domain\QMS\Enums\ManagementReviewInputType;
 use App\Domain\QMS\Enums\ManagementReviewStatus;
 use App\Domain\QMS\Enums\ManagementReviewType;
 use App\Domain\QMS\Policies\ManagementReviewPolicy;
+use App\Domain\Shared\Contracts\ProvidesElectronicSignatureContent;
 use App\Models\User;
 use Database\Factories\Domain\QMS\Models\ManagementReviewFactory;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
@@ -19,10 +21,12 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Str;
 
 #[UsePolicy(ManagementReviewPolicy::class)]
-final class ManagementReview extends Model
+final class ManagementReview extends Model implements ProvidesElectronicSignatureContent
 {
     /** @use HasFactory<ManagementReviewFactory> */
     use HasFactory;
+
+    use ProvidesNarrativeSignatureContent;
 
     protected $fillable = [
         'review_number', 'type', 'status', 'title', 'period_start_at', 'period_end_at',

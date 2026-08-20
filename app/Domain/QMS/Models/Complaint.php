@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Domain\QMS\Models;
 
 use App\Domain\QMS\Concerns\LinksRiskAssessments;
+use App\Domain\QMS\Concerns\ProvidesNarrativeSignatureContent;
 use App\Domain\QMS\Enums\ComplaintSource;
 use App\Domain\QMS\Enums\ComplaintStatus;
 use App\Domain\QMS\Enums\ComplaintType;
 use App\Domain\QMS\Policies\ComplaintPolicy;
+use App\Domain\Shared\Contracts\ProvidesElectronicSignatureContent;
 use App\Models\Department;
 use App\Models\User;
 use Database\Factories\Domain\QMS\Models\ComplaintFactory;
@@ -21,12 +23,13 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Str;
 
 #[UsePolicy(ComplaintPolicy::class)]
-final class Complaint extends Model
+final class Complaint extends Model implements ProvidesElectronicSignatureContent
 {
     /** @use HasFactory<ComplaintFactory> */
     use HasFactory;
 
     use LinksRiskAssessments;
+    use ProvidesNarrativeSignatureContent;
 
     protected $fillable = [
         'complaint_number',

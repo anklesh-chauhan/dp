@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Domain\QMS\Models;
 
+use App\Domain\QMS\Concerns\ProvidesNarrativeSignatureContent;
 use App\Domain\QMS\Enums\RiskAssessmentStatus;
 use App\Domain\QMS\Enums\RiskAssessmentType;
 use App\Domain\QMS\Policies\RiskAssessmentPolicy;
+use App\Domain\Shared\Contracts\ProvidesElectronicSignatureContent;
 use App\Models\Department;
 use App\Models\User;
 use Database\Factories\Domain\QMS\Models\RiskAssessmentFactory;
@@ -20,10 +22,12 @@ use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Support\Str;
 
 #[UsePolicy(RiskAssessmentPolicy::class)]
-final class RiskAssessment extends Model
+final class RiskAssessment extends Model implements ProvidesElectronicSignatureContent
 {
     /** @use HasFactory<RiskAssessmentFactory> */
     use HasFactory;
+
+    use ProvidesNarrativeSignatureContent;
 
     protected $fillable = [
         'risk_number', 'type', 'status', 'title', 'scope', 'hazard', 'potential_harm',

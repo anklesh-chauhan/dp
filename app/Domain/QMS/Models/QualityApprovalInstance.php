@@ -7,6 +7,9 @@ namespace App\Domain\QMS\Models;
 use App\Domain\Shared\Contracts\ApprovableSubject;
 use App\Domain\Shared\Contracts\ApprovalInstance;
 use App\Domain\Shared\Contracts\ApprovalWorkflowStepDefinition;
+use App\Domain\Shared\Contracts\HasSignatureContentDigest;
+use App\Domain\Shared\Contracts\ProvidesElectronicSignatureContent;
+use App\Domain\Shared\Services\ElectronicSignatureContentDigester;
 use App\Models\User;
 use Database\Factories\Domain\QMS\Models\QualityApprovalInstanceFactory;
 use DateTimeInterface;
@@ -16,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use LogicException;
 
-final class QualityApprovalInstance extends Model implements ApprovalInstance
+final class QualityApprovalInstance extends Model implements ApprovalInstance, HasSignatureContentDigest
 {
     /** @use HasFactory<QualityApprovalInstanceFactory> */
     use HasFactory;
@@ -127,6 +130,23 @@ final class QualityApprovalInstance extends Model implements ApprovalInstance
     public function signatureUserAgent(): ?string
     {
         return $this->signature_user_agent;
+    }
+
+    public function signatureContentDigest(): ?string
+    {
+        if (blank($this->signature_hash)) {
+            return null;
+        }
+
+        $subject = $this->approvalInstanceSubject();
+
+        if (! $subject instanceof ProvidesElectronicSignatureContent) {
+            return null;
+        }
+
+        return app(ElectronicSignatureContentDigester::class)->digest(
+            $subject->electronicSignatureContentPayload(),
+        );
     }
 
     /** @return MorphTo<Model, $this> */

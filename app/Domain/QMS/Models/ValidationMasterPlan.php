@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Domain\QMS\Models;
 
+use App\Domain\QMS\Concerns\ProvidesNarrativeSignatureContent;
 use App\Domain\QMS\Enums\ValidationMasterPlanStatus;
 use App\Domain\QMS\Policies\ValidationMasterPlanPolicy;
+use App\Domain\Shared\Contracts\ProvidesElectronicSignatureContent;
 use App\Models\ControlledDocument;
 use App\Models\User;
 use Database\Factories\Domain\QMS\Models\ValidationMasterPlanFactory;
@@ -18,10 +20,12 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Str;
 
 #[UsePolicy(ValidationMasterPlanPolicy::class)]
-final class ValidationMasterPlan extends Model
+final class ValidationMasterPlan extends Model implements ProvidesElectronicSignatureContent
 {
     /** @use HasFactory<ValidationMasterPlanFactory> */
     use HasFactory;
+
+    use ProvidesNarrativeSignatureContent;
 
     protected $fillable = [
         'vmp_number',

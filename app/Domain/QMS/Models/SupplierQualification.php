@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Domain\QMS\Models;
 
+use App\Domain\QMS\Concerns\ProvidesNarrativeSignatureContent;
 use App\Domain\QMS\Enums\SupplierCategory;
 use App\Domain\QMS\Enums\SupplierQualificationStatus;
 use App\Domain\QMS\Enums\SupplierRiskLevel;
 use App\Domain\QMS\Policies\SupplierQualificationPolicy;
+use App\Domain\Shared\Contracts\ProvidesElectronicSignatureContent;
 use App\Models\Department;
 use App\Models\User;
 use Database\Factories\Domain\QMS\Models\SupplierQualificationFactory;
@@ -20,10 +22,12 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Str;
 
 #[UsePolicy(SupplierQualificationPolicy::class)]
-final class SupplierQualification extends Model
+final class SupplierQualification extends Model implements ProvidesElectronicSignatureContent
 {
     /** @use HasFactory<SupplierQualificationFactory> */
     use HasFactory;
+
+    use ProvidesNarrativeSignatureContent;
 
     protected $fillable = [
         'supplier_number', 'legal_name', 'site_name', 'category', 'status', 'risk_level',

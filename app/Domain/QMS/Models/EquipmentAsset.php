@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Domain\QMS\Models;
 
+use App\Domain\QMS\Concerns\ProvidesNarrativeSignatureContent;
 use App\Domain\QMS\Enums\EquipmentAssetCategory;
 use App\Domain\QMS\Enums\EquipmentAssetCriticality;
 use App\Domain\QMS\Enums\EquipmentAssetStatus;
 use App\Domain\QMS\Policies\EquipmentAssetPolicy;
+use App\Domain\Shared\Contracts\ProvidesElectronicSignatureContent;
 use App\Models\Department;
 use App\Models\User;
 use Database\Factories\Domain\QMS\Models\EquipmentAssetFactory;
@@ -19,10 +21,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 #[UsePolicy(EquipmentAssetPolicy::class)]
-final class EquipmentAsset extends Model
+final class EquipmentAsset extends Model implements ProvidesElectronicSignatureContent
 {
     /** @use HasFactory<EquipmentAssetFactory> */
     use HasFactory;
+
+    use ProvidesNarrativeSignatureContent;
 
     protected $fillable = [
         'asset_number',

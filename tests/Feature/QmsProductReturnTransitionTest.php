@@ -69,10 +69,11 @@ it('records an attributable timeline and signs QA disposition decisions', functi
         ->and($events)->toHaveCount(4)
         ->and($signedDisposition?->signature_hash)->not->toBeNull()
         ->and($signedDisposition?->signatureIpAddress())->toBe('203.0.113.60')
-        ->and($signedDisposition?->context)->toBe([
+        ->and($signedDisposition?->context)->toMatchArray([
             'disposition' => ProductReturnDisposition::Destroy->value,
             'qa_disposition_notes' => 'Not suitable for rework.',
         ])
+        ->and($signedDisposition?->signatureContentDigest())->not->toBeNull()
         ->and(app(ElectronicSignatureVerifier::class)->isValid($signedDisposition))->toBeTrue();
 
     expect(fn () => $signedDisposition->update(['reason' => 'tampered']))

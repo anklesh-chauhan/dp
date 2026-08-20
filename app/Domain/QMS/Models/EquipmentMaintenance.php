@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Domain\QMS\Models;
 
+use App\Domain\QMS\Concerns\ProvidesNarrativeSignatureContent;
 use App\Domain\QMS\Enums\EquipmentMaintenanceStatus;
 use App\Domain\QMS\Policies\EquipmentMaintenancePolicy;
+use App\Domain\Shared\Contracts\ProvidesElectronicSignatureContent;
 use App\Models\User;
 use Database\Factories\Domain\QMS\Models\EquipmentMaintenanceFactory;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
@@ -16,10 +18,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 #[UsePolicy(EquipmentMaintenancePolicy::class)]
-final class EquipmentMaintenance extends Model
+final class EquipmentMaintenance extends Model implements ProvidesElectronicSignatureContent
 {
     /** @use HasFactory<EquipmentMaintenanceFactory> */
     use HasFactory;
+
+    use ProvidesNarrativeSignatureContent;
 
     protected $fillable = [
         'work_order_number',

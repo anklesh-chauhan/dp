@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Domain\QMS\Models;
 
+use App\Domain\QMS\Concerns\ProvidesNarrativeSignatureContent;
 use App\Domain\QMS\Enums\EquipmentQualificationStatus;
 use App\Domain\QMS\Enums\EquipmentQualificationType;
 use App\Domain\QMS\Policies\EquipmentQualificationPolicy;
+use App\Domain\Shared\Contracts\ProvidesElectronicSignatureContent;
 use App\Models\User;
 use Database\Factories\Domain\QMS\Models\EquipmentQualificationFactory;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
@@ -18,10 +20,12 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Str;
 
 #[UsePolicy(EquipmentQualificationPolicy::class)]
-final class EquipmentQualification extends Model
+final class EquipmentQualification extends Model implements ProvidesElectronicSignatureContent
 {
     /** @use HasFactory<EquipmentQualificationFactory> */
     use HasFactory;
+
+    use ProvidesNarrativeSignatureContent;
 
     protected $fillable = [
         'qualification_number',
