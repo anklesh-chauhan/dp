@@ -7,6 +7,7 @@ namespace App\Filament\Resources\ControlledDocuments\RelationManagers;
 use App\Actions\Sop\ApproveDocumentAction;
 use App\Actions\Sop\RejectDocumentAction;
 use App\Actions\Sop\ReturnDocumentAction;
+use App\Domain\DMS\Services\ControlledDocumentSectionReviewService;
 use App\Domain\DMS\Services\SopApprovalDecisionAuthorizationAdapter;
 use App\Exceptions\WorkflowException;
 use App\Filament\Concerns\HandlesServiceExceptions;
@@ -155,6 +156,10 @@ class ApprovalRelationManager extends RelationManager
             })
             ->visible(fn (SopApproval $record): bool => $this->canDecide($record)
                 && $record->approvalDecision?->hasCode(ApprovalDecision::PENDING))
+            ->disabled(fn (): bool => $decision === 'approve' && $this->ownerHasOpenReviewComments())
+            ->tooltip(fn (): ?string => $decision === 'approve' && $this->ownerHasOpenReviewComments()
+                ? ControlledDocumentSectionReviewService::UNRESOLVED_COMMENTS_APPROVAL_MESSAGE
+                : null)
             ->action(function (SopApproval $record, array $data) use ($decision, $label, $successTitle): void {
                 $this->runServiceAction(
                     fn () => match ($decision) {
@@ -195,5 +200,12 @@ class ApprovalRelationManager extends RelationManager
         } catch (WorkflowException) {
             return false;
         }
+    }
+
+    private function ownerHasOpenReviewComments(): bool
+    {
+        $owner = $this->getOwnerRecord();
+
+        return $owner instanceof ControlledDocument && $owner->hasOpenSectionReviewComments();
     }
 }

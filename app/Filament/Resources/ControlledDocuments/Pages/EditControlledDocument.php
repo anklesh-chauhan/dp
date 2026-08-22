@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Filament\Resources\ControlledDocuments\Pages;
 
 use App\Actions\Sop\SubmitDocumentAction;
+use App\Domain\DMS\Services\ControlledDocumentSectionReviewService;
+use App\Filament\Concerns\HandlesServiceExceptions;
 use App\Filament\Concerns\ProvidesControlledDocumentPrintPreviewAction;
 use App\Filament\Resources\ControlledDocuments\ControlledDocumentResource;
 use App\Models\DocumentStatus;
@@ -18,6 +20,7 @@ use Illuminate\Support\Facades\Auth;
 
 class EditControlledDocument extends EditRecord
 {
+    use HandlesServiceExceptions;
     use ProvidesControlledDocumentPrintPreviewAction;
 
     protected static string $resource = ControlledDocumentResource::class;
@@ -60,9 +63,13 @@ class EditControlledDocument extends EditRecord
                         return $description;
                     }
 
-                    return $description.' '.$attention.' Confirm those sections have been updated before submitting.';
+                    return $description.' '.$attention.' Mark those comments as addressed before submitting.';
                 })
                 ->modalSubmitActionLabel('Submit for approval')
+                ->disabled(fn (): bool => $this->record->hasOpenSectionReviewComments())
+                ->tooltip(fn (): ?string => $this->record->hasOpenSectionReviewComments()
+                    ? ControlledDocumentSectionReviewService::UNRESOLVED_COMMENTS_SUBMISSION_MESSAGE
+                    : null)
                 ->visible(fn (): bool => $this->record->documentStatus?->hasCode(DocumentStatus::DRAFT)
                     && Auth::user()?->can('submit', $this->record))
                 ->action(function (): void {

@@ -19,6 +19,10 @@ use Illuminate\Support\Str;
 
 class ControlledDocumentSectionReviewService
 {
+    public const UNRESOLVED_COMMENTS_APPROVAL_MESSAGE = 'This document cannot be approved while reviewer comments are still unresolved. Return it so the maker can address them.';
+
+    public const UNRESOLVED_COMMENTS_SUBMISSION_MESSAGE = 'Address all reviewer comments before submitting this document for approval.';
+
     public function __construct(
         private readonly SopApprovalDecisionAuthorizationAdapter $approvalAuthorization,
         private readonly AuditLogService $auditLogService,
@@ -62,6 +66,25 @@ class ControlledDocumentSectionReviewService
     public function canResolve(ControlledDocument $document, User $user): bool
     {
         return $document->canBeEditedBy($user);
+    }
+
+    public function hasUnresolvedComments(ControlledDocument $document): bool
+    {
+        return $document->hasOpenSectionReviewComments();
+    }
+
+    public function assertCanApprove(ControlledDocument $document): void
+    {
+        if ($this->hasUnresolvedComments($document)) {
+            throw new WorkflowException(message: self::UNRESOLVED_COMMENTS_APPROVAL_MESSAGE);
+        }
+    }
+
+    public function assertCanSubmit(ControlledDocument $document): void
+    {
+        if ($this->hasUnresolvedComments($document)) {
+            throw new WorkflowException(message: self::UNRESOLVED_COMMENTS_SUBMISSION_MESSAGE);
+        }
     }
 
     public function addComment(

@@ -20,6 +20,7 @@ class SopApprovalSubmissionLifecycleAdapter implements ApprovalSubmissionLifecyc
     public function __construct(
         private readonly AuditLogService $auditLogService,
         private readonly DocumentLockService $documentLockService,
+        private readonly ControlledDocumentSectionReviewService $sectionReviewService,
     ) {}
 
     public function assertSubmittable(ApprovableSubject $subject): void
@@ -31,6 +32,8 @@ class SopApprovalSubmissionLifecycleAdapter implements ApprovalSubmissionLifecyc
                 message: 'Only draft documents can be submitted for approval.'
             );
         }
+
+        $this->sectionReviewService->assertCanSubmit($document);
 
         if ($document->documentType?->requiresExecutionRecord()) {
             $document->loadMissing('sections.items', 'sections.executionTables.items');

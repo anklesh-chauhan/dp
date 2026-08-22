@@ -7,6 +7,7 @@ namespace App\Filament\Resources\LogDocuments\Pages;
 use App\Actions\Sop\SubmitDocumentAction;
 use App\Domain\DMS\Actions\LockDocumentAction;
 use App\Domain\DMS\Actions\UnlockDocumentAction;
+use App\Domain\DMS\Services\ControlledDocumentSectionReviewService;
 use App\Filament\Concerns\HandlesServiceExceptions;
 use App\Filament\Concerns\PresentsSectionReviewAttention;
 use App\Filament\Concerns\ProvidesControlledDocumentPrintPreviewAction;
@@ -66,6 +67,10 @@ class ViewLogDocument extends ViewRecord
                 ->icon(Heroicon::PaperAirplane)
                 ->color('success')
                 ->requiresConfirmation()
+                ->disabled(fn (): bool => $this->record->hasOpenSectionReviewComments())
+                ->tooltip(fn (): ?string => $this->record->hasOpenSectionReviewComments()
+                    ? ControlledDocumentSectionReviewService::UNRESOLVED_COMMENTS_SUBMISSION_MESSAGE
+                    : null)
                 ->visible(fn (): bool => $this->record->documentStatus?->hasCode(DocumentStatus::DRAFT)
                     && Auth::user()?->can('submit', $this->record))
                 ->action(function (): void {

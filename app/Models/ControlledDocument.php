@@ -529,6 +529,15 @@ class ControlledDocument extends Model implements ApprovableSubject, ControlledD
         return $this->sectionReviewComments()->open();
     }
 
+    public function hasOpenSectionReviewComments(): bool
+    {
+        if ($this->relationLoaded('openSectionReviewComments')) {
+            return $this->openSectionReviewComments->isNotEmpty();
+        }
+
+        return $this->openSectionReviewComments()->exists();
+    }
+
     public function sectionReviewAttentionSummary(): ?string
     {
         $comments = $this->relationLoaded('openSectionReviewComments')

@@ -105,9 +105,13 @@ class ViewControlledDocument extends ViewRecord
                         return $description;
                     }
 
-                    return $description.' '.$attention.' Confirm those sections have been updated before submitting.';
+                    return $description.' '.$attention.' Mark those comments as addressed before submitting.';
                 })
                 ->modalSubmitActionLabel('Submit for approval')
+                ->disabled(fn (): bool => $this->record->hasOpenSectionReviewComments())
+                ->tooltip(fn (): ?string => $this->record->hasOpenSectionReviewComments()
+                    ? ControlledDocumentSectionReviewService::UNRESOLVED_COMMENTS_SUBMISSION_MESSAGE
+                    : null)
                 ->visible(fn (): bool => $this->record->documentStatus?->hasCode(DocumentStatus::DRAFT)
                     && Auth::user()?->can('submit', $this->record))
                 ->action(function (): void {
@@ -328,6 +332,14 @@ class ViewControlledDocument extends ViewRecord
                 default => 'The current submission will be rejected and its remaining workflow steps will close.',
             })
             ->modalSubmitActionLabel($label)
+            ->disabled(fn (): bool => $decision === 'approve' && $this->record->hasOpenSectionReviewComments())
+            ->tooltip(function () use ($decision, $tooltip): ?string {
+                if ($decision === 'approve' && $this->record->hasOpenSectionReviewComments()) {
+                    return ControlledDocumentSectionReviewService::UNRESOLVED_COMMENTS_APPROVAL_MESSAGE;
+                }
+
+                return $tooltip !== '' ? $tooltip : null;
+            })
             ->schema([
                 ApprovalNarrativeTextarea::decisionRationale(
                     helperText: 'Explain what you reviewed and why you are making this decision. This text becomes part of the signed audit trail.',

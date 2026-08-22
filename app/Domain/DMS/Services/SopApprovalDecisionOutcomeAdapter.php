@@ -18,6 +18,7 @@ class SopApprovalDecisionOutcomeAdapter implements ApprovalDecisionOutcome
 {
     public function __construct(
         private readonly AuditLogService $auditLogService,
+        private readonly ControlledDocumentSectionReviewService $sectionReviewService,
     ) {}
 
     public function applyOutcome(
@@ -58,6 +59,9 @@ class SopApprovalDecisionOutcomeAdapter implements ApprovalDecisionOutcome
         $document = $approval->document()
             ->with(['approvals.workflowStep', 'approvals.approvalDecision'])
             ->firstOrFail();
+
+        $this->sectionReviewService->assertCanApprove($document);
+
         $mandatoryApprovals = $document->approvals
             ->filter(fn (SopApproval $item): bool => $item->workflowStep->is_mandatory);
 

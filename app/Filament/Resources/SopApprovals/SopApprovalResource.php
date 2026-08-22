@@ -7,6 +7,7 @@ namespace App\Filament\Resources\SopApprovals;
 use App\Actions\Sop\ApproveDocumentAction;
 use App\Actions\Sop\RejectDocumentAction;
 use App\Actions\Sop\ReturnDocumentAction;
+use App\Domain\DMS\Services\ControlledDocumentSectionReviewService;
 use App\Filament\Resources\ControlledDocuments\ControlledDocumentResource;
 use App\Filament\Resources\SopApprovals\Pages\ListSopApprovals;
 use App\Filament\Support\ApprovalNarrativeTextarea;
@@ -140,6 +141,10 @@ class SopApprovalResource extends Resource
                         ),
                     ])
                     ->visible(fn (SopApproval $record): bool => Auth::user()?->can('approve', $record) ?? false)
+                    ->disabled(fn (SopApproval $record): bool => $record->document?->hasOpenSectionReviewComments() ?? false)
+                    ->tooltip(fn (SopApproval $record): ?string => ($record->document?->hasOpenSectionReviewComments() ?? false)
+                        ? ControlledDocumentSectionReviewService::UNRESOLVED_COMMENTS_APPROVAL_MESSAGE
+                        : null)
                     ->action(fn (SopApproval $record, array $data): mixed => ServiceExceptionHandler::run(
                         fn () => app(ApproveDocumentAction::class)->execute($record, Auth::user(), $data['comments'] ?? null),
                         failureTitle: 'Approval Failed',

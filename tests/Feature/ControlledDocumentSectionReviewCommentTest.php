@@ -2,10 +2,15 @@
 
 declare(strict_types=1);
 
+use App\Actions\Sop\ApproveDocumentAction;
+use App\Actions\Sop\ReturnDocumentAction;
+use App\Actions\Sop\SubmitDocumentAction;
 use App\Domain\DMS\Actions\AddSectionReviewCommentAction;
 use App\Domain\DMS\Actions\ResolveSectionReviewCommentAction;
+use App\Domain\DMS\Services\ControlledDocumentSectionReviewService;
 use App\Exceptions\WorkflowException;
 use App\Filament\Resources\ControlledDocuments\Pages\ViewControlledDocument;
+use App\Filament\Resources\ControlledDocuments\RelationManagers\ApprovalRelationManager;
 use App\Filament\Resources\ControlledDocuments\RelationManagers\DocumentSectionRelationManager;
 use App\Filament\Resources\ControlledDocuments\RelationManagers\SectionReviewCommentsRelationManager;
 use App\Models\ApprovalDecision;
@@ -240,4 +245,122 @@ it('does not let the maker comment during approval or the reviewer resolve comme
         $this->reviewer,
         'Another comment after return.',
     ))->toThrow(WorkflowException::class);
+});
+
+it('does not let a reviewer approve while section comments are unresolved', function (): void {
+    ControlledDocumentSectionReviewComment::factory()
+        ->forSection($this->section)
+        ->forApproval($this->documentApproval)
+        ->create([
+            'author_id' => $this->reviewer,
+            'body' => 'Replace purified water with WFI.',
+        ]);
+
+    expect(fn () => app(ApproveDocumentAction::class)->execute(
+        $this->documentApproval,
+        $this->reviewer,
+        'Looks good.',
+    ))->toThrow(
+        WorkflowException::class,
+        ControlledDocumentSectionReviewService::UNRESOLVED_COMMENTS_APPROVAL_MESSAGE,
+    );
+
+    expect($this->documentApproval->refresh()->approvalDecision?->code)->toBe(ApprovalDecision::PENDING)
+        ->and($this->document->refresh()->documentStatus?->code)->toBe(DocumentStatus::UNDER_REVIEW);
+});
+
+it('lets a reviewer return a document that still has unresolved section comments', function (): void {
+    ControlledDocumentSectionReviewComment::factory()
+        ->forSection($this->section)
+        ->forApproval($this->documentApproval)
+        ->create([
+            'author_id' => $this->reviewer,
+            'body' => 'Name the equipment ID.',
+        ]);
+
+    $result = app(ReturnDocumentAction::class)->execute(
+        $this->documentApproval,
+        $this->reviewer,
+        'Return the flagged section.',
+    );
+    $result->refresh();
+
+    expect($result->approvalDecision?->code)->toBe(ApprovalDecision::RETURNED)
+        ->and($this->document->refresh()->documentStatus?->code)->toBe(DocumentStatus::DRAFT);
+});
+
+it('lets a reviewer approve after section comments are addressed', function (): void {
+    ControlledDocumentSectionReviewComment::factory()
+        ->forSection($this->section)
+        ->forApproval($this->documentApproval)
+        ->resolved($this->author)
+        ->create([
+            'author_id' => $this->reviewer,
+            'body' => 'Add the equipment ID to the purpose.',
+        ]);
+
+    $result = app(ApproveDocumentAction::class)->execute(
+        $this->documentApproval,
+        $this->reviewer,
+        'Comments were addressed.',
+    );
+    $result->refresh();
+
+    expect($result->approvalDecision?->code)->toBe(ApprovalDecision::APPROVED)
+        ->and($this->document->refresh()->documentStatus?->code)->toBe(DocumentStatus::APPROVED);
+});
+
+it('does not let the maker resubmit while section comments are unresolved', function (): void {
+    $comment = ControlledDocumentSectionReviewComment::factory()
+        ->forSection($this->section)
+        ->forApproval($this->documentApproval)
+        ->create([
+            'author_id' => $this->reviewer,
+            'body' => 'Add the equipment ID to the purpose.',
+        ]);
+
+    app(ReturnDocumentAction::class)->execute(
+        $this->documentApproval,
+        $this->reviewer,
+        'Return the flagged section.',
+    );
+
+    $document = $this->document->refresh();
+
+    expect(fn () => app(SubmitDocumentAction::class)->execute($document, $this->author))
+        ->toThrow(
+            WorkflowException::class,
+            ControlledDocumentSectionReviewService::UNRESOLVED_COMMENTS_SUBMISSION_MESSAGE,
+        );
+
+    app(ResolveSectionReviewCommentAction::class)->execute($comment->fresh(), $this->author);
+
+    $submitted = app(SubmitDocumentAction::class)->execute($document->fresh(), $this->author);
+
+    expect($submitted->documentStatus?->code)->toBe(DocumentStatus::UNDER_REVIEW);
+});
+
+it('disables approve while unresolved comments remain and keeps return available', function (): void {
+    ControlledDocumentSectionReviewComment::factory()
+        ->forSection($this->section)
+        ->forApproval($this->documentApproval)
+        ->create([
+            'author_id' => $this->reviewer,
+            'body' => 'Replace purified water with WFI.',
+        ]);
+
+    $this->actingAs($this->reviewer);
+
+    Livewire::test(ViewControlledDocument::class, ['record' => $this->document->getRouteKey()])
+        ->assertActionVisible('approveCurrentStep')
+        ->assertActionDisabled('approveCurrentStep')
+        ->assertActionEnabled('returnCurrentStep');
+
+    Livewire::test(ApprovalRelationManager::class, [
+        'ownerRecord' => $this->document,
+        'pageClass' => ViewControlledDocument::class,
+    ])
+        ->assertActionVisible(TestAction::make('approve')->table($this->documentApproval))
+        ->assertActionDisabled(TestAction::make('approve')->table($this->documentApproval))
+        ->assertActionEnabled(TestAction::make('return')->table($this->documentApproval));
 });
