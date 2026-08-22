@@ -9,7 +9,6 @@ use App\Actions\Sop\RejectDocumentAction;
 use App\Actions\Sop\ReturnDocumentAction;
 use App\Actions\Sop\SubmitDocumentAction;
 use App\Domain\DMS\Actions\CreateDocumentRevisionAction;
-use App\Domain\DMS\Actions\IssueDocumentAction;
 use App\Domain\DMS\Actions\LockDocumentAction;
 use App\Domain\DMS\Actions\UnlockDocumentAction;
 use App\Domain\DMS\Services\ControlledDocumentAccessService;
@@ -25,8 +24,7 @@ use App\Filament\Concerns\ProvidesDocumentEffectivenessActions;
 use App\Filament\Concerns\ProvidesRetentionLifecycleActions;
 use App\Filament\Resources\ControlledDocuments\ControlledDocumentResource;
 use App\Filament\Support\ApprovalNarrativeTextarea;
-use App\Models\Department;
-use App\Models\DocumentIssuance;
+use App\Filament\Support\IssueControlledCopyAction;
 use App\Models\DocumentStatus;
 use App\Models\ReportTemplate;
 use App\Models\SopApproval;
@@ -35,15 +33,12 @@ use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
-use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Pages\ViewRecord;
-use Filament\Schemas\Components\Utilities\Get;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -158,79 +153,7 @@ class ViewControlledDocument extends ViewRecord
                 ->visible(fn (): bool => $this->record->canBePrintedDirectly()
                     && app(ControlledDocumentAccessService::class)->canView(Auth::user(), $this->record)),
 
-            Action::make('issueControlledCopy')
-                ->label('Issue Controlled Copy')
-                ->icon(Heroicon::DocumentCheck)
-                ->schema([
-                    Select::make('issuance_type')
-                        ->label('Copy type')
-                        ->options(fn (): array => $this->record->documentType?->requiresExecutionRecord()
-                            ? [
-                                DocumentIssuance::TYPE_EXECUTION => 'Writable GMP execution record',
-                                DocumentIssuance::TYPE_REFERENCE => 'Read-only reference copy',
-                            ]
-                            : [DocumentIssuance::TYPE_REFERENCE => 'Read-only reference copy'])
-                        ->default(fn (): string => $this->record->documentType?->requiresExecutionRecord()
-                            ? DocumentIssuance::TYPE_EXECUTION
-                            : DocumentIssuance::TYPE_REFERENCE)
-                        ->live()
-                        ->required(),
-                    Select::make('issued_to_user_id')
-                        ->label('Issue to user')
-                        ->options(fn (): array => User::query()->orderBy('name')->pluck('name', 'id')->all())
-                        ->searchable()
-                        ->requiredWithout('issued_to_department_id'),
-                    Select::make('issued_to_department_id')
-                        ->label('Issue to department')
-                        ->options(fn (): array => Department::query()->orderBy('name')->pluck('name', 'id')->all())
-                        ->searchable()
-                        ->requiredWithout('issued_to_user_id'),
-                    TextInput::make('issued_to_location')->maxLength(255),
-                    TextInput::make('batch_number')
-                        ->visible(fn (Get $get): bool => ($this->record->documentType?->isBatchRecord() ?? false)
-                            && $get('issuance_type') === DocumentIssuance::TYPE_EXECUTION),
-                    TextInput::make('product_name')
-                        ->visible(fn (Get $get): bool => ($this->record->documentType?->isBatchRecord() ?? false)
-                            && $get('issuance_type') === DocumentIssuance::TYPE_EXECUTION),
-                    Select::make('log_frequency')
-                        ->label('Execution frequency')
-                        ->options(['hourly' => 'Hourly', 'shift' => 'Every shift', 'daily' => 'Daily'])
-                        ->visible(fn (Get $get): bool => ($this->record->documentType?->isRepeatingLog() ?? false)
-                            && $get('issuance_type') === DocumentIssuance::TYPE_EXECUTION)
-                        ->required(fn (Get $get): bool => ($this->record->documentType?->isRepeatingLog() ?? false)
-                            && $get('issuance_type') === DocumentIssuance::TYPE_EXECUTION),
-                    DatePicker::make('log_period_start')
-                        ->label('Log period start')
-                        ->visible(fn (Get $get): bool => ($this->record->documentType?->isRepeatingLog() ?? false)
-                            && $get('issuance_type') === DocumentIssuance::TYPE_EXECUTION)
-                        ->required(fn (Get $get): bool => ($this->record->documentType?->isRepeatingLog() ?? false)
-                            && $get('issuance_type') === DocumentIssuance::TYPE_EXECUTION),
-                    DatePicker::make('log_period_end')
-                        ->label('Log period end')
-                        ->afterOrEqual('log_period_start')
-                        ->visible(fn (Get $get): bool => ($this->record->documentType?->isRepeatingLog() ?? false)
-                            && $get('issuance_type') === DocumentIssuance::TYPE_EXECUTION)
-                        ->required(fn (Get $get): bool => ($this->record->documentType?->isRepeatingLog() ?? false)
-                            && $get('issuance_type') === DocumentIssuance::TYPE_EXECUTION),
-                    Select::make('supervisor_id')
-                        ->label('Supervisor reviewer')
-                        ->options(fn (): array => User::query()->orderBy('name')->pluck('name', 'id')->all())
-                        ->searchable()
-                        ->visible(fn (Get $get): bool => ($this->record->documentType?->requiresSupervisorReview() ?? false)
-                            && $get('issuance_type') === DocumentIssuance::TYPE_EXECUTION)
-                        ->required(fn (Get $get): bool => ($this->record->documentType?->requiresSupervisorReview() ?? false)
-                            && $get('issuance_type') === DocumentIssuance::TYPE_EXECUTION),
-                    Textarea::make('notes')->rows(2),
-                ])
-                ->visible(fn (): bool => $this->record->canBeIssued()
-                    && (Auth::user()?->can('Issue:DocumentIssuance') ?? false))
-                ->action(function (array $data): void {
-                    $this->runServiceAction(
-                        fn () => app(IssueDocumentAction::class)->execute($this->record, Auth::user(), $data),
-                        failureTitle: 'Issuance Failed',
-                        successTitle: 'Controlled copy issued.',
-                    );
-                }),
+            IssueControlledCopyAction::make(),
 
             EditAction::make()
                 ->visible(fn (): bool => ($user = Auth::user()) instanceof User

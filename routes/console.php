@@ -8,5 +8,5 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Schedule::command('documents:activate-due')->daily()->withoutOverlapping();
+Schedule::command('documents:activate-due')->hourly()->withoutOverlapping();
 Schedule::command('gxp:backup-create --sync')->daily()->withoutOverlapping();

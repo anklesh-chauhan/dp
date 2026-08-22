@@ -11,16 +11,19 @@ use App\Filament\Resources\ControlledDocuments\RelationManagers\TrainingAssignme
 use App\Models\ControlledDocument;
 use App\Models\Department;
 use App\Models\DocumentCategory;
+use App\Models\DocumentIssuance;
 use App\Models\DocumentStatus;
 use App\Models\DocumentTemplate;
 use App\Models\DocumentTemplateVersion;
 use App\Models\DocumentType;
+use App\Models\Organization;
 use App\Models\SopAuditLog;
 use App\Models\TemplateStatus;
 use App\Models\User;
 use Database\Seeders\LookupTableSeeder;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -39,6 +42,7 @@ beforeEach(function (): void {
         'View:ControlledDocument',
         'AssignTraining:ControlledDocument',
         'MakeEffective:ControlledDocument',
+        'Issue:DocumentIssuance',
     ] as $permission) {
         Permission::findOrCreate($permission, 'web');
     }
@@ -50,6 +54,7 @@ beforeEach(function (): void {
         'View:ControlledDocument',
         'AssignTraining:ControlledDocument',
         'MakeEffective:ControlledDocument',
+        'Issue:DocumentIssuance',
     ]);
     $this->trainee = User::factory()->create();
     $this->document = approvedControlledDocument();
@@ -204,6 +209,77 @@ it('shows make effective on approved documents and activates after training is c
         ->assertNotified();
 
     expect($this->document->refresh()->documentStatus?->code)->toBe(DocumentStatus::EFFECTIVE);
+});
+
+it('activates on the organization calendar date so controlled copies can be issued', function (): void {
+    $this->travelTo(Carbon::parse('2026-08-20 19:04:00', 'UTC'));
+
+    Organization::factory()->create([
+        'is_default' => true,
+        'timezone' => 'Asia/Kolkata',
+    ]);
+
+    $assignment = app(AssignDocumentTrainingAction::class)->execute(
+        $this->document,
+        $this->controller,
+        [$this->trainee->id],
+    )->firstOrFail();
+
+    app(CompleteDocumentTrainingAction::class)->execute(
+        $assignment,
+        $this->trainee,
+        'I have read and understood this procedure.',
+    );
+
+    $released = app(MakeDocumentEffectiveAction::class)->execute(
+        $this->document,
+        $this->controller,
+        '2026-08-21',
+        'Training complete. Release for use.',
+    );
+
+    expect($released->documentStatus?->code)->toBe(DocumentStatus::EFFECTIVE)
+        ->and($released->canBeIssued())->toBeTrue()
+        ->and(now()->toDateString())->toBe('2026-08-20');
+});
+
+it('shows issue controlled copy on an effective sop and issues a reference copy', function (): void {
+    $this->actingAs($this->controller);
+    Gate::before(static fn (): bool => true);
+
+    $assignment = app(AssignDocumentTrainingAction::class)->execute(
+        $this->document,
+        $this->controller,
+        [$this->trainee->id],
+    )->firstOrFail();
+
+    app(CompleteDocumentTrainingAction::class)->execute(
+        $assignment,
+        $this->trainee,
+        'I have read and understood this procedure.',
+    );
+
+    app(MakeDocumentEffectiveAction::class)->execute(
+        $this->document,
+        $this->controller,
+        now()->toDateString(),
+        'Training complete.',
+    );
+
+    $recipient = User::factory()->create();
+
+    Livewire::test(ViewControlledDocument::class, ['record' => $this->document->refresh()->getRouteKey()])
+        ->assertActionVisible('issueControlledCopy')
+        ->callAction('issueControlledCopy', [
+            'issuance_type' => DocumentIssuance::TYPE_REFERENCE,
+            'issued_to_user_id' => $recipient->id,
+        ])
+        ->assertNotified();
+
+    expect(DocumentIssuance::query()
+        ->where('document_id', $this->document->id)
+        ->where('issued_to_user_id', $recipient->id)
+        ->exists())->toBeTrue();
 });
 
 it('lets a document controller assign trainees from the required training table', function (): void {

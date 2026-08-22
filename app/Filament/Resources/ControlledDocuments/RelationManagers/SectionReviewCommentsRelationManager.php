@@ -29,6 +29,11 @@ class SectionReviewCommentsRelationManager extends RelationManager
 
     protected static ?string $title = 'Reviewer comments';
 
+    public static function getBadge(object $ownerRecord, string $pageClass): ?string
+    {
+        return (string) $ownerRecord->sectionReviewComments()->where('resolved_at', null)->count();
+    }
+
     public static function canViewForRecord(object $ownerRecord, string $pageClass): bool
     {
         if (! $ownerRecord instanceof ControlledDocument) {

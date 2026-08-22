@@ -25,6 +25,18 @@ beforeEach(function (): void {
     config()->set('modules.enabled', ['dms']);
 });
 
+it('reports today in the organization timezone', function (): void {
+    $this->travelTo(Carbon::parse('2026-08-20 19:04:00', 'UTC'));
+
+    Organization::factory()->create([
+        'is_default' => true,
+        'timezone' => 'Asia/Kolkata',
+    ]);
+
+    expect(app(DateFormatSettings::class)->todayDateString())->toBe('2026-08-21')
+        ->and(now()->toDateString())->toBe('2026-08-20');
+});
+
 it('falls back to configuration defaults when no organization profile exists', function (): void {
     config()->set('formatting.date', DateDisplayFormat::Iso->value);
     config()->set('formatting.datetime', DateTimeDisplayFormat::IsoHm->value);

@@ -9,6 +9,7 @@ use App\Domain\DMS\Services\DocumentTrainingService;
 use App\Filament\Support\AssignDocumentTrainingAction;
 use App\Models\ControlledDocument;
 use App\Models\DocumentStatus;
+use App\Support\Formatting\DateFormatSettings;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Textarea;
@@ -31,8 +32,8 @@ trait ProvidesDocumentEffectivenessActions
             ->schema([
                 DatePicker::make('effective_date')
                     ->label('Effective date')
-                    ->helperText('This is the date operations must start following this version. It cannot be earlier than today.')
-                    ->minDate(now()->startOfDay())
+                    ->helperText('This is the date operations must start following this version. It cannot be earlier than today in the organization timezone.')
+                    ->minDate(fn (): string => app(DateFormatSettings::class)->todayDateString())
                     ->required(),
                 Textarea::make('reason')
                     ->label('Release reason')
@@ -40,7 +41,7 @@ trait ProvidesDocumentEffectivenessActions
             ])
             ->fillForm(fn (): array => [
                 'effective_date' => $this->effectivenessRecord()->effective_date?->toDateString()
-                    ?? now()->toDateString(),
+                    ?? app(DateFormatSettings::class)->todayDateString(),
             ])
             ->modalHeading('Confirm the effective date?')
             ->modalDescription(fn (): string => $this->makeEffectiveModalDescription())
@@ -61,13 +62,16 @@ trait ProvidesDocumentEffectivenessActions
                     ),
                     failureTitle: 'Could not make document effective',
                     successTitle: 'Effective date confirmed',
-                    successBody: 'The document becomes effective on the confirmed date. A prior effective version in the same series is superseded at that time.',
-                    afterSuccess: fn () => $this->refreshFormData([
-                        'document_status_id',
-                        'effective_date',
-                        'released_for_effectiveness_at',
-                        'released_for_effectiveness_by',
-                    ]),
+                    successBody: 'The document becomes effective on the confirmed date. Controlled copies can be issued once the status is Effective.',
+                    afterSuccess: function (): void {
+                        $this->effectivenessRecord()->refresh()->load(['documentStatus', 'documentType']);
+                        $this->refreshFormData([
+                            'document_status_id',
+                            'effective_date',
+                            'released_for_effectiveness_at',
+                            'released_for_effectiveness_by',
+                        ]);
+                    },
                 );
             });
     }

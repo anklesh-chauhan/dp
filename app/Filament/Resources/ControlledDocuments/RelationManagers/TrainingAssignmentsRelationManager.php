@@ -31,6 +31,11 @@ class TrainingAssignmentsRelationManager extends RelationManager
 
     protected static ?string $title = 'Required training';
 
+    public static function getBadge(object $ownerRecord, string $pageClass): ?string
+    {
+        return (string) $ownerRecord->trainingAssignments()->where('completed_at', null)->count();
+    }
+
     public static function canViewForRecord(object $ownerRecord, string $pageClass): bool
     {
         if (! $ownerRecord instanceof ControlledDocument) {

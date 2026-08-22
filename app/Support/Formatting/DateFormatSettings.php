@@ -49,6 +49,14 @@ final class DateFormatSettings
         return filled($timezone) ? (string) $timezone : (string) config('app.timezone', 'UTC');
     }
 
+    /**
+     * Calendar date (Y-m-d) in the active organization timezone.
+     */
+    public function todayDateString(): string
+    {
+        return now($this->timezone())->toDateString();
+    }
+
     public function formatDate(mixed $value, ?string $timezone = null): ?string
     {
         // Date-only values keep the stored calendar day unless a timezone is explicit.

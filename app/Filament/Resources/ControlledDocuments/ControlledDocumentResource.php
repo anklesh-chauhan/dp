@@ -17,8 +17,10 @@ use App\Filament\Resources\ControlledDocuments\RelationManagers\DocumentVariable
 use App\Filament\Resources\ControlledDocuments\RelationManagers\OriginalArtifactRelationManager;
 use App\Filament\Resources\ControlledDocuments\RelationManagers\SectionReviewCommentsRelationManager;
 use App\Filament\Resources\ControlledDocuments\RelationManagers\TrainingAssignmentsRelationManager;
+use App\Filament\Resources\LogDocuments\RelationManagers\IssuanceRelationManager;
 use App\Filament\Resources\Shared\RelationManagers\QualityAttachmentsRelationManager;
 use App\Filament\Support\DocumentClassificationFormFields;
+use App\Filament\Support\IssueControlledCopyAction;
 use App\Filament\Support\TemplateVariableFieldBuilder;
 use App\Models\ControlledDocument;
 use App\Models\DocumentStatus;
@@ -226,6 +228,7 @@ class ControlledDocumentResource extends Resource
                 TrashedFilter::make(),
             ])
             ->recordActions([
+                IssueControlledCopyAction::make(),
                 ActionGroup::make([
                     ViewAction::make(),
                     Action::make('printPdf')
@@ -261,6 +264,7 @@ class ControlledDocumentResource extends Resource
             QualityAttachmentsRelationManager::class,
             ApprovalRelationManager::class,
             ChangeHistoryRelationManager::class,
+            IssuanceRelationManager::class,
             AuditRelationManager::class,
         ];
     }

@@ -10,6 +10,7 @@ use App\Models\ControlledDocument;
 use App\Models\DocumentStatus;
 use App\Models\SopAuditLog;
 use App\Models\User;
+use App\Support\Formatting\DateFormatSettings;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -21,6 +22,7 @@ class DocumentEffectivenessService
         private readonly DocumentActivationService $documentActivationService,
         private readonly DocumentTrainingService $documentTrainingService,
         private readonly WorkflowNotificationService $workflowNotificationService,
+        private readonly DateFormatSettings $dateFormatSettings,
     ) {}
 
     public function release(
@@ -87,7 +89,7 @@ class DocumentEffectivenessService
                 fn ($query) => $query->where('code', DocumentStatus::APPROVED)
             )
             ->whereNotNull('released_for_effectiveness_at')
-            ->whereDate('effective_date', '<=', now()->toDateString())
+            ->whereDate('effective_date', '<=', $this->dateFormatSettings->todayDateString())
             ->orderBy('id')
             ->get();
 
@@ -121,7 +123,7 @@ class DocumentEffectivenessService
             return $document;
         }
 
-        if ($document->effective_date === null || $document->effective_date->toDateString() > now()->toDateString()) {
+        if ($document->effective_date === null || $document->effective_date->toDateString() > $this->dateFormatSettings->todayDateString()) {
             return $document;
         }
 
@@ -140,7 +142,7 @@ class DocumentEffectivenessService
             ]);
         }
 
-        if ($date < now()->toDateString()) {
+        if ($date < $this->dateFormatSettings->todayDateString()) {
             throw ValidationException::withMessages([
                 'effective_date' => 'The effective date cannot be earlier than today.',
             ]);

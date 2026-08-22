@@ -7,6 +7,7 @@ namespace App\Filament\Resources\LogDocuments\RelationManagers;
 use App\Domain\DMS\Actions\DestroyIssuanceAction;
 use App\Domain\DMS\Actions\RecallIssuanceAction;
 use App\Filament\Concerns\HandlesServiceExceptions;
+use App\Models\ControlledDocument;
 use App\Models\DocumentIssuance;
 use App\Models\IssuanceStatus;
 use Filament\Actions\Action;
@@ -24,7 +25,17 @@ class IssuanceRelationManager extends RelationManager
 
     protected static string $relationship = 'issuances';
 
-    protected static ?string $title = 'Controlled Copy Issuance Register';
+    protected static ?string $title = 'Controlled Copy Issuanced';
+
+    public static function getBadge(object $ownerRecord, string $pageClass): ?string
+    {
+        return (string) $ownerRecord->issuances()->count();
+    }
+
+    public static function canViewForRecord(object $ownerRecord, string $pageClass): bool
+    {
+        return $ownerRecord instanceof ControlledDocument && $ownerRecord->isIssuableType();
+    }
 
     public function form(Schema $schema): Schema
     {
