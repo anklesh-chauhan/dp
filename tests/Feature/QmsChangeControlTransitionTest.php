@@ -10,6 +10,7 @@ use App\Exceptions\ModuleNotEnabledException;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Models\Permission;
 
@@ -111,4 +112,55 @@ it('requires the QMS entitlement for lifecycle transitions', function (): void {
         $this->actor,
     ))->toThrow(ModuleNotEnabledException::class)
         ->and(ChangeControlAuditEvent::query()->count())->toBe(0);
+});
+
+it('requires a quality approval instance to skip review or return to draft', function (): void {
+    $service = app(ChangeControlTransitionService::class);
+    $service->transition(
+        $this->changeControl,
+        ChangeControlStatus::Submitted,
+        $this->actor,
+        'Ready for quality review.',
+    );
+
+    expect(fn () => $service->transition(
+        $this->changeControl,
+        ChangeControlStatus::Approved,
+        $this->actor,
+        'Skip independent review.',
+    ))->toThrow(ValidationException::class);
+
+    expect(fn () => $service->transition(
+        $this->changeControl,
+        ChangeControlStatus::Draft,
+        $this->actor,
+        'Return without a workflow decision.',
+    ))->toThrow(ValidationException::class)
+        ->and($this->changeControl->fresh()?->status)->toBe(ChangeControlStatus::Submitted)
+        ->and($this->changeControl->fresh()?->approved_at)->toBeNull();
+
+    $approved = $service->transition(
+        $this->changeControl,
+        ChangeControlStatus::Approved,
+        $this->actor,
+        'Final quality approval completed.',
+        ['approval_instance_uuid' => (string) Str::uuid()],
+    );
+
+    expect($approved->status)->toBe(ChangeControlStatus::Approved)
+        ->and($approved->approved_at)->not->toBeNull();
+
+    $returned = ChangeControl::factory()->create([
+        'status' => ChangeControlStatus::Submitted,
+        'submitted_at' => now(),
+    ]);
+    $result = $service->transition(
+        $returned,
+        ChangeControlStatus::Draft,
+        $this->actor,
+        'Returned from quality review.',
+        ['approval_instance_uuid' => (string) Str::uuid()],
+    );
+
+    expect($result->status)->toBe(ChangeControlStatus::Draft);
 });

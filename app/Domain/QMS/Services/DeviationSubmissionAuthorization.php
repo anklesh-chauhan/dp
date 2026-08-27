@@ -12,22 +12,33 @@ final class DeviationSubmissionAuthorization implements ApprovalSubmissionAuthor
 {
     public function canSubmit(ApprovableSubject $subject, User $user): bool
     {
+        return $this->denialReason($subject, $user) === null;
+    }
+
+    public function denialReason(ApprovableSubject $subject, User $user): ?string
+    {
         if (! $user->can('Submit:Deviation') && ! $user->can('Update:Deviation')) {
-            return false;
+            return 'You do not have permission to submit this deviation.';
         }
 
         if ($user->can('Manage:Deviation')) {
-            return true;
+            return null;
         }
 
         if (
             $user->department_id !== null
             && $user->department_id !== $subject->approvalSubjectDepartmentId()
         ) {
-            return false;
+            return 'You can only submit deviations for your own department.';
         }
 
-        return $subject->approvalSubjectCreatedById() === $user->id
-            || $subject->approvalSubjectOwnerId() === $user->id;
+        if (
+            $subject->approvalSubjectCreatedById() === $user->id
+            || $subject->approvalSubjectOwnerId() === $user->id
+        ) {
+            return null;
+        }
+
+        return 'Only the reporter or owner can submit this deviation.';
     }
 }

@@ -222,6 +222,80 @@ it('adds change control permissions only for a QMS installation', function (): v
         ->toEqualCanonicalizing($expectedAdministratorPermissions)
         ->and(Permission::query()->whereIn('name', AiModuleSeeder::PERMISSIONS)->exists())
         ->toBeFalse();
+
+    $makerRole = Role::findByName('sop maker', 'web');
+    $checkerRole = Role::findByName('sop checker', 'web');
+
+    foreach (QmsModuleSeeder::MAKER_PERMISSIONS as $permission) {
+        expect($makerRole->hasPermissionTo($permission))->toBeTrue();
+    }
+
+    expect($makerRole->hasPermissionTo('Create:ControlledDocument'))->toBeTrue()
+        ->and($makerRole->hasPermissionTo('Revise:ControlledDocument'))->toBeTrue()
+        ->and($makerRole->hasPermissionTo('Approve:ChangeControl'))->toBeFalse()
+        ->and($makerRole->hasPermissionTo('Manage:Deviation'))->toBeFalse()
+        ->and($makerRole->hasPermissionTo('Decide:QualityApproval'))->toBeFalse()
+        ->and($makerRole->hasPermissionTo('Create:QualityApprovalWorkflow'))->toBeFalse();
+
+    foreach (QmsModuleSeeder::CHECKER_PERMISSIONS as $permission) {
+        expect($checkerRole->hasPermissionTo($permission))->toBeTrue();
+    }
+
+    expect($checkerRole->hasPermissionTo('Manage:ChangeControl'))->toBeFalse()
+        ->and($checkerRole->hasPermissionTo('Create:Deviation'))->toBeFalse()
+        ->and($checkerRole->hasPermissionTo('Submit:Deviation'))->toBeFalse()
+        ->and($checkerRole->hasPermissionTo('Approve:RiskAssessment'))->toBeFalse()
+        ->and($checkerRole->hasPermissionTo('Complete:Investigation'))->toBeFalse();
+
+    $documentController = Role::findByName('document controller', 'web');
+    $approver = Role::findByName('sop approver', 'web');
+    $qaReviewer = Role::findByName('qa reviewer', 'web');
+    $logMaker = Role::findByName('log maker', 'web');
+    $recordExecutor = Role::findByName('gmp record executor', 'web');
+    $productionSupervisor = Role::findByName('production supervisor', 'web');
+
+    foreach (QmsModuleSeeder::DOCUMENT_CONTROLLER_PERMISSIONS as $permission) {
+        expect($documentController->hasPermissionTo($permission))->toBeTrue();
+    }
+
+    expect($documentController->hasPermissionTo('Issue:DocumentIssuance'))->toBeTrue()
+        ->and($documentController->hasPermissionTo('Create:QualityApprovalWorkflow'))->toBeTrue()
+        ->and($documentController->hasPermissionTo('Manage:Deviation'))->toBeFalse()
+        ->and($documentController->hasPermissionTo('Decide:QualityApproval'))->toBeFalse();
+
+    foreach (QmsModuleSeeder::APPROVER_PERMISSIONS as $permission) {
+        expect($approver->hasPermissionTo($permission))->toBeTrue();
+    }
+
+    expect($approver->hasPermissionTo('Decide:DocumentTemplateApproval'))->toBeTrue()
+        ->and($approver->hasPermissionTo('Decide:QualityApproval'))->toBeTrue()
+        ->and($approver->hasPermissionTo('Create:Deviation'))->toBeFalse();
+
+    foreach (QmsModuleSeeder::QA_REVIEWER_PERMISSIONS as $permission) {
+        expect($qaReviewer->hasPermissionTo($permission))->toBeTrue();
+    }
+
+    expect($qaReviewer->hasPermissionTo('Approve:DocumentExecution'))->toBeTrue()
+        ->and($qaReviewer->hasPermissionTo('Release:BatchRelease'))->toBeTrue()
+        ->and($qaReviewer->hasPermissionTo('Manage:RiskAssessment'))->toBeFalse()
+        ->and($qaReviewer->hasPermissionTo('Create:ChangeControl'))->toBeFalse();
+
+    foreach (QmsModuleSeeder::LOG_MAKER_PERMISSIONS as $permission) {
+        expect($logMaker->hasPermissionTo($permission))->toBeTrue();
+    }
+
+    foreach (QmsModuleSeeder::RECORD_EXECUTOR_PERMISSIONS as $permission) {
+        expect($recordExecutor->hasPermissionTo($permission))->toBeTrue();
+    }
+
+    foreach (QmsModuleSeeder::PRODUCTION_SUPERVISOR_PERMISSIONS as $permission) {
+        expect($productionSupervisor->hasPermissionTo($permission))->toBeTrue();
+    }
+
+    expect($logMaker->hasPermissionTo('Create:BatchRelease'))->toBeFalse()
+        ->and($recordExecutor->hasPermissionTo('Create:BatchRelease'))->toBeTrue()
+        ->and($productionSupervisor->hasPermissionTo('Review:BatchRelease'))->toBeTrue()
+        ->and($productionSupervisor->hasPermissionTo('Release:BatchRelease'))->toBeFalse();
 });
 
 it('is idempotent when a QMS installation is seeded repeatedly', function (): void {

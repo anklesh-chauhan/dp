@@ -130,6 +130,20 @@ final class Deviation extends Model implements ApprovableSubject, ProvidesElectr
         return $this->morphMany(QualityApprovalInstance::class, 'subject');
     }
 
+    public function hasPendingQualityApproval(): bool
+    {
+        $latestSubmissionUuid = $this->approvalInstances()->latest('id')->value('submission_uuid');
+
+        if (! is_string($latestSubmissionUuid)) {
+            return false;
+        }
+
+        return $this->approvalInstances()
+            ->where('submission_uuid', $latestSubmissionUuid)
+            ->where('decision_code', 'pending')
+            ->exists();
+    }
+
     public function approvalSubjectKey(): int|string|null
     {
         $key = $this->getKey();

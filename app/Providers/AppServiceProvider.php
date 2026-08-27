@@ -13,6 +13,7 @@ use App\Domain\DMS\Services\SopApprovalSubmissionLifecycleAdapter;
 use App\Domain\DMS\Services\SopWorkflowDefinitionSelector;
 use App\Domain\QMS\Adapters\QmsTrainingCompetencyRefresherAdapter;
 use App\Domain\QMS\Services\CalibrationGate;
+use App\Domain\QMS\Services\ChangeControlApprovalDecisionService;
 use App\Domain\QMS\Services\CompetencyGate;
 use App\Domain\QMS\Services\DeviationApprovalDecisionService;
 use App\Domain\QMS\Services\QualityApprovalDecisionAuthorization;
@@ -101,6 +102,15 @@ class AppServiceProvider extends ServiceProvider
         $this->app->when(DeviationApprovalDecisionService::class)
             ->needs(ApprovalDecisionPersistence::class)
             ->give(QualityApprovalDecisionPersistence::class);
+        $this->app->when(ChangeControlApprovalDecisionService::class)
+            ->needs(ApprovalDecisionAuthorization::class)
+            ->give(QualityApprovalDecisionAuthorization::class);
+        $this->app->when(ChangeControlApprovalDecisionService::class)
+            ->needs(ApprovalDecisionOutcome::class)
+            ->give(QualityApprovalDecisionOutcome::class);
+        $this->app->when(ChangeControlApprovalDecisionService::class)
+            ->needs(ApprovalDecisionPersistence::class)
+            ->give(QualityApprovalDecisionPersistence::class);
         $this->app->bind(WorkflowDecisionNotifier::class, WorkflowNotificationService::class);
         $this->app->bind(CompetencyActionGate::class, function (Application $app): CompetencyActionGate {
             if ($app->make(ModuleManager::class)->enabled(ProductModule::QMS)) {
@@ -124,6 +134,9 @@ class AppServiceProvider extends ServiceProvider
             return $app->make(NullTrainingCompetencyRefresher::class);
         });
         $this->app->when(DeviationApprovalDecisionService::class)
+            ->needs(WorkflowDecisionNotifier::class)
+            ->give(QualityWorkflowNotificationService::class);
+        $this->app->when(ChangeControlApprovalDecisionService::class)
             ->needs(WorkflowDecisionNotifier::class)
             ->give(QualityWorkflowNotificationService::class);
         $this->app->bind(ElectronicSignatureHasher::class, Sha256ElectronicSignatureHasher::class);

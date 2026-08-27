@@ -6,11 +6,13 @@ namespace App\Filament\Support;
 
 use App\Domain\DMS\Services\SopApprovalDecisionAuthorizationAdapter;
 use App\Domain\DMS\Services\TemplateApprovalDecisionService;
+use App\Domain\QMS\Models\ChangeControl;
 use App\Domain\QMS\Models\Deviation;
 use App\Domain\QMS\Models\QualityApprovalInstance;
 use App\Domain\QMS\Services\QualityApprovalDecisionAuthorization;
 use App\Enums\ProductModule;
 use App\Exceptions\WorkflowException;
+use App\Filament\Resources\ChangeControls\ChangeControlResource;
 use App\Filament\Resources\ControlledDocuments\ControlledDocumentResource;
 use App\Filament\Resources\Deviations\DeviationResource;
 use App\Filament\Resources\DocumentTemplateApprovalInstances\DocumentTemplateApprovalInstanceResource;
@@ -144,24 +146,42 @@ class MyApprovalQueueService
             ])
             ->get()
             ->filter(fn (QualityApprovalInstance $instance): bool => $this->qualityAuthorization->canDecide($instance, $user))
-            ->filter(fn (QualityApprovalInstance $instance): bool => $instance->subject instanceof Deviation)
+            ->filter(fn (QualityApprovalInstance $instance): bool => $instance->subject instanceof Deviation
+                || $instance->subject instanceof ChangeControl)
             ->map(function (QualityApprovalInstance $instance): array {
-                /** @var Deviation $deviation */
-                $deviation = $instance->subject;
-                $deviation->loadMissing('department');
+                $subject = $instance->subject;
+                $subject->loadMissing('department');
 
+                if ($subject instanceof ChangeControl) {
+                    return [
+                        'id' => "qms-change-control:{$instance->getKey()}",
+                        'module' => 'QMS',
+                        'work_type' => 'Change Control',
+                        'reference' => (string) $subject->change_number,
+                        'title' => (string) $subject->title,
+                        'department' => (string) ($subject->department?->name ?? 'Global'),
+                        'step' => (int) $instance->workflowStep->step_no,
+                        'step_type' => 'Approval',
+                        'required_role' => (string) $instance->workflowStep->role->name,
+                        'submitted_at' => $instance->created_at->toISOString(),
+                        'review_url' => ChangeControlResource::getUrl('view', ['record' => $subject]),
+                        'print_preview_url' => null,
+                    ];
+                }
+
+                /** @var Deviation $subject */
                 return [
                     'id' => "qms-deviation:{$instance->getKey()}",
                     'module' => 'QMS',
                     'work_type' => 'Deviation',
-                    'reference' => (string) $deviation->deviation_number,
-                    'title' => (string) $deviation->title,
-                    'department' => (string) ($deviation->department?->name ?? 'Global'),
+                    'reference' => (string) $subject->deviation_number,
+                    'title' => (string) $subject->title,
+                    'department' => (string) ($subject->department?->name ?? 'Global'),
                     'step' => (int) $instance->workflowStep->step_no,
                     'step_type' => 'Approval',
                     'required_role' => (string) $instance->workflowStep->role->name,
                     'submitted_at' => $instance->created_at->toISOString(),
-                    'review_url' => DeviationResource::getUrl('view', ['record' => $deviation]),
+                    'review_url' => DeviationResource::getUrl('view', ['record' => $subject]),
                     'print_preview_url' => null,
                 ];
             });

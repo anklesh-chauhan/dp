@@ -4,15 +4,18 @@ declare(strict_types=1);
 
 namespace App\Domain\QMS\Models;
 
+use App\Domain\QMS\Policies\QualityApprovalWorkflowPolicy;
 use App\Domain\Shared\Contracts\ApprovalWorkflowDefinition;
 use App\Domain\Shared\Contracts\ApprovalWorkflowStepDefinition;
 use App\Models\Department;
 use Database\Factories\Domain\QMS\Models\QualityApprovalWorkflowFactory;
+use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+#[UsePolicy(QualityApprovalWorkflowPolicy::class)]
 final class QualityApprovalWorkflow extends Model implements ApprovalWorkflowDefinition
 {
     /** @use HasFactory<QualityApprovalWorkflowFactory> */

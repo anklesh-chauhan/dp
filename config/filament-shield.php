@@ -266,6 +266,8 @@ return [
         'download_pdf:controlled_document' => 'Download PDF: Controlled Document',
         'manage_pdf_access:controlled_document' => 'Manage PDF Access: Controlled Document',
         'manage_pdf_policies:controlled_document' => 'Manage PDF Policies: Controlled Document',
+        'decide:document_template_approval' => 'Decide: Document Template Approval',
+        'decide:quality_approval' => 'Decide: Quality Approval',
         'approve',
         'submit',
         'review',

@@ -11,6 +11,7 @@ use App\Filament\Resources\ChangeControls\Pages\CreateChangeControl;
 use App\Filament\Resources\ChangeControls\Pages\EditChangeControl;
 use App\Filament\Resources\ChangeControls\Pages\ListChangeControls;
 use App\Filament\Resources\ChangeControls\Pages\ViewChangeControl;
+use App\Filament\Resources\ChangeControls\RelationManagers\ApprovalInstancesRelationManager;
 use App\Filament\Resources\ChangeControls\RelationManagers\AuditEventsRelationManager;
 use App\Filament\Resources\ChangeControls\RelationManagers\DocumentImpactsRelationManager;
 use App\Filament\Resources\ChangeControls\Schemas\ChangeControlForm;
@@ -71,6 +72,7 @@ final class ChangeControlResource extends Resource
         return [
             DocumentImpactsRelationManager::class,
             RiskAssessmentsRelationManager::class,
+            ApprovalInstancesRelationManager::class,
             AuditEventsRelationManager::class,
         ];
     }

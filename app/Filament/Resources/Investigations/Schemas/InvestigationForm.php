@@ -23,6 +23,7 @@ final class InvestigationForm
                             ->relationship('deviation', 'deviation_number')
                             ->searchable()
                             ->preload()
+                            ->default(fn (): ?int => request()->integer('deviation_id') ?: null)
                             ->required()->live(),
                         Select::make('lead_id')
                             ->relationship('lead', 'name')

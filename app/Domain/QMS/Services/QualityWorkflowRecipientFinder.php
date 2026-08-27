@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Domain\QMS\Services;
 
+use App\Domain\QMS\Models\ChangeControl;
 use App\Domain\QMS\Models\Deviation;
 use App\Domain\QMS\Models\QualityApprovalInstance;
 use App\Domain\Shared\Enums\ApprovalDecisionCode;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Spatie\Permission\Models\Role;
 
@@ -28,9 +30,25 @@ final class QualityWorkflowRecipientFinder
     /**
      * @return Collection<int, User>
      */
+    public function changeControlStakeholders(ChangeControl $changeControl): Collection
+    {
+        return $this->usersByIds($changeControl->requested_by, $changeControl->owner_id);
+    }
+
+    /**
+     * @return Collection<int, User>
+     */
     public function currentDeviationReviewers(Deviation $deviation): Collection
     {
-        $instance = $this->currentQualityApproval($deviation);
+        return $this->currentReviewers($deviation);
+    }
+
+    /**
+     * @return Collection<int, User>
+     */
+    public function currentReviewers(Model $subject): Collection
+    {
+        $instance = $this->currentQualityApproval($subject);
 
         if (! $instance instanceof QualityApprovalInstance) {
             return collect();
@@ -41,10 +59,10 @@ final class QualityWorkflowRecipientFinder
             ->values();
     }
 
-    public function currentQualityApproval(Deviation $deviation): ?QualityApprovalInstance
+    public function currentQualityApproval(Model $subject): ?QualityApprovalInstance
     {
         $instances = QualityApprovalInstance::query()
-            ->whereMorphedTo('subject', $deviation)
+            ->whereMorphedTo('subject', $subject)
             ->with(['workflowStep.role', 'workflowStep.department', 'subject'])
             ->orderBy('id')
             ->get();

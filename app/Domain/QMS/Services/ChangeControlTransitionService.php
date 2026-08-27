@@ -62,6 +62,8 @@ final class ChangeControlTransitionService
                 ]);
             }
 
+            $this->assertWorkflowOnlyTransition($fromStatus, $toStatus, $context);
+
             if ($toStatus === ChangeControlStatus::Approved) {
                 $this->assertMajorChangeRiskGate($record);
                 $this->competencyGate->assert($actor, CompetencyCurriculum::GATE_CHANGE_CONTROL_APPROVE);
@@ -116,13 +118,16 @@ final class ChangeControlTransitionService
             ],
             ChangeControlStatus::Submitted => [
                 ChangeControlStatus::UnderReview,
+                ChangeControlStatus::Approved,
                 ChangeControlStatus::Rejected,
                 ChangeControlStatus::Cancelled,
+                ChangeControlStatus::Draft,
             ],
             ChangeControlStatus::UnderReview => [
                 ChangeControlStatus::Approved,
                 ChangeControlStatus::Rejected,
                 ChangeControlStatus::Cancelled,
+                ChangeControlStatus::Draft,
             ],
             ChangeControlStatus::Approved => [
                 ChangeControlStatus::Implementing,
@@ -151,7 +156,7 @@ final class ChangeControlTransitionService
             ChangeControlStatus::EffectivenessReview => 'VerifyEffectiveness:ChangeControl',
             ChangeControlStatus::Closed => 'Close:ChangeControl',
             ChangeControlStatus::Cancelled => 'Manage:ChangeControl',
-            ChangeControlStatus::Draft => 'Update:ChangeControl',
+            ChangeControlStatus::Draft => 'Review:ChangeControl',
         };
     }
 
@@ -161,9 +166,44 @@ final class ChangeControlTransitionService
             ChangeControlStatus::Approved,
             ChangeControlStatus::Rejected,
             ChangeControlStatus::Cancelled,
+            ChangeControlStatus::Draft,
             ChangeControlStatus::EffectivenessReview,
             ChangeControlStatus::Closed,
         ], true);
+    }
+
+    /**
+     * @param  array<string, mixed>  $context
+     */
+    private function assertWorkflowOnlyTransition(
+        ChangeControlStatus $fromStatus,
+        ChangeControlStatus $toStatus,
+        array $context,
+    ): void {
+        $hasQualityApprovalContext = filled($context['approval_instance_uuid'] ?? null);
+
+        if (
+            $fromStatus === ChangeControlStatus::Submitted
+            && $toStatus === ChangeControlStatus::Approved
+            && ! $hasQualityApprovalContext
+        ) {
+            throw ValidationException::withMessages([
+                'status' => 'Change control cannot skip review without a completed quality approval step.',
+            ]);
+        }
+
+        if (
+            $toStatus === ChangeControlStatus::Draft
+            && in_array($fromStatus, [
+                ChangeControlStatus::Submitted,
+                ChangeControlStatus::UnderReview,
+            ], true)
+            && ! $hasQualityApprovalContext
+        ) {
+            throw ValidationException::withMessages([
+                'status' => 'Change control can return to draft only through a quality approval return.',
+            ]);
+        }
     }
 
     /** @return array<string, Carbon> */

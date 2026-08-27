@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Domain\DMS\Enums\TemplateApprovalStatus;
+use App\Domain\QMS\Enums\ChangeControlStatus;
+use App\Domain\QMS\Models\ChangeControl;
 use App\Domain\QMS\Models\Deviation;
 use App\Domain\QMS\Models\QualityApprovalInstance;
 use App\Domain\QMS\Models\QualityApprovalWorkflow;
@@ -178,4 +180,51 @@ it('does not expose unavailable work or duplicate queue navigation', function ()
         ->and(MyApprovalQueue::canAccess())->toBeFalse()
         ->and(SopApprovalResource::shouldRegisterNavigation())->toBeFalse()
         ->and(DocumentTemplateApprovalInstanceResource::shouldRegisterNavigation())->toBeFalse();
+});
+
+it('includes actionable change control quality approvals for authorized reviewers', function (): void {
+    foreach (['Review:ChangeControl', 'Approve:ChangeControl', 'View:ChangeControl'] as $permission) {
+        Permission::findOrCreate($permission, 'web');
+    }
+
+    $this->reviewer->givePermissionTo([
+        'Review:ChangeControl',
+        'Approve:ChangeControl',
+        'View:ChangeControl',
+    ]);
+
+    $qualityWorkflow = QualityApprovalWorkflow::factory()->create([
+        'department_id' => $this->department,
+        'subject_type' => ChangeControl::class,
+    ]);
+    $qualityStep = QualityApprovalWorkflowStep::factory()->create([
+        'workflow_id' => $qualityWorkflow,
+        'role_id' => $this->reviewerRole,
+        'department_id' => $this->department,
+    ]);
+    $changeControl = ChangeControl::factory()->create([
+        'department_id' => $this->department,
+        'requested_by' => $this->author,
+        'status' => ChangeControlStatus::Submitted,
+        'submitted_at' => now(),
+    ]);
+    QualityApprovalInstance::factory()->create([
+        'subject_type' => ChangeControl::class,
+        'subject_id' => $changeControl,
+        'workflow_id' => $qualityWorkflow,
+        'workflow_step_id' => $qualityStep,
+    ]);
+
+    $this->actingAs($this->reviewer);
+    $items = app(MyApprovalQueueService::class)->forUser($this->reviewer);
+    $changeControlItem = $items->firstWhere('work_type', 'Change Control');
+
+    expect($changeControlItem)->not->toBeNull()
+        ->and($changeControlItem['print_preview_url'])->toBeNull()
+        ->and($changeControlItem['review_url'])->not->toBeEmpty()
+        ->and($changeControlItem['reference'])->toBe($changeControl->change_number);
+
+    Livewire::test(MyApprovalQueue::class)
+        ->assertOk()
+        ->assertSee('Change Control');
 });

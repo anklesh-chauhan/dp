@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Domain\QMS\Services;
 
+use App\Domain\QMS\Enums\ChangeControlStatus;
 use App\Domain\QMS\Enums\DeviationStatus;
+use App\Domain\QMS\Models\ChangeControl;
 use App\Domain\QMS\Models\Deviation;
 use App\Domain\QMS\Models\QualityApprovalInstance;
+use App\Domain\Shared\Contracts\ApprovableSubject;
 use App\Domain\Shared\Contracts\ApprovalDecisionAuthorization;
 use App\Domain\Shared\Contracts\ApprovalInstance;
 use App\Enums\ProductModule;
@@ -33,7 +36,7 @@ final class QualityApprovalDecisionAuthorization implements ApprovalDecisionAuth
         ]);
         $subject = $approval->approvalInstanceSubject();
 
-        if (! $subject instanceof Deviation || $subject->status !== DeviationStatus::Open) {
+        if (! $this->subjectIsReadyForDecision($subject)) {
             throw new WorkflowException(message: 'This quality approval is no longer available.');
         }
 
@@ -49,8 +52,8 @@ final class QualityApprovalDecisionAuthorization implements ApprovalDecisionAuth
             throw new WorkflowException(message: 'You do not have permission to decide quality approvals.');
         }
 
-        if (! $user->can('Investigate:Deviation')) {
-            throw new WorkflowException(message: 'You do not have permission to apply the deviation outcome.');
+        if (! $this->userCanApplyOutcome($subject, $user)) {
+            throw new WorkflowException(message: 'You do not have permission to apply the quality approval outcome.');
         }
 
         if (! $user->hasRole($approval->workflowStep->role)) {
@@ -59,16 +62,19 @@ final class QualityApprovalDecisionAuthorization implements ApprovalDecisionAuth
             );
         }
 
-        if (! $user->can('Manage:Deviation') && $subject->reported_by === $user->id) {
-            throw new WorkflowException(message: 'The deviation reporter cannot approve their own submission.');
+        if (
+            ! $user->can($this->managePermission($subject))
+            && $subject->approvalSubjectCreatedById() === $user->id
+        ) {
+            throw new WorkflowException(message: 'The submitter cannot approve their own submission.');
         }
 
         $requiredDepartmentId = $approval->workflowStep->resolveRequiredDepartmentId(
-            $subject->department_id,
+            $subject->approvalSubjectDepartmentId(),
         );
 
         if (
-            ! $user->can('Manage:Deviation')
+            ! $user->can($this->managePermission($subject))
             && $user->department_id !== null
             && $requiredDepartmentId !== null
             && $requiredDepartmentId !== $user->department_id
@@ -90,7 +96,7 @@ final class QualityApprovalDecisionAuthorization implements ApprovalDecisionAuth
 
     private function belongsToLatestCycle(
         QualityApprovalInstance $approval,
-        Deviation $subject,
+        ApprovableSubject $subject,
     ): bool {
         $latestSubmissionUuid = QualityApprovalInstance::query()
             ->whereMorphedTo('subject', $subject)
@@ -110,5 +116,34 @@ final class QualityApprovalDecisionAuthorization implements ApprovalDecisionAuth
                 ->where('is_mandatory', true))
             ->where('decision_code', '!=', 'approved')
             ->exists();
+    }
+
+    private function subjectIsReadyForDecision(mixed $subject): bool
+    {
+        return match (true) {
+            $subject instanceof Deviation => $subject->status === DeviationStatus::Open,
+            $subject instanceof ChangeControl => in_array($subject->status, [
+                ChangeControlStatus::Submitted,
+                ChangeControlStatus::UnderReview,
+            ], true),
+            default => false,
+        };
+    }
+
+    private function userCanApplyOutcome(mixed $subject, User $user): bool
+    {
+        return match (true) {
+            $subject instanceof Deviation => $user->can('Investigate:Deviation'),
+            $subject instanceof ChangeControl => $user->can('Review:ChangeControl')
+                || $user->can('Approve:ChangeControl'),
+            default => false,
+        };
+    }
+
+    private function managePermission(mixed $subject): string
+    {
+        return $subject instanceof ChangeControl
+            ? 'Manage:ChangeControl'
+            : 'Manage:Deviation';
     }
 }

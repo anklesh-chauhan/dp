@@ -7,12 +7,14 @@ namespace App\Filament\Resources\Deviations\Pages;
 use App\Domain\QMS\Enums\DeviationStatus;
 use App\Domain\QMS\Services\DeviationApprovalSubmissionService;
 use App\Domain\QMS\Services\DeviationTransitionService;
+use App\Filament\Resources\Capas\CapaResource;
 use App\Filament\Resources\Deviations\DeviationResource;
+use App\Filament\Resources\Investigations\InvestigationResource;
 use App\Filament\Support\ApprovalNarrativeTextarea;
+use App\Filament\Support\ServiceExceptionHandler;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
-use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 
 final class ViewDeviation extends ViewRecord
@@ -24,13 +26,62 @@ final class ViewDeviation extends ViewRecord
         return [
             EditAction::make()->visible(fn (): bool => DeviationResource::canEdit($this->record)),
             $this->submissionAction(),
-            $this->transitionAction('beginInvestigation', 'Begin Investigation', DeviationStatus::UnderInvestigation, [DeviationStatus::Open], 'Investigate:Deviation'),
-            $this->transitionAction('completeInvestigation', 'Complete Investigation', DeviationStatus::InvestigationComplete, [DeviationStatus::UnderInvestigation], 'Investigate:Deviation'),
-            $this->transitionAction('requireCapa', 'Require CAPA', DeviationStatus::CapaRequired, [DeviationStatus::InvestigationComplete], 'Investigate:Deviation'),
-            $this->transitionAction('beginEffectivenessReview', 'Begin Effectiveness Review', DeviationStatus::EffectivenessReview, [DeviationStatus::InvestigationComplete, DeviationStatus::CapaRequired], 'VerifyEffectiveness:Deviation'),
-            $this->transitionAction('close', 'Close', DeviationStatus::Closed, [DeviationStatus::EffectivenessReview], 'Close:Deviation', 'success'),
-            $this->transitionAction('reject', 'Reject', DeviationStatus::Rejected, [DeviationStatus::Open], 'Investigate:Deviation', 'danger'),
-            $this->transitionAction('cancel', 'Cancel', DeviationStatus::Cancelled, [DeviationStatus::Draft, DeviationStatus::Open, DeviationStatus::UnderInvestigation], 'Manage:Deviation', 'danger'),
+            $this->transitionAction(
+                'beginInvestigation',
+                'Begin Investigation',
+                DeviationStatus::UnderInvestigation,
+                [DeviationStatus::Open],
+                'Investigate:Deviation',
+                hideWhenPendingQualityApproval: true,
+            ),
+            $this->createInvestigationAction(),
+            $this->transitionAction(
+                'completeInvestigation',
+                'Complete Investigation',
+                DeviationStatus::InvestigationComplete,
+                [DeviationStatus::UnderInvestigation],
+                'Investigate:Deviation',
+            ),
+            $this->transitionAction(
+                'requireCapa',
+                'Require CAPA',
+                DeviationStatus::CapaRequired,
+                [DeviationStatus::InvestigationComplete],
+                'Investigate:Deviation',
+            ),
+            $this->createCapaAction(),
+            $this->transitionAction(
+                'beginEffectivenessReview',
+                'Begin Effectiveness Review',
+                DeviationStatus::EffectivenessReview,
+                [DeviationStatus::InvestigationComplete, DeviationStatus::CapaRequired],
+                'VerifyEffectiveness:Deviation',
+            ),
+            $this->transitionAction(
+                'close',
+                'Close',
+                DeviationStatus::Closed,
+                [DeviationStatus::EffectivenessReview],
+                'Close:Deviation',
+                'success',
+            ),
+            $this->transitionAction(
+                'reject',
+                'Reject',
+                DeviationStatus::Rejected,
+                [DeviationStatus::Open],
+                'Investigate:Deviation',
+                'danger',
+                hideWhenPendingQualityApproval: true,
+            ),
+            $this->transitionAction(
+                'cancel',
+                'Cancel',
+                DeviationStatus::Cancelled,
+                [DeviationStatus::Draft, DeviationStatus::Open, DeviationStatus::UnderInvestigation],
+                'Manage:Deviation',
+                'danger',
+            ),
         ];
     }
 
@@ -57,18 +108,51 @@ final class ViewDeviation extends ViewRecord
                 /** @var User $user */
                 $user = auth()->user();
 
-                app(DeviationApprovalSubmissionService::class)->submit(
-                    $this->record,
-                    $user,
-                    $data['reason'],
-                    request()->ip(),
-                    request()->userAgent(),
+                ServiceExceptionHandler::run(
+                    function () use ($data, $user): void {
+                        app(DeviationApprovalSubmissionService::class)->submit(
+                            $this->record,
+                            $user,
+                            $data['reason'],
+                            request()->ip(),
+                            request()->userAgent(),
+                        );
+                        $this->record->refresh();
+                        $this->refreshFormData(['status']);
+                    },
+                    failureTitle: 'Unable to submit deviation',
+                    successTitle: 'Deviation submitted',
                 );
-                $this->record->refresh();
-                $this->refreshFormData(['status']);
-
-                Notification::make()->success()->title('Deviation submitted')->send();
             });
+    }
+
+    private function createInvestigationAction(): Action
+    {
+        return Action::make('createInvestigation')
+            ->label('Create Investigation')
+            ->url(fn (): string => InvestigationResource::getUrl('create', [
+                'deviation_id' => $this->record->getKey(),
+            ]))
+            ->visible(fn (): bool => in_array($this->record->status, [
+                DeviationStatus::Open,
+                DeviationStatus::UnderInvestigation,
+            ], true)
+                && ! $this->record->hasPendingQualityApproval()
+                && (bool) auth()->user()?->can('Create:Investigation'));
+    }
+
+    private function createCapaAction(): Action
+    {
+        return Action::make('createCapa')
+            ->label('Create CAPA')
+            ->url(fn (): string => CapaResource::getUrl('create', [
+                'deviation_id' => $this->record->getKey(),
+            ]))
+            ->visible(fn (): bool => in_array($this->record->status, [
+                DeviationStatus::InvestigationComplete,
+                DeviationStatus::CapaRequired,
+            ], true)
+                && (bool) auth()->user()?->can('Create:Capa'));
     }
 
     /** @param list<DeviationStatus> $fromStatuses */
@@ -79,6 +163,7 @@ final class ViewDeviation extends ViewRecord
         array $fromStatuses,
         string $permission,
         string $color = 'primary',
+        bool $hideWhenPendingQualityApproval = false,
     ): Action {
         return Action::make($name)
             ->label($label)
@@ -97,23 +182,28 @@ final class ViewDeviation extends ViewRecord
                 ),
             ])
             ->visible(fn (): bool => in_array($this->record->status, $fromStatuses, true)
-                && (bool) auth()->user()?->can($permission))
+                && (bool) auth()->user()?->can($permission)
+                && (! $hideWhenPendingQualityApproval || ! $this->record->hasPendingQualityApproval()))
             ->action(function (array $data) use ($toStatus, $label): void {
                 /** @var User $user */
                 $user = auth()->user();
 
-                app(DeviationTransitionService::class)->transition(
-                    $this->record,
-                    $toStatus,
-                    $user,
-                    $data['reason'],
-                    ipAddress: request()->ip(),
-                    userAgent: request()->userAgent(),
+                ServiceExceptionHandler::run(
+                    function () use ($data, $user, $toStatus): void {
+                        app(DeviationTransitionService::class)->transition(
+                            $this->record,
+                            $toStatus,
+                            $user,
+                            $data['reason'],
+                            ipAddress: request()->ip(),
+                            userAgent: request()->userAgent(),
+                        );
+                        $this->record->refresh();
+                        $this->refreshFormData(['status', 'closed_at']);
+                    },
+                    failureTitle: "Unable to {$label}",
+                    successTitle: "Deviation: {$label}",
                 );
-                $this->record->refresh();
-                $this->refreshFormData(['status', 'closed_at']);
-
-                Notification::make()->success()->title("Deviation: {$label}")->send();
             });
     }
 }

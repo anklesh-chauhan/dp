@@ -7,9 +7,12 @@ use App\Actions\Sop\SubmitDocumentAction;
 use App\Domain\DMS\Actions\AddSectionReviewCommentAction;
 use App\Domain\DMS\Actions\ResolveSectionReviewCommentAction;
 use App\Domain\DMS\Services\TemplateApprovalService;
+use App\Domain\QMS\Models\ChangeControl;
 use App\Domain\QMS\Models\Deviation;
 use App\Domain\QMS\Models\QualityApprovalWorkflow;
 use App\Domain\QMS\Models\QualityApprovalWorkflowStep;
+use App\Domain\QMS\Services\ChangeControlApprovalDecisionService;
+use App\Domain\QMS\Services\ChangeControlApprovalSubmissionService;
 use App\Domain\QMS\Services\DeviationApprovalDecisionService;
 use App\Domain\QMS\Services\DeviationApprovalSubmissionService;
 use App\Models\ApprovalDecision;
@@ -361,6 +364,84 @@ it('notifies the next quality reviewer after the first deviation step is approve
     expect(notificationTitles($secondReviewer))->toContain('Deviation is waiting for your approval')
         ->and(notificationTitles($this->author))->toBe([])
         ->and(notificationTitles($this->reviewer))->toContain('Deviation submitted for your review');
+});
+
+it('notifies quality reviewers when a change control is submitted', function (): void {
+    foreach (['Submit:ChangeControl', 'Review:ChangeControl', 'Approve:ChangeControl'] as $permission) {
+        Permission::findOrCreate($permission, 'web');
+    }
+    $this->author->givePermissionTo('Submit:ChangeControl');
+    $this->reviewer->givePermissionTo(['Review:ChangeControl', 'Approve:ChangeControl']);
+
+    $workflow = QualityApprovalWorkflow::factory()->create([
+        'department_id' => $this->department,
+        'subject_type' => ChangeControl::class,
+        'is_active' => true,
+    ]);
+    QualityApprovalWorkflowStep::factory()->create([
+        'workflow_id' => $workflow,
+        'step_no' => 1,
+        'role_id' => $this->reviewerRole,
+        'department_id' => $this->department,
+        'is_mandatory' => true,
+    ]);
+    $changeControl = ChangeControl::factory()->create([
+        'department_id' => $this->department,
+        'requested_by' => $this->author,
+        'owner_id' => $this->author,
+    ]);
+
+    app(ChangeControlApprovalSubmissionService::class)->submit(
+        $changeControl,
+        $this->author,
+        'Submit for independent quality review.',
+    );
+
+    expect(notificationTitles($this->reviewer))->toContain('Change control submitted for your review')
+        ->and(notificationTitles($this->author))->toBe([]);
+});
+
+it('notifies the change control requester when quality review is returned', function (): void {
+    foreach (['Submit:ChangeControl', 'Review:ChangeControl', 'Approve:ChangeControl'] as $permission) {
+        Permission::findOrCreate($permission, 'web');
+    }
+    $this->author->givePermissionTo('Submit:ChangeControl');
+    $this->reviewer->givePermissionTo(['Review:ChangeControl', 'Approve:ChangeControl']);
+
+    $workflow = QualityApprovalWorkflow::factory()->create([
+        'department_id' => $this->department,
+        'subject_type' => ChangeControl::class,
+        'is_active' => true,
+    ]);
+    QualityApprovalWorkflowStep::factory()->create([
+        'workflow_id' => $workflow,
+        'step_no' => 1,
+        'role_id' => $this->reviewerRole,
+        'department_id' => $this->department,
+        'is_mandatory' => true,
+    ]);
+    $changeControl = ChangeControl::factory()->create([
+        'department_id' => $this->department,
+        'requested_by' => $this->author,
+        'owner_id' => $this->author,
+    ]);
+
+    $submitted = app(ChangeControlApprovalSubmissionService::class)->submit(
+        $changeControl,
+        $this->author,
+        'Submit for independent quality review.',
+    );
+    $instance = $submitted->approvalInstances()->sole();
+
+    app(ChangeControlApprovalDecisionService::class)->return(
+        $instance,
+        $this->reviewer,
+        'Clarify the validation rationale before resubmission.',
+    );
+
+    expect(notificationTitles($this->author))->toContain('Change control returned for correction')
+        ->and(notificationTitles($this->reviewer))->toContain('Change control submitted for your review')
+        ->and(notificationTitles($this->reviewer))->not->toContain('Change control returned for correction');
 });
 
 it('can count unread filament database notifications with a json path query', function (): void {

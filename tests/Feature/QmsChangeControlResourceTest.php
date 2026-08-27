@@ -7,11 +7,14 @@ use App\Domain\QMS\Enums\DocumentImpactAction;
 use App\Domain\QMS\Models\ChangeControl;
 use App\Domain\QMS\Models\ChangeControlAuditEvent;
 use App\Domain\QMS\Models\ChangeControlDocumentImpact;
+use App\Domain\QMS\Models\QualityApprovalWorkflow;
+use App\Domain\QMS\Models\QualityApprovalWorkflowStep;
 use App\Filament\Resources\ChangeControls\ChangeControlResource;
 use App\Filament\Resources\ChangeControls\Pages\CreateChangeControl;
 use App\Filament\Resources\ChangeControls\Pages\EditChangeControl;
 use App\Filament\Resources\ChangeControls\Pages\ListChangeControls;
 use App\Filament\Resources\ChangeControls\Pages\ViewChangeControl;
+use App\Filament\Resources\ChangeControls\RelationManagers\ApprovalInstancesRelationManager;
 use App\Filament\Resources\ChangeControls\RelationManagers\AuditEventsRelationManager;
 use App\Filament\Resources\ChangeControls\RelationManagers\DocumentImpactsRelationManager;
 use App\Models\ControlledDocument;
@@ -25,6 +28,7 @@ use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
@@ -133,6 +137,76 @@ it('submits a draft through the lifecycle service and shows immutable audit hist
         ->assertActionDoesNotExist(TestAction::make('create')->table())
         ->assertActionDoesNotExist(TestAction::make('edit')->table())
         ->assertActionDoesNotExist(TestAction::make('delete')->table());
+});
+
+it('shows pending quality steps and hides skip-review actions when a workflow is configured', function (): void {
+    $changeControl = ChangeControl::factory()->create([
+        'requested_by' => $this->user,
+    ]);
+    $workflow = QualityApprovalWorkflow::factory()->create([
+        'department_id' => $changeControl->department_id,
+        'subject_type' => ChangeControl::class,
+    ]);
+    $reviewerRole = Role::findOrCreate('quality reviewer', 'web');
+    QualityApprovalWorkflowStep::factory()->create([
+        'workflow_id' => $workflow,
+        'role_id' => $reviewerRole,
+    ]);
+
+    Livewire::test(ViewChangeControl::class, ['record' => $changeControl->getKey()])
+        ->callAction('submit', ['reason' => 'Submit for configured quality review.'])
+        ->assertNotified();
+
+    $instances = $changeControl->approvalInstances;
+
+    expect($instances)->toHaveCount(1)
+        ->and($instances->first()?->decision_code)->toBe('pending')
+        ->and($changeControl->fresh()?->status)->toBe(ChangeControlStatus::Submitted);
+
+    foreach (['Review:ChangeControl', 'Approve:ChangeControl'] as $permission) {
+        Permission::findOrCreate($permission, 'web');
+        $this->user->givePermissionTo($permission);
+    }
+
+    Livewire::test(ViewChangeControl::class, ['record' => $changeControl->getKey()])
+        ->assertActionHidden('beginReview')
+        ->assertActionHidden('approve')
+        ->assertActionHidden('reject');
+
+    Livewire::test(ApprovalInstancesRelationManager::class, [
+        'ownerRecord' => $changeControl->fresh(),
+        'pageClass' => ViewChangeControl::class,
+    ])
+        ->assertSuccessful()
+        ->assertCanSeeTableRecords($instances)
+        ->assertActionDoesNotExist(TestAction::make('create')->table())
+        ->assertActionDoesNotExist(TestAction::make('edit')->table())
+        ->assertActionDoesNotExist(TestAction::make('delete')->table());
+
+    foreach (['Decide:QualityApproval', 'Review:ChangeControl', 'Approve:ChangeControl'] as $permission) {
+        Permission::findOrCreate($permission, 'web');
+    }
+    $reviewer = User::factory()->create(['department_id' => $changeControl->department_id]);
+    $reviewer->assignRole($reviewerRole);
+    $reviewer->givePermissionTo([
+        'View:ChangeControl',
+        'Decide:QualityApproval',
+        'Review:ChangeControl',
+        'Approve:ChangeControl',
+    ]);
+    $this->actingAs($reviewer);
+
+    Livewire::test(ApprovalInstancesRelationManager::class, [
+        'ownerRecord' => $changeControl->fresh(),
+        'pageClass' => ViewChangeControl::class,
+    ])
+        ->callAction(TestAction::make('approve')->table($instances->first()), [
+            'comments' => 'Quality review completed in the workspace.',
+        ])
+        ->assertNotified();
+
+    expect($changeControl->fresh()?->status)->toBe(ChangeControlStatus::Approved)
+        ->and($instances->first()?->fresh()?->decision_code)->toBe('approved');
 });
 
 it('routes review and approval actions through attributable lifecycle transitions', function (): void {

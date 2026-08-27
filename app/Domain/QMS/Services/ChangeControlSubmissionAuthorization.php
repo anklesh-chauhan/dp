@@ -12,22 +12,33 @@ final class ChangeControlSubmissionAuthorization implements ApprovalSubmissionAu
 {
     public function canSubmit(ApprovableSubject $subject, User $user): bool
     {
+        return $this->denialReason($subject, $user) === null;
+    }
+
+    public function denialReason(ApprovableSubject $subject, User $user): ?string
+    {
         if (! $user->can('Submit:ChangeControl') && ! $user->can('Update:ChangeControl')) {
-            return false;
+            return 'You do not have permission to submit this change control.';
         }
 
         if ($user->can('Manage:ChangeControl')) {
-            return true;
+            return null;
         }
 
         if (
             $user->department_id !== null
             && $user->department_id !== $subject->approvalSubjectDepartmentId()
         ) {
-            return false;
+            return 'You can only submit change controls for your own department.';
         }
 
-        return $subject->approvalSubjectCreatedById() === $user->id
-            || $subject->approvalSubjectOwnerId() === $user->id;
+        if (
+            $subject->approvalSubjectCreatedById() === $user->id
+            || $subject->approvalSubjectOwnerId() === $user->id
+        ) {
+            return null;
+        }
+
+        return 'Only the requester or owner can submit this change control.';
     }
 }

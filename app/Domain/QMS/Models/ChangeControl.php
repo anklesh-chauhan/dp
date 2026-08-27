@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Str;
 
 #[UsePolicy(ChangeControlPolicy::class)]
@@ -109,6 +110,26 @@ final class ChangeControl extends Model implements ApprovableSubject, ProvidesEl
     public function auditEvents(): HasMany
     {
         return $this->hasMany(ChangeControlAuditEvent::class);
+    }
+
+    /** @return MorphMany<QualityApprovalInstance, $this> */
+    public function approvalInstances(): MorphMany
+    {
+        return $this->morphMany(QualityApprovalInstance::class, 'subject');
+    }
+
+    public function hasPendingQualityApproval(): bool
+    {
+        $latestSubmissionUuid = $this->approvalInstances()->latest('id')->value('submission_uuid');
+
+        if (! is_string($latestSubmissionUuid)) {
+            return false;
+        }
+
+        return $this->approvalInstances()
+            ->where('submission_uuid', $latestSubmissionUuid)
+            ->where('decision_code', 'pending')
+            ->exists();
     }
 
     public function approvalSubjectKey(): int|string|null

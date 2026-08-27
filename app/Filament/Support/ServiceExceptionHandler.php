@@ -6,6 +6,7 @@ namespace App\Filament\Support;
 
 use App\Exceptions\ServiceException;
 use Filament\Notifications\Notification;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Validation\ValidationException;
 
 class ServiceExceptionHandler
@@ -43,6 +44,13 @@ class ServiceExceptionHandler
             return $result;
         } catch (ServiceException $exception) {
             self::notify($exception, $failureTitle);
+
+            return null;
+        } catch (AuthorizationException $exception) {
+            self::notifyFailure(
+                $exception->getMessage() !== '' ? $exception->getMessage() : 'You are not authorized to perform this action.',
+                $failureTitle ?? 'Not authorized',
+            );
 
             return null;
         } catch (ValidationException $exception) {

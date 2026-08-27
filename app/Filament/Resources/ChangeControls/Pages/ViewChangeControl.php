@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Filament\Resources\ChangeControls\Pages;
 
 use App\Domain\QMS\Enums\ChangeControlStatus;
+use App\Domain\QMS\Services\ChangeControlApprovalSubmissionService;
 use App\Domain\QMS\Services\ChangeControlTransitionService;
 use App\Domain\Reporting\Enums\ReportFormat;
 use App\Domain\Reporting\Enums\ReportScope;
 use App\Filament\Resources\ChangeControls\ChangeControlResource;
 use App\Filament\Support\ApprovalNarrativeTextarea;
 use App\Filament\Support\CaptureKnowledgeLessonAction;
+use App\Filament\Support\ServiceExceptionHandler;
 use App\Models\ReportTemplate;
 use App\Models\User;
 use Filament\Actions\Action;
@@ -69,21 +71,21 @@ final class ViewChangeControl extends ViewRecord
                     /** @var User $user */
                     $user = auth()->user();
 
-                    app(ChangeControlTransitionService::class)->transition(
-                        $this->record,
-                        ChangeControlStatus::Submitted,
-                        $user,
-                        $data['reason'],
-                        ipAddress: request()->ip(),
-                        userAgent: request()->userAgent(),
+                    ServiceExceptionHandler::run(
+                        function () use ($data, $user): void {
+                            app(ChangeControlApprovalSubmissionService::class)->submit(
+                                $this->record,
+                                $user,
+                                $data['reason'],
+                                request()->ip(),
+                                request()->userAgent(),
+                            );
+                            $this->record->refresh();
+                            $this->refreshFormData(['status', 'submitted_at']);
+                        },
+                        failureTitle: 'Unable to submit change control',
+                        successTitle: 'Change control submitted',
                     );
-                    $this->record->refresh();
-                    $this->refreshFormData(['status', 'submitted_at']);
-
-                    Notification::make()
-                        ->success()
-                        ->title('Change control submitted')
-                        ->send();
                 }),
             $this->transitionAction(
                 'beginReview',
@@ -91,6 +93,7 @@ final class ViewChangeControl extends ViewRecord
                 ChangeControlStatus::UnderReview,
                 [ChangeControlStatus::Submitted],
                 'Review:ChangeControl',
+                hideWhenPendingQualityApproval: true,
             ),
             $this->transitionAction(
                 'approve',
@@ -99,6 +102,7 @@ final class ViewChangeControl extends ViewRecord
                 [ChangeControlStatus::UnderReview],
                 'Approve:ChangeControl',
                 'success',
+                hideWhenPendingQualityApproval: true,
             ),
             $this->transitionAction(
                 'reject',
@@ -107,6 +111,7 @@ final class ViewChangeControl extends ViewRecord
                 [ChangeControlStatus::Submitted, ChangeControlStatus::UnderReview],
                 'Review:ChangeControl',
                 'danger',
+                hideWhenPendingQualityApproval: true,
             ),
             $this->transitionAction(
                 'cancel',
@@ -150,6 +155,7 @@ final class ViewChangeControl extends ViewRecord
         array $fromStatuses,
         string $permission,
         string $color = 'primary',
+        bool $hideWhenPendingQualityApproval = false,
     ): Action {
         return Action::make($name)
             ->label($label)
@@ -168,7 +174,8 @@ final class ViewChangeControl extends ViewRecord
                 ),
             ])
             ->visible(fn (): bool => in_array($this->record->status, $fromStatuses, true)
-                && (bool) auth()->user()?->can($permission))
+                && (bool) auth()->user()?->can($permission)
+                && (! $hideWhenPendingQualityApproval || ! $this->record->hasPendingQualityApproval()))
             ->action(function (array $data) use ($toStatus, $label): void {
                 /** @var User $user */
                 $user = auth()->user();

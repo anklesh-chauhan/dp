@@ -6,6 +6,7 @@ use App\Domain\QMS\Enums\DeviationSeverity;
 use App\Domain\QMS\Enums\DeviationStatus;
 use App\Domain\QMS\Models\Deviation;
 use App\Domain\QMS\Models\DeviationAuditEvent;
+use App\Domain\QMS\Models\QualityApprovalInstance;
 use App\Domain\QMS\Models\QualityApprovalWorkflow;
 use App\Domain\QMS\Models\QualityApprovalWorkflowStep;
 use App\Filament\Resources\Deviations\DeviationResource;
@@ -99,7 +100,7 @@ it('delegates lifecycle actions and exposes immutable audit history', function (
     Livewire::test(ViewDeviation::class, ['record' => $deviation->id])
         ->assertSuccessful()
         ->callAction('submit', ['reason' => 'Quality event is ready for triage.'])
-        ->assertNotified();
+        ->assertNotified('Deviation submitted');
 
     expect($deviation->fresh()?->status)->toBe(DeviationStatus::Open)
         ->and(DeviationAuditEvent::query()
@@ -116,6 +117,101 @@ it('delegates lifecycle actions and exposes immutable audit history', function (
         ->assertActionDoesNotExist(TestAction::make('create')->table())
         ->assertActionDoesNotExist(TestAction::make('edit')->table())
         ->assertActionDoesNotExist(TestAction::make('delete')->table());
+});
+
+it('notifies when submit is blocked for another department', function (): void {
+    $makerDepartment = Department::factory()->create();
+    $otherDepartment = Department::factory()->create();
+    $this->user->update(['department_id' => $makerDepartment->id]);
+
+    $deviation = Deviation::factory()->create([
+        'reported_by' => $this->user,
+        'department_id' => $otherDepartment->id,
+    ]);
+
+    Livewire::test(ViewDeviation::class, ['record' => $deviation->id])
+        ->callAction('submit', ['reason' => 'Attempting cross-department submit.'])
+        ->assertNotified('Unable to submit deviation');
+
+    expect($deviation->fresh()?->status)->toBe(DeviationStatus::Draft);
+});
+
+it('shows lifecycle and related buttons by deviation status', function (): void {
+    foreach (['Investigate:Deviation', 'Create:Investigation', 'Create:Capa', 'VerifyEffectiveness:Deviation', 'Close:Deviation'] as $permission) {
+        Permission::findOrCreate($permission, 'web');
+    }
+    $this->user->givePermissionTo([
+        'Investigate:Deviation',
+        'Create:Investigation',
+        'Create:Capa',
+        'VerifyEffectiveness:Deviation',
+        'Close:Deviation',
+    ]);
+
+    $open = Deviation::factory()->create([
+        'reported_by' => $this->user,
+        'status' => DeviationStatus::Open,
+    ]);
+
+    Livewire::test(ViewDeviation::class, ['record' => $open->id])
+        ->assertActionVisible('beginInvestigation')
+        ->assertActionVisible('createInvestigation')
+        ->assertActionVisible('reject')
+        ->assertActionHidden('submit')
+        ->assertActionHidden('completeInvestigation')
+        ->assertActionHidden('createCapa');
+
+    $underInvestigation = Deviation::factory()->create([
+        'reported_by' => $this->user,
+        'status' => DeviationStatus::UnderInvestigation,
+    ]);
+
+    Livewire::test(ViewDeviation::class, ['record' => $underInvestigation->id])
+        ->assertActionHidden('beginInvestigation')
+        ->assertActionVisible('createInvestigation')
+        ->assertActionVisible('completeInvestigation')
+        ->assertActionHidden('createCapa');
+
+    $investigationComplete = Deviation::factory()->create([
+        'reported_by' => $this->user,
+        'status' => DeviationStatus::InvestigationComplete,
+    ]);
+
+    Livewire::test(ViewDeviation::class, ['record' => $investigationComplete->id])
+        ->assertActionHidden('createInvestigation')
+        ->assertActionVisible('requireCapa')
+        ->assertActionVisible('createCapa')
+        ->assertActionVisible('beginEffectivenessReview');
+});
+
+it('hides begin investigation while a quality workflow step is pending', function (): void {
+    Permission::findOrCreate('Investigate:Deviation', 'web');
+    Permission::findOrCreate('Create:Investigation', 'web');
+    $this->user->givePermissionTo(['Investigate:Deviation', 'Create:Investigation']);
+
+    $deviation = Deviation::factory()->create([
+        'reported_by' => $this->user,
+        'status' => DeviationStatus::Open,
+    ]);
+    $workflow = QualityApprovalWorkflow::factory()->create([
+        'department_id' => $deviation->department_id,
+    ]);
+    QualityApprovalWorkflowStep::factory()->create([
+        'workflow_id' => $workflow,
+        'role_id' => Role::findOrCreate('quality reviewer', 'web')->id,
+    ]);
+
+    QualityApprovalInstance::factory()->create([
+        'subject_type' => Deviation::class,
+        'subject_id' => $deviation,
+        'workflow_id' => $workflow,
+        'workflow_step_id' => $workflow->steps()->first()->id,
+    ]);
+
+    Livewire::test(ViewDeviation::class, ['record' => $deviation->id])
+        ->assertActionHidden('beginInvestigation')
+        ->assertActionHidden('createInvestigation')
+        ->assertActionHidden('reject');
 });
 
 it('shows read-only pending steps when submission uses a quality workflow', function (): void {

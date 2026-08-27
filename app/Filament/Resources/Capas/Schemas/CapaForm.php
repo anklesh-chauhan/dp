@@ -26,6 +26,7 @@ final class CapaForm
                             ->relationship('deviation', 'deviation_number')
                             ->searchable()
                             ->preload()
+                            ->default(fn (): ?int => request()->integer('deviation_id') ?: null)
                             ->required()->live(),
                         Select::make('investigation_id')
                             ->relationship('investigation', 'investigation_number')

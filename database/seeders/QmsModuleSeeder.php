@@ -53,6 +53,18 @@ class QmsModuleSeeder extends Seeder
         'View:QualityAttachment',
         'Create:QualityAttachment',
         'Decide:QualityApproval',
+        'ViewAny:QualityApprovalWorkflow',
+        'View:QualityApprovalWorkflow',
+        'Create:QualityApprovalWorkflow',
+        'Update:QualityApprovalWorkflow',
+        'Delete:QualityApprovalWorkflow',
+        'DeleteAny:QualityApprovalWorkflow',
+        'ForceDelete:QualityApprovalWorkflow',
+        'ForceDeleteAny:QualityApprovalWorkflow',
+        'Restore:QualityApprovalWorkflow',
+        'RestoreAny:QualityApprovalWorkflow',
+        'Replicate:QualityApprovalWorkflow',
+        'Reorder:QualityApprovalWorkflow',
         'ViewAny:Complaint',
         'View:Complaint',
         'Create:Complaint',
@@ -239,6 +251,433 @@ class QmsModuleSeeder extends Seeder
         'Manage:BatchRelease',
     ];
 
+    /**
+     * Quality Workflow record types the checker may decide. Matches
+     * QualityWorkflowSubjects (Deviation, Change Control). Excludes create,
+     * submit, manage, and close so checkers cannot own the full record lifecycle.
+     *
+     * @var array<int, string>
+     */
+    public const CHECKER_PERMISSIONS = [
+        'Decide:QualityApproval',
+        'View:QualityAttachment',
+        'ViewAny:ChangeControl',
+        'View:ChangeControl',
+        'Review:ChangeControl',
+        'Approve:ChangeControl',
+        'ViewAny:Deviation',
+        'View:Deviation',
+        'Investigate:Deviation',
+    ];
+
+    /**
+     * Final quality-workflow approver. Can decide pending steps and close out
+     * Change Control / Deviation / Investigation review gates.
+     *
+     * @var array<int, string>
+     */
+    public const APPROVER_PERMISSIONS = [
+        'Decide:QualityApproval',
+        'View:QualityAttachment',
+        'Create:QualityAttachment',
+        'ViewAny:ChangeControl',
+        'View:ChangeControl',
+        'Review:ChangeControl',
+        'Approve:ChangeControl',
+        'VerifyEffectiveness:ChangeControl',
+        'ViewAny:Deviation',
+        'View:Deviation',
+        'Investigate:Deviation',
+        'VerifyEffectiveness:Deviation',
+        'Close:Deviation',
+        'ViewAny:Investigation',
+        'View:Investigation',
+        'Review:Investigation',
+        'Complete:Investigation',
+        'ViewAny:Capa',
+        'View:Capa',
+        'VerifyEffectiveness:Capa',
+        'Close:Capa',
+    ];
+
+    /**
+     * Document controller: read across QMS plus control-plane duties (quality
+     * workflows, site master file, competency, inspector evidence, metrics).
+     *
+     * @var array<int, string>
+     */
+    public const DOCUMENT_CONTROLLER_PERMISSIONS = [
+        'ViewAny:ChangeControl',
+        'View:ChangeControl',
+        'ViewAny:Deviation',
+        'View:Deviation',
+        'ViewAny:Investigation',
+        'View:Investigation',
+        'ViewAny:Capa',
+        'View:Capa',
+        'View:QualityAttachment',
+        'Create:QualityAttachment',
+        'ViewAny:QualityApprovalWorkflow',
+        'View:QualityApprovalWorkflow',
+        'Create:QualityApprovalWorkflow',
+        'Update:QualityApprovalWorkflow',
+        'Delete:QualityApprovalWorkflow',
+        'DeleteAny:QualityApprovalWorkflow',
+        'Restore:QualityApprovalWorkflow',
+        'RestoreAny:QualityApprovalWorkflow',
+        'Replicate:QualityApprovalWorkflow',
+        'Reorder:QualityApprovalWorkflow',
+        'ViewAny:Complaint',
+        'View:Complaint',
+        'ViewAny:InternalAudit',
+        'View:InternalAudit',
+        'ViewAny:AuditFinding',
+        'View:AuditFinding',
+        'ViewAny:RiskAssessment',
+        'View:RiskAssessment',
+        'ViewAny:SupplierQualification',
+        'View:SupplierQualification',
+        'ViewAny:ManagementReview',
+        'View:ManagementReview',
+        'ViewAny:ProductQualityReview',
+        'View:ProductQualityReview',
+        'View:QualityMetrics',
+        'ViewAny:ProductRecall',
+        'View:ProductRecall',
+        'ViewAny:ProductReturn',
+        'View:ProductReturn',
+        'ViewAny:LaboratoryOosEvent',
+        'View:LaboratoryOosEvent',
+        'ViewAny:ValidationMasterPlan',
+        'View:ValidationMasterPlan',
+        'ViewAny:EquipmentAsset',
+        'View:EquipmentAsset',
+        'ViewAny:EquipmentQualification',
+        'View:EquipmentQualification',
+        'ViewAny:EquipmentCalibration',
+        'View:EquipmentCalibration',
+        'ViewAny:EquipmentMaintenance',
+        'View:EquipmentMaintenance',
+        'ViewAny:CsvValidationProject',
+        'View:CsvValidationProject',
+        'ViewAny:CompetencyCurriculum',
+        'View:CompetencyCurriculum',
+        'Create:CompetencyCurriculum',
+        'Update:CompetencyCurriculum',
+        'Assign:CompetencyCurriculum',
+        'ViewAny:UserCompetency',
+        'View:UserCompetency',
+        'Create:UserCompetency',
+        'Update:UserCompetency',
+        'Assign:UserCompetency',
+        'Verify:UserCompetency',
+        'ViewAny:ScheduleMGapAssessment',
+        'View:ScheduleMGapAssessment',
+        'ViewAny:SiteMasterFile',
+        'View:SiteMasterFile',
+        'Create:SiteMasterFile',
+        'Update:SiteMasterFile',
+        'Review:SiteMasterFile',
+        'Publish:SiteMasterFile',
+        'Export:InspectorEvidencePack',
+        'ViewAny:ComputerizedSystemIncident',
+        'View:ComputerizedSystemIncident',
+        'ViewAny:BatchRelease',
+        'View:BatchRelease',
+    ];
+
+    /**
+     * QA reviewer: oversight across QMS review/approve/investigate gates.
+     * Excludes Manage and authoring Create/Submit.
+     *
+     * @var array<int, string>
+     */
+    public const QA_REVIEWER_PERMISSIONS = [
+        'Decide:QualityApproval',
+        'View:QualityAttachment',
+        'Create:QualityAttachment',
+        'ViewAny:ChangeControl',
+        'View:ChangeControl',
+        'Review:ChangeControl',
+        'Approve:ChangeControl',
+        'VerifyEffectiveness:ChangeControl',
+        'Close:ChangeControl',
+        'ViewAny:Deviation',
+        'View:Deviation',
+        'Investigate:Deviation',
+        'VerifyEffectiveness:Deviation',
+        'Close:Deviation',
+        'ViewAny:Investigation',
+        'View:Investigation',
+        'Review:Investigation',
+        'Complete:Investigation',
+        'ViewAny:Capa',
+        'View:Capa',
+        'Implement:Capa',
+        'VerifyEffectiveness:Capa',
+        'Close:Capa',
+        'ViewAny:Complaint',
+        'View:Complaint',
+        'Assess:Complaint',
+        'Investigate:Complaint',
+        'Respond:Complaint',
+        'Close:Complaint',
+        'ViewAny:InternalAudit',
+        'View:InternalAudit',
+        'Schedule:InternalAudit',
+        'Conduct:InternalAudit',
+        'Report:InternalAudit',
+        'FollowUp:InternalAudit',
+        'Close:InternalAudit',
+        'ViewAny:AuditFinding',
+        'View:AuditFinding',
+        'Respond:AuditFinding',
+        'Verify:AuditFinding',
+        'Close:AuditFinding',
+        'ViewAny:RiskAssessment',
+        'View:RiskAssessment',
+        'Review:RiskAssessment',
+        'Approve:RiskAssessment',
+        'Mitigate:RiskAssessment',
+        'Monitor:RiskAssessment',
+        'Close:RiskAssessment',
+        'ViewAny:SupplierQualification',
+        'View:SupplierQualification',
+        'Assess:SupplierQualification',
+        'Audit:SupplierQualification',
+        'Approve:SupplierQualification',
+        'Review:SupplierQualification',
+        'ViewAny:ManagementReview',
+        'View:ManagementReview',
+        'Schedule:ManagementReview',
+        'Conduct:ManagementReview',
+        'Approve:ManagementReview',
+        'Complete:ManagementReview',
+        'ViewAny:ProductQualityReview',
+        'View:ProductQualityReview',
+        'Conduct:ProductQualityReview',
+        'Approve:ProductQualityReview',
+        'Close:ProductQualityReview',
+        'View:QualityMetrics',
+        'ViewAny:ProductRecall',
+        'View:ProductRecall',
+        'Verify:ProductRecall',
+        'Close:ProductRecall',
+        'ViewAny:ProductReturn',
+        'View:ProductReturn',
+        'Close:ProductReturn',
+        'ViewAny:LaboratoryOosEvent',
+        'View:LaboratoryOosEvent',
+        'Investigate:LaboratoryOosEvent',
+        'Confirm:LaboratoryOosEvent',
+        'Close:LaboratoryOosEvent',
+        'ViewAny:ValidationMasterPlan',
+        'View:ValidationMasterPlan',
+        'Approve:ValidationMasterPlan',
+        'ViewAny:EquipmentAsset',
+        'View:EquipmentAsset',
+        'ViewAny:EquipmentQualification',
+        'View:EquipmentQualification',
+        'Review:EquipmentQualification',
+        'Approve:EquipmentQualification',
+        'ViewAny:EquipmentCalibration',
+        'View:EquipmentCalibration',
+        'Verify:EquipmentCalibration',
+        'ViewAny:EquipmentMaintenance',
+        'View:EquipmentMaintenance',
+        'ViewAny:CsvValidationProject',
+        'View:CsvValidationProject',
+        'Review:CsvValidationProject',
+        'Release:CsvValidationProject',
+        'PeriodicReview:CsvValidationProject',
+        'ViewAny:CompetencyCurriculum',
+        'View:CompetencyCurriculum',
+        'ViewAny:UserCompetency',
+        'View:UserCompetency',
+        'Verify:UserCompetency',
+        'ViewAny:ScheduleMGapAssessment',
+        'View:ScheduleMGapAssessment',
+        'Conduct:ScheduleMGapAssessment',
+        'Approve:ScheduleMGapAssessment',
+        'Close:ScheduleMGapAssessment',
+        'ViewAny:SiteMasterFile',
+        'View:SiteMasterFile',
+        'Review:SiteMasterFile',
+        'Publish:SiteMasterFile',
+        'Export:InspectorEvidencePack',
+        'ViewAny:ComputerizedSystemIncident',
+        'View:ComputerizedSystemIncident',
+        'Investigate:ComputerizedSystemIncident',
+        'Close:ComputerizedSystemIncident',
+        'ViewAny:BatchRelease',
+        'View:BatchRelease',
+        'Review:BatchRelease',
+        'Release:BatchRelease',
+    ];
+
+    /**
+     * Shared operational read access for shop-floor roles.
+     *
+     * @var array<int, string>
+     */
+    public const OPERATIONAL_VIEW_PERMISSIONS = [
+        'View:QualityAttachment',
+        'ViewAny:ChangeControl',
+        'View:ChangeControl',
+        'ViewAny:Deviation',
+        'View:Deviation',
+        'ViewAny:BatchRelease',
+        'View:BatchRelease',
+        'ViewAny:EquipmentAsset',
+        'View:EquipmentAsset',
+        'ViewAny:ComputerizedSystemIncident',
+        'View:ComputerizedSystemIncident',
+    ];
+
+    /**
+     * @var array<int, string>
+     */
+    public const LOG_MAKER_PERMISSIONS = self::OPERATIONAL_VIEW_PERMISSIONS;
+
+    /**
+     * @var array<int, string>
+     */
+    public const RECORD_EXECUTOR_PERMISSIONS = [
+        ...self::OPERATIONAL_VIEW_PERMISSIONS,
+        'Create:BatchRelease',
+        'Update:BatchRelease',
+        'Create:QualityAttachment',
+        'Create:ComputerizedSystemIncident',
+        'Update:ComputerizedSystemIncident',
+    ];
+
+    /**
+     * @var array<int, string>
+     */
+    public const PRODUCTION_SUPERVISOR_PERMISSIONS = [
+        ...self::OPERATIONAL_VIEW_PERMISSIONS,
+        'Review:BatchRelease',
+        'Create:QualityAttachment',
+    ];
+
+    /**
+     * Authoring grants for SOP Maker across QMS records. Mirrors DMS maker
+     * create/update/submit intent. QMS has no Revise:* permissions; Update
+     * covers draft edits. Excludes workflow admin, manage, approve, and close.
+     *
+     * @var array<int, string>
+     */
+    public const MAKER_PERMISSIONS = [
+        'ViewAny:ChangeControl',
+        'View:ChangeControl',
+        'Create:ChangeControl',
+        'Update:ChangeControl',
+        'Submit:ChangeControl',
+        'ViewAny:Deviation',
+        'View:Deviation',
+        'Create:Deviation',
+        'Update:Deviation',
+        'Submit:Deviation',
+        'ViewAny:Investigation',
+        'View:Investigation',
+        'Create:Investigation',
+        'Update:Investigation',
+        'ViewAny:Capa',
+        'View:Capa',
+        'Create:Capa',
+        'Update:Capa',
+        'View:QualityAttachment',
+        'Create:QualityAttachment',
+        'ViewAny:Complaint',
+        'View:Complaint',
+        'Create:Complaint',
+        'Update:Complaint',
+        'ViewAny:InternalAudit',
+        'View:InternalAudit',
+        'Create:InternalAudit',
+        'Update:InternalAudit',
+        'ViewAny:AuditFinding',
+        'View:AuditFinding',
+        'Create:AuditFinding',
+        'Update:AuditFinding',
+        'ViewAny:RiskAssessment',
+        'View:RiskAssessment',
+        'Create:RiskAssessment',
+        'Update:RiskAssessment',
+        'ViewAny:SupplierQualification',
+        'View:SupplierQualification',
+        'Create:SupplierQualification',
+        'Update:SupplierQualification',
+        'ViewAny:ManagementReview',
+        'View:ManagementReview',
+        'Create:ManagementReview',
+        'Update:ManagementReview',
+        'ViewAny:ProductQualityReview',
+        'View:ProductQualityReview',
+        'Create:ProductQualityReview',
+        'Update:ProductQualityReview',
+        'ViewAny:ProductRecall',
+        'View:ProductRecall',
+        'Create:ProductRecall',
+        'Update:ProductRecall',
+        'ViewAny:ProductReturn',
+        'View:ProductReturn',
+        'Create:ProductReturn',
+        'Update:ProductReturn',
+        'ViewAny:LaboratoryOosEvent',
+        'View:LaboratoryOosEvent',
+        'Create:LaboratoryOosEvent',
+        'Update:LaboratoryOosEvent',
+        'ViewAny:ValidationMasterPlan',
+        'View:ValidationMasterPlan',
+        'Create:ValidationMasterPlan',
+        'Update:ValidationMasterPlan',
+        'ViewAny:EquipmentAsset',
+        'View:EquipmentAsset',
+        'Create:EquipmentAsset',
+        'Update:EquipmentAsset',
+        'ViewAny:EquipmentQualification',
+        'View:EquipmentQualification',
+        'Create:EquipmentQualification',
+        'Update:EquipmentQualification',
+        'ViewAny:EquipmentCalibration',
+        'View:EquipmentCalibration',
+        'Create:EquipmentCalibration',
+        'Update:EquipmentCalibration',
+        'ViewAny:EquipmentMaintenance',
+        'View:EquipmentMaintenance',
+        'Create:EquipmentMaintenance',
+        'Update:EquipmentMaintenance',
+        'ViewAny:CsvValidationProject',
+        'View:CsvValidationProject',
+        'Create:CsvValidationProject',
+        'Update:CsvValidationProject',
+        'ViewAny:CompetencyCurriculum',
+        'View:CompetencyCurriculum',
+        'Create:CompetencyCurriculum',
+        'Update:CompetencyCurriculum',
+        'ViewAny:UserCompetency',
+        'View:UserCompetency',
+        'Create:UserCompetency',
+        'Update:UserCompetency',
+        'ViewAny:ScheduleMGapAssessment',
+        'View:ScheduleMGapAssessment',
+        'Create:ScheduleMGapAssessment',
+        'Update:ScheduleMGapAssessment',
+        'ViewAny:SiteMasterFile',
+        'View:SiteMasterFile',
+        'Create:SiteMasterFile',
+        'Update:SiteMasterFile',
+        'ViewAny:ComputerizedSystemIncident',
+        'View:ComputerizedSystemIncident',
+        'Create:ComputerizedSystemIncident',
+        'Update:ComputerizedSystemIncident',
+        'ViewAny:BatchRelease',
+        'View:BatchRelease',
+        'Create:BatchRelease',
+        'Update:BatchRelease',
+    ];
+
     public function run(): void
     {
         foreach (self::PERMISSIONS as $permission) {
@@ -250,8 +689,27 @@ class QmsModuleSeeder extends Seeder
         Role::findOrCreate('sop administrator', 'web')
             ->givePermissionTo(self::PERMISSIONS);
 
+        $this->grantQmsPermissions('sop maker', self::MAKER_PERMISSIONS);
+        $this->grantQmsPermissions('sop checker', self::CHECKER_PERMISSIONS);
+        $this->grantQmsPermissions('sop approver', self::APPROVER_PERMISSIONS);
+        $this->grantQmsPermissions('document controller', self::DOCUMENT_CONTROLLER_PERMISSIONS);
+        $this->grantQmsPermissions('qa reviewer', self::QA_REVIEWER_PERMISSIONS);
+        $this->grantQmsPermissions('log maker', self::LOG_MAKER_PERMISSIONS);
+        $this->grantQmsPermissions('gmp record executor', self::RECORD_EXECUTOR_PERMISSIONS);
+        $this->grantQmsPermissions('production supervisor', self::PRODUCTION_SUPERVISOR_PERMISSIONS);
+
         $this->call(CompetencyCurriculumSeeder::class);
 
         app(KnowledgeGuideSeeder::class)->seedQmsGuides();
+    }
+
+    /**
+     * @param  array<int, string>  $permissions
+     */
+    private function grantQmsPermissions(string $roleName, array $permissions): void
+    {
+        $role = Role::findOrCreate($roleName, 'web');
+        $role->revokePermissionTo(array_values(array_diff(self::PERMISSIONS, $permissions)));
+        $role->givePermissionTo($permissions);
     }
 }

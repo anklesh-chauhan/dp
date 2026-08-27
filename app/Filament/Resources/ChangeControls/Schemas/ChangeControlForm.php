@@ -38,6 +38,7 @@ final class ChangeControlForm
                                 ->relationship('department', 'name')
                                 ->searchable()
                                 ->preload()
+                                ->default(fn (): ?int => auth()->user()?->department_id)
                                 ->required()->live(),
                             Select::make('owner_id')
                                 ->relationship('owner', 'name')
