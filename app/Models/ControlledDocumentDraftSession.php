@@ -7,6 +7,8 @@ use Database\Factories\ControlledDocumentDraftSessionFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
 
 final class ControlledDocumentDraftSession extends Model
@@ -89,6 +91,18 @@ final class ControlledDocumentDraftSession extends Model
     public function referencedControlledDocument(): BelongsTo
     {
         return $this->belongsTo(ControlledDocument::class, 'referenced_controlled_document_id');
+    }
+
+    /** @return HasMany<ControlledDocumentDraftRequest, $this> */
+    public function draftRequests(): HasMany
+    {
+        return $this->hasMany(ControlledDocumentDraftRequest::class);
+    }
+
+    /** @return HasOne<ControlledDocumentDraftRequest, $this> */
+    public function latestDraftRequest(): HasOne
+    {
+        return $this->hasOne(ControlledDocumentDraftRequest::class)->latestOfMany();
     }
 
     public function calculatePreviewHash(): string

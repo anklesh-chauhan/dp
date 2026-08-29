@@ -1,4 +1,29 @@
 <x-filament-panels::page>
+    <x-filament::section>
+        <x-slot name="heading">Draft chat history</x-slot>
+        <x-slot name="description">Reopen a previous drafting session, including its current background-job status.</x-slot>
+
+        <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            @forelse ($this->draftHistory as $historyItem)
+                <button
+                    type="button"
+                    wire:click="openDraftSession({{ $historyItem['id'] }})"
+                    @class([
+                        'grid gap-1 rounded-xl border px-4 py-3 text-start transition',
+                        'border-primary-500 bg-primary-50 dark:bg-primary-500/10' => $draftSessionId === $historyItem['id'],
+                        'border-gray-200 hover:border-primary-300 dark:border-white/10 dark:hover:border-primary-500' => $draftSessionId !== $historyItem['id'],
+                    ])
+                >
+                    <span class="truncate text-sm font-medium text-gray-950 dark:text-white">{{ $historyItem['title'] }}</span>
+                    <span class="text-xs text-gray-500 dark:text-gray-400">{{ $historyItem['context'] }} · {{ $historyItem['status'] }}</span>
+                    <span class="text-xs text-gray-500 dark:text-gray-400">{{ $historyItem['updated_at'] }}</span>
+                </button>
+            @empty
+                <p class="text-sm text-gray-500 dark:text-gray-400">Your drafting conversations will appear here.</p>
+            @endforelse
+        </div>
+    </x-filament::section>
+
     @if (! $this->session)
         <x-filament::section>
             <x-slot name="heading">Start a controlled-document draft</x-slot>
@@ -84,13 +109,71 @@
                                 Describe the document you need in your own words. Include its purpose, users, scope, process, responsibilities, and any important controls you already know.
                             </div>
                         @endforelse
+
+                        @if ($this->draftRequestActive)
+                            <div class="ms-auto max-w-[90%] rounded-xl bg-primary-600 px-4 py-3 text-sm whitespace-pre-wrap text-white">
+                                {{ $this->draftRequest->message }}
+                            </div>
+                        @endif
                     </div>
+
+                    @if ($this->draftRequest)
+                        <div
+                            @if ($this->draftRequestActive) wire:poll.2s="refreshDraftStatus" @endif
+                            @class([
+                                'mt-5 rounded-xl border px-4 py-3 text-sm',
+                                'border-warning-300 bg-warning-50 text-warning-800 dark:border-warning-500/30 dark:bg-warning-500/10 dark:text-warning-200' => $this->draftRequest->status->value === 'queued',
+                                'border-primary-300 bg-primary-50 text-primary-800 dark:border-primary-500/30 dark:bg-primary-500/10 dark:text-primary-200' => $this->draftRequest->status->value === 'processing',
+                                'border-success-300 bg-success-50 text-success-800 dark:border-success-500/30 dark:bg-success-500/10 dark:text-success-200' => $this->draftRequest->status->value === 'completed',
+                                'border-danger-300 bg-danger-50 text-danger-800 dark:border-danger-500/30 dark:bg-danger-500/10 dark:text-danger-200' => $this->draftRequest->status->value === 'failed',
+                            ])
+                        >
+                            <div class="flex items-center gap-3">
+                                @if ($this->draftRequestActive)
+                                    <x-filament::loading-indicator class="h-5 w-5 shrink-0" />
+                                @endif
+                                <div class="grid gap-1">
+                                    <p class="font-medium">
+                                        @switch($this->draftRequest->status->value)
+                                            @case('queued')
+                                                Request queued
+                                                @break
+                                            @case('processing')
+                                                AI is preparing the draft response
+                                                @break
+                                            @case('completed')
+                                                Draft response ready
+                                                @break
+                                            @default
+                                                Drafting request failed
+                                        @endswitch
+                                    </p>
+                                    <p>
+                                        @switch($this->draftRequest->status->value)
+                                            @case('queued')
+                                                Waiting for an available background worker. This page will update automatically.
+                                                @break
+                                            @case('processing')
+                                                The request is running in the background, so the page will not time out.
+                                                @break
+                                            @case('completed')
+                                                The conversation and preview have been updated.
+                                                @break
+                                            @default
+                                                {{ $this->draftRequest->failure_message }}
+                                        @endswitch
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
 
                     <div class="mt-5 grid gap-2">
                         <x-filament::input.wrapper :valid="! $errors->has('userMessage')">
                             <textarea
                                 class="fi-input block min-h-28 w-full resize-y border-none bg-transparent px-3 py-2 text-base text-gray-950 outline-none transition duration-75 placeholder:text-gray-400 focus:ring-0 disabled:text-gray-500 sm:text-sm dark:text-white dark:placeholder:text-gray-500"
                                 wire:model="userMessage"
+                                @disabled($this->draftRequestActive)
                                 placeholder="Tell the assistant what to create or what to revise..."
                             ></textarea>
                         </x-filament::input.wrapper>
@@ -99,14 +182,22 @@
                         @enderror
 
                         <div class="flex flex-wrap items-center gap-3">
-                            <x-filament::button wire:click="sendMessage" wire:loading.attr="disabled">
+                            <x-filament::button
+                                wire:click="sendMessage"
+                                wire:loading.attr="disabled"
+                                :disabled="$this->draftRequestActive"
+                            >
                                 Send
                             </x-filament::button>
-                            <x-filament::button color="gray" wire:click="resetConversation">
+                            <x-filament::button
+                                color="gray"
+                                wire:click="resetConversation"
+                                :disabled="$this->draftRequestActive"
+                            >
                                 Start over
                             </x-filament::button>
                             <span class="text-sm text-gray-500" wire:loading wire:target="sendMessage">
-                                Preparing the next response...
+                                Adding the request to the queue...
                             </span>
                         </div>
                     </div>
@@ -164,12 +255,15 @@
                         </x-slot>
 
                         <x-filament::button
+                            type="button"
                             color="success"
                             wire:click="createDraft"
                             wire:confirm="Create this Draft controlled document from the exact preview shown?"
                             wire:loading.attr="disabled"
+                            wire:target="createDraft"
                         >
-                            Confirm and create Draft
+                            <span wire:loading.remove wire:target="createDraft">Confirm and create Draft</span>
+                            <span wire:loading wire:target="createDraft">Creating Draft...</span>
                         </x-filament::button>
                         @error('confirmation')
                             <p class="mt-2 text-sm text-danger-600">{{ $message }}</p>

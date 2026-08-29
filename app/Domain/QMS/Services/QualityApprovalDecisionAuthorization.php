@@ -63,10 +63,13 @@ final class QualityApprovalDecisionAuthorization implements ApprovalDecisionAuth
         }
 
         if (
-            ! $user->can($this->managePermission($subject))
-            && $subject->approvalSubjectCreatedById() === $user->id
+            $subject->approvalSubjectCreatedById() === $user->id
         ) {
             throw new WorkflowException(message: 'The submitter cannot approve their own submission.');
+        }
+
+        if ($this->hasAlreadyDecidedInCycle($approval, $user)) {
+            throw new WorkflowException(message: 'A different signer is required for each quality approval step.');
         }
 
         $requiredDepartmentId = $approval->workflowStep->resolveRequiredDepartmentId(
@@ -115,6 +118,21 @@ final class QualityApprovalDecisionAuthorization implements ApprovalDecisionAuth
                 ->where('step_no', '<', $approval->workflowStep->step_no)
                 ->where('is_mandatory', true))
             ->where('decision_code', '!=', 'approved')
+            ->exists();
+    }
+
+    private function hasAlreadyDecidedInCycle(
+        QualityApprovalInstance $approval,
+        User $user,
+    ): bool {
+        return QualityApprovalInstance::query()
+            ->where('submission_uuid', $approval->submission_uuid)
+            ->where('decided_by', $user->getKey())
+            ->whereIn('decision_code', [
+                'approved',
+                'rejected',
+                'returned',
+            ])
             ->exists();
     }
 

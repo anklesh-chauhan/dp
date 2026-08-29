@@ -41,4 +41,6 @@ enum AIUseCase: string
     case APPROVAL_DECISION_RATIONALE = 'approval_decision_rationale';
 
     case DOCUMENT_CONTENT_ASSISTANCE = 'document_content_assistance';
+
+    case APPLICATION_ASSISTANT = 'application_assistant';
 }

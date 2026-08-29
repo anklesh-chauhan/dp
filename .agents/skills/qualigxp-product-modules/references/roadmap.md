@@ -2,6 +2,13 @@
 
 ## Verified checkpoint
 
+- Controlled-document drafting now reconciles model output against authoritative template and session state: only genuinely missing required fields block preview readiness, non-empty values survive blank model responses, current variables and the current date are included in agent context, and persisted or legacy chat text cannot contradict a ready preview. The drafting conversation, queued-job, preview, and Filament regression set passed with 20 tests and 107 assertions.
+- AI chat history is now user-owned and assistant-scoped: the general QualiGxP assistant lists and reopens only that user's conversations created by the QualiGxP agent, while the controlled-document assistant lists and restores durable draft sessions together with their latest queued-job state. Cross-user history access is rejected server-side. The combined assistant, queue, preview, and conversation-service regression set passed with 26 tests and 120 assertions, and the production frontend build passed.
+- Controlled-document drafting turns now use durable queued request records with visible queued/processing/completed/failed states, Livewire polling, single-active-turn enforcement, sanitized failures, exponential retry backoff, and preview-revision idempotency; the page no longer holds a gateway request open during model generation. Focused queue, Filament, draft-creation, and observability coverage passed with 15 tests and 128 assertions.
+- The first general QualiGxP assistant is read-only, permission-aware, citation-backed, rate-limited, and restricted to the locally configured Ollama provider for internal GxP data; it can search approved/effective controlled documents, permitted quality records, and the current user's approval queue without mutation tools.
+- AI provider governance now intersects use-case routing, data-classification allowlists, and enabled providers before every governed request.
+- Used QMS approval workflow definitions are immutable, and each approval cycle requires a distinct eligible signer even when a user holds management permissions.
+- Focused AI, QMS, entitlement, seeder, notification, and observability regression coverage passed with 83 tests and 1,007 assertions; Pint and the production frontend build also passed.
 - Module enum, dependency rules, configuration, manager, exception, and `module:*` middleware exist.
 - DMS protects the current Filament panel and document print route.
 - AI observability, template controls, actions, and queued jobs are entitlement-aware.

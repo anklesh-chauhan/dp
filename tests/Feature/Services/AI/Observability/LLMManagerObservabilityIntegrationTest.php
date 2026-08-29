@@ -7,8 +7,8 @@ use App\Models\AiExecutionAttempt;
 use App\Services\AI\Contracts\LLMManagerContract;
 use App\Services\AI\Data\LLMRequest;
 use App\Services\AI\Data\LLMResponse;
-use App\Services\AI\Enums\AIUseCase;
 use App\Services\AI\Enums\AiExecutionStatus;
+use App\Services\AI\Enums\AIUseCase;
 use App\Services\AI\Enums\LLMCapability;
 use App\Services\AI\Routing\ProviderRegistry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -18,6 +18,10 @@ uses(RefreshDatabase::class);
 
 beforeEach(function (): void {
     config()->set('ai.routing.document_classification', [
+        'gemini',
+        'ollama',
+    ]);
+    config()->set('ai.governance.classification_providers.internal', [
         'gemini',
         'ollama',
     ]);

@@ -10,6 +10,7 @@ use App\Services\AI\Data\LLMResponse;
 use App\Services\AI\Enums\AIUseCase;
 use App\Services\AI\Enums\LLMCapability;
 use App\Services\AI\Exceptions\AllProvidersFailedException;
+use App\Services\AI\Routing\AiProviderGovernance;
 use App\Services\AI\Routing\LLMManager;
 use App\Services\AI\Routing\ProviderRegistry;
 use App\Services\AI\Routing\ProviderRouter;
@@ -23,11 +24,18 @@ beforeEach(function (): void {
         'gemini',
         'ollama',
     ]);
+    config()->set('ai.governance.classification_providers.internal', [
+        'gemini',
+        'ollama',
+    ]);
+    config()->set('ai.providers.gemini.enabled', true);
+    config()->set('ai.providers.ollama.enabled', true);
 
-    $this->registry = new ProviderRegistry();
+    $this->registry = new ProviderRegistry;
 
     $this->router = new ProviderRouter(
         $this->registry,
+        new AiProviderGovernance,
     );
 
     $this->recorder = Mockery::mock(
@@ -189,9 +197,9 @@ it('throws when no eligible providers exist', function (): void {
 })->throws(AllProvidersFailedException::class);
 
 it('records a successful execution and provider attempt', function (): void {
-    $execution = new AiExecution();
+    $execution = new AiExecution;
 
-    $attempt = new AiExecutionAttempt();
+    $attempt = new AiExecutionAttempt;
 
     $response = new LLMResponse(
         content: [
@@ -250,11 +258,11 @@ it('records a successful execution and provider attempt', function (): void {
 });
 
 it('records a failed attempt before successful fallback', function (): void {
-    $execution = new AiExecution();
+    $execution = new AiExecution;
 
-    $geminiAttempt = new AiExecutionAttempt();
+    $geminiAttempt = new AiExecutionAttempt;
 
-    $ollamaAttempt = new AiExecutionAttempt();
+    $ollamaAttempt = new AiExecutionAttempt;
 
     $gemini = (new FakeLLMProvider('gemini'))
         ->willFail('Gemini unavailable.');
@@ -334,11 +342,11 @@ it('records a failed attempt before successful fallback', function (): void {
 });
 
 it('records execution failure when all providers fail', function (): void {
-    $execution = new AiExecution();
+    $execution = new AiExecution;
 
-    $geminiAttempt = new AiExecutionAttempt();
+    $geminiAttempt = new AiExecutionAttempt;
 
-    $ollamaAttempt = new AiExecutionAttempt();
+    $ollamaAttempt = new AiExecutionAttempt;
 
     $gemini = (new FakeLLMProvider('gemini'))
         ->willFail('Gemini unavailable.');
@@ -399,7 +407,7 @@ it('records execution failure when all providers fail', function (): void {
 })->throws(AllProvidersFailedException::class);
 
 it('records a failed execution with zero attempts when no providers exist', function (): void {
-    $execution = new AiExecution();
+    $execution = new AiExecution;
 
     $this->recorder
         ->shouldReceive('startExecution')
@@ -454,7 +462,7 @@ it('continues generation when execution recording cannot start', function (): vo
 });
 
 it('continues provider execution when attempt recording cannot start', function (): void {
-    $execution = new AiExecution();
+    $execution = new AiExecution;
 
     $response = new LLMResponse(
         content: [
@@ -504,9 +512,9 @@ it('continues provider execution when attempt recording cannot start', function 
 });
 
 it('does not convert provider success into failure when attempt completion recording fails', function (): void {
-    $execution = new AiExecution();
+    $execution = new AiExecution;
 
-    $attempt = new AiExecutionAttempt();
+    $attempt = new AiExecutionAttempt;
 
     $response = new LLMResponse(
         content: [
@@ -554,11 +562,11 @@ it('does not convert provider success into failure when attempt completion recor
 });
 
 it('continues fallback when failed attempt recording fails', function (): void {
-    $execution = new AiExecution();
+    $execution = new AiExecution;
 
-    $geminiAttempt = new AiExecutionAttempt();
+    $geminiAttempt = new AiExecutionAttempt;
 
-    $ollamaAttempt = new AiExecutionAttempt();
+    $ollamaAttempt = new AiExecutionAttempt;
 
     $gemini = (new FakeLLMProvider('gemini'))
         ->willFail('Gemini unavailable.');
@@ -626,9 +634,9 @@ it('continues fallback when failed attempt recording fails', function (): void {
 });
 
 it('does not convert provider success into failure when execution completion recording fails', function (): void {
-    $execution = new AiExecution();
+    $execution = new AiExecution;
 
-    $attempt = new AiExecutionAttempt();
+    $attempt = new AiExecutionAttempt;
 
     $response = new LLMResponse(
         content: [
@@ -676,9 +684,9 @@ it('does not convert provider success into failure when execution completion rec
 });
 
 it('preserves all providers failed exception when execution failure recording fails', function (): void {
-    $execution = new AiExecution();
+    $execution = new AiExecution;
 
-    $attempt = new AiExecutionAttempt();
+    $attempt = new AiExecutionAttempt;
 
     $gemini = (new FakeLLMProvider('gemini'))
         ->willFail('Gemini unavailable.');

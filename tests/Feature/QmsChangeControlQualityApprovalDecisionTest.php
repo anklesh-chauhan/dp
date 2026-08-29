@@ -177,6 +177,31 @@ it('enforces permission role department separation of duties and QMS entitlement
         ->toThrow(ModuleNotEnabledException::class);
 });
 
+it('requires a different signer for every quality approval step including managers', function (): void {
+    $role = Role::findOrCreate('multi-step quality reviewer', 'web');
+    QualityApprovalWorkflowStep::factory()->count(2)->sequence(
+        ['step_no' => 1],
+        ['step_no' => 2],
+    )->create([
+        'workflow_id' => $this->workflow,
+        'role_id' => $role,
+    ]);
+    $reviewer = reviewerForChangeControlQualityApproval($role, $this->department);
+    $reviewer->givePermissionTo('Manage:ChangeControl');
+    app(ChangeControlApprovalSubmissionService::class)->submit($this->changeControl, $this->submitter);
+    [$first, $second] = $this->changeControl->approvalInstances()
+        ->orderBy('workflow_step_id')
+        ->get()
+        ->all();
+    $service = app(ChangeControlApprovalDecisionService::class);
+
+    $service->approve($first, $reviewer, 'First independent decision.');
+
+    expect(fn () => $service->approve($second->fresh(), $reviewer, 'Attempted second signature.'))
+        ->toThrow(WorkflowException::class, 'A different signer is required')
+        ->and($second->fresh()?->decision_code)->toBe('pending');
+});
+
 it('does not persist a decision without authority for its Change Control outcome', function (): void {
     $role = Role::findOrCreate('decision only reviewer', 'web');
     QualityApprovalWorkflowStep::factory()->create([

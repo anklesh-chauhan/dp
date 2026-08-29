@@ -11,6 +11,7 @@ final readonly class ProviderRouter
 {
     public function __construct(
         private ProviderRegistry $registry,
+        private AiProviderGovernance $governance,
     ) {}
 
     /**
@@ -18,9 +19,9 @@ final readonly class ProviderRouter
      */
     public function providersFor(LLMRequest $request): array
     {
-        $providerNames = config(
-            "ai.routing.{$request->useCase->value}",
-            [],
+        $providerNames = $this->governance->providersFor(
+            $request->useCase,
+            $request->dataClassification,
         );
 
         $providers = [];

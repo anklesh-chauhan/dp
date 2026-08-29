@@ -10,10 +10,14 @@ use App\Enums\ProductModule;
 use App\Models\ControlledDocument;
 use App\Models\ControlledDocumentDraftSession;
 use App\Models\User;
+use App\Services\AI\AiDraftVariableNormalizer;
 use App\Services\AI\Enums\ControlledDocumentDraftSessionStatus;
 use App\Support\Modules\ModuleManager;
+use Carbon\CarbonImmutable;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
 final readonly class CreateControlledDocumentFromAiDraftAction
@@ -21,6 +25,7 @@ final readonly class CreateControlledDocumentFromAiDraftAction
     public function __construct(
         private CreateDocumentFromTemplateAction $createDocument,
         private ModuleManager $moduleManager,
+        private AiDraftVariableNormalizer $variableNormalizer,
     ) {}
 
     public function execute(
@@ -63,13 +68,20 @@ final readonly class CreateControlledDocumentFromAiDraftAction
                 ]);
             }
 
+            $variables = $this->variableNormalizer->normalize(
+                $lockedSession->templateVersion,
+                $lockedSession->draft_variables ?? [],
+            );
+
             $document = $this->createDocument->execute(new ControlledDocumentData(
                 templateId: (int) $lockedSession->template_id,
                 templateVersionId: (int) $lockedSession->template_version_id,
                 title: (string) $lockedSession->title,
                 ownerId: (int) $lockedSession->owner_id,
                 createdBy: (int) $user->getKey(),
-                variables: $lockedSession->draft_variables ?? [],
+                variables: $variables,
+                effectiveDate: $this->dateValue($variables, 'effective_date'),
+                reviewDate: $this->dateValue($variables, 'review_date'),
                 regulationTagIds: $lockedSession->template->regulationTags
                     ->modelKeys(),
                 referencedControlledDocumentId: $lockedSession->referenced_controlled_document_id,
@@ -84,5 +96,22 @@ final readonly class CreateControlledDocumentFromAiDraftAction
 
             return $document;
         });
+    }
+
+    /** @param array<string, mixed> $variables */
+    private function dateValue(array $variables, string $name): ?CarbonInterface
+    {
+        $value = $variables[$name] ?? null;
+
+        if (blank($value)) {
+            return null;
+        }
+
+        Validator::make(
+            [$name => $value],
+            [$name => ['date']],
+        )->validate();
+
+        return CarbonImmutable::parse((string) $value);
     }
 }

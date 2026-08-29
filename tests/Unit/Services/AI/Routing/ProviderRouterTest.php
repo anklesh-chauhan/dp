@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Services\AI\Data\LLMRequest;
 use App\Services\AI\Enums\AIUseCase;
 use App\Services\AI\Enums\LLMCapability;
+use App\Services\AI\Routing\AiProviderGovernance;
 use App\Services\AI\Routing\ProviderRegistry;
 use App\Services\AI\Routing\ProviderRouter;
 use Tests\Support\AI\FakeLLMProvider;
@@ -17,11 +18,18 @@ beforeEach(function (): void {
         'gemini',
         'ollama',
     ]);
+    config()->set('ai.governance.classification_providers.internal', [
+        'gemini',
+        'ollama',
+    ]);
+    config()->set('ai.providers.gemini.enabled', true);
+    config()->set('ai.providers.ollama.enabled', true);
 
-    $this->registry = new ProviderRegistry();
+    $this->registry = new ProviderRegistry;
 
     $this->router = new ProviderRouter(
         $this->registry,
+        new AiProviderGovernance,
     );
 
     $this->request = new LLMRequest(

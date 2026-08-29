@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use LogicException;
 
 #[UsePolicy(QualityApprovalWorkflowPolicy::class)]
 final class QualityApprovalWorkflow extends Model implements ApprovalWorkflowDefinition
@@ -29,6 +30,24 @@ final class QualityApprovalWorkflow extends Model implements ApprovalWorkflowDef
         'department_id',
         'is_active',
     ];
+
+    protected static function booted(): void
+    {
+        self::updating(function (self $workflow): void {
+            if (
+                $workflow->hasApprovalHistory()
+                && $workflow->isDirty([
+                    'workflow_code',
+                    'name',
+                    'description',
+                    'subject_type',
+                    'department_id',
+                ])
+            ) {
+                throw new LogicException('A quality workflow definition with approval history is immutable. Deactivate it and create a replacement workflow.');
+            }
+        });
+    }
 
     /** @return array<string, string> */
     protected function casts(): array
@@ -68,5 +87,15 @@ final class QualityApprovalWorkflow extends Model implements ApprovalWorkflowDef
     public function approvalInstances(): HasMany
     {
         return $this->hasMany(QualityApprovalInstance::class, 'workflow_id');
+    }
+
+    public function hasApprovalHistory(): bool
+    {
+        return $this->approvalInstances()->exists();
+    }
+
+    public function isDefinitionMutable(): bool
+    {
+        return ! $this->hasApprovalHistory();
     }
 }

@@ -17,6 +17,7 @@ class AiModuleSeeder extends Seeder
     public const PERMISSIONS = [
         'ViewAny:AiExecution',
         'View:AiExecution',
+        'Use:AiAssistant',
     ];
 
     public function run(): void
@@ -29,5 +30,19 @@ class AiModuleSeeder extends Seeder
 
         Role::findOrCreate('sop administrator', 'web')
             ->givePermissionTo(self::PERMISSIONS);
+
+        foreach ([
+            'sop maker',
+            'sop checker',
+            'sop approver',
+            'document controller',
+            'qa reviewer',
+            'log maker',
+            'gmp record executor',
+            'production supervisor',
+        ] as $roleName) {
+            Role::findOrCreate($roleName, 'web')
+                ->givePermissionTo('Use:AiAssistant');
+        }
     }
 }

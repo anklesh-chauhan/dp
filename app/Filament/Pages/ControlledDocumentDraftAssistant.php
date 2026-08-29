@@ -8,12 +8,15 @@ use App\Domain\DMS\Services\SopReferenceService;
 use App\Domain\DMS\Services\VariableResolverService;
 use App\Enums\ProductModule;
 use App\Filament\Resources\ControlledDocuments\ControlledDocumentResource;
+use App\Models\ControlledDocumentDraftRequest;
 use App\Models\ControlledDocumentDraftSession;
 use App\Models\DocumentTemplate;
 use App\Models\TemplateStatus;
 use App\Models\User;
 use App\Services\AI\Actions\CreateControlledDocumentFromAiDraftAction;
+use App\Services\AI\AiDraftVariableNormalizer;
 use App\Services\AI\ControlledDocumentDraftConversationService;
+use App\Services\AI\Enums\ControlledDocumentDraftRequestStatus;
 use App\Support\Modules\ModuleManager;
 use BackedEnum;
 use Filament\Notifications\Notification;
@@ -51,6 +54,8 @@ final class ControlledDocumentDraftAssistant extends Page
     public ?int $draftSessionId = null;
 
     public string $userMessage = '';
+
+    public ?int $draftRequestId = null;
 
     public ?string $expectedPreviewHash = null;
 
@@ -95,9 +100,10 @@ final class ControlledDocumentDraftAssistant extends Page
         );
 
         $this->draftSessionId = (int) $session->getKey();
+        $this->draftRequestId = null;
         $this->expectedPreviewHash = null;
         $this->userMessage = '';
-        unset($this->session, $this->messages, $this->previewSections);
+        unset($this->session, $this->messages, $this->previewSections, $this->draftHistory);
     }
 
     public function sendMessage(
@@ -109,15 +115,22 @@ final class ControlledDocumentDraftAssistant extends Page
         ]);
 
         try {
-            $result = $service->respond(
+            $request = $service->queueResponse(
                 session: $this->ownedSession(),
                 user: auth()->user(),
                 message: $data['userMessage'],
             );
 
-            $this->expectedPreviewHash = (string) $result['preview_hash'];
+            $this->draftRequestId = (int) $request->getKey();
+            $this->expectedPreviewHash = null;
             $this->userMessage = '';
-            unset($this->session, $this->messages, $this->previewSections);
+            unset($this->draftRequest, $this->draftRequestActive);
+
+            Notification::make()
+                ->info()
+                ->title('Drafting request queued')
+                ->body('You can keep this page open while the background worker prepares the response.')
+                ->send();
         } catch (ValidationException $exception) {
             throw $exception;
         } catch (Throwable $exception) {
@@ -128,6 +141,53 @@ final class ControlledDocumentDraftAssistant extends Page
                 ->title('The drafting assistant could not respond')
                 ->body('Please try again. If the problem continues, contact an administrator.')
                 ->send();
+        }
+    }
+
+    public function openDraftSession(int $draftSessionId): void
+    {
+        $session = ControlledDocumentDraftSession::query()
+            ->with('latestDraftRequest')
+            ->where('created_by', auth()->id())
+            ->findOrFail($draftSessionId);
+
+        $this->draftSessionId = (int) $session->getKey();
+        $this->templateId = (int) $session->template_id;
+        $this->ownerId = (int) $session->owner_id;
+        $this->referencedControlledDocumentId = $session->referenced_controlled_document_id;
+        $this->draftRequestId = $session->latestDraftRequest?->getKey();
+        $this->expectedPreviewHash = $session->latestDraftRequest?->status === ControlledDocumentDraftRequestStatus::COMPLETED
+            ? $session->latestDraftRequest->preview_hash
+            : null;
+        $this->userMessage = '';
+
+        unset(
+            $this->session,
+            $this->messages,
+            $this->previewSections,
+            $this->draftRequest,
+            $this->draftRequestActive,
+        );
+    }
+
+    public function refreshDraftStatus(): void
+    {
+        unset(
+            $this->draftRequest,
+            $this->draftRequestActive,
+            $this->session,
+            $this->messages,
+            $this->previewSections,
+        );
+
+        $request = $this->draftRequest;
+
+        if ($request?->status === ControlledDocumentDraftRequestStatus::COMPLETED) {
+            $this->expectedPreviewHash = $request->preview_hash;
+        }
+
+        if ($request?->status === ControlledDocumentDraftRequestStatus::FAILED) {
+            $this->expectedPreviewHash = null;
         }
     }
 
@@ -142,11 +202,18 @@ final class ControlledDocumentDraftAssistant extends Page
             ]);
         }
 
-        $document = $action->execute(
-            session: $session,
-            user: auth()->user(),
-            expectedPreviewHash: $this->expectedPreviewHash,
-        );
+        try {
+            $document = $action->execute(
+                session: $session,
+                user: auth()->user(),
+                expectedPreviewHash: $this->expectedPreviewHash,
+            );
+        } catch (ValidationException $exception) {
+            throw ValidationException::withMessages([
+                'confirmation' => collect($exception->errors())->flatten()->first()
+                    ?? 'The draft could not be created. Review the preview and try again.',
+            ]);
+        }
 
         Notification::make()
             ->success()
@@ -162,15 +229,28 @@ final class ControlledDocumentDraftAssistant extends Page
 
     public function resetConversation(): void
     {
+        if ($this->draftRequestActive) {
+            throw ValidationException::withMessages([
+                'userMessage' => 'Wait for the current drafting request to finish before starting over.',
+            ]);
+        }
+
         $this->reset([
             'templateId',
             'referencedControlledDocumentId',
             'draftSessionId',
+            'draftRequestId',
             'userMessage',
             'expectedPreviewHash',
         ]);
         $this->ownerId = auth()->id();
-        unset($this->session, $this->messages, $this->previewSections);
+        unset(
+            $this->session,
+            $this->messages,
+            $this->previewSections,
+            $this->draftRequest,
+            $this->draftRequestActive,
+        );
     }
 
     /**
@@ -188,6 +268,30 @@ final class ControlledDocumentDraftAssistant extends Page
             ->mapWithKeys(fn (DocumentTemplate $template): array => [
                 $template->getKey() => "{$template->name} ({$template->documentType->code})",
             ])
+            ->all();
+    }
+
+    /** @return list<array{id: int, title: string, context: string, status: string, updated_at: string}> */
+    #[Computed]
+    public function draftHistory(): array
+    {
+        return ControlledDocumentDraftSession::query()
+            ->with(['template.documentType', 'latestDraftRequest'])
+            ->where('created_by', auth()->id())
+            ->latest('updated_at')
+            ->limit(20)
+            ->get()
+            ->map(function (ControlledDocumentDraftSession $session): array {
+                $requestStatus = $session->latestDraftRequest?->status->value;
+
+                return [
+                    'id' => (int) $session->getKey(),
+                    'title' => $session->title ?: $session->template->name,
+                    'context' => $session->template->documentType->code,
+                    'status' => str($requestStatus ?: $session->status->value)->replace('_', ' ')->headline()->toString(),
+                    'updated_at' => $session->updated_at->diffForHumans(),
+                ];
+            })
             ->all();
     }
 
@@ -242,6 +346,26 @@ final class ControlledDocumentDraftAssistant extends Page
             ->find($this->draftSessionId);
     }
 
+    #[Computed]
+    public function draftRequest(): ?ControlledDocumentDraftRequest
+    {
+        if ($this->draftRequestId === null || $this->draftSessionId === null) {
+            return null;
+        }
+
+        return ControlledDocumentDraftRequest::query()
+            ->whereKey($this->draftRequestId)
+            ->where('controlled_document_draft_session_id', $this->draftSessionId)
+            ->where('requested_by', auth()->id())
+            ->first();
+    }
+
+    #[Computed]
+    public function draftRequestActive(): bool
+    {
+        return $this->draftRequest?->status->isActive() ?? false;
+    }
+
     /**
      * @return list<array{role: string, content: string}>
      */
@@ -277,8 +401,18 @@ final class ControlledDocumentDraftAssistant extends Page
             return [];
         }
 
-        $variables = $session->draft_variables ?? [];
+        $variables = app(AiDraftVariableNormalizer::class)->normalize(
+            $session->templateVersion,
+            $session->draft_variables ?? [],
+        );
         $resolver = app(VariableResolverService::class);
+
+        try {
+            $variables = $resolver->resolveValues($session->templateVersion, $variables)['substitution'];
+        } catch (ValidationException) {
+            // Legacy previews can contain values that predate AI normalization.
+            // Confirmation displays the specific validation problem to the user.
+        }
 
         return $session->templateVersion->sections
             ->map(fn ($section): array => [
@@ -302,6 +436,14 @@ final class ControlledDocumentDraftAssistant extends Page
         }
 
         $decoded = json_decode($content, true);
+
+        if (
+            is_array($decoded)
+            && ($decoded['ready_for_preview'] ?? false) === true
+            && empty($decoded['missing_details'] ?? [])
+        ) {
+            return 'The controlled-document preview is ready for review.';
+        }
 
         return is_array($decoded) && filled($decoded['assistant_message'] ?? null)
             ? (string) $decoded['assistant_message']

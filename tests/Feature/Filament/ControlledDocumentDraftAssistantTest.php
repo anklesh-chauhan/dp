@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 use App\Filament\Pages\ControlledDocumentDraftAssistant;
 use App\Models\ControlledDocument;
+use App\Models\ControlledDocumentDraftRequest;
 use App\Models\ControlledDocumentDraftSession;
 use App\Models\DocumentTemplate;
 use App\Models\DocumentTemplateVersion;
 use App\Models\TemplateStatus;
 use App\Models\User;
+use App\Services\AI\Enums\ControlledDocumentDraftRequestStatus;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Livewire;
@@ -71,4 +74,53 @@ it('blocks users without controlled-document creation permission', function (): 
     $this->actingAs(User::factory()->create());
 
     expect(ControlledDocumentDraftAssistant::canAccess())->toBeFalse();
+});
+
+it('lists and reopens an owned drafting chat with its latest job state', function (): void {
+    $templateVersion = $this->template->publishedVersion;
+    $session = ControlledDocumentDraftSession::factory()->create([
+        'created_by' => $this->user,
+        'template_id' => $this->template,
+        'template_version_id' => $templateVersion,
+        'owner_id' => $this->owner,
+        'title' => 'Validation Master Plan',
+    ]);
+    $request = ControlledDocumentDraftRequest::factory()->create([
+        'controlled_document_draft_session_id' => $session,
+        'requested_by' => $this->user,
+        'status' => ControlledDocumentDraftRequestStatus::QUEUED,
+        'message' => 'Prepare the validation plan.',
+    ]);
+
+    $component = Livewire::test(ControlledDocumentDraftAssistant::class);
+
+    expect($component->get('draftHistory'))
+        ->toHaveCount(1)
+        ->and($component->get('draftHistory.0.title'))->toBe('Validation Master Plan')
+        ->and($component->get('draftHistory.0.status'))->toBe('Queued');
+
+    $component
+        ->call('openDraftSession', $session->getKey())
+        ->assertSet('draftSessionId', $session->getKey())
+        ->assertSet('templateId', $this->template->getKey())
+        ->assertSet('ownerId', $this->owner->getKey())
+        ->assertSet('draftRequestId', $request->getKey())
+        ->assertSee('Request queued');
+});
+
+it('does not expose or reopen another users drafting history', function (): void {
+    $session = ControlledDocumentDraftSession::factory()->create([
+        'created_by' => User::factory(),
+        'template_id' => $this->template,
+        'template_version_id' => $this->template->publishedVersion,
+        'owner_id' => $this->owner,
+        'title' => 'Private draft chat',
+    ]);
+
+    $component = Livewire::test(ControlledDocumentDraftAssistant::class);
+
+    expect($component->get('draftHistory'))->toBeEmpty();
+
+    expect(fn () => $component->call('openDraftSession', $session->getKey()))
+        ->toThrow(ModelNotFoundException::class);
 });

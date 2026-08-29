@@ -75,11 +75,16 @@ final class WorkflowStepsRelationManager extends RelationManager
                 IconColumn::make('is_mandatory')->label('Mandatory')->boolean(),
             ])
             ->defaultSort('step_no')
-            ->headerActions([CreateAction::make()])
+            ->headerActions([
+                CreateAction::make()
+                    ->visible(fn (): bool => $this->getOwnerRecord()->isDefinitionMutable()),
+            ])
             ->recordActions([
                 ActionGroup::make([
-                    EditAction::make(),
-                    DeleteAction::make(),
+                    EditAction::make()
+                        ->visible(fn (): bool => $this->getOwnerRecord()->isDefinitionMutable()),
+                    DeleteAction::make()
+                        ->visible(fn (): bool => $this->getOwnerRecord()->isDefinitionMutable()),
                 ])->icon('heroicon-o-ellipsis-vertical'),
             ]);
     }

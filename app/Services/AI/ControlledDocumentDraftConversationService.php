@@ -6,8 +6,10 @@ namespace App\Services\AI;
 
 use App\Ai\Agents\ControlledDocumentDraftAgent;
 use App\Enums\ProductModule;
+use App\Jobs\ProcessControlledDocumentDraftRequest;
 use App\Models\AiExecution;
 use App\Models\ControlledDocument;
+use App\Models\ControlledDocumentDraftRequest;
 use App\Models\ControlledDocumentDraftSession;
 use App\Models\DocumentTemplateVersion;
 use App\Models\TemplateStatus;
@@ -17,11 +19,16 @@ use App\Services\AI\Data\LLMRequest;
 use App\Services\AI\Data\LLMResponse;
 use App\Services\AI\Enums\AIDataClassification;
 use App\Services\AI\Enums\AIUseCase;
+use App\Services\AI\Enums\ControlledDocumentDraftRequestStatus;
 use App\Services\AI\Enums\ControlledDocumentDraftSessionStatus;
 use App\Services\AI\Enums\LLMCapability;
+use App\Services\AI\Routing\AiProviderGovernance;
 use App\Support\Modules\ModuleManager;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Laravel\Ai\Models\ConversationMessage;
 use Laravel\Ai\Responses\StructuredAgentResponse;
 use Throwable;
 
@@ -30,6 +37,9 @@ final readonly class ControlledDocumentDraftConversationService
     public function __construct(
         private ModuleManager $moduleManager,
         private AiExecutionRecorder $recorder,
+        private AiProviderGovernance $providerGovernance,
+        private AiRequestRateLimiter $rateLimiter,
+        private AiDraftVariableNormalizer $variableNormalizer,
     ) {}
 
     public function start(
@@ -64,6 +74,66 @@ final readonly class ControlledDocumentDraftConversationService
         ])->load(['template.documentType', 'templateVersion.variables.variableDataType', 'owner']);
     }
 
+    public function queueResponse(
+        ControlledDocumentDraftSession $session,
+        User $user,
+        string $message,
+    ): ControlledDocumentDraftRequest {
+        $this->authorizeSession($session, $user);
+
+        $message = trim($message);
+
+        if ($message === '' || Str::length($message) > 10000) {
+            throw ValidationException::withMessages([
+                'userMessage' => 'Enter a drafting request of no more than 10,000 characters.',
+            ]);
+        }
+
+        if (! $session->status->canChat()) {
+            throw ValidationException::withMessages([
+                'userMessage' => 'This draft conversation can no longer be changed.',
+            ]);
+        }
+
+        return DB::transaction(function () use ($session, $user, $message): ControlledDocumentDraftRequest {
+            $lockedSession = ControlledDocumentDraftSession::query()
+                ->lockForUpdate()
+                ->findOrFail($session->getKey());
+
+            $this->authorizeSession($lockedSession, $user);
+
+            if (! $lockedSession->status->canChat()) {
+                throw ValidationException::withMessages([
+                    'userMessage' => 'This draft conversation can no longer be changed.',
+                ]);
+            }
+
+            $hasActiveRequest = $lockedSession->draftRequests()
+                ->whereIn('status', [
+                    ControlledDocumentDraftRequestStatus::QUEUED,
+                    ControlledDocumentDraftRequestStatus::PROCESSING,
+                ])
+                ->exists();
+
+            if ($hasActiveRequest) {
+                throw ValidationException::withMessages([
+                    'userMessage' => 'Please wait for the current drafting request to finish.',
+                ]);
+            }
+
+            $request = $lockedSession->draftRequests()->create([
+                'requested_by' => $user->getKey(),
+                'message' => $message,
+                'status' => ControlledDocumentDraftRequestStatus::QUEUED,
+                'queued_at' => now(),
+            ]);
+
+            ProcessControlledDocumentDraftRequest::dispatch($request->getKey())->afterCommit();
+
+            return $request;
+        });
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -73,6 +143,11 @@ final readonly class ControlledDocumentDraftConversationService
         string $message,
     ): array {
         $this->authorizeSession($session, $user);
+        $this->rateLimiter->ensureAvailable(
+            'controlled-document-drafting',
+            $user,
+            (int) config('ai.governance.rate_limits.controlled_document_drafting', 10),
+        );
 
         if (! $session->status->canChat()) {
             throw ValidationException::withMessages([
@@ -94,6 +169,7 @@ final readonly class ControlledDocumentDraftConversationService
             variableDefinitions: $definitions,
             templateContext: $this->templateContext($session),
             currentBrief: $session->brief ?? [],
+            currentVariables: $session->draft_variables ?? [],
         );
 
         $request = new LLMRequest(
@@ -130,19 +206,24 @@ final readonly class ControlledDocumentDraftConversationService
 
             $result = $this->normalizeResult($response->toArray(), $definitions, $session);
             $durationMs = $this->elapsedMilliseconds($startedAt);
+            $conversationId = $response->conversationId ?? $session->conversation_id;
 
-            $session->forceFill([
-                'conversation_id' => $response->conversationId ?? $session->conversation_id,
-                'title' => $result['title'],
-                'brief' => $result['brief'],
-                'draft_variables' => $result['variables'],
-                'status' => $result['ready_for_preview']
-                    ? ControlledDocumentDraftSessionStatus::PREVIEW_READY
-                    : ControlledDocumentDraftSessionStatus::GATHERING,
-                'preview_revision' => $session->preview_revision + 1,
-            ]);
-            $session->preview_hash = $session->calculatePreviewHash();
-            $session->save();
+            DB::transaction(function () use ($session, $result, $conversationId, $user): void {
+                $session->forceFill([
+                    'conversation_id' => $conversationId,
+                    'title' => $result['title'],
+                    'brief' => $result['brief'],
+                    'draft_variables' => $result['variables'],
+                    'status' => $result['ready_for_preview']
+                        ? ControlledDocumentDraftSessionStatus::PREVIEW_READY
+                        : ControlledDocumentDraftSessionStatus::GATHERING,
+                    'preview_revision' => $session->preview_revision + 1,
+                ]);
+                $session->preview_hash = $session->calculatePreviewHash();
+                $session->save();
+
+                $this->replacePersistedAssistantResponse($conversationId, $user, $result);
+            });
 
             $this->completeExecution($execution, $response, $result, $durationMs);
 
@@ -224,6 +305,7 @@ final readonly class ControlledDocumentDraftConversationService
             'template_code' => $session->template->code,
             'document_type' => $session->template->documentType->name,
             'template_version' => $session->templateVersion->version,
+            'current_date' => now()->toDateString(),
             'section_titles' => $session->templateVersion->sections->pluck('title')->all(),
         ];
     }
@@ -242,13 +324,19 @@ final readonly class ControlledDocumentDraftConversationService
         $receivedVariables = is_array($result['variables'] ?? null) ? $result['variables'] : [];
 
         foreach ($definitions as $name => $definition) {
-            $variables[$name] = trim((string) (
-                $receivedVariables[$name]
-                ?? $session->draft_variables[$name]
+            $existingValue = trim((string) (
+                $session->draft_variables[$name]
                 ?? $definition['default']
                 ?? ''
             ));
+            $receivedValue = array_key_exists($name, $receivedVariables)
+                ? trim((string) $receivedVariables[$name])
+                : '';
+
+            $variables[$name] = $receivedValue !== '' ? $receivedValue : $existingValue;
         }
+
+        $variables = $this->variableNormalizer->normalize($session->templateVersion, $variables);
 
         $missing = collect($definitions)
             ->filter(fn (array $definition, string $name): bool => $definition['required'] && blank($variables[$name]))
@@ -263,16 +351,48 @@ final readonly class ControlledDocumentDraftConversationService
         }
 
         return [
-            'assistant_message' => trim((string) ($result['assistant_message'] ?? 'Please provide the missing document details.')),
+            'assistant_message' => $this->assistantMessage($missing),
             'title' => $title,
             'brief' => is_array($result['brief'] ?? null) ? $result['brief'] : ($session->brief ?? []),
             'variables' => $variables,
-            'missing_details' => array_values(array_unique([
-                ...$missing,
-                ...array_map('strval', is_array($result['missing_details'] ?? null) ? $result['missing_details'] : []),
-            ])),
-            'ready_for_preview' => $missing === [] && (bool) ($result['ready_for_preview'] ?? false),
+            'missing_details' => $missing,
+            'ready_for_preview' => $missing === [],
         ];
+    }
+
+    /** @param  list<string>  $missing */
+    private function assistantMessage(array $missing): string
+    {
+        if ($missing === []) {
+            return 'The controlled-document preview is ready for review.';
+        }
+
+        return 'Please provide the following required details: '.implode(', ', $missing).'.';
+    }
+
+    /** @param  array<string, mixed>  $result */
+    private function replacePersistedAssistantResponse(
+        ?string $conversationId,
+        User $user,
+        array $result,
+    ): void {
+        if ($conversationId === null) {
+            return;
+        }
+
+        $message = ConversationMessage::query()
+            ->where('conversation_id', $conversationId)
+            ->where('participant_type', $user->getMorphClass())
+            ->where('participant_id', $user->getKey())
+            ->where('agent', ControlledDocumentDraftAgent::class)
+            ->where('role', 'assistant')
+            ->latest('created_at')
+            ->latest('id')
+            ->firstOrFail();
+
+        $message->forceFill([
+            'content' => json_encode($result, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT),
+        ])->save();
     }
 
     /**
@@ -280,10 +400,10 @@ final readonly class ControlledDocumentDraftConversationService
      */
     private function providers(): array
     {
-        $providers = array_values(array_filter(
-            config('ai.routing.controlled_document_drafting', []),
-            fn (string $provider): bool => (bool) config("ai.providers.{$provider}.enabled", false),
-        ));
+        $providers = $this->providerGovernance->providersFor(
+            AIUseCase::CONTROLLED_DOCUMENT_DRAFTING,
+            AIDataClassification::INTERNAL,
+        );
 
         if ($providers === []) {
             throw ValidationException::withMessages([

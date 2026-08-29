@@ -173,3 +173,32 @@ it('hides delete when the workflow already has approval instances', function ():
         ->assertSuccessful()
         ->assertActionHidden(DeleteAction::class);
 });
+
+it('locks a workflow definition and its steps after approval history exists', function (): void {
+    $workflow = QualityApprovalWorkflow::factory()->create();
+    $step = QualityApprovalWorkflowStep::factory()->create(['workflow_id' => $workflow]);
+    QualityApprovalInstance::factory()->create([
+        'workflow_id' => $workflow,
+        'workflow_step_id' => $step,
+    ]);
+
+    expect($workflow->fresh()?->isDefinitionMutable())->toBeFalse()
+        ->and(fn () => $workflow->update(['name' => 'Changed historical workflow']))
+        ->toThrow(LogicException::class)
+        ->and(fn () => $step->update(['step_no' => 2]))
+        ->toThrow(LogicException::class)
+        ->and(fn () => QualityApprovalWorkflowStep::factory()->create(['workflow_id' => $workflow]))
+        ->toThrow(LogicException::class);
+
+    $workflow->refresh();
+
+    expect(fn () => $workflow->update(['is_active' => false]))->not->toThrow(LogicException::class);
+
+    Livewire::test(WorkflowStepsRelationManager::class, [
+        'ownerRecord' => $workflow,
+        'pageClass' => EditQualityApprovalWorkflow::class,
+    ])
+        ->assertActionHidden(TestAction::make('create')->table())
+        ->assertActionHidden(TestAction::make('edit')->table($step))
+        ->assertActionHidden(TestAction::make('delete')->table($step));
+});

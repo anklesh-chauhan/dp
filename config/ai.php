@@ -17,6 +17,7 @@ return [
     'default_for_reranking' => 'cohere',
 
     'conversations' => [
+        'generate_title' => false,
         'connection' => env('AI_CONVERSATION_DB_CONNECTION'),
         'tables' => [
             'conversations' => 'agent_conversations',
@@ -29,6 +30,37 @@ return [
             'cache' => false,
             'store' => env('CACHE_STORE', 'database'),
         ],
+    ],
+
+    'governance' => [
+        'classification_providers' => [
+            'public' => array_values(array_filter(array_map(
+                static fn (string $provider): string => trim($provider),
+                explode(',', (string) env('AI_PUBLIC_PROVIDERS', 'gemini,openai,ollama')),
+            ))),
+            'internal' => array_values(array_filter(array_map(
+                static fn (string $provider): string => trim($provider),
+                explode(',', (string) env('AI_INTERNAL_PROVIDERS', 'ollama')),
+            ))),
+            'confidential' => array_values(array_filter(array_map(
+                static fn (string $provider): string => trim($provider),
+                explode(',', (string) env('AI_CONFIDENTIAL_PROVIDERS', 'ollama')),
+            ))),
+            'restricted' => array_values(array_filter(array_map(
+                static fn (string $provider): string => trim($provider),
+                explode(',', (string) env('AI_RESTRICTED_PROVIDERS', 'ollama')),
+            ))),
+        ],
+        'rate_limits' => [
+            'controlled_document_drafting' => (int) env('AI_DRAFT_REQUESTS_PER_MINUTE', 10),
+            'application_assistant' => (int) env('AI_ASSISTANT_REQUESTS_PER_MINUTE', 12),
+        ],
+    ],
+
+    'draft_queue' => [
+        'connection' => env('AI_DRAFT_QUEUE_CONNECTION'),
+        'queue' => env('AI_DRAFT_QUEUE', 'default'),
+        'timeout' => (int) env('AI_DRAFT_QUEUE_TIMEOUT', 900),
     ],
 
     'providers' => [
@@ -127,6 +159,10 @@ return [
         'controlled_document_drafting' => [
             'gemini',
             'openai',
+            'ollama',
+        ],
+
+        'application_assistant' => [
             'ollama',
         ],
 

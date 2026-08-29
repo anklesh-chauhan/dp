@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use LogicException;
 use Spatie\Permission\Models\Role;
 
 final class QualityApprovalWorkflowStep extends Model implements ApprovalWorkflowStepDefinition
@@ -25,6 +26,19 @@ final class QualityApprovalWorkflowStep extends Model implements ApprovalWorkflo
         'department_id',
         'is_mandatory',
     ];
+
+    protected static function booted(): void
+    {
+        self::creating(function (self $step): void {
+            $step->assertWorkflowDefinitionIsMutable();
+        });
+        self::updating(function (self $step): void {
+            $step->assertWorkflowDefinitionIsMutable();
+        });
+        self::deleting(function (self $step): void {
+            $step->assertWorkflowDefinitionIsMutable();
+        });
+    }
 
     /** @return array<string, string> */
     protected function casts(): array
@@ -69,5 +83,14 @@ final class QualityApprovalWorkflowStep extends Model implements ApprovalWorkflo
     public function approvalInstances(): HasMany
     {
         return $this->hasMany(QualityApprovalInstance::class, 'workflow_step_id');
+    }
+
+    private function assertWorkflowDefinitionIsMutable(): void
+    {
+        $workflow = $this->workflow()->first();
+
+        if ($workflow?->hasApprovalHistory()) {
+            throw new LogicException('Quality workflow steps with approval history are immutable. Deactivate the workflow and create a replacement.');
+        }
     }
 }

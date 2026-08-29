@@ -8,6 +8,7 @@ use App\Models\RegulationTag;
 use App\Services\AI\Contracts\AiExecutionRecorder;
 use App\Services\AI\Data\LLMResponse;
 use App\Services\AI\DocumentAiClassifier;
+use App\Services\AI\Routing\AiProviderGovernance;
 use App\Services\AI\Routing\LLMManager;
 use App\Services\AI\Routing\ProviderRegistry;
 use App\Services\AI\Routing\ProviderRouter;
@@ -24,11 +25,16 @@ beforeEach(function (): void {
     config()->set('ai.routing.document_type_selection', [
         'fake',
     ]);
+    config()->set('ai.governance.classification_providers.internal', [
+        'fake',
+    ]);
+    config()->set('ai.providers.fake.enabled', true);
 
     $this->registry = new ProviderRegistry;
 
     $this->router = new ProviderRouter(
         $this->registry,
+        new AiProviderGovernance,
     );
 
     $this->recorder = Mockery::mock(AiExecutionRecorder::class);

@@ -3,12 +3,12 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>QualiGxP AI — Responsible AI for GxP Document Control</title>
-    <meta name="description" content="QualiGxP AI assists SOP template generation and document drafting. Generated content still requires qualified human review, approval, and electronic signatures.">
-    <meta name="keywords" content="pharmaceutical AI, GxP AI, SOP generation, human-in-the-loop AI, QualiGxP AI, responsible AI quality, regulated document AI">
+    <title>QualiGxP AI — Application Assistant, Drafting &amp; Template Generation</title>
+    <meta name="description" content="QualiGxP AI includes a read-only application assistant for documents, quality records, and approvals, plus optional template generation and controlled-document drafting. People still review, approve, and sign.">
+    <meta name="keywords" content="pharmaceutical AI, GxP AI, SOP generation, human-in-the-loop AI, QualiGxP Assistant, read-only AI assistant, regulated document AI, approval queue AI">
     <link rel="canonical" href="https://qualigxp.com/ai.html">
-    <meta property="og:title" content="QualiGxP AI — Responsible AI for GxP Document Control">
-    <meta property="og:description" content="Optional AI assistance for templates and documents. People still review, approve, and sign.">
+    <meta property="og:title" content="QualiGxP AI — Application Assistant, Drafting &amp; Template Generation">
+    <meta property="og:description" content="Read-only workspace assistant, optional drafting help, and template generation. People still review, approve, and sign.">
     <meta property="og:url" content="https://qualigxp.com/ai.html">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="QualiGxP">
@@ -47,24 +47,50 @@
                 <p class="crumbs"><a href="index.html">Home</a> / AI</p>
                 <p class="eyebrow">Optional module · requires DMS</p>
                 <h1>AI that assists. People who decide.</h1>
-                <p class="lede">When the AI module is licensed, QualiGxP can help a small QA team draft regulated templates faster. Generated content is assistance, not an approval decision and not a replacement for qualified review. Skip this module until the document-control process is already in place.</p>
+                <p class="lede">When the AI module is licensed, QualiGxP adds a read-only application assistant for everyday plant questions, optional drafting help for controlled documents, and background template generation. Every answer and draft is assistance — not an approval decision and not a replacement for qualified review. Skip this module until document control is already in place.</p>
             </div>
         </section>
 
         <section class="section band">
-            <div class="container cards three">
+            <div class="container cards four">
+                <article class="card">
+                    <h3 style="margin-top:0">QualiGxP Assistant</h3>
+                    <p>A read-only chat assistant searches approved and effective controlled documents, permitted QMS records, and your pending approval queue — then links every record-specific answer to its source.</p>
+                </article>
+                <article class="card">
+                    <h3 style="margin-top:0">Document draft assistant</h3>
+                    <p>Controlled-document drafting runs as queued background work with visible status. Authors review the preview, then create a draft that enters the same review and approval workflow as any other document.</p>
+                </article>
                 <article class="card">
                     <h3 style="margin-top:0">Template generation</h3>
                     <p>Template creation can start regulatory template generation in the background. If AI is not licensed, the template is saved normally and completed by the author.</p>
                 </article>
                 <article class="card">
-                    <h3 style="margin-top:0">Draft assistance</h3>
-                    <p>Controlled-document drafting assistance helps quality teams structure SOP and record content faster, then returns the work to the same review and approval workflow.</p>
-                </article>
-                <article class="card">
                     <h3 style="margin-top:0">Observable execution</h3>
-                    <p>AI execution status and provider performance are visible under AI Management, so assistance remains reviewable rather than hidden.</p>
+                    <p>AI execution status, provider routing, and rate limits are visible under AI Management, so assistance remains reviewable rather than hidden.</p>
                 </article>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="container split">
+                <div>
+                    <p class="eyebrow">QualiGxP Assistant</p>
+                    <h2>Ask about your plant workspace — without leaving control.</h2>
+                    <p class="section-copy">The application assistant is permission-aware and read-only. It searches only records the signed-in user may view, respects enabled DMS and QMS entitlements, and cites the source record in every factual answer. Conversation history stays with the user.</p>
+                    <div class="fit-list" style="margin-top:1.5rem">
+                        <div class="feature"><span class="dot"></span><h3>Controlled documents</h3><p>Find effective SOPs, batch records, and other approved documents by number, title, purpose, or section text.</p></div>
+                        <div class="feature"><span class="dot"></span><h3>Quality records</h3><p>When QMS is licensed, search deviations and change controls you are authorized to view.</p></div>
+                        <div class="feature"><span class="dot"></span><h3>Your approval queue</h3><p>See which document, template, or quality steps are waiting for your decision — with links to the review surface.</p></div>
+                    </div>
+                </div>
+                <div class="dark-panel">
+                    <p class="eyebrow" style="color:#fcd34d">Example questions</p>
+                    <div class="step"><b>01</b><div><strong>“Find the effective change-control SOP.”</strong><p>Document search with citation link</p></div></div>
+                    <div class="step"><b>02</b><div><strong>“What approvals are waiting for me?”</strong><p>Actionable queue for the signed-in user</p></div></div>
+                    <div class="step"><b>03</b><div><strong>“Summarize deviation DEV-…”</strong><p>Read-only QMS summary when entitled</p></div></div>
+                    <div class="step"><b>04</b><div><strong>“Show open change controls about validation.”</strong><p>Filtered quality-record search</p></div></div>
+                </div>
             </div>
         </section>
 
@@ -73,14 +99,15 @@
                 <div class="dark-panel">
                     <p class="eyebrow" style="color:#fcd34d">What AI does not do</p>
                     <div class="step"><b>01</b><div><strong>It does not approve</strong><p>Electronic signatures stay with authorized people</p></div></div>
-                    <div class="step"><b>02</b><div><strong>It does not skip workflow</strong><p>Drafts still move through configured steps</p></div></div>
-                    <div class="step"><b>03</b><div><strong>It does not replace review</strong><p>Qualified personnel remain accountable</p></div></div>
+                    <div class="step"><b>02</b><div><strong>It does not mutate records</strong><p>No create, edit, submit, sign, publish, or close actions</p></div></div>
+                    <div class="step"><b>03</b><div><strong>It does not skip workflow</strong><p>Drafts still move through configured steps</p></div></div>
+                    <div class="step"><b>04</b><div><strong>It does not certify</strong><p>No legal, regulatory, or validation claims</p></div></div>
                 </div>
                 <div>
                     <p class="eyebrow">Responsible by design</p>
                     <h2>Assistance inside a controlled system.</h2>
-                    <p class="section-copy">AI sits on top of DMS. Templates and documents still require the same permissions, separation of duties, attributable reasons, and append-only history as work created by hand. For most SME plants, DMS and QMS come first.</p>
-                    <div class="feature" style="margin-top:1.5rem"><span class="dot"></span><h3>Human in the loop</h3><p>Authors, checkers, and approvers remain the decision-makers. AI output must be reviewed before it can become an approved controlled record.</p></div>
+                    <p class="section-copy">AI sits on top of DMS and, when licensed, QMS. Provider routing respects data-classification rules, requests are rate-limited, and every execution is recorded. Templates and documents still require the same permissions, separation of duties, attributable reasons, and append-only history as work created by hand. For most SME plants, DMS and QMS come first.</p>
+                    <div class="feature" style="margin-top:1.5rem"><span class="dot"></span><h3>Human in the loop</h3><p>Authors, checkers, and approvers remain the decision-makers. AI output must be reviewed before it can become an approved controlled record. The application assistant summarizes authorized records only — it never replaces qualified personnel.</p></div>
                 </div>
             </div>
         </section>
