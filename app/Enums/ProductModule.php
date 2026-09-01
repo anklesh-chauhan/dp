@@ -12,12 +12,15 @@ enum ProductModule: string
 
     case AI = 'ai';
 
+    case TMS = 'tms';
+
     public function label(): string
     {
         return match ($this) {
             self::DMS => 'Document Management System',
             self::QMS => 'Quality Management System',
             self::AI => 'AI Assistant',
+            self::TMS => 'Training Management',
         };
     }
 
@@ -27,7 +30,7 @@ enum ProductModule: string
     public function dependencies(): array
     {
         return match ($this) {
-            self::QMS, self::AI => [self::DMS],
+            self::QMS, self::AI, self::TMS => [self::DMS],
             self::DMS => [],
         };
     }

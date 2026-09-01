@@ -3,12 +3,12 @@
 declare(strict_types=1);
 
 use App\Domain\DMS\Services\DocumentExecutionService;
-use App\Domain\QMS\Enums\UserCompetencyStatus;
 use App\Domain\QMS\Models\CompetencyCurriculum;
 use App\Domain\QMS\Models\CompetencyCurriculumItem;
 use App\Domain\QMS\Models\UserCompetency;
 use App\Domain\QMS\Services\CompetencyGate;
 use App\Domain\QMS\Services\CompetencyService;
+use App\Domain\TMS\Enums\UserCompetencyStatus;
 use App\Filament\Resources\CompetencyCurricula\CompetencyCurriculumResource;
 use App\Filament\Resources\UserCompetencies\UserCompetencyResource;
 use App\Models\ControlledDocument;
@@ -25,6 +25,7 @@ use App\Models\TemplateStatus;
 use App\Models\User;
 use Database\Seeders\LookupTableSeeder;
 use Database\Seeders\QmsModuleSeeder;
+use Database\Seeders\TmsModuleSeeder;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
@@ -33,7 +34,7 @@ use Spatie\Permission\Models\Permission;
 uses(RefreshDatabase::class);
 
 beforeEach(function (): void {
-    config()->set('modules.enabled', ['dms', 'qms']);
+    config()->set('modules.enabled', ['dms', 'qms', 'tms']);
     $this->seed(LookupTableSeeder::class);
 
     foreach (['Assign:UserCompetency', 'Assign:CompetencyCurriculum', 'Verify:UserCompetency'] as $permission) {
@@ -67,9 +68,9 @@ it('installs competency schema and module permissions', function (): void {
             'Verify:UserCompetency',
             'Manage:UserCompetency',
         )
-        ->and(CompetencyCurriculumResource::getNavigationSort())->toBe(20)
-        ->and(UserCompetencyResource::getNavigationSort())->toBe(21)
-        ->and(CompetencyCurriculumResource::getNavigationGroup())->toBe('QMS');
+        ->and(CompetencyCurriculumResource::getNavigationSort())->toBe(30)
+        ->and(UserCompetencyResource::getNavigationSort())->toBe(31)
+        ->and(CompetencyCurriculumResource::getNavigationGroup())->toBe('TMS');
 });
 
 it('assigns a curriculum and marks trained after required document training is complete', function (): void {
@@ -92,7 +93,7 @@ it('assigns a curriculum and marks trained after required document training is c
     expect($competency->status)->toBe(UserCompetencyStatus::Assigned);
 
     ControlledDocumentTrainingAssignment::factory()->create([
-        'document_id' => $this->document->id,
+        'controlled_document_id' => $this->document->id,
         'user_id' => $this->trainee->id,
         'assigned_by' => $this->actor->id,
         'assigned_at' => now(),
@@ -122,7 +123,7 @@ it('marks competency expired when past expires_at', function (): void {
     ]);
 
     ControlledDocumentTrainingAssignment::factory()->create([
-        'document_id' => $this->document->id,
+        'controlled_document_id' => $this->document->id,
         'user_id' => $this->trainee->id,
         'completed_at' => now()->subYears(2),
     ]);
@@ -179,7 +180,7 @@ it('blocks qaApprove when active document_execution_qa competency is overdue', f
     ]);
 
     ControlledDocumentTrainingAssignment::factory()->create([
-        'document_id' => $this->document->id,
+        'controlled_document_id' => $this->document->id,
         'user_id' => $this->actor->id,
         'completed_at' => now()->subYears(2),
     ]);
@@ -213,7 +214,7 @@ it('allows qaApprove when active document_execution_qa competency is trained', f
     ]);
 
     ControlledDocumentTrainingAssignment::factory()->create([
-        'document_id' => $this->document->id,
+        'controlled_document_id' => $this->document->id,
         'user_id' => $this->actor->id,
         'completed_at' => now(),
     ]);
@@ -277,7 +278,7 @@ it('enforces QMS entitlement on competency filament resources', function (): voi
 });
 
 it('seeds active default gate curricula that fail open until required SOPs are linked', function (): void {
-    $this->seed(QmsModuleSeeder::class);
+    $this->seed(TmsModuleSeeder::class);
 
     $executionGate = CompetencyCurriculum::query()->where('code', 'GMP_EXECUTION')->first();
     $changeGate = CompetencyCurriculum::query()->where('code', 'CHANGE_CONTROL_APPROVE')->first();
@@ -301,21 +302,21 @@ function competencyApprovedDocument(array $overrides = []): ControlledDocument
     $category = DocumentCategory::factory()->create();
     $documentType = DocumentType::query()->where('code', DocumentType::SOP)->firstOrFail();
     $template = DocumentTemplate::factory()->create([
-        'department_id' => $department,
-        'category_id' => $category,
-        'document_type_id' => $documentType,
+        'department_id' => $department->id,
+        'category_id' => $category->id,
+        'document_type_id' => $documentType->id,
         'template_status_id' => TemplateStatus::idFor(TemplateStatus::DRAFT),
     ]);
     $templateVersion = DocumentTemplateVersion::factory()->create([
-        'document_template_id' => $template,
+        'document_template_id' => $template->id,
     ]);
 
     return ControlledDocument::factory()->create([
-        'template_id' => $template,
-        'template_version_id' => $templateVersion,
-        'department_id' => $department,
-        'category_id' => $category,
-        'document_type_id' => $documentType,
+        'template_id' => $template->id,
+        'template_version_id' => $templateVersion->id,
+        'department_id' => $department->id,
+        'category_id' => $category->id,
+        'document_type_id' => $documentType->id,
         'document_status_id' => DocumentStatus::idFor(DocumentStatus::APPROVED),
         ...$overrides,
     ]);
@@ -327,27 +328,27 @@ function competencyQaReviewExecution(): DocumentExecution
     $category = DocumentCategory::factory()->create();
     $documentType = DocumentType::query()->where('code', DocumentType::BATCH_RECORD)->firstOrFail();
     $template = DocumentTemplate::factory()->create([
-        'department_id' => $department,
-        'category_id' => $category,
-        'document_type_id' => $documentType,
+        'department_id' => $department->id,
+        'category_id' => $category->id,
+        'document_type_id' => $documentType->id,
         'template_status_id' => TemplateStatus::idFor(TemplateStatus::DRAFT),
     ]);
-    $templateVersion = DocumentTemplateVersion::factory()->create(['document_template_id' => $template]);
+    $templateVersion = DocumentTemplateVersion::factory()->create(['document_template_id' => $template->id]);
     $document = ControlledDocument::factory()->create([
-        'template_id' => $template,
-        'template_version_id' => $templateVersion,
-        'department_id' => $department,
-        'category_id' => $category,
-        'document_type_id' => $documentType,
+        'template_id' => $template->id,
+        'template_version_id' => $templateVersion->id,
+        'department_id' => $department->id,
+        'category_id' => $category->id,
+        'document_type_id' => $documentType->id,
         'document_status_id' => DocumentStatus::idFor(DocumentStatus::EFFECTIVE),
     ]);
     $issuance = DocumentIssuance::factory()->create([
-        'document_id' => $document,
+        'document_id' => $document->id,
         'issuance_type' => DocumentIssuance::TYPE_EXECUTION,
     ]);
 
     return DocumentExecution::factory()->create([
-        'document_issuance_id' => $issuance,
+        'document_issuance_id' => $issuance->id,
         'document_type_code' => DocumentType::BATCH_RECORD,
         'workflow_configuration' => [
             'requires_qa_approval' => true,

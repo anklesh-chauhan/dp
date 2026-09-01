@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Database\Factories\Domain\QMS\Models;
 
-use App\Domain\QMS\Enums\UserCompetencyStatus;
 use App\Domain\QMS\Models\CompetencyCurriculum;
 use App\Domain\QMS\Models\UserCompetency;
+use App\Domain\TMS\Enums\UserCompetencyStatus;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

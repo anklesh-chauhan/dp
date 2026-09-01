@@ -4,17 +4,18 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Domain\TMS\Enums\TrainingAssignmentSource;
+use App\Domain\TMS\Models\TrainingAssignment;
 use App\Models\ControlledDocument;
-use App\Models\ControlledDocumentTrainingAssignment;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<ControlledDocumentTrainingAssignment>
+ * @extends Factory<TrainingAssignment>
  */
 class ControlledDocumentTrainingAssignmentFactory extends Factory
 {
-    protected $model = ControlledDocumentTrainingAssignment::class;
+    protected $model = TrainingAssignment::class;
 
     /**
      * @return array<string, mixed>
@@ -22,7 +23,9 @@ class ControlledDocumentTrainingAssignmentFactory extends Factory
     public function definition(): array
     {
         return [
-            'document_id' => ControlledDocument::factory(),
+            'source_type' => TrainingAssignmentSource::ControlledDocument,
+            'controlled_document_id' => ControlledDocument::factory(),
+            'training_program_id' => null,
             'user_id' => User::factory(),
             'assigned_by' => User::factory(),
             'assigned_at' => now(),

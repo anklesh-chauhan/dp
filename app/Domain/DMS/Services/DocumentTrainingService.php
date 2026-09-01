@@ -7,8 +7,9 @@ namespace App\Domain\DMS\Services;
 use App\Domain\Shared\Contracts\TrainingCompetencyRefresher;
 use App\Domain\Shared\Services\AuditLogService;
 use App\Domain\Shared\Services\WorkflowNotificationService;
+use App\Domain\TMS\Enums\TrainingAssignmentSource;
+use App\Domain\TMS\Models\TrainingAssignment;
 use App\Models\ControlledDocument;
-use App\Models\ControlledDocumentTrainingAssignment;
 use App\Models\DocumentStatus;
 use App\Models\SopAuditLog;
 use App\Models\User;
@@ -44,13 +45,13 @@ class DocumentTrainingService
         }
 
         return $assignments->every(
-            fn (ControlledDocumentTrainingAssignment $assignment): bool => $assignment->isCompleted()
+            fn (TrainingAssignment $assignment): bool => $assignment->isCompleted()
         );
     }
 
     /**
      * @param  list<int>  $userIds
-     * @return Collection<int, ControlledDocumentTrainingAssignment>
+     * @return Collection<int, TrainingAssignment>
      */
     public function assign(ControlledDocument $document, User $actor, array $userIds): Collection
     {
@@ -91,7 +92,9 @@ class DocumentTrainingService
                 }
 
                 $created->push($document->trainingAssignments()->create([
+                    'source_type' => TrainingAssignmentSource::ControlledDocument,
                     'user_id' => $userId,
+                    'controlled_document_id' => $document->getKey(),
                     'assigned_by' => $actor->id,
                     'assigned_at' => now(),
                 ]));
@@ -108,7 +111,7 @@ class DocumentTrainingService
                 newValues: [
                     'user_ids' => $created->pluck('user_id')->all(),
                     'assigned_names' => $created
-                        ->map(fn (ControlledDocumentTrainingAssignment $assignment): string => (string) $users->get($assignment->user_id)?->name)
+                        ->map(fn (TrainingAssignment $assignment): string => (string) $users->get($assignment->user_id)?->name)
                         ->filter()
                         ->values()
                         ->all(),
@@ -130,10 +133,10 @@ class DocumentTrainingService
     }
 
     public function complete(
-        ControlledDocumentTrainingAssignment $assignment,
+        TrainingAssignment $assignment,
         User $actor,
         ?string $comments = null,
-    ): ControlledDocumentTrainingAssignment {
+    ): TrainingAssignment {
         $assignment->loadMissing('document.documentStatus');
         $document = $assignment->document;
 
@@ -159,7 +162,7 @@ class DocumentTrainingService
 
         $comments = trim((string) $comments);
 
-        return DB::transaction(function () use ($assignment, $actor, $document, $comments): ControlledDocumentTrainingAssignment {
+        return DB::transaction(function () use ($assignment, $actor, $document, $comments): TrainingAssignment {
             $assignment->update([
                 'completed_at' => now(),
                 'completion_comments' => $comments !== '' ? $comments : null,
@@ -182,7 +185,7 @@ class DocumentTrainingService
         });
     }
 
-    public function remove(ControlledDocumentTrainingAssignment $assignment, User $actor): void
+    public function remove(TrainingAssignment $assignment, User $actor): void
     {
         $assignment->loadMissing('document.documentStatus');
         $document = $assignment->document;
@@ -217,7 +220,7 @@ class DocumentTrainingService
     }
 
     /**
-     * @return Collection<int, ControlledDocumentTrainingAssignment>
+     * @return Collection<int, TrainingAssignment>
      */
     private function assignments(ControlledDocument $document): Collection
     {

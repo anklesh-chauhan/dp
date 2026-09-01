@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\QMS\Adapters;
 
-use App\Domain\QMS\Services\CompetencyService;
 use App\Domain\Shared\Contracts\TrainingCompetencyRefresher;
+use App\Domain\TMS\Services\CompetencyService;
 use App\Models\User;
 
 final class QmsTrainingCompetencyRefresherAdapter implements TrainingCompetencyRefresher

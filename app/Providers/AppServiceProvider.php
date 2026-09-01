@@ -46,10 +46,13 @@ use App\Domain\Shared\Services\ProcessPostgresRestoreRunner;
 use App\Domain\Shared\Services\Sha256ContentIntegrityHasher;
 use App\Domain\Shared\Services\Sha256ElectronicSignatureHasher;
 use App\Domain\Shared\Services\WorkflowNotificationService;
+use App\Domain\TMS\Adapters\TmsTrainingCompetencyRefresherAdapter;
 use App\Enums\ProductModule;
 use App\Listeners\ConfirmElectronicSignatureFromAction;
 use App\Models\DocumentType;
+use App\Models\User;
 use App\Observers\DocumentTypeObserver;
+use App\Observers\UserObserver;
 use App\Support\Formatting\DateFormatSettings;
 use App\Support\Modules\AuditedProductLicenseRevoker;
 use App\Support\Modules\ConfiguredModuleEntitlementProvider;
@@ -127,6 +130,10 @@ class AppServiceProvider extends ServiceProvider
             return $app->make(NullCalibrationReadinessGate::class);
         });
         $this->app->bind(TrainingCompetencyRefresher::class, function (Application $app): TrainingCompetencyRefresher {
+            if ($app->make(ModuleManager::class)->enabled(ProductModule::TMS)) {
+                return $app->make(TmsTrainingCompetencyRefresherAdapter::class);
+            }
+
             if ($app->make(ModuleManager::class)->enabled(ProductModule::QMS)) {
                 return $app->make(QmsTrainingCompetencyRefresherAdapter::class);
             }
@@ -173,6 +180,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         DocumentType::observe(DocumentTypeObserver::class);
+        User::observe(UserObserver::class);
 
         Event::listen(ActionCalling::class, ConfirmElectronicSignatureFromAction::class);
 

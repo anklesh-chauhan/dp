@@ -7,6 +7,7 @@ namespace App\Domain\DMS\Services;
 use App\Domain\Shared\Contracts\ApprovalDecisionOutcome;
 use App\Domain\Shared\Contracts\ApprovalInstance;
 use App\Domain\Shared\Services\AuditLogService;
+use App\Domain\TMS\Services\DocumentRetrainingService;
 use App\Models\ApprovalDecision;
 use App\Models\DocumentStatus;
 use App\Models\SopApproval;
@@ -19,6 +20,7 @@ class SopApprovalDecisionOutcomeAdapter implements ApprovalDecisionOutcome
     public function __construct(
         private readonly AuditLogService $auditLogService,
         private readonly ControlledDocumentSectionReviewService $sectionReviewService,
+        private readonly DocumentRetrainingService $documentRetrainingService,
     ) {}
 
     public function applyOutcome(
@@ -71,6 +73,11 @@ class SopApprovalDecisionOutcomeAdapter implements ApprovalDecisionOutcome
             $document->update([
                 'document_status_id' => DocumentStatus::idFor(DocumentStatus::APPROVED),
             ]);
+
+            $this->documentRetrainingService->scheduleForNewlyApprovedRevision(
+                $document->refresh()->loadMissing('supersedesDocument'),
+                $decidedBy,
+            );
         }
         // Intermediate step approvals leave the document under review until every
         // mandatory workflow step has been signed. Final approval sets Approved;

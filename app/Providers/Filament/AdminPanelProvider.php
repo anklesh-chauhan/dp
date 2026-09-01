@@ -53,6 +53,8 @@ class AdminPanelProvider extends PanelProvider
                 NavigationGroup::make('DMS')->icon(Heroicon::DocumentText),
                 NavigationGroup::make('DMS · Reports')->icon(Heroicon::OutlinedChartBar),
                 NavigationGroup::make('QMS')->icon(Heroicon::OutlinedClipboardDocumentCheck),
+                NavigationGroup::make('TMS')->icon(Heroicon::OutlinedAcademicCap),
+                NavigationGroup::make('TMS · Reports')->icon(Heroicon::OutlinedTableCells),
                 NavigationGroup::make('DMS · Help & Knowledge')->icon(Heroicon::OutlinedBookOpen),
                 NavigationGroup::make('DMS · Settings')->icon(Heroicon::OutlinedSquares2x2),
                 NavigationGroup::make('Core · Identity & Access')->icon(Heroicon::UserGroup),

@@ -584,7 +584,7 @@ class ControlledDocument extends Model implements ApprovableSubject, ControlledD
      */
     public function trainingAssignments(): HasMany
     {
-        return $this->hasMany(ControlledDocumentTrainingAssignment::class, 'document_id')->latest('assigned_at');
+        return $this->hasMany(ControlledDocumentTrainingAssignment::class, 'controlled_document_id')->latest('assigned_at');
     }
 
     /**

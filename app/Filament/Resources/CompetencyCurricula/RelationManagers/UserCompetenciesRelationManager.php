@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\CompetencyCurricula\RelationManagers;
 
-use App\Domain\QMS\Models\CompetencyCurriculum;
-use App\Domain\QMS\Models\UserCompetency;
-use App\Domain\QMS\Services\CompetencyService;
+use App\Domain\TMS\Models\CompetencyCurriculum;
+use App\Domain\TMS\Models\UserCompetency;
+use App\Domain\TMS\Services\CompetencyService;
 use App\Enums\ProductModule;
 use App\Models\User;
 use App\Support\Modules\ModuleManager;
@@ -29,7 +29,7 @@ final class UserCompetenciesRelationManager extends RelationManager
 
     public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
     {
-        return app(ModuleManager::class)->enabled(ProductModule::QMS)
+        return app(ModuleManager::class)->enabled(ProductModule::TMS)
             && (bool) auth()->user()?->can('View:UserCompetency');
     }
 

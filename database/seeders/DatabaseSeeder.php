@@ -39,6 +39,10 @@ class DatabaseSeeder extends Seeder
             $this->call(QmsModuleSeeder::class);
         }
 
+        if ($moduleManager->enabled(ProductModule::TMS)) {
+            $this->call(TmsModuleSeeder::class);
+        }
+
         if (app()->environment(['local', 'testing'])) {
             $user = User::firstOrCreate(
                 ['email' => 'admin@example.com'],

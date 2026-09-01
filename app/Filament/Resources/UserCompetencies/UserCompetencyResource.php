@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\UserCompetencies;
 
-use App\Domain\QMS\Models\UserCompetency;
+use App\Domain\TMS\Models\UserCompetency;
 use App\Enums\ProductModule;
 use App\Filament\Resources\UserCompetencies\Pages\ListUserCompetencies;
 use App\Filament\Resources\UserCompetencies\Pages\ViewUserCompetency;
@@ -25,9 +25,9 @@ final class UserCompetencyResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCheckBadge;
 
-    protected static string|UnitEnum|null $navigationGroup = 'QMS';
+    protected static string|UnitEnum|null $navigationGroup = 'TMS';
 
-    protected static ?int $navigationSort = 21;
+    protected static ?int $navigationSort = 31;
 
     protected static ?string $navigationLabel = 'User competencies';
 
@@ -37,16 +37,16 @@ final class UserCompetencyResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'id';
 
-    protected static string|array $routeMiddleware = ['module:qms'];
+    protected static string|array $routeMiddleware = ['module:tms'];
 
     public static function canAccess(): bool
     {
-        return app(ModuleManager::class)->enabled(ProductModule::QMS) && parent::canAccess();
+        return app(ModuleManager::class)->enabled(ProductModule::TMS) && parent::canAccess();
     }
 
     public static function shouldRegisterNavigation(): bool
     {
-        return app(ModuleManager::class)->enabled(ProductModule::QMS)
+        return app(ModuleManager::class)->enabled(ProductModule::TMS)
             && parent::shouldRegisterNavigation();
     }
 

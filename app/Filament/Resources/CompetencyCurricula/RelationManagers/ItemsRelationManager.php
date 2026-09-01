@@ -27,7 +27,7 @@ final class ItemsRelationManager extends RelationManager
 
     public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
     {
-        return app(ModuleManager::class)->enabled(ProductModule::QMS)
+        return app(ModuleManager::class)->enabled(ProductModule::TMS)
             && (bool) auth()->user()?->can('View:CompetencyCurriculum');
     }
 

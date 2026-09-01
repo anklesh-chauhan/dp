@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Domain\QMS\Models\CompetencyCurriculum;
+use App\Domain\TMS\Models\CompetencyCurriculum;
 use Illuminate\Database\Seeder;
 
 final class CompetencyCurriculumSeeder extends Seeder

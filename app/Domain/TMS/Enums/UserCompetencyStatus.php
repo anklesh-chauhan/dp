@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\QMS\Enums;
+namespace App\Domain\TMS\Enums;
 
 use Filament\Support\Contracts\HasColor;
 use Filament\Support\Contracts\HasLabel;

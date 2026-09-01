@@ -42,6 +42,7 @@ abstract class OperationalReportPage extends Page implements HasTable
         return match (static::productModule()) {
             ProductModule::DMS => 'DMS · Reports',
             ProductModule::QMS => 'QMS · Reports',
+            ProductModule::TMS => 'TMS · Reports',
             ProductModule::AI => 'AI Management',
         };
     }

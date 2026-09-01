@@ -10,6 +10,7 @@ use Database\Seeders\CoreModuleSeeder;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\DmsModuleSeeder;
 use Database\Seeders\QmsModuleSeeder;
+use Database\Seeders\TmsModuleSeeder;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -316,6 +317,30 @@ it('is idempotent when a QMS installation is seeded repeatedly', function (): vo
         ->and(Role::findByName('sop administrator', 'web')->permissions->pluck('name')->all())
         ->toHaveCount(count($expectedAdministratorPermissions))
         ->toEqualCanonicalizing($expectedAdministratorPermissions);
+});
+
+it('adds TMS permissions only for a TMS installation', function (): void {
+    config()->set('modules.enabled', ['dms', 'tms']);
+
+    $this->seed(DatabaseSeeder::class);
+
+    $expectedAdministratorPermissions = [
+        ...CoreModuleSeeder::PERMISSIONS,
+        ...DmsModuleSeeder::PERMISSIONS,
+        ...TmsModuleSeeder::PERMISSIONS,
+    ];
+
+    expect(Permission::query()->pluck('name')->all())
+        ->toHaveCount(count($expectedAdministratorPermissions))
+        ->toEqualCanonicalizing($expectedAdministratorPermissions)
+        ->and(Role::findByName('sop maker', 'web')->hasPermissionTo('View:MyTraining'))
+        ->toBeTrue()
+        ->and(Role::findByName('sop maker', 'web')->hasPermissionTo('Complete:TrainingAssignment'))
+        ->toBeTrue()
+        ->and(Role::findByName('sop maker', 'web')->hasPermissionTo('ViewAny:TrainingAssignment'))
+        ->toBeFalse()
+        ->and(Role::findByName('document controller', 'web')->hasPermissionTo('ViewAny:TrainingAssignment'))
+        ->toBeTrue();
 });
 
 it('does not create the development bootstrap administrator in production', function (): void {

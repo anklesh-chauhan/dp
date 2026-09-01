@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\CompetencyCurricula;
 
-use App\Domain\QMS\Models\CompetencyCurriculum;
+use App\Domain\TMS\Models\CompetencyCurriculum;
 use App\Enums\ProductModule;
 use App\Filament\Resources\CompetencyCurricula\Pages\CreateCompetencyCurriculum;
 use App\Filament\Resources\CompetencyCurricula\Pages\EditCompetencyCurriculum;
@@ -30,9 +30,9 @@ final class CompetencyCurriculumResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedAcademicCap;
 
-    protected static string|UnitEnum|null $navigationGroup = 'QMS';
+    protected static string|UnitEnum|null $navigationGroup = 'TMS';
 
-    protected static ?int $navigationSort = 20;
+    protected static ?int $navigationSort = 30;
 
     protected static ?string $navigationLabel = 'Competency curricula';
 
@@ -42,16 +42,16 @@ final class CompetencyCurriculumResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'name';
 
-    protected static string|array $routeMiddleware = ['module:qms'];
+    protected static string|array $routeMiddleware = ['module:tms'];
 
     public static function canAccess(): bool
     {
-        return app(ModuleManager::class)->enabled(ProductModule::QMS) && parent::canAccess();
+        return app(ModuleManager::class)->enabled(ProductModule::TMS) && parent::canAccess();
     }
 
     public static function shouldRegisterNavigation(): bool
     {
-        return app(ModuleManager::class)->enabled(ProductModule::QMS)
+        return app(ModuleManager::class)->enabled(ProductModule::TMS)
             && parent::shouldRegisterNavigation();
     }
 

@@ -698,8 +698,6 @@ class QmsModuleSeeder extends Seeder
         $this->grantQmsPermissions('gmp record executor', self::RECORD_EXECUTOR_PERMISSIONS);
         $this->grantQmsPermissions('production supervisor', self::PRODUCTION_SUPERVISOR_PERMISSIONS);
 
-        $this->call(CompetencyCurriculumSeeder::class);
-
         app(KnowledgeGuideSeeder::class)->seedQmsGuides();
     }
 

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\UserCompetencies\Tables;
 
-use App\Domain\QMS\Enums\UserCompetencyStatus;
-use App\Domain\QMS\Models\UserCompetency;
-use App\Domain\QMS\Services\CompetencyService;
+use App\Domain\TMS\Enums\UserCompetencyStatus;
+use App\Domain\TMS\Models\UserCompetency;
+use App\Domain\TMS\Services\CompetencyService;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;

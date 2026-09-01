@@ -10,7 +10,7 @@ return [
     | Licensed Product Modules
     |--------------------------------------------------------------------------
     |
-    | DMS is the core product. QMS and AI currently depend on DMS. This
+    | DMS is the core product. QMS, TMS, and AI currently depend on DMS. This
     | configuration source can later be replaced by signed license or
     | organization entitlement providers through ModuleManager.
     |

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use App\Domain\QMS\Enums\UserCompetencyStatus;
 use App\Domain\QMS\Models\CompetencyCurriculum;
 use App\Domain\QMS\Models\UserCompetency;
+use App\Domain\TMS\Enums\UserCompetencyStatus;
 use App\Models\User;
 use Database\Seeders\QmsModuleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
