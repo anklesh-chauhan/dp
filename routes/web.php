@@ -9,6 +9,7 @@ use App\Http\Controllers\ControlledDocumentViewerController;
 use App\Http\Controllers\CsvValidationReportController;
 use App\Http\Controllers\DocumentDistributionReportController;
 use App\Http\Controllers\DocumentTemplateDraftPreviewController;
+use App\Http\Controllers\IssuancePrintPackController;
 use App\Http\Controllers\ReportTemplatePreviewController;
 use Illuminate\Support\Facades\Route;
 
@@ -23,6 +24,18 @@ Route::post('/app-guide/complete', [AppGuideController::class, 'complete'])
 Route::post('/app-guide/restart', [AppGuideController::class, 'restart'])
     ->middleware(['auth', 'module:dms'])
     ->name('app-guide.restart');
+
+Route::get('/issuance-batches/{issuanceBatch}/print', [IssuancePrintPackController::class, 'preview'])
+    ->middleware(['auth', 'module:dms'])
+    ->name('issuance-batches.print');
+
+Route::get('/issuance-batches/{issuanceBatch}/print-status', [IssuancePrintPackController::class, 'status'])
+    ->middleware(['auth', 'module:dms'])
+    ->name('issuance-batches.print-status');
+
+Route::get('/issuance-batches/{issuanceBatch}/print-pack', [IssuancePrintPackController::class, 'pdf'])
+    ->middleware(['auth', 'module:dms'])
+    ->name('issuance-batches.print-pack');
 
 Route::get('/controlled-documents/{controlledDocument}/print', ControlledDocumentPrintController::class)
     ->middleware(['auth', 'module:dms', 'can:view,controlledDocument'])

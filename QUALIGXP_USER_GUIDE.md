@@ -243,6 +243,8 @@ Append-only register of login, lockout, password, role, electronic-signature cha
 
 Consequential lifecycle decisions require an attributable reason. Approvals, rejections, returns, and many QMS closures also capture a canonical electronic signature: signer, meaning, UTC timestamp, reason, IP address, user agent, and a SHA-256 integrity hash. The current password is the second identification component when a signature challenge is presented.
 
+Printed copies can show that electronic-signature manifestation, or blank Sign & Date lines for handwritten signing, depending on the print template. Changing the print layout does **not** replace in-app electronic signatures.
+
 Use your own named account. A hidden action is usually a permission, status, or separation-of-duties gate — not a UI error.
 
 ## 9. DMS
@@ -345,13 +347,28 @@ Only one draft revision is allowed in a series at a time. Approved QMS change co
 
 ### 9.7 Print, issue, and control copies
 
-- Direct **Print / PDF** is only for approved or effective documents that do **not** require controlled-copy issuance.
-- For issuable masters: **Issuable Documents** → **Issue Controlled Copy**.
-- Copy type: **Read-only reference copy**, or **Writable GMP execution record** (Form, Log, Checklist, BMR, BPR).
-- Enter recipient, optional location. For BMR/BPR enter batch and product. For logs enter frequency, period, and supervisor.
-- Print or view from **Issuance Register** (**Print Copy** / **View Controlled Copy**) on an **Active** issuance.
+**Issue a controlled copy** from **Issuable Documents** or the effective master: **Issue Controlled Copy**. Choose **Read-only reference copy**, or **Writable GMP execution record** (Form, Log, Checklist, BMR, BPR). Enter recipient, optional location, and number of copies. For BMR/BPR enter batch and product. For logs enter frequency, period, and supervisor.
+
+**Print and fill on paper** is a separate action for forms, logs, and checklists completed by hand. It records numbered paper copies in the Issuance Register and does **not** create electronic GMP execution records. After you confirm, **Print** opens a page preview (like printing from Word). Choose a printer and print. Each copy starts on a new page with its own copy number. Large batches prepare in that same window; keep it open until the pages appear.
+
+**Print from the application**
+
+- **Print** opens a preview, then the browser printer dialog. You do not need to download a file first.
+- Issuable masters must be printed through an **Active** controlled copy. Use **Issuance Register**: **Print** (one copy), **Print all copies** (every paper copy issued together), **Print** on selected rows, or **Print by copy number** (list or range such as `SOP-QA-00001-C01-SOP-QA-00001-C10`). Copies in one print must belong to the same master.
+- Non-issuable masters may use **Print** when they are Approved or Effective, subject to PDF access policy.
+- **View Controlled Copy** is the watermarked on-screen viewer. Draft **Preview** is for authoring review only and is not controlled printing.
 - Recalled or destroyed copies cannot be printed or viewed as controlled copies.
 - **Recall** or **Destroy** with a recorded reason: **Active → Recalled**; **Active/Recalled → Destroyed**.
+
+**Print templates** (**DMS Settings → Print and report templates**, Body Blocks → Approval Signatures → **Signature style**):
+
+- **Electronic signatures** (default) — prints the recorded electronic-signature manifestation (signer identity, meaning, date/time).
+- **Manual signature lines** — prints blank Sign & Date lines for wet-ink signing; name and designation still print.
+- **Electronic, except blank lines on paper copies** — electronic on controlled/PDF copies; blank lines on paper copies.
+
+In-app electronic signatures (password re-entry, hash, audit) stay the same whichever style you choose.
+
+**Print audit trail.** Controlled print, view, and download write append-only document audit entries (`printed`, `viewed`, `downloaded`). Open the document → **Audit**, or the dashboard **Recent Audit Activity**. Each print record includes user, time, IP, and browser; a single-copy print also stores issuance number, watermark, template, and PDF checksum. A combined multi-copy print is logged when that file is first generated; opening the same print again later does not add another print row. Denied print/view/download is logged as `pdf_access_denied`.
 
 ### 9.8 Formats and execution
 
@@ -360,9 +377,9 @@ Only one draft revision is allowed in a series at a time. Approved QMS change co
 | ------------- | ------ | ----------- |
 | SOP, Policy, Manual | Text | Reference |
 | Report, Protocol, Specification, Validation | Structured table | Reference |
-| Form, BMR, BPR | Controlled form | Reference or writable execution |
-| Log | Repeating log | Reference or writable execution |
-| Checklist | Checklist | Reference or writable execution |
+| Form, BMR, BPR | Controlled form | Reference, writable execution, or paper (hand fill) |
+| Log | Repeating log | Reference, writable execution, or paper (hand fill) |
+| Checklist | Checklist | Reference, writable execution, or paper (hand fill) |
 | Annexure | Attachment package | Reference |
 
 
@@ -902,6 +919,7 @@ Then `Ctrl + F5`. Use `npm.cmd run dev` during continuous development.
 - Preserve failed validation runs; resolve them through linked deviations.
 - Deactivate unused users; do not delete GxP accounts.
 - Keep DMS copy recall separate from QMS market product recall.
+- Treat controlled **Print** as an audited action. Review print, view, and download history on the document **Audit** tab. Draft print-layout preview is not a controlled print.
 - Site-owned controls remain outside the application: NTP, TLS, off-site backup copies, disaster-recovery drills, optional MFA.
 
 ## 14. Troubleshooting

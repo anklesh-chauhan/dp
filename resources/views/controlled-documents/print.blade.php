@@ -44,13 +44,17 @@
         .page {
             background: #fff;
             box-shadow: 0 18px 48px rgba(15, 23, 42, .16);
-            display: grid;
+            display: flex;
+            flex-direction: column;
             gap: 14px;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
             margin: 0 auto;
             max-width: 900px;
             min-height: 1120px;
             padding: {{ $pageSettings['margin_top_mm'] }}mm {{ $pageSettings['margin_right_mm'] }}mm {{ $pageSettings['margin_bottom_mm'] }}mm {{ $pageSettings['margin_left_mm'] }}mm;
+        }
+
+        .page + .page {
+            margin-top: 24px;
         }
 
         header {
@@ -140,6 +144,13 @@
 
         .approval-signatures .signature-sign div + div {
             margin-top: 2px;
+        }
+
+        .signature-blank-line {
+            border-bottom: 1px solid #111827;
+            margin: 10px 0 4px;
+            min-height: 28px;
+            width: 90%;
         }
 
         .change-history {
@@ -401,6 +412,12 @@
                 padding: 0;
             }
 
+            .page + .page {
+                break-before: page;
+                margin-top: 0;
+                page-break-before: always;
+            }
+
             .print-document-frame {
                 border-collapse: collapse;
                 display: table;
@@ -466,7 +483,7 @@
 <body>
     @unless ($serverPdf ?? false)
     <div class="toolbar">
-        <button type="button" onclick="window.print()">Print / Save PDF</button>
+        <button type="button" onclick="window.print()">Print</button>
     </div>
     @endunless
 
@@ -487,9 +504,9 @@
         <tbody>
             <tr>
                 <td>
-    <main class="page">
         @php($fieldOrder = collect($reportTemplate->fields)->pluck('key')->flip())
         @php($fieldConfig = collect($reportTemplate->fields)->keyBy('key'))
+    <main class="page">
         <div class="print-header-flow {{ ($serverPdf ?? false) || $headerZones['repeat_every_page'] ? 'print-header-flow-hidden' : '' }}">
             @include('reports.partials.print-header')
         </div>
@@ -614,6 +631,8 @@
                 </div>
                 @if ($issuance?->isExecution() && $section->items->isNotEmpty())
                     @include('controlled-documents.partials.execution-table', ['section' => $section])
+                @elseif ($issuance?->isPaper())
+                    @include('controlled-documents.partials.paper-fill-fields', ['section' => $section])
                 @endif
             </article>
         @empty
@@ -662,7 +681,7 @@
 
         @if (in_array('audit_reference', $enabledFields, true))
             <footer class="muted" style="order: {{ $fieldOrder['audit_reference'] ?? 0 }}; margin-top: 24px;">
-                Printed by {{ auth()->user()->name }} at {{ app(\App\Support\Formatting\DateFormatSettings::class)->formatDateTime(now()) }} · Template {{ $reportTemplate->layout_key }}
+                Printed by {{ ($printedBy ?? auth()->user())?->name ?? '-' }} at {{ app(\App\Support\Formatting\DateFormatSettings::class)->formatDateTime(now()) }} · Template {{ $reportTemplate->layout_key }}
             </footer>
         @endif
 

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Filament\Concerns;
 
+use App\Domain\DMS\Services\ControlledDocumentAccessService;
+use App\Filament\Support\DirectPrint;
 use App\Models\ControlledDocument;
 use Filament\Actions\Action;
 use Filament\Support\Icons\Heroicon;
@@ -23,6 +25,19 @@ trait ProvidesControlledDocumentPrintPreviewAction
             ->openUrlInNewTab()
             ->visible(fn (): bool => $this->record instanceof ControlledDocument
                 && $this->record->canPreviewWithPrintTemplate(Auth::user()));
+    }
+
+    protected function controlledDocumentDirectPrintAction(
+        string $name = 'printDirect',
+    ): Action {
+        return Action::make($name)
+            ->label('Print')
+            ->icon(Heroicon::Printer)
+            ->url(fn (): string => DirectPrint::documentUrl($this->record))
+            ->openUrlInNewTab()
+            ->visible(fn (): bool => $this->record instanceof ControlledDocument
+                && $this->record->canBePrintedDirectly()
+                && app(ControlledDocumentAccessService::class)->canPrint(Auth::user(), $this->record));
     }
 
     protected function controlledDocumentPrintPreviewModalAction(

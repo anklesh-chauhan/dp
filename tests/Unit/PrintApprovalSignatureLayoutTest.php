@@ -8,6 +8,7 @@ use App\Models\ApprovalStepType;
 use App\Models\ControlledDocument;
 use App\Models\Department;
 use App\Models\Designation;
+use App\Models\DocumentIssuance;
 use App\Models\DocumentTemplate;
 use App\Models\DocumentTemplateVersion;
 use App\Models\DocumentType;
@@ -193,5 +194,147 @@ it('does not claim an electronic signature without a signature hash', function (
     $groups = app(PrintApprovalSignatureLayout::class)->groups($document);
 
     expect($groups[1]['entries'][0]['signature'])->toBe('-')
-        ->and($groups[1]['entries'][0]['signature_lines'])->toBe(['-']);
+        ->and($groups[1]['entries'][0]['signature_lines'])->toBe(['-'])
+        ->and($groups[1]['entries'][0]['manual'])->toBeFalse();
+});
+
+it('prints blank signature lines when the template uses manual signatures', function (): void {
+    $qa = Department::factory()->create(['name' => 'Quality Assurance']);
+    $owner = User::factory()->create([
+        'name' => 'Neha Shah',
+        'department_id' => $qa->id,
+    ]);
+    $reviewer = User::factory()->create([
+        'name' => 'Ravi Patel',
+        'department_id' => $qa->id,
+        'designation_id' => Designation::factory()->create(['name' => 'QA Reviewer', 'code' => 'QA_REV'])->id,
+    ]);
+
+    $template = DocumentTemplate::factory()->create([
+        'document_type_id' => DocumentType::query()->firstOrFail()->id,
+        'department_id' => $qa->id,
+    ]);
+    $templateVersion = DocumentTemplateVersion::factory()->create([
+        'document_template_id' => $template->id,
+    ]);
+    $document = ControlledDocument::factory()->create([
+        'template_id' => $template->id,
+        'template_version_id' => $templateVersion->id,
+        'department_id' => $qa->id,
+        'owner_id' => $owner->id,
+        'created_by' => $owner->id,
+    ]);
+    $step = SopWorkflowStep::factory()->create([
+        'step_no' => 1,
+        'approval_step_type_id' => ApprovalStepType::idFor(ApprovalStepType::CHECKER),
+        'department_id' => $qa->id,
+    ]);
+
+    SopApproval::factory()->create([
+        'document_id' => $document->id,
+        'workflow_step_id' => $step->id,
+        'approved_by' => $reviewer->id,
+        'approval_decision_id' => ApprovalDecision::idFor(ApprovalDecision::APPROVED),
+        'approved_at' => now(),
+    ]);
+
+    $document->load([
+        'approvals.approver.designation',
+        'approvals.approvalDecision',
+        'approvals.workflowStep.department',
+        'approvals.workflowStep.approvalStepType',
+        'creator.department',
+        'creator.designation',
+        'department',
+        'owner.department',
+        'owner.designation',
+    ]);
+
+    $groups = app(PrintApprovalSignatureLayout::class)->groups(
+        $document,
+        PrintApprovalSignatureLayout::STYLE_MANUAL,
+    );
+
+    expect($groups[0]['entries'][0]['manual'])->toBeTrue()
+        ->and($groups[0]['entries'][0]['signature_lines'])->toBe([])
+        ->and($groups[1]['entries'][0])->toMatchArray([
+            'name' => 'Ravi Patel',
+            'designation' => 'QA Reviewer',
+            'manual' => true,
+            'signature' => '',
+            'signature_lines' => [],
+        ]);
+
+    $html = view('controlled-documents.partials.approval-signatures', [
+        'document' => $document,
+        'issuance' => null,
+        'fieldConfig' => collect([
+            'approvals' => ['signature_style' => PrintApprovalSignatureLayout::STYLE_MANUAL],
+        ]),
+    ])->render();
+
+    expect($html)
+        ->toContain('signature-blank-line')
+        ->not->toContain('Electronically signed')
+        ->toContain('Sign and date on the lines above');
+});
+
+it('keeps electronic signatures for paper_manual unless the copy is paper', function (): void {
+    $qa = Department::factory()->create(['name' => 'Quality Assurance']);
+    $owner = User::factory()->create([
+        'name' => 'Neha Shah',
+        'department_id' => $qa->id,
+    ]);
+    $reviewer = User::factory()->create([
+        'name' => 'Ravi Patel',
+        'department_id' => $qa->id,
+    ]);
+
+    $template = DocumentTemplate::factory()->create([
+        'document_type_id' => DocumentType::query()->firstOrFail()->id,
+        'department_id' => $qa->id,
+    ]);
+    $templateVersion = DocumentTemplateVersion::factory()->create([
+        'document_template_id' => $template->id,
+    ]);
+    $document = ControlledDocument::factory()->create([
+        'template_id' => $template->id,
+        'template_version_id' => $templateVersion->id,
+        'department_id' => $qa->id,
+        'owner_id' => $owner->id,
+        'created_by' => $owner->id,
+    ]);
+    $step = SopWorkflowStep::factory()->create([
+        'step_no' => 1,
+        'approval_step_type_id' => ApprovalStepType::idFor(ApprovalStepType::CHECKER),
+        'department_id' => $qa->id,
+    ]);
+
+    SopApproval::factory()->create([
+        'document_id' => $document->id,
+        'workflow_step_id' => $step->id,
+        'approved_by' => $reviewer->id,
+        'approval_decision_id' => ApprovalDecision::idFor(ApprovalDecision::APPROVED),
+        'approved_at' => now(),
+    ]);
+
+    $document->load([
+        'approvals.approver.designation',
+        'approvals.approvalDecision',
+        'approvals.workflowStep.department',
+        'approvals.workflowStep.approvalStepType',
+        'creator.department',
+        'creator.designation',
+        'department',
+        'owner.department',
+        'owner.designation',
+    ]);
+
+    $layout = app(PrintApprovalSignatureLayout::class);
+    $paper = new DocumentIssuance(['issuance_type' => DocumentIssuance::TYPE_PAPER]);
+    $reference = new DocumentIssuance(['issuance_type' => DocumentIssuance::TYPE_REFERENCE]);
+
+    expect($layout->groups($document, PrintApprovalSignatureLayout::STYLE_PAPER_MANUAL, $reference)[1]['entries'][0]['manual'])->toBeFalse()
+        ->and($layout->groups($document, PrintApprovalSignatureLayout::STYLE_PAPER_MANUAL, $paper)[1]['entries'][0]['manual'])->toBeTrue()
+        ->and($layout->groups($document)[1]['entries'][0]['manual'])->toBeFalse();
 });

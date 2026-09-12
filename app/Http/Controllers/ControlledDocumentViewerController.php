@@ -32,16 +32,22 @@ class ControlledDocumentViewerController extends Controller
                 throw new AccessDeniedHttpException('You do not have access to view this original PDF.');
             }
 
+            $canPrint = $this->accessService->canPrint($request->user(), $controlledDocument);
+
             return view('controlled-documents.viewer', [
                 'document' => $controlledDocument,
                 'contentUrl' => route('controlled-documents.original-artifacts.view', [$controlledDocument, $artifact]),
-                'printUrl' => $this->accessService->canPrint($request->user(), $controlledDocument)
+                'printUrl' => $canPrint
                     ? route('controlled-documents.original-artifacts.print', [$controlledDocument, $artifact])
                     : null,
+                'printPreviewUrl' => null,
                 'downloadUrl' => $this->accessService->canDownload($request->user(), $controlledDocument)
                     ? route('controlled-documents.original-artifacts.download', [$controlledDocument, $artifact])
                     : null,
                 'watermark' => $request->user()->name.' | '.$request->user()->email.' | '.now()->format('Y-m-d H:i:s T'),
+                'printMode' => false,
+                'autoPrint' => false,
+                'pollUrl' => null,
             ]);
         }
 
@@ -65,22 +71,45 @@ class ControlledDocumentViewerController extends Controller
             throw new AccessDeniedHttpException('You do not have access to view this controlled PDF.');
         }
 
+        $printMode = $request->boolean('print');
+
+        if ($printMode && ! $this->accessService->canPrint($request->user(), $controlledDocument)) {
+            $this->auditLogService->log(
+                action: SopAuditLog::ACTION_PDF_ACCESS_DENIED,
+                newValues: ['requested_action' => 'print'],
+                document: $controlledDocument,
+            );
+
+            throw new AccessDeniedHttpException('You do not have permission to print this controlled PDF.');
+        }
+
         $parameters = array_filter([
             'controlledDocument' => $controlledDocument,
             'issuance' => $issuance?->id,
             'template' => $request->integer('template') ?: null,
         ]);
 
+        $canPrint = $this->accessService->canPrint($request->user(), $controlledDocument);
+        $printPreviewParameters = [...$parameters, 'print' => 1];
+
         return view('controlled-documents.viewer', [
             'document' => $controlledDocument,
-            'contentUrl' => route('controlled-documents.pdf-content', $parameters),
-            'printUrl' => $this->accessService->canPrint($request->user(), $controlledDocument)
+            'contentUrl' => $printMode
                 ? route('controlled-documents.print', $parameters)
+                : route('controlled-documents.pdf-content', $parameters),
+            'printUrl' => $canPrint ? route('controlled-documents.print', $parameters) : null,
+            'printPreviewUrl' => $canPrint && ! $printMode
+                ? route('controlled-documents.viewer', $printPreviewParameters)
                 : null,
             'downloadUrl' => $this->accessService->canDownload($request->user(), $controlledDocument)
                 ? route('controlled-documents.download', $parameters)
                 : null,
-            'watermark' => $request->user()->name.' | '.$request->user()->email.' | '.now()->format('Y-m-d H:i:s T'),
+            'watermark' => $printMode
+                ? ''
+                : $request->user()->name.' | '.$request->user()->email.' | '.now()->format('Y-m-d H:i:s T'),
+            'printMode' => $printMode,
+            'autoPrint' => $printMode,
+            'pollUrl' => null,
         ]);
     }
 

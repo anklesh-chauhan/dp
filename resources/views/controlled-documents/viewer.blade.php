@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $document->document_number }} - Controlled Viewer</title>
+    <title>{{ ($printMode ?? false) ? 'Print' : 'Controlled Viewer' }} - {{ $document->document_number }}</title>
     @vite(['resources/js/pdf-viewer.js'])
     <style>
         :root { --viewer-bg: #f3f4f6; --viewer-surface: #ffffff; --viewer-toolbar: #ffffff; --viewer-border: #e5e7eb; --viewer-text: #111827; --viewer-muted: #6b7280; --viewer-control: #ffffff; --viewer-primary: #2563eb; --viewer-primary-hover: #1d4ed8; --viewer-shadow: rgb(15 23 42 / 0.14); }
@@ -37,32 +37,59 @@
             .viewer-pages { padding: 12px 4px; }
             .viewer-button { padding: 6px 9px; }
         }
-        @media print { body { display: none !important; } }
+        @media print {
+            @page { margin: 0; }
+            body.view-mode { display: none !important; }
+            body.print-mode { background: #fff; }
+            body.print-mode .viewer-toolbar,
+            body.print-mode .viewer-loading,
+            body.print-mode .viewer-error { display: none !important; }
+            body.print-mode .viewer-pages { gap: 0; padding: 0; }
+            body.print-mode .viewer-page { box-shadow: none; break-after: page; max-width: none; page-break-after: always; }
+            body.print-mode .viewer-page:last-child { break-after: auto; page-break-after: auto; }
+            body.print-mode .viewer-page canvas { height: auto; width: 100%; }
+            body.print-mode .viewer-watermark { display: none; }
+        }
     </style>
 </head>
-<body>
+<body class="{{ ($printMode ?? false) ? 'print-mode' : 'view-mode' }}">
     <main
         id="controlled-pdf-viewer"
         data-pdf-url="{{ $contentUrl }}"
         data-watermark="{{ $watermark }}"
+        data-auto-print="{{ ($autoPrint ?? false) ? '1' : '0' }}"
+        data-allow-print="{{ ($printMode ?? false) ? '1' : '0' }}"
+        @if (filled($pollUrl ?? null))
+            data-poll-url="{{ $pollUrl }}"
+        @endif
     >
-        <nav class="viewer-toolbar" aria-label="Controlled PDF toolbar">
+        <nav class="viewer-toolbar" aria-label="{{ ($printMode ?? false) ? 'Print preview toolbar' : 'Controlled PDF toolbar' }}">
             <div class="viewer-title">
                 <strong>{{ $document->document_number }} - {{ $document->title }}</strong>
-                <span>Controlled viewer - actions are permission-based and audited</span>
+                <span>
+                    @if ($printMode ?? false)
+                        Print preview — choose a printer, then print. Each copy starts on a new page.
+                    @else
+                        Controlled viewer - actions are permission-based and audited
+                    @endif
+                </span>
             </div>
             <button class="viewer-button" type="button" data-action="zoom-out" aria-label="Zoom out">-</button>
             <span class="viewer-status" data-role="zoom">100%</span>
             <button class="viewer-button" type="button" data-action="zoom-in" aria-label="Zoom in">+</button>
             <span class="viewer-status" data-role="pages">Loading...</span>
-            @if ($printUrl)
+            @if ($printMode ?? false)
+                <button class="viewer-button viewer-button-primary" type="button" data-action="print">Print</button>
+            @elseif ($printPreviewUrl ?? null)
+                <a class="viewer-button viewer-button-primary" href="{{ $printPreviewUrl }}" target="_blank" rel="noopener">Print</a>
+            @elseif ($printUrl ?? null)
                 <a class="viewer-button viewer-button-primary" href="{{ $printUrl }}" target="_blank" rel="noopener">Print</a>
             @endif
-            @if ($downloadUrl)
+            @if ($downloadUrl ?? null)
                 <a class="viewer-button" href="{{ $downloadUrl }}">Download</a>
             @endif
         </nav>
-        <div class="viewer-loading" data-role="loading">Preparing the controlled document...</div>
+        <div class="viewer-loading" data-role="loading">{{ ($printMode ?? false) ? 'Preparing pages for print...' : 'Preparing the controlled document...' }}</div>
         <div class="viewer-pages" data-role="pages-container"></div>
     </main>
 </body>

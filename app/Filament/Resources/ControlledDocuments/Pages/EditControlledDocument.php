@@ -82,6 +82,7 @@ class EditControlledDocument extends EditRecord
                     );
                 }),
             $this->controlledDocumentPrintPreviewAction(),
+            $this->controlledDocumentDirectPrintAction(),
             Action::make('printPdf')
                 ->label('View PDF')
                 ->icon(Heroicon::Eye)

@@ -11,7 +11,7 @@ This guide applies to the QualiGxP Document Management System (DMS) and covers:
 - document templates and controlled-document masters;
 - SOP, policy, manual, form, log, checklist, BMR, BPR, report, protocol, specification, validation, and annexure documents;
 - template and document review/approval;
-- reference-copy and writable execution-copy issuance;
+- reference-copy, writable execution-copy, and paper-copy issuance;
 - execution, independent verification, supervisor review, and QA disposition;
 - revision, supersession, obsolescence, archival, retention completion, and destruction.
 
@@ -19,16 +19,18 @@ Quality events such as deviations, CAPAs, change controls, incidents, audits, an
 
 ## 2. Roles and responsibilities
 
-| Role | Main responsibilities |
-|---|---|
-| SOP Maker | Create and edit templates and draft controlled documents; submit documents; create revisions. |
-| SOP Checker | Review assigned document/template approval steps and record approval decisions. |
-| SOP Approver | Perform final or assigned approval steps. |
-| Document Controller | Publish approved templates; issue, recall, and destroy controlled copies; manage controlled PDF access; administer retention. |
-| GMP Record Executor / Log Maker | Enter issued-copy data, complete sections, and submit execution records. |
-| Production Supervisor | Independently review completed execution records when required. |
-| QA Reviewer | Review/approve controlled documents and perform final QA disposition for BMR/BPR executions. |
-| SOP Administrator | Administer DMS configuration, permissions, and all DMS operations. |
+
+| Role                            | Main responsibilities                                                                                                                |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| SOP Maker                       | Create and edit templates and draft controlled documents; submit documents; create revisions.                                        |
+| SOP Checker                     | Review assigned document/template approval steps and record approval decisions.                                                      |
+| SOP Approver                    | Perform final or assigned approval steps.                                                                                            |
+| Document Controller             | Publish approved templates; issue, print, recall, and destroy controlled copies; manage controlled PDF access; administer retention. |
+| GMP Record Executor / Log Maker | Enter issued-copy data, complete sections, and submit execution records.                                                             |
+| Production Supervisor           | Independently review completed execution records when required.                                                                      |
+| QA Reviewer                     | Review/approve controlled documents and perform final QA disposition for BMR/BPR executions.                                         |
+| SOP Administrator               | Administer DMS configuration, permissions, and all DMS operations.                                                                   |
+
 
 An organization may assign equivalent job titles, but users must have the corresponding application permissions. Use different accounts for authoring, checking, approving, execution, production review, and QA disposition when separation of duties applies.
 
@@ -36,16 +38,18 @@ An organization may assign equivalent job titles, but users must have the corres
 
 Under the **DMS** navigation group:
 
-| Screen | Use for |
-|---|---|
-| **Controlled Documents** | Author and manage all controlled-document masters. |
-| **Document Templates** | Create, revise, and publish reusable templates. |
-| **Template Approval Queue** | Decide pending template approval steps. |
-| **Approval Queue** | Decide pending controlled-document (and licensed QMS) approval steps. |
-| **Issuable Documents** | Work with effective issuable masters and issue controlled copies. |
-| **Issuance Register** | Find issued copies; open execution records; view controlled copies; recall or destroy. |
-| **GMP Execution Records** | Begin, complete, review, and close writable execution copies. |
-| **SOP Workflows** | Configure department and global approval workflows. |
+
+| Screen                      | Use for                                                                                         |
+| --------------------------- | ----------------------------------------------------------------------------------------------- |
+| **Controlled Documents**    | Author and manage all controlled-document masters.                                              |
+| **Document Templates**      | Create, revise, and publish reusable templates.                                                 |
+| **Template Approval Queue** | Decide pending template approval steps.                                                         |
+| **Approval Queue**          | Decide pending controlled-document (and licensed QMS) approval steps.                           |
+| **Issuable Documents**      | Work with effective issuable masters and issue controlled copies.                               |
+| **Issuance Register**       | Find issued copies; open execution records; view or print controlled copies; recall or destroy. |
+| **GMP Execution Records**   | Begin, complete, review, and close writable execution copies.                                   |
+| **SOP Workflows**           | Configure department and global approval workflows.                                             |
+
 
 Related configuration lives under **DMS · Settings**, **Document & Template Management**, and **Core · Identity & Access**, subject to permission.
 
@@ -75,40 +79,48 @@ flowchart LR
     N --> O[Destroyed]
 ```
 
+
+
+
+
 ### 4.1 Master-document status flow
 
-| Status | Meaning | Normal next action |
-|---|---|---|
-| Draft | Editable authoring version. | Complete the master and submit for approval. |
-| Under review | Approval workflow is active; editing is locked. Intermediate step approvals keep this status. | Assigned reviewers approve, return, or reject. |
-| Approved | All mandatory workflow steps are approved. Training and Document Control release are still required before operational use. | Assign/complete required training, then confirm the effective date. |
-| Effective | Document Control confirmed the effective date after approval and required training. | Issue controlled copies or create a revision. |
-| Rejected | Approval was rejected. | Follow the organization’s correction/recreation procedure. |
-| Superseded | A newer version in the same document series became effective. | Archive after operational withdrawal is complete. |
-| Obsolete | Withdrawn without replacement or no longer applicable. | Archive. |
-| Archived | Preserved for the defined retention period. | Complete retention when the period expires. |
-| Retention completed | Retention obligations are complete. | Destroy with an approved reason. |
-| Destroyed | Final lifecycle state. | No further use. |
+
+| Status              | Meaning                                                                                                                     | Normal next action                                                  |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Draft               | Editable authoring version.                                                                                                 | Complete the master and submit for approval.                        |
+| Under review        | Approval workflow is active; editing is locked. Intermediate step approvals keep this status.                               | Assigned reviewers approve, return, or reject.                      |
+| Approved            | All mandatory workflow steps are approved. Training and Document Control release are still required before operational use. | Assign/complete required training, then confirm the effective date. |
+| Effective           | Document Control confirmed the effective date after approval and required training.                                         | Issue controlled copies or create a revision.                       |
+| Rejected            | Approval was rejected.                                                                                                      | Follow the organization’s correction/recreation procedure.          |
+| Superseded          | A newer version in the same document series became effective.                                                               | Archive after operational withdrawal is complete.                   |
+| Obsolete            | Withdrawn without replacement or no longer applicable.                                                                      | Archive.                                                            |
+| Archived            | Preserved for the defined retention period.                                                                                 | Complete retention when the period expires.                         |
+| Retention completed | Retention obligations are complete.                                                                                         | Destroy with an approved reason.                                    |
+| Destroyed           | Final lifecycle state.                                                                                                      | No further use.                                                     |
+
 
 While a document is under review, lists and the record subheading show the pending workflow step (role / step type).
 
 ## 5. Document-type workflow matrix
 
-| Type | Code | Format | Effective SOP reference required | Issued copy | Execution controls |
-|---|---|---|---|---|---|
-| Standard Operating Procedure | SOP | Text document | No | Reference | No writable execution record. |
-| Policy | POLICY | Text document | No | Reference | No writable execution record. |
-| Manual | MANUAL | Text document | No | Reference | No writable execution record. |
-| Controlled Form | FORM | Controlled form | Yes | Reference or execution | Complete required fields/sections; closes directly unless configuration overrides the default. |
-| Log Document | LOG | Repeating log | Yes | Reference or execution | Scheduled/repeated entries; supervisor review required. |
-| Checklist | CHECKLIST | Checklist | Yes | Reference or execution | Required responses, independent item verification, and supervisor review. |
-| Batch Manufacturing Record | BMR | Controlled form | Yes | Reference or execution | Independent item verification, supervisor review, QA approval, material reconciliation review, and final disposition. |
-| Batch Packaging Record | BPR | Controlled form | Yes | Reference or execution | Same controlled execution path as BMR. |
-| Report | REPORT | Structured table | Yes | Reference | Approved report is controlled as a read-only copy; no execution record. |
-| Protocol | PROTOCOL | Structured table | Yes | Reference | Approved protocol master is issued read-only; execution evidence should be captured in the configured execution/QMS record. |
-| Specification | SPEC | Structured table | Yes | Reference | Controlled acceptance criteria/reference document. |
-| Validation | VALIDATION | Structured table | Yes | Reference | Controlled validation/qualification document. |
-| Annexure | ANNEXURE | Attachment package | Yes | Reference | Controlled supporting evidence package. |
+
+| Type                         | Code       | Format             | Effective SOP reference required | Issued copy            | Execution controls                                                                                                          |
+| ---------------------------- | ---------- | ------------------ | -------------------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Standard Operating Procedure | SOP        | Text document      | No                               | Reference              | No writable execution record.                                                                                               |
+| Policy                       | POLICY     | Text document      | No                               | Reference              | No writable execution record.                                                                                               |
+| Manual                       | MANUAL     | Text document      | No                               | Reference              | No writable execution record.                                                                                               |
+| Controlled Form              | FORM       | Controlled form    | Yes                              | Reference or execution | Complete required fields/sections; closes directly unless configuration overrides the default.                              |
+| Log Document                 | LOG        | Repeating log      | Yes                              | Reference or execution | Scheduled/repeated entries; supervisor review required.                                                                     |
+| Checklist                    | CHECKLIST  | Checklist          | Yes                              | Reference or execution | Required responses, independent item verification, and supervisor review.                                                   |
+| Batch Manufacturing Record   | BMR        | Controlled form    | Yes                              | Reference or execution | Independent item verification, supervisor review, QA approval, material reconciliation review, and final disposition.       |
+| Batch Packaging Record       | BPR        | Controlled form    | Yes                              | Reference or execution | Same controlled execution path as BMR.                                                                                      |
+| Report                       | REPORT     | Structured table   | Yes                              | Reference              | Approved report is controlled as a read-only copy; no execution record.                                                     |
+| Protocol                     | PROTOCOL   | Structured table   | Yes                              | Reference              | Approved protocol master is issued read-only; execution evidence should be captured in the configured execution/QMS record. |
+| Specification                | SPEC       | Structured table   | Yes                              | Reference              | Controlled acceptance criteria/reference document.                                                                          |
+| Validation                   | VALIDATION | Structured table   | Yes                              | Reference              | Controlled validation/qualification document.                                                                               |
+| Annexure                     | ANNEXURE   | Attachment package | Yes                              | Reference              | Controlled supporting evidence package.                                                                                     |
+
 
 All listed types are configured as issuable. A writable execution copy is available only when the type’s format requires an execution record: FORM, LOG, CHECKLIST, BMR, and BPR.
 
@@ -116,17 +128,19 @@ Per-type execution flags (`requires_item_verification`, `requires_supervisor_rev
 
 ### 5.1 Additional configured controlled-document codes
 
-| Type | Code | DMS behavior |
-|---|---|---|
-| Change Control | CHANGE_CONTROL | Text/reference controlled document requiring an effective SOP reference. Operational decisions belong to the QMS Change Control resource. |
-| Corrective and Preventive Action | CAPA | Text/reference controlled document requiring an effective SOP reference. CAPA implementation/effectiveness is managed in QMS. |
-| Deviation | DEV | Text/reference controlled document requiring an effective SOP reference. Deviation investigation and disposition are managed in QMS. |
-| Incident | INCIDENT | Text/reference controlled document requiring an effective SOP reference. |
-| Audit | AUDIT | Text/reference controlled document requiring an effective SOP reference. Audit scheduling/findings are managed in QMS. |
-| Inspection | INSPECTION | Text/reference controlled document requiring an effective SOP reference. |
-| Test | TEST | Text/reference controlled document requiring an effective SOP reference. |
-| Training | TRAINING | Text/reference controlled document requiring an effective SOP reference. Training assignment/completion may be managed by the applicable training process. |
-| Other | OTHER | General text/reference controlled document requiring an effective SOP reference. |
+
+| Type                             | Code           | DMS behavior                                                                                                                                               |
+| -------------------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Change Control                   | CHANGE_CONTROL | Text/reference controlled document requiring an effective SOP reference. Operational decisions belong to the QMS Change Control resource.                  |
+| Corrective and Preventive Action | CAPA           | Text/reference controlled document requiring an effective SOP reference. CAPA implementation/effectiveness is managed in QMS.                              |
+| Deviation                        | DEV            | Text/reference controlled document requiring an effective SOP reference. Deviation investigation and disposition are managed in QMS.                       |
+| Incident                         | INCIDENT       | Text/reference controlled document requiring an effective SOP reference.                                                                                   |
+| Audit                            | AUDIT          | Text/reference controlled document requiring an effective SOP reference. Audit scheduling/findings are managed in QMS.                                     |
+| Inspection                       | INSPECTION     | Text/reference controlled document requiring an effective SOP reference.                                                                                   |
+| Test                             | TEST           | Text/reference controlled document requiring an effective SOP reference.                                                                                   |
+| Training                         | TRAINING       | Text/reference controlled document requiring an effective SOP reference. Training assignment/completion may be managed by the applicable training process. |
+| Other                            | OTHER          | General text/reference controlled document requiring an effective SOP reference.                                                                           |
+
 
 These codes follow the common controlled-master approval, reference issuance, revision, and retention workflow when used in DMS. They do not create writable Document Execution records unless their format profile is deliberately changed to a writable type.
 
@@ -149,11 +163,15 @@ Published templates follow their own retention path: **Published → Obsolete �
 
 ## 7. Common master-document process
 
+
+
 ### Step 1: Select or prepare a template
 
 1. Open **DMS → Document Templates**.
 2. Select a published template for the required document type.
 3. If a suitable template does not exist, create, approve, and publish one before generating the controlled document.
+
+
 
 ### Step 2: Create the controlled-document master
 
@@ -161,6 +179,8 @@ Published templates follow their own retention path: **Published → Obsolete �
 2. Enter the title, department, category, owner, proposed effective/review dates, and required variables.
 3. For every document type except SOP, POLICY, and MANUAL, select an effective referenced SOP when the type requires one.
 4. Confirm the generated document number and version.
+
+
 
 ### Step 3: Author the master
 
@@ -184,6 +204,8 @@ Before selecting **Submit for Approval**, verify:
 - no execution responses have been entered in the master;
 - the correct department approval workflow is active.
 
+
+
 ### Step 5: Submit and approve
 
 1. Select **Submit for Approval** and confirm.
@@ -191,13 +213,15 @@ Before selecting **Submit for Approval**, verify:
 3. Assigned reviewers act from **DMS → Approval Queue**.
 4. Each decision is electronically attributed and audit logged.
 5. Separation of duties applies:
-   - a user may be blocked from approving their own submission;
-   - every workflow step in the same approval cycle must be decided by a different user.
+  - a user may be blocked from approving their own submission;
+  - every workflow step in the same approval cycle must be decided by a different user.
 6. A reviewer may:
-   - **Approve**: advance the required approval path; the document stays **Under review** until every mandatory step is approved;
-   - **Return for Correction**: send the document back to Draft;
-   - **Reject Submission**: place the document in Rejected status.
+  - **Approve**: advance the required approval path; the document stays **Under review** until every mandatory step is approved;
+  - **Return for Correction**: send the document back to Draft;
+  - **Reject Submission**: place the document in Rejected status.
 7. When all mandatory steps are approved, the document becomes **Approved**.
+
+
 
 ### Step 6: Complete training and make effective
 
@@ -211,6 +235,8 @@ Before selecting **Submit for Approval**, verify:
 Document types can turn the training gate on or off in **DMS · Settings → Document Types**. Seeded defaults require training only for SOP, Policy, and Manual. Those documents still require Document Control to confirm the effective date after approval.
 
 ## 8. Type-specific master guidance
+
+
 
 ### 8.1 SOP
 
@@ -293,6 +319,8 @@ flowchart LR
     G -->|Rejected| I[Closed - Rejected]
 ```
 
+
+
 Controls:
 
 - each required execution item must contain a response;
@@ -302,6 +330,8 @@ Controls:
 - material planned/actual quantities should be recorded and reconciled before QA disposition;
 - the QA approver must differ from both the executor and supervisor reviewer;
 - QA selects **Release batch** or **Reject batch** and records notes as required.
+
+
 
 ### 8.8 Report
 
@@ -330,27 +360,52 @@ Only an **Effective**, issuable document with a valid effective SOP reference (w
 1. Open the effective document from **Controlled Documents** or **Issuable Documents**.
 2. Select **Issue Controlled Copy**.
 3. Select the copy type:
-   - **Read-only reference copy** for controlled viewing/printing;
-   - **Writable GMP execution record** for FORM, LOG, CHECKLIST, BMR, or BPR.
+  - **Read-only reference copy** for controlled viewing and printing;
+  - **Writable GMP execution record** for FORM, LOG, CHECKLIST, BMR, or BPR.
 4. Select the recipient user and/or department, optional location, and notes.
-5. For BMR/BPR execution copies, enter batch and product information.
-6. For logs, enter frequency, period, and supervisor as applicable.
-7. Confirm issuance.
+5. Enter **Number of copies**. Each copy in the batch receives its own sequential copy number, issuance number, and watermark.
+6. For BMR/BPR execution copies, enter batch and product information.
+7. For logs, enter frequency, period, and supervisor as applicable.
+8. Confirm issuance.
 
-The system assigns a sequential copy number, issuance number, watermark code, issuer, and issue timestamp.
+The system assigns sequential copy numbers, issuance numbers, watermark codes, issuer, and issue timestamp. Writable execution copies still create one execution record per copy.
 
-After issuance:
+### 9.1 Print and fill on paper
+
+Some forms, logs, and checklists are completed by hand. Do not use **Issue Controlled Copy** for that — that action still creates electronic reference or execution copies.
+
+1. Open the effective document from **Controlled Documents** or **Issuable Documents**.
+2. Select **Print and fill on paper**.
+3. Select the recipient user and/or department, optional location, number of copies, and notes.
+4. Confirm. The system records numbered paper copies in the Issuance Register. It does **not** create electronic GMP execution records.
+5. **Print** opens a page preview (like printing from Word). Choose a printer and print. Each copy starts on a new page with its own copy number. Large batches prepare in that same window; keep it open until the pages appear.
+
+Filled paper stays in the physical archive. Recall or destroy unused numbered copies from the Issuance Register when they are no longer valid.
+
+### 9.2 After issuance
 
 1. Open **DMS → Issuance Register** (or the document’s issuance relation).
 2. Select **View Controlled Copy** on an **Active** issuance to open the watermarked controlled viewer.
-3. Recalled or destroyed copies cannot be viewed as controlled copies.
-4. Use **Recall** or **Destroy** with a recorded reason. Issuance statuses are **Active → Recalled** and **Active/Recalled → Destroyed**.
+3. Select **Print** on an active issuance when a single controlled print is required. Print opens a preview, then the printer dialog. You do not need to download a file first.
+4. To print many copies at once, stay on **Issuance Register**:
+  - Use the **All copies**, **Reference copy**, **Writable execution record**, and **Paper copy** tabs to find the right records.
+  - Select the copies and choose **Print**, or use **Print by copy number**. Paste a comma-separated list (`SOP-QA-00001-C01,SOP-QA-00001-C02`) or an inclusive range (`SOP-QA-00001-C01-SOP-QA-00001-C100`).
+  - Print copies from one master document at a time. Each copy starts on a new page with its own copy number and watermark.
+5. For paper copies issued together, select **Print all copies**.
+6. Recalled or destroyed copies cannot be viewed or printed as controlled copies.
+7. Use **Recall** or **Destroy** with a recorded reason. Issuance statuses are **Active → Recalled** and **Active/Recalled → Destroyed**.
 
-### 9.1 Direct print versus controlled copy
+
+
+### 9.3 Direct print versus controlled copy
 
 - Issuable masters must be printed or viewed through an active controlled-copy issuance.
-- Non-issuable masters may use direct **Print / PDF** when they are Approved or Effective, subject to PDF access policy.
-- Draft/review **print layout preview** is for authoring review only and is not controlled printing.
+- Non-issuable masters may use **Print** when they are Approved or Effective, subject to PDF access policy. Print opens a preview, then the printer dialog.
+- Draft/review print layout preview is for authoring review only and is not controlled printing.
+
+Print templates (**DMS Settings → Print and report templates**, Body Blocks → Approval Signatures → **Signature style**) can print the recorded electronic-signature manifestation, blank Sign & Date lines for wet-ink signing, or electronic signatures except on paper copies. Changing the print layout does not replace in-app electronic signatures.
+
+Controlled print, view, and download write append-only document audit entries (`printed`, `viewed`, `downloaded`). Open the document → **Audit**. A combined multi-copy print is logged when that file is first generated; opening the same print again later does not add another print row. Draft preview is not a controlled print.
 
 ## 10. Execution-record procedure
 
@@ -365,6 +420,8 @@ Writable issuance creates a separate `DocumentExecution` that snapshots the appr
 5. Complete required section statuses (**Completed** or **Not applicable** with notes).
 6. Use a different authorized user for independent verification where required.
 7. Upload execution evidence/annexures against the execution record when required. These files are private, integrity-checked, and belong to the execution—not the approved master.
+
+
 
 ### 10.2 Complete and submit
 
@@ -420,22 +477,26 @@ Document Controller (or equivalent) permissions are required for these actions. 
 
 ## 13. Common validation messages and resolutions
 
-| Message or condition | Resolution |
-|---|---|
+
+| Message or condition                                                         | Resolution                                                                             |
+| ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
 | Section needs at least one execution field / table needs at least one column | Edit each named table/checklist section and add the missing execution field or column. |
-| Referenced SOP is unavailable / not effective | Select an Effective SOP that has not been archived or deleted. |
-| No active approval workflow | Ask the administrator to configure an active department or global SOP workflow. |
-| Complete these sections / Enter responses for… | Enter the named responses and mark the named sections Completed/Not applicable. |
-| Independent verification is required for… | A different authorized user must verify each named item. |
-| Reviewer must be different from the person who completed the record | Use an independent supervisor/reviewer account. |
-| An explanation is required for an N/A response | Enter comments when the response is N/A. |
-| QA approver must be independent of execution and production review | Assign a QA user who did not execute or perform production review. |
-| This document already has a draft revision | Finish or resolve the current draft revision before creating another. |
-| Separation of duties / every step must be decided by a different user | Use another authorized account for the next approval step. |
+| Referenced SOP is unavailable / not effective                                | Select an Effective SOP that has not been archived or deleted.                         |
+| No active approval workflow                                                  | Ask the administrator to configure an active department or global SOP workflow.        |
+| Complete these sections / Enter responses for…                               | Enter the named responses and mark the named sections Completed/Not applicable.        |
+| Independent verification is required for…                                    | A different authorized user must verify each named item.                               |
+| Reviewer must be different from the person who completed the record          | Use an independent supervisor/reviewer account.                                        |
+| An explanation is required for an N/A response                               | Enter comments when the response is N/A.                                               |
+| QA approver must be independent of execution and production review           | Assign a QA user who did not execute or perform production review.                     |
+| This document already has a draft revision                                   | Finish or resolve the current draft revision before creating another.                  |
+| Separation of duties / every step must be decided by a different user        | Use another authorized account for the next approval step.                             |
+
+
+
 
 ## 14. Audit-trail expectations
 
-The application records important DMS events, including template submission/publication, document generation, submission, approval decisions, activation, issuance, revision, supersession, controlled-copy recall/destruction, execution transitions, and retention transitions.
+The application records important DMS events, including template submission/publication, document generation, submission, approval decisions, activation, issuance, controlled print/view/download, revision, supersession, controlled-copy recall/destruction, execution transitions, and retention transitions.
 
 Users should always:
 
@@ -444,9 +505,14 @@ Users should always:
 - avoid selecting themselves as an independent verifier or reviewer;
 - preserve contemporaneous GMP entries;
 - use revisions instead of changing an effective document;
-- use controlled copies rather than uncontrolled downloads or screenshots.
+- use controlled copies rather than uncontrolled downloads or screenshots;
+- review print, view, and download history on the document **Audit** tab when copies are issued or printed.
+
+
 
 ## 15. Quick checklists
+
+
 
 ### Template ready to publish
 
@@ -454,6 +520,8 @@ Users should always:
 - [ ] Template submitted and every mandatory approval step decided by distinct users.
 - [ ] Author/submitter did not decide any step.
 - [ ] Publish Approved Version completed by an authorized publisher.
+
+
 
 ### Master ready for approval
 
@@ -464,6 +532,8 @@ Users should always:
 - [ ] Attachments, references, and tags reviewed.
 - [ ] Appropriate approval workflow is active.
 
+
+
 ### Execution ready for submission
 
 - [ ] All required responses entered.
@@ -472,6 +542,8 @@ Users should always:
 - [ ] Independent item verification complete where required.
 - [ ] Correct supervisor assigned.
 - [ ] Required execution evidence uploaded.
+
+
 
 ### BMR/BPR ready for QA disposition
 

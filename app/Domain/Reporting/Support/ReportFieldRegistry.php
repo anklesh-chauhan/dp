@@ -108,6 +108,9 @@ final class ReportFieldRegistry
                 'show_label' => true,
                 'show_section_titles' => true,
                 'page_break_before' => false,
+                ...($key === 'approvals' ? [
+                    'signature_style' => PrintApprovalSignatureLayout::STYLE_ELECTRONIC,
+                ] : []),
             ])
             ->values()
             ->all();
@@ -149,6 +152,7 @@ final class ReportFieldRegistry
                 if ($field['key'] === 'approvals') {
                     $field['enabled'] = true;
                     $field['show_label'] = true;
+                    $field['signature_style'] = PrintApprovalSignatureLayout::STYLE_ELECTRONIC;
 
                     return $field;
                 }
@@ -184,7 +188,7 @@ final class ReportFieldRegistry
             ->map(function (array $field) use ($definitions): array {
                 $key = (string) $field['key'];
 
-                return [
+                $normalized = [
                     'key' => $key,
                     'label' => Str::limit(Str::squish((string) ($field['label'] ?? $definitions[$key]['label'])), 80, '') ?: $definitions[$key]['label'],
                     'group' => $definitions[$key]['group'],
@@ -197,6 +201,15 @@ final class ReportFieldRegistry
                     'show_section_titles' => (bool) Arr::get($field, 'show_section_titles', true),
                     'page_break_before' => (bool) Arr::get($field, 'page_break_before', false),
                 ];
+
+                if ($key === 'approvals') {
+                    $style = Arr::get($field, 'signature_style', PrintApprovalSignatureLayout::STYLE_ELECTRONIC);
+                    $normalized['signature_style'] = in_array($style, array_keys(PrintApprovalSignatureLayout::styleOptions()), true)
+                        ? $style
+                        : PrintApprovalSignatureLayout::STYLE_ELECTRONIC;
+                }
+
+                return $normalized;
             });
 
         $missing = collect($definitions)
@@ -211,6 +224,9 @@ final class ReportFieldRegistry
                 'show_label' => true,
                 'show_section_titles' => true,
                 'page_break_before' => false,
+                ...($key === 'approvals' ? [
+                    'signature_style' => PrintApprovalSignatureLayout::STYLE_ELECTRONIC,
+                ] : []),
             ]);
 
         return $normalized->concat($missing)->values()->all();

@@ -15,6 +15,7 @@ use App\Filament\Concerns\ProvidesDocumentEffectivenessActions;
 use App\Filament\Concerns\ProvidesRetentionLifecycleActions;
 use App\Filament\Resources\LogDocuments\LogDocumentResource;
 use App\Filament\Support\IssueControlledCopyAction;
+use App\Filament\Support\IssuePaperCopiesAction;
 use App\Models\DocumentStatus;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
@@ -82,6 +83,7 @@ class ViewLogDocument extends ViewRecord
                     );
                 }),
             IssueControlledCopyAction::make(),
+            IssuePaperCopiesAction::make(),
             Action::make('lockDocument')
                 ->label('Lock for Editing')
                 ->icon(Heroicon::LockClosed)

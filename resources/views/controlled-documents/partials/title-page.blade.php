@@ -26,7 +26,7 @@
         </div>
     @endif
 
-    @if ($titlePage['show_controlled_notice'])
-        <div class="title-page-notice">{{ $issuance ? 'CONTROLLED COPY' : 'UNCONTROLLED WHEN PRINTED' }}</div>
+        @if ($titlePage['show_controlled_notice'])
+        <div class="title-page-notice">{{ $issuance ? 'CONTROLLED COPY '.$issuance->copy_number : 'UNCONTROLLED WHEN PRINTED' }}</div>
     @endif
 </section>

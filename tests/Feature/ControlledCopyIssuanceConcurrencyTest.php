@@ -16,6 +16,7 @@ use App\Models\TemplateStatus;
 use App\Models\User;
 use Database\Seeders\LookupTableSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Validation\ValidationException;
 
 uses(RefreshDatabase::class);
 
@@ -87,3 +88,50 @@ it('skips an already reserved issuance number instead of raising a unique constr
         ->and($issuance->issuance_number)->toBe('DEV-QA-00001-C02')
         ->and($issuance->watermark_code)->toBe('CC-DEVQA00001-02');
 });
+
+it('issues the requested number of sequential copies in one action', function (): void {
+    $document = issuableControlledDocument();
+
+    $issuances = app(DocumentIssuanceService::class)->issueCopies($document, $this->issuer, [
+        'issued_to_user_id' => $this->issuer->id,
+        'copy_count' => 3,
+    ]);
+
+    expect($issuances)->toHaveCount(3)
+        ->and($issuances->pluck('copy_number')->all())->toBe([1, 2, 3])
+        ->and($issuances->pluck('issuance_number')->all())->toBe([
+            'DEV-QA-00001-C01',
+            'DEV-QA-00001-C02',
+            'DEV-QA-00001-C03',
+        ])
+        ->and(DocumentIssuance::query()->where('document_id', $document->id)->count())->toBe(3);
+});
+
+it('issues a single copy when copy count is omitted', function (): void {
+    $document = issuableControlledDocument();
+
+    $issuance = app(DocumentIssuanceService::class)->issue($document, $this->issuer, [
+        'issued_to_user_id' => $this->issuer->id,
+    ]);
+
+    expect($issuance->copy_number)->toBe(1)
+        ->and(DocumentIssuance::query()->where('document_id', $document->id)->count())->toBe(1);
+});
+
+it('rejects an invalid copy count without writing issuance rows', function (mixed $copyCount): void {
+    $document = issuableControlledDocument();
+
+    expect(fn () => app(DocumentIssuanceService::class)->issueCopies($document, $this->issuer, [
+        'issued_to_user_id' => $this->issuer->id,
+        'copy_count' => $copyCount,
+    ]))->toThrow(function (ValidationException $exception): void {
+        expect($exception->errors())->toHaveKey('copy_count');
+    });
+
+    expect(DocumentIssuance::query()->where('document_id', $document->id)->count())->toBe(0);
+})->with([
+    'zero' => 0,
+    'negative' => -1,
+    'decimal' => 1.5,
+    'non-numeric' => 'abc',
+]);

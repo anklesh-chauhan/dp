@@ -8,7 +8,11 @@ use App\Domain\DMS\Contracts\ControlledDocumentPdfRenderer;
 use App\Models\ControlledDocument;
 use App\Models\DocumentIssuance;
 use App\Models\ReportTemplate;
+use App\Models\User;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use RuntimeException;
 use Spatie\LaravelPdf\Facades\Pdf;
 
 class GotenbergControlledDocumentPdfRenderer implements ControlledDocumentPdfRenderer
@@ -20,6 +24,7 @@ class GotenbergControlledDocumentPdfRenderer implements ControlledDocumentPdfRen
         ReportTemplate $reportTemplate,
         ?DocumentIssuance $issuance,
         array $organization,
+        ?User $printedBy = null,
     ): string {
         $organization = $this->embedOrganizationLogo($organization);
         $pageSettings = $reportTemplate->printPageSettings();
@@ -36,6 +41,7 @@ class GotenbergControlledDocumentPdfRenderer implements ControlledDocumentPdfRen
             'reportTemplate' => $reportTemplate,
             'enabledFields' => $reportTemplate->enabledFieldKeys(),
             'organization' => $organization,
+            'printedBy' => $printedBy,
             'serverPdf' => true,
             'serverPdfMargins' => [
                 'top' => $topMargin,
@@ -72,10 +78,41 @@ class GotenbergControlledDocumentPdfRenderer implements ControlledDocumentPdfRen
         return $this->generate($data, $pageSettings, $headerZones, $footerZones);
     }
 
+    /**
+     * @param  Collection<int, DocumentIssuance>  $issuances
+     * @param  array<string, mixed>  $organization
+     */
+    public function renderPack(
+        ControlledDocument $document,
+        ReportTemplate $reportTemplate,
+        Collection $issuances,
+        array $organization,
+        ?User $printedBy = null,
+    ): string {
+        if ($issuances->isEmpty()) {
+            throw new \InvalidArgumentException('A print pack requires at least one issued copy.');
+        }
+
+        $parts = $issuances
+            ->values()
+            ->map(fn (DocumentIssuance $issuance): string => $this->render(
+                $document,
+                $reportTemplate,
+                $issuance,
+                $organization,
+                $printedBy,
+            ));
+
+        if ($parts->count() === 1) {
+            return (string) $parts->first();
+        }
+
+        return $this->mergePdfDocuments($parts->all(), $issuances->values());
+    }
+
     /** @param array<string, mixed> $data */
     private function generate(array $data, array $pageSettings, array $headerZones, array $footerZones): string
     {
-
         $builder = Pdf::view('controlled-documents.print', $data)
             ->driver('gotenberg')
             ->format($pageSettings['paper_size'])
@@ -96,6 +133,40 @@ class GotenbergControlledDocumentPdfRenderer implements ControlledDocumentPdfRen
         }
 
         return $builder->generatePdfContent();
+    }
+
+    /**
+     * @param  list<string>  $documents
+     * @param  Collection<int, DocumentIssuance>  $issuances
+     */
+    private function mergePdfDocuments(array $documents, Collection $issuances): string
+    {
+        $request = Http::timeout((int) config('services.gotenberg.timeout', 120))
+            ->connectTimeout(10);
+
+        $username = config('laravel-pdf.gotenberg.username');
+        $password = config('laravel-pdf.gotenberg.password');
+
+        if (filled($username)) {
+            $request = $request->withBasicAuth((string) $username, (string) $password);
+        }
+
+        foreach (array_values($documents) as $index => $contents) {
+            $issuance = $issuances->get($index);
+            $filename = sprintf('%03d-%s.pdf', $index + 1, $issuance?->issuance_number ?? 'copy');
+            $request = $request->attach('files', $contents, $filename);
+        }
+
+        $merged = $request
+            ->post(rtrim((string) (config('laravel-pdf.gotenberg.url') ?: config('services.gotenberg.url')), '/').'/forms/pdfengines/merge')
+            ->throw()
+            ->body();
+
+        if (! str_starts_with($merged, '%PDF-')) {
+            throw new RuntimeException('The document renderer did not return a valid merged PDF.');
+        }
+
+        return $merged;
     }
 
     /** @param array<string, mixed> $headerZones */

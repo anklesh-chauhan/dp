@@ -1,4 +1,14 @@
-@php($signatureGroups = app(\App\Domain\Reporting\Support\PrintApprovalSignatureLayout::class)->groups($document))
+@php
+    $signatureStyle = $fieldConfig['approvals']['signature_style'] ?? \App\Domain\Reporting\Support\PrintApprovalSignatureLayout::STYLE_ELECTRONIC;
+    $signatureGroups = app(\App\Domain\Reporting\Support\PrintApprovalSignatureLayout::class)->groups(
+        $document,
+        $signatureStyle,
+        $issuance ?? null,
+    );
+    $usesManualLines = collect($signatureGroups)->contains(
+        fn (array $group): bool => collect($group['entries'])->contains(fn (array $entry): bool => $entry['manual'] ?? false),
+    );
+@endphp
 
 <table class="approval-signatures">
     @forelse ($signatureGroups as $group)
@@ -11,9 +21,13 @@
                     <th class="signature-department" rowspan="3">{{ $entry['department'] }}</th>
                     <th class="signature-label">Sign &amp; Date</th>
                     <td class="signature-value signature-sign">
-                        @foreach ($entry['signature_lines'] as $line)
-                            <div>{{ $line }}</div>
-                        @endforeach
+                        @if ($entry['manual'] ?? false)
+                            <div class="signature-blank-line" aria-hidden="true"></div>
+                        @else
+                            @foreach ($entry['signature_lines'] as $line)
+                                <div>{{ $line }}</div>
+                            @endforeach
+                        @endif
                     </td>
                 </tr>
                 <tr>
@@ -34,6 +48,12 @@
         </tbody>
     @endforelse
 </table>
-<p class="muted signature-manifestation-note">
-    Electronic signatures shown above include the signer identity, signature meaning, and signed date/time as attributable GxP records.
-</p>
+@if ($usesManualLines)
+    <p class="muted signature-manifestation-note">
+        Sign and date on the lines above. Printed name and designation identify the expected signer.
+    </p>
+@else
+    <p class="muted signature-manifestation-note">
+        Electronic signatures shown above include the signer identity, signature meaning, and signed date/time as attributable GxP records.
+    </p>
+@endif

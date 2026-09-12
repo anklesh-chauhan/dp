@@ -42,7 +42,7 @@ class ControlledDocumentPdfService
             return $existing;
         }
 
-        $contents = $this->renderer->render($document, $reportTemplate, $issuance, $organization);
+        $contents = $this->renderer->render($document, $reportTemplate, $issuance, $organization, $generatedBy);
 
         if (! str_starts_with($contents, '%PDF-')) {
             throw new RuntimeException('The document renderer did not return a valid PDF.');

@@ -13,6 +13,7 @@ use App\Domain\QMS\Models\CsvValidationProject;
 use App\Domain\Reporting\Enums\ReportFormat;
 use App\Domain\Reporting\Enums\ReportScope;
 use App\Domain\Reporting\Services\TabularReportExporter;
+use App\Domain\Reporting\Support\PrintApprovalSignatureLayout;
 use App\Domain\Reporting\Support\PrintLayoutRegistry;
 use App\Domain\Reporting\Support\ReportFieldRegistry;
 use App\Models\ControlledDocument;
@@ -133,6 +134,29 @@ it('normalizes body block label and controlled section title visibility', functi
         ])
         ->and($fields[1]['show_label'])->toBeTrue()
         ->and($fields[1]['show_section_titles'])->toBeTrue();
+});
+
+it('normalizes approval signature style and keeps electronic as the default', function (): void {
+    $registry = app(ReportFieldRegistry::class);
+
+    $fields = $registry->normalize(ReportScope::ControlledDocument, [[
+        'key' => 'approvals',
+        'enabled' => true,
+        'signature_style' => PrintApprovalSignatureLayout::STYLE_MANUAL,
+    ]]);
+
+    $approvals = collect($fields)->firstWhere('key', 'approvals');
+    $fallback = $registry->normalize(ReportScope::ControlledDocument, [[
+        'key' => 'approvals',
+        'enabled' => true,
+        'signature_style' => 'wet-ink',
+    ]]);
+
+    expect($approvals['signature_style'])->toBe(PrintApprovalSignatureLayout::STYLE_MANUAL)
+        ->and(collect($fallback)->firstWhere('key', 'approvals')['signature_style'])
+        ->toBe(PrintApprovalSignatureLayout::STYLE_ELECTRONIC)
+        ->and(collect($registry->defaultFields(ReportScope::ControlledDocument))->firstWhere('key', 'approvals')['signature_style'])
+        ->toBe(PrintApprovalSignatureLayout::STYLE_ELECTRONIC);
 });
 
 it('normalizes safe variable-column header and footer configuration with legacy conversion', function (): void {

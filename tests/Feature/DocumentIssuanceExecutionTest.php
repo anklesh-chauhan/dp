@@ -708,7 +708,7 @@ it('rejects an unsupported controlled-copy type', function (): void {
     expect(fn () => app(DocumentIssuanceService::class)->issue($document, $this->issuer, [
         'issued_to_user_id' => $this->issuer->id,
         'issuance_type' => 'editable_pdf',
-    ]))->toThrow(ValidationException::class, 'Select either a read-only reference copy or a writable execution record.');
+    ]))->toThrow(ValidationException::class, 'Select a read-only reference copy, a writable execution record, or a paper copy.');
 });
 
 it('routes a completed log through independent supervisor review and then locks it', function (): void {

@@ -19,6 +19,7 @@ use App\Filament\Resources\LogDocuments\Pages\ViewLogDocument;
 use App\Filament\Resources\LogDocuments\RelationManagers\IssuanceRelationManager;
 use App\Filament\Support\ContentAiAssist;
 use App\Filament\Support\IssueControlledCopyAction;
+use App\Filament\Support\IssuePaperCopiesAction;
 use App\Filament\Support\TemplateVariableFieldBuilder;
 use App\Models\ControlledDocument;
 use App\Models\DocumentTemplateVersion;
@@ -190,6 +191,7 @@ class LogDocumentResource extends Resource
             ])
             ->recordActions([
                 IssueControlledCopyAction::make(),
+                IssuePaperCopiesAction::make(),
                 ActionGroup::make([
                     ViewAction::make(),
                     EditAction::make(),

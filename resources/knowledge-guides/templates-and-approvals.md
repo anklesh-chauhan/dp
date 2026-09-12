@@ -21,6 +21,8 @@ Template editing is frozen after submission. A rejected or returned version beco
 - Approvals, rejections, and returns receive electronic-signature metadata and append-only audit history.
 - The actor must hold the step’s assigned role and department access.
 
+Print templates are separate from template approval. To choose whether printed copies show electronic-signature manifestation or blank Sign & Date lines, open **DMS Settings → Print and report templates** and set **Signature style** on the Approval Signatures body block. That layout choice does not replace in-app electronic signatures. See **Issuance, Printing & Execution**.
+
 ## Controlled-document approvals
 
 1. From a **Draft** controlled document, select **Submit for Approval**.

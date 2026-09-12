@@ -5,6 +5,7 @@
     'document' => null,
     'organization' => [],
     'issuance' => null,
+    'printedBy' => null,
     'preview' => false,
     'serverPdf' => false,
 ])
@@ -70,7 +71,7 @@
                 <strong>{{ $preview ? 'CONTROLLED COPY' : ($issuance ? "CONTROLLED COPY {$issuance->copy_number}" : 'UNCONTROLLED WHEN PRINTED') }}</strong>
                 @break
             @case('printed_by')
-                <span>{{ ($item['show_label'] ?? true) ? $item['label'].': ' : '' }}{{ $preview ? 'Preview User' : auth()->user()->name }}</span>
+                <span>{{ ($item['show_label'] ?? true) ? $item['label'].': ' : '' }}{{ $preview ? 'Preview User' : (($printedBy ?? auth()->user())?->name ?? '-') }}</span>
                 @break
             @case('printed_at')
                 <span>{{ ($item['show_label'] ?? true) ? $item['label'].': ' : '' }}{{ $dates->formatDateTime(now()) }}</span>

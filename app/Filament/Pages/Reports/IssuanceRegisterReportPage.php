@@ -44,7 +44,10 @@ class IssuanceRegisterReportPage extends OperationalReportPage
             ->query($this->reportQuery())
             ->columns([
                 TextColumn::make('issuance_number')->searchable()->sortable(),
-                TextColumn::make('issuance_type')->label('Copy type')->badge(),
+                TextColumn::make('issuance_type')
+                    ->label('Copy type')
+                    ->badge()
+                    ->formatStateUsing(fn (?string $state): string => DocumentIssuance::typeLabel($state)),
                 TextColumn::make('document.document_number')->label('Document #')->searchable(),
                 TextColumn::make('document.title')->label('Title')->limit(30),
                 TextColumn::make('copy_number')->label('Copy #'),
@@ -67,6 +70,7 @@ class IssuanceRegisterReportPage extends OperationalReportPage
                 SelectFilter::make('issuance_type')->options([
                     DocumentIssuance::TYPE_REFERENCE => 'Reference copy',
                     DocumentIssuance::TYPE_EXECUTION => 'Writable execution record',
+                    DocumentIssuance::TYPE_PAPER => 'Paper copy',
                 ]),
             ])
             ->defaultSort('issued_at', 'desc')

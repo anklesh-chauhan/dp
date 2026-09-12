@@ -6,6 +6,7 @@ namespace App\Filament\Resources\ReportTemplates\Schemas;
 
 use App\Domain\Reporting\Enums\ReportFormat;
 use App\Domain\Reporting\Enums\ReportScope;
+use App\Domain\Reporting\Support\PrintApprovalSignatureLayout;
 use App\Domain\Reporting\Support\PrintLayoutRegistry;
 use App\Domain\Reporting\Support\ReportFieldRegistry;
 use Closure;
@@ -186,6 +187,13 @@ final class ReportTemplateForm
                                             ->label('Show Controlled Section Titles / Names')
                                             ->default(true)
                                             ->visible(fn (Get $get): bool => $get('key') === 'sections'),
+                                        Select::make('signature_style')
+                                            ->label('Signature style')
+                                            ->options(PrintApprovalSignatureLayout::styleOptions())
+                                            ->default(PrintApprovalSignatureLayout::STYLE_ELECTRONIC)
+                                            ->helperText('Electronic signatures stay as recorded. Manual prints blank Sign & Date lines for handwritten signing.')
+                                            ->visible(fn (Get $get): bool => $get('key') === 'approvals')
+                                            ->required(fn (Get $get): bool => $get('key') === 'approvals'),
                                         Toggle::make('page_break_before')
                                             ->label('Page Break Before'),
                                     ])

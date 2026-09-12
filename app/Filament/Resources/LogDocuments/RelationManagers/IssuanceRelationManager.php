@@ -7,8 +7,10 @@ namespace App\Filament\Resources\LogDocuments\RelationManagers;
 use App\Domain\DMS\Actions\DestroyIssuanceAction;
 use App\Domain\DMS\Actions\RecallIssuanceAction;
 use App\Filament\Concerns\HandlesServiceExceptions;
+use App\Filament\Support\DirectPrint;
 use App\Models\ControlledDocument;
 use App\Models\DocumentIssuance;
+use App\Models\DocumentIssuanceBatch;
 use App\Models\IssuanceStatus;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
@@ -17,6 +19,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 
 class IssuanceRelationManager extends RelationManager
@@ -47,6 +50,10 @@ class IssuanceRelationManager extends RelationManager
         return $table
             ->columns([
                 TextColumn::make('issuance_number')->searchable()->sortable(),
+                TextColumn::make('issuance_type')
+                    ->label('Copy type')
+                    ->badge()
+                    ->formatStateUsing(fn (?string $state): string => DocumentIssuance::typeLabel($state)),
                 TextColumn::make('copy_number')->label('Copy #')->sortable(),
                 TextColumn::make('watermark_code')->label('Watermark'),
                 TextColumn::make('issuedToUser.name')->label('Issued To User')->placeholder('—'),
@@ -65,6 +72,7 @@ class IssuanceRelationManager extends RelationManager
                     }),
             ])
             ->defaultSort('issued_at', 'desc')
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->with('batch'))
             ->recordActions([
                 Action::make('printCopy')
                     ->label('View Controlled Copy')
@@ -75,6 +83,20 @@ class IssuanceRelationManager extends RelationManager
                     ]))
                     ->openUrlInNewTab()
                     ->visible(fn (DocumentIssuance $record): bool => $record->isActive()),
+                Action::make('printCopyPdf')
+                    ->label('Print')
+                    ->icon(Heroicon::Printer)
+                    ->url(fn (DocumentIssuance $record): string => DirectPrint::copyUrl($record))
+                    ->openUrlInNewTab()
+                    ->visible(fn (DocumentIssuance $record): bool => $record->isActive()),
+                Action::make('printPack')
+                    ->label('Print all copies')
+                    ->icon(Heroicon::DocumentDuplicate)
+                    ->url(fn (DocumentIssuance $record): string => DirectPrint::batchUrl($record->batch))
+                    ->openUrlInNewTab()
+                    ->visible(fn (DocumentIssuance $record): bool => $record->isPaper()
+                        && $record->batch instanceof DocumentIssuanceBatch
+                        && $record->batch->copy_count > 1),
                 Action::make('recall')
                     ->label('Recall')
                     ->icon(Heroicon::ArrowUturnLeft)

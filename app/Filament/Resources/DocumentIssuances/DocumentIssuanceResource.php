@@ -9,11 +9,15 @@ use App\Domain\DMS\Actions\RecallIssuanceAction;
 use App\Domain\DMS\Services\DocumentIssuanceAccessService;
 use App\Filament\Resources\DocumentExecutions\DocumentExecutionResource;
 use App\Filament\Resources\LogDocuments\LogDocumentResource;
+use App\Filament\Support\DirectPrint;
+use App\Filament\Support\IssuanceRegisterPrintAction;
 use App\Filament\Support\ServiceExceptionHandler;
 use App\Models\DocumentIssuance;
+use App\Models\DocumentIssuanceBatch;
 use App\Models\IssuanceStatus;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
+use Filament\Actions\BulkActionGroup;
 use Filament\Forms\Components\Textarea;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -56,7 +60,10 @@ class DocumentIssuanceResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('issuance_number')->searchable()->sortable(),
-                TextColumn::make('issuance_type')->label('Copy type')->badge(),
+                TextColumn::make('issuance_type')
+                    ->label('Copy type')
+                    ->badge()
+                    ->formatStateUsing(fn (?string $state): string => DocumentIssuance::typeLabel($state)),
                 TextColumn::make('document.document_number')->label('Document #')->searchable(),
                 TextColumn::make('document.title')->label('Title')->limit(30),
                 TextColumn::make('document.referenced_sop_number')->label('Referenced SOP'),
@@ -79,11 +86,16 @@ class DocumentIssuanceResource extends Resource
             ->defaultSort('issued_at', 'desc')
             ->filters([
                 SelectFilter::make('issuance_status_id')->relationship('issuanceStatus', 'name')->label('Status'),
-                SelectFilter::make('issuance_type')->options([
-                    DocumentIssuance::TYPE_REFERENCE => 'Reference copy',
-                    DocumentIssuance::TYPE_EXECUTION => 'Writable execution record',
+            ])
+            ->headerActions([
+                IssuanceRegisterPrintAction::byIssuanceNumber(),
+            ])
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    IssuanceRegisterPrintAction::printSelected(),
                 ]),
             ])
+            ->maxSelectableRecords(200)
             ->recordActions([
                 ActionGroup::make([
 
@@ -108,6 +120,20 @@ class DocumentIssuanceResource extends Resource
                         ]))
                         ->openUrlInNewTab()
                         ->visible(fn (DocumentIssuance $record): bool => $record->isActive()),
+                    Action::make('printCopyPdf')
+                        ->label('Print')
+                        ->icon(Heroicon::Printer)
+                        ->url(fn (DocumentIssuance $record): string => DirectPrint::copyUrl($record))
+                        ->openUrlInNewTab()
+                        ->visible(fn (DocumentIssuance $record): bool => $record->isActive()),
+                    Action::make('printPack')
+                        ->label('Print all copies')
+                        ->icon(Heroicon::DocumentDuplicate)
+                        ->url(fn (DocumentIssuance $record): string => DirectPrint::batchUrl($record->batch))
+                        ->openUrlInNewTab()
+                        ->visible(fn (DocumentIssuance $record): bool => $record->isPaper()
+                            && $record->batch instanceof DocumentIssuanceBatch
+                            && $record->batch->copy_count > 1),
                     Action::make('recall')
                         ->label('Recall')
                         ->color('warning')
@@ -152,7 +178,7 @@ class DocumentIssuanceResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery()
-            ->with(['document', 'issuanceStatus', 'issuedToUser', 'issuer', 'execution']);
+            ->with(['document', 'issuanceStatus', 'issuedToUser', 'issuer', 'execution', 'batch']);
 
         $user = Auth::user();
 

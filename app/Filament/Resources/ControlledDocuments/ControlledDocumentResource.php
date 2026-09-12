@@ -19,8 +19,10 @@ use App\Filament\Resources\ControlledDocuments\RelationManagers\SectionReviewCom
 use App\Filament\Resources\ControlledDocuments\RelationManagers\TrainingAssignmentsRelationManager;
 use App\Filament\Resources\LogDocuments\RelationManagers\IssuanceRelationManager;
 use App\Filament\Resources\Shared\RelationManagers\QualityAttachmentsRelationManager;
+use App\Filament\Support\DirectPrint;
 use App\Filament\Support\DocumentClassificationFormFields;
 use App\Filament\Support\IssueControlledCopyAction;
+use App\Filament\Support\IssuePaperCopiesAction;
 use App\Filament\Support\TemplateVariableFieldBuilder;
 use App\Models\ControlledDocument;
 use App\Models\DocumentStatus;
@@ -54,6 +56,7 @@ use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Auth;
 use UnitEnum;
 
 class ControlledDocumentResource extends Resource
@@ -229,6 +232,7 @@ class ControlledDocumentResource extends Resource
             ])
             ->recordActions([
                 IssueControlledCopyAction::make(),
+                IssuePaperCopiesAction::make(),
                 ActionGroup::make([
                     ViewAction::make(),
                     Action::make('printPdf')
@@ -237,6 +241,13 @@ class ControlledDocumentResource extends Resource
                         ->url(fn (ControlledDocument $record): string => route('controlled-documents.viewer', $record))
                         ->openUrlInNewTab()
                         ->visible(fn (ControlledDocument $record): bool => $record->canBePrintedDirectly()),
+                    Action::make('printDirect')
+                        ->label('Print')
+                        ->icon(Heroicon::Printer)
+                        ->url(fn (ControlledDocument $record): string => DirectPrint::documentUrl($record))
+                        ->openUrlInNewTab()
+                        ->visible(fn (ControlledDocument $record): bool => $record->canBePrintedDirectly()
+                            && (Auth::user()?->can('PrintPdf:ControlledDocument') ?? false)),
                     EditAction::make()
                         ->visible(fn (ControlledDocument $record): bool => ($user = auth()->user()) instanceof User
                             && $user->can('update', $record)

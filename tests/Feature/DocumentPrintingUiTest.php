@@ -18,6 +18,14 @@ it('generates an issued-copy print URL with the controlled document route key', 
     ], false))->toBe('/controlled-documents/123/print?issuance=456');
 });
 
+it('opens print preview from the controlled viewer', function (): void {
+    expect(route('controlled-documents.viewer', [
+        'controlledDocument' => 123,
+        'issuance' => 456,
+        'print' => 1,
+    ], false))->toBe('/controlled-documents/123/viewer?issuance=456&print=1');
+});
+
 it('allows direct print only for approved or effective non-issuable documents', function (): void {
     $approvedDocument = documentForPrinting(
         isIssuable: false,

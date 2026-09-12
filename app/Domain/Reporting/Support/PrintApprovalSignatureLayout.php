@@ -7,6 +7,7 @@ namespace App\Domain\Reporting\Support;
 use App\Models\ApprovalDecision;
 use App\Models\ApprovalStepType;
 use App\Models\ControlledDocument;
+use App\Models\DocumentIssuance;
 use App\Models\SopApproval;
 use App\Models\User;
 use App\Support\Formatting\DateFormatSettings;
@@ -20,16 +21,39 @@ final class PrintApprovalSignatureLayout
 
     public const APPROVED_BY = 'Approved By';
 
+    public const STYLE_ELECTRONIC = 'electronic';
+
+    public const STYLE_MANUAL = 'manual';
+
+    public const STYLE_PAPER_MANUAL = 'paper_manual';
+
+    /**
+     * @return array<string, string>
+     */
+    public static function styleOptions(): array
+    {
+        return [
+            self::STYLE_ELECTRONIC => 'Electronic signatures',
+            self::STYLE_MANUAL => 'Manual signature lines',
+            self::STYLE_PAPER_MANUAL => 'Electronic, except blank lines on paper copies',
+        ];
+    }
+
     public function __construct(
         private readonly DateFormatSettings $dates,
     ) {}
 
     /**
-     * @return list<array{heading: string, entries: list<array{department: string, signature: string, signature_lines: list<string>, name: string, designation: string}>}>
+     * @return list<array{heading: string, entries: list<array{department: string, signature: string, signature_lines: list<string>, name: string, designation: string, manual: bool}>}>
      */
-    public function groups(ControlledDocument $document): array
-    {
-        /** @var array<string, list<array{department: string, signature: string, signature_lines: list<string>, name: string, designation: string}>> $groups */
+    public function groups(
+        ControlledDocument $document,
+        string $style = self::STYLE_ELECTRONIC,
+        ?DocumentIssuance $issuance = null,
+    ): array {
+        $manual = $this->usesManualLines($style, $issuance);
+
+        /** @var array<string, list<array{department: string, signature: string, signature_lines: list<string>, name: string, designation: string, manual: bool}>> $groups */
         $groups = [
             self::PREPARED_BY => [],
             self::REVIEWED_BY => [],
@@ -44,12 +68,13 @@ final class PrintApprovalSignatureLayout
                 name: $preparedBy->name,
                 designation: $preparedBy->designation?->name,
                 signatureLines: [],
+                manual: $manual,
             );
         }
 
         $document->approvals
             ->sortBy(fn (SopApproval $approval): int => (int) ($approval->workflowStep?->step_no ?? PHP_INT_MAX))
-            ->each(function (SopApproval $approval) use ($document, &$groups): void {
+            ->each(function (SopApproval $approval) use ($document, $manual, &$groups): void {
                 $heading = $this->headingFor($approval);
                 $groups[$heading] ??= [];
                 $groups[$heading][] = $this->entry(
@@ -57,6 +82,7 @@ final class PrintApprovalSignatureLayout
                     name: $approval->approver?->name,
                     designation: $approval->approver?->designation?->name,
                     signatureLines: $this->signatureLinesFor($approval, $heading),
+                    manual: $manual,
                 );
             });
 
@@ -72,9 +98,9 @@ final class PrintApprovalSignatureLayout
 
     /**
      * @param  list<string>  $signatureLines
-     * @return array{department: string, signature: string, signature_lines: list<string>, name: string, designation: string}
+     * @return array{department: string, signature: string, signature_lines: list<string>, name: string, designation: string, manual: bool}
      */
-    private function entry(?string $department, ?string $name, ?string $designation, array $signatureLines): array
+    private function entry(?string $department, ?string $name, ?string $designation, array $signatureLines, bool $manual = false): array
     {
         $lines = array_values(array_filter(
             $signatureLines,
@@ -83,11 +109,21 @@ final class PrintApprovalSignatureLayout
 
         return [
             'department' => filled($department) ? $department : '-',
-            'signature' => $lines === [] ? '-' : implode("\n", $lines),
-            'signature_lines' => $lines === [] ? ['-'] : $lines,
+            'signature' => $manual ? '' : ($lines === [] ? '-' : implode("\n", $lines)),
+            'signature_lines' => $manual ? [] : ($lines === [] ? ['-'] : $lines),
             'name' => filled($name) ? $name : '-',
             'designation' => filled($designation) ? $designation : '-',
+            'manual' => $manual,
         ];
+    }
+
+    private function usesManualLines(string $style, ?DocumentIssuance $issuance): bool
+    {
+        return match ($style) {
+            self::STYLE_MANUAL => true,
+            self::STYLE_PAPER_MANUAL => $issuance?->isPaper() ?? false,
+            default => false,
+        };
     }
 
     /**

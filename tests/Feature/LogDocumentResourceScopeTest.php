@@ -113,6 +113,36 @@ it('issues a controlled copy from the issuable documents list', function (): voi
         ->exists())->toBeTrue();
 });
 
+it('issues the entered number of copies from the issuable documents list', function (): void {
+    config()->set('modules.enabled', ['dms']);
+
+    foreach (['ViewAny:LogDocument', 'View:LogDocument', 'Issue:DocumentIssuance'] as $permission) {
+        Permission::findOrCreate($permission, 'web');
+    }
+
+    $user = User::factory()->create();
+    $user->givePermissionTo(['ViewAny:LogDocument', 'View:LogDocument', 'Issue:DocumentIssuance']);
+    $this->actingAs($user);
+
+    $document = logDocumentResourceDocument(DocumentType::FORM);
+    $recipient = User::factory()->create();
+
+    Livewire::test(ListLogDocuments::class)
+        ->assertCanSeeTableRecords([$document])
+        ->callAction(TestAction::make('issueControlledCopy')->table($document), [
+            'issuance_type' => DocumentIssuance::TYPE_EXECUTION,
+            'issued_to_user_id' => $recipient->id,
+            'copy_count' => 3,
+        ])
+        ->assertHasNoActionErrors()
+        ->assertNotified();
+
+    expect(DocumentIssuance::query()
+        ->where('document_id', $document->id)
+        ->where('issued_to_user_id', $recipient->id)
+        ->count())->toBe(3);
+});
+
 it('hides the list issue action without issuance permission', function (): void {
     config()->set('modules.enabled', ['dms']);
 
@@ -128,5 +158,6 @@ it('hides the list issue action without issuance permission', function (): void 
 
     Livewire::test(ListLogDocuments::class)
         ->assertCanSeeTableRecords([$document])
-        ->assertActionHidden(TestAction::make('issueControlledCopy')->table($document));
+        ->assertActionHidden(TestAction::make('issueControlledCopy')->table($document))
+        ->assertActionHidden(TestAction::make('issuePaperCopies')->table($document));
 });

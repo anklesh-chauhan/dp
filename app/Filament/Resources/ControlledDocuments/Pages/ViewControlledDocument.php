@@ -25,6 +25,7 @@ use App\Filament\Concerns\ProvidesRetentionLifecycleActions;
 use App\Filament\Resources\ControlledDocuments\ControlledDocumentResource;
 use App\Filament\Support\ApprovalNarrativeTextarea;
 use App\Filament\Support\IssueControlledCopyAction;
+use App\Filament\Support\IssuePaperCopiesAction;
 use App\Models\DocumentStatus;
 use App\Models\ReportTemplate;
 use App\Models\SopApproval;
@@ -133,6 +134,7 @@ class ViewControlledDocument extends ViewRecord
             ),
 
             $this->controlledDocumentPrintPreviewAction(),
+            $this->controlledDocumentDirectPrintAction(),
             $this->assignDocumentTrainingAction(),
             $this->makeDocumentEffectiveAction(),
 
@@ -158,6 +160,7 @@ class ViewControlledDocument extends ViewRecord
                     && app(ControlledDocumentAccessService::class)->canView(Auth::user(), $this->record)),
 
             IssueControlledCopyAction::make(),
+            IssuePaperCopiesAction::make(),
 
             EditAction::make()
                 ->visible(fn (): bool => ($user = Auth::user()) instanceof User

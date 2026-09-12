@@ -146,6 +146,7 @@ it('renders documents from their immutable organization snapshot', function (): 
                 && $identity['registration_number'] === 'REG-ORIGINAL'
                 && $identity['document_header'] === 'Controlled quality document'
                 && $identity['document_footer'] === 'Confidential'),
+            Mockery::on(fn (User $printedBy): bool => $printedBy->is($this->user)),
         )
         ->andReturn('%PDF-1.4 snapshot-organization');
     app()->instance(ControlledDocumentPdfRenderer::class, $renderer);
@@ -197,6 +198,7 @@ it('falls back to the linked organization when an older document has no snapshot
             Mockery::on(fn (array $identity): bool => $identity['legal_name'] === 'Legacy Document Pharma Limited'
                 && $identity['registration_number'] === 'REG-LEGACY'
                 && $identity['logo_path'] === 'organization-logos/legacy-logo.png'),
+            Mockery::on(fn (User $printedBy): bool => $printedBy->is($this->user)),
         )
         ->andReturn('%PDF-1.4 linked-organization');
     app()->instance(ControlledDocumentPdfRenderer::class, $renderer);

@@ -114,13 +114,14 @@ it('renders the custom viewer with permission-based controls', function (): void
 
     expect($view)
         ->toContain('data-pdf-url')
-        ->toContain('@if ($printUrl)')
-        ->toContain('@if ($downloadUrl)')
+        ->toContain('data-auto-print')
+        ->toContain('data-action="print"')
         ->toContain('viewer-watermark')
         ->and($javascript)
         ->toContain("from 'pdfjs-dist'")
         ->toContain('withCredentials: true')
-        ->toContain("['p', 's']");
+        ->toContain("['p', 's']")
+        ->toContain('window.print()');
 });
 
 it('serves the controlled viewer only to authorized users', function (): void {
@@ -137,6 +138,36 @@ it('serves the controlled viewer only to authorized users', function (): void {
         ->assertSee('Controlled viewer')
         ->assertDontSee('>Print<', false)
         ->assertDontSee('>Download<', false);
+
+    $printer = User::factory()->create();
+    $printer->givePermissionTo([
+        'View:ControlledDocument',
+        'ViewPdf:ControlledDocument',
+        'PrintPdf:ControlledDocument',
+    ]);
+
+    $this->actingAs($printer)
+        ->get(route('controlled-documents.viewer', $this->document))
+        ->assertOk()
+        ->assertSee('>Print<', false)
+        ->assertSee('print=1', false);
+
+    $this->actingAs($printer)
+        ->get(route('controlled-documents.viewer', [
+            'controlledDocument' => $this->document,
+            'print' => 1,
+        ]))
+        ->assertOk()
+        ->assertSee('print-mode', false)
+        ->assertSee('data-auto-print="1"', false)
+        ->assertSee('data-action="print"', false);
+
+    $this->actingAs($authorizedUser)
+        ->get(route('controlled-documents.viewer', [
+            'controlledDocument' => $this->document,
+            'print' => 1,
+        ]))
+        ->assertForbidden();
 
     ControlledDocumentAccessGrant::factory()->create([
         'controlled_document_id' => $this->document->id,

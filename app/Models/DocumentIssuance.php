@@ -20,8 +20,11 @@ class DocumentIssuance extends Model
 
     public const TYPE_EXECUTION = 'execution';
 
+    public const TYPE_PAPER = 'paper';
+
     protected $fillable = [
         'document_id',
+        'issuance_batch_id',
         'copy_number',
         'issuance_number',
         'issuance_type',
@@ -57,6 +60,14 @@ class DocumentIssuance extends Model
     public function document(): BelongsTo
     {
         return $this->belongsTo(ControlledDocument::class, 'document_id');
+    }
+
+    /**
+     * @return BelongsTo<DocumentIssuanceBatch, $this>
+     */
+    public function batch(): BelongsTo
+    {
+        return $this->belongsTo(DocumentIssuanceBatch::class, 'issuance_batch_id');
     }
 
     /**
@@ -134,5 +145,20 @@ class DocumentIssuance extends Model
     public function isExecution(): bool
     {
         return $this->issuance_type === self::TYPE_EXECUTION;
+    }
+
+    public function isPaper(): bool
+    {
+        return $this->issuance_type === self::TYPE_PAPER;
+    }
+
+    public static function typeLabel(?string $type): string
+    {
+        return match ($type) {
+            self::TYPE_REFERENCE => 'Reference copy',
+            self::TYPE_EXECUTION => 'Writable execution record',
+            self::TYPE_PAPER => 'Paper copy',
+            default => $type ?? '—',
+        };
     }
 }

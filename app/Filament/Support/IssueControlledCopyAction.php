@@ -17,6 +17,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 
 class IssueControlledCopyAction
@@ -34,10 +35,20 @@ class IssueControlledCopyAction
                 ServiceExceptionHandler::run(
                     fn () => app(IssueDocumentAction::class)->execute($record, Auth::user(), $data),
                     failureTitle: 'Issuance Failed',
-                    afterSuccess: function (DocumentIssuance $issuance): void {
+                    afterSuccess: function (Collection $issuances): void {
+                        $first = $issuances->first();
+                        $last = $issuances->last();
+                        $count = $issuances->count();
+
+                        if (! $first instanceof DocumentIssuance || ! $last instanceof DocumentIssuance) {
+                            return;
+                        }
+
                         Notification::make()
-                            ->title('Controlled copy issued')
-                            ->body("Copy {$issuance->issuance_number} has been issued.")
+                            ->title($count === 1 ? 'Controlled copy issued' : 'Controlled copies issued')
+                            ->body($count === 1
+                                ? "Copy {$first->issuance_number} has been issued."
+                                : "{$count} copies issued ({$first->issuance_number}–{$last->issuance_number}).")
                             ->success()
                             ->send();
                     },
@@ -81,6 +92,14 @@ class IssueControlledCopyAction
                 ->searchable()
                 ->requiredWithout('issued_to_user_id'),
             TextInput::make('issued_to_location')->label('Issue To Location')->maxLength(255),
+            TextInput::make('copy_count')
+                ->label('Number of copies')
+                ->helperText('Enter how many numbered copies to issue. Each copy receives its own copy number, issuance number, and watermark.')
+                ->numeric()
+                ->integer()
+                ->minValue(1)
+                ->default(1)
+                ->required(),
             TextInput::make('batch_number')
                 ->visible(fn (Get $get): bool => $isBatchRecord && $isExecutionCopy($get)),
             TextInput::make('product_name')
