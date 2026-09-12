@@ -553,12 +553,16 @@ class SopModuleSeeder extends Seeder
             $this->seedStandardTemplate($definition, $qa, $publishedStatusId);
         }
 
+        $this->seedManualSignatureDocumentTemplates();
         $this->assignPrintReportTemplates();
     }
 
-    private function assignPrintReportTemplates(): void
+    /**
+     * @return array<string, string>
+     */
+    private function printReportTemplateMappings(): array
     {
-        $mappings = [
+        return [
             'TPL-SOP-GMP' => 'sop-gmp-standard',
             'TPL-LOG-GMP' => 'repeating-log-gmp-print',
             'TPL-STRUCTURED-GMP' => 'structured-table-gmp-print',
@@ -567,20 +571,107 @@ class SopModuleSeeder extends Seeder
             'TPL-CHECKLIST-GMP' => 'checklist-gmp-print',
             'TPL-ANNEXURE-GMP' => 'annexure-gmp-print',
         ];
+    }
 
-        foreach ($mappings as $templateCode => $layoutKey) {
-            $reportTemplateId = ReportTemplate::query()
-                ->where('layout_key', $layoutKey)
-                ->value('id');
+    private function seedManualSignatureDocumentTemplates(): void
+    {
+        foreach ($this->printReportTemplateMappings() as $templateCode => $layoutKey) {
+            $source = DocumentTemplate::query()
+                ->where('code', $templateCode)
+                ->with(['versions.sections', 'versions.variables'])
+                ->first();
 
-            if ($reportTemplateId === null) {
+            if ($source === null) {
                 continue;
             }
 
-            DocumentTemplate::query()
-                ->where('code', $templateCode)
-                ->update(['report_template_id' => $reportTemplateId]);
+            $template = DocumentTemplate::query()->updateOrCreate(
+                ['code' => $templateCode.'-MANUAL'],
+                [
+                    'name' => $source->name.' (Manual Signatures)',
+                    'description' => trim(implode(' ', array_filter([
+                        $source->description,
+                        'Prints blank Sign & Date lines for handwritten signing.',
+                    ]))),
+                    'department_id' => $source->department_id,
+                    'category_id' => $source->category_id,
+                    'document_type_id' => $source->document_type_id,
+                    'template_status_id' => $source->template_status_id,
+                    'current_version' => $source->current_version,
+                    'report_template_id' => ReportTemplate::query()
+                        ->where('layout_key', $layoutKey.'-manual')
+                        ->value('id'),
+                ],
+            );
+
+            foreach ($source->versions as $sourceVersion) {
+                $version = DocumentTemplateVersion::query()->updateOrCreate(
+                    [
+                        'document_template_id' => $template->id,
+                        'version' => $sourceVersion->version,
+                    ],
+                    [
+                        'content_json' => $sourceVersion->content_json,
+                        'effective_date' => $sourceVersion->effective_date,
+                        'change_reason' => $sourceVersion->change_reason,
+                        'template_status_id' => $sourceVersion->template_status_id,
+                    ],
+                );
+
+                foreach ($sourceVersion->sections as $section) {
+                    $version->sections()->updateOrCreate(
+                        ['section_order' => $section->section_order],
+                        [
+                            'title' => $section->title,
+                            'heading_level' => $section->heading_level,
+                            'section_type' => $section->section_type,
+                            'content' => $section->content,
+                            'configuration' => $section->configuration,
+                            'is_required' => $section->is_required,
+                            'include_in_toc' => $section->include_in_toc,
+                            'toc_title' => $section->toc_title,
+                        ],
+                    );
+                }
+
+                foreach ($sourceVersion->variables as $variable) {
+                    $version->variables()->updateOrCreate(
+                        ['name' => $variable->name],
+                        [
+                            'label' => $variable->label,
+                            'variable_data_type_id' => $variable->variable_data_type_id,
+                            'default_value' => $variable->default_value,
+                            'validation_rules' => $variable->validation_rules,
+                            'options' => $variable->options,
+                            'required' => $variable->required,
+                        ],
+                    );
+                }
+            }
         }
+    }
+
+    private function assignPrintReportTemplates(): void
+    {
+        foreach ($this->printReportTemplateMappings() as $templateCode => $layoutKey) {
+            $this->assignPrintReportTemplate($templateCode, $layoutKey);
+            $this->assignPrintReportTemplate($templateCode.'-MANUAL', $layoutKey.'-manual');
+        }
+    }
+
+    private function assignPrintReportTemplate(string $templateCode, string $layoutKey): void
+    {
+        $reportTemplateId = ReportTemplate::query()
+            ->where('layout_key', $layoutKey)
+            ->value('id');
+
+        if ($reportTemplateId === null) {
+            return;
+        }
+
+        DocumentTemplate::query()
+            ->where('code', $templateCode)
+            ->update(['report_template_id' => $reportTemplateId]);
     }
 
     /** @param array<string, mixed> $definition */

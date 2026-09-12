@@ -29,8 +29,9 @@ uses(RefreshDatabase::class);
 it('seeds the GMP and ALCOA plus standard template library', function (): void {
     $this->seed(ReportTemplateSeeder::class);
 
-    expect(ReportTemplate::query()->count())->toBe(15)
+    expect(ReportTemplate::query()->count())->toBe(23)
         ->and(ReportTemplate::query()->where('layout_key', 'sop-gmp-standard')->value('is_system'))->toBeTrue()
+        ->and(ReportTemplate::query()->where('layout_key', 'sop-gmp-standard-manual')->value('is_system'))->toBeTrue()
         ->and(ReportTemplate::query()->where('scope', ReportScope::DocumentDistribution)->count())->toBe(3)
         ->and(ReportTemplate::query()->where('scope', ReportScope::CsvValidationTraceability)->count())->toBe(2)
         ->and(ReportTemplate::query()->where('layout_key', 'csv-validation-summary-pdf')->value('is_system'))->toBeTrue();
@@ -46,6 +47,9 @@ it('seeds GMP controlled document templates with UI body block defaults and a re
     $sections = collect($gmpTemplate->fields)->firstWhere('key', 'sections');
     $approvals = collect($gmpTemplate->fields)->firstWhere('key', 'approvals');
 
+    $manualTemplate = ReportTemplate::query()->where('layout_key', 'sop-gmp-standard-manual')->firstOrFail();
+    $manualApprovals = collect($manualTemplate->fields)->firstWhere('key', 'approvals');
+
     expect($enabledKeys)->toBe(['approvals', 'sections', 'change_history'])
         ->and($sections)
         ->enabled->toBeTrue()
@@ -54,8 +58,12 @@ it('seeds GMP controlled document templates with UI body block defaults and a re
         ->and($approvals)
         ->enabled->toBeTrue()
         ->show_label->toBeTrue()
+        ->signature_style->toBe(PrintApprovalSignatureLayout::STYLE_ELECTRONIC)
+        ->and($manualTemplate->name)->toBe('GMP SOP Standard (Manual Signatures)')
+        ->and($manualApprovals['signature_style'])->toBe(PrintApprovalSignatureLayout::STYLE_MANUAL)
         ->and(collect($gmpTemplate->fields)->firstWhere('key', 'organization')['enabled'])->toBeFalse()
-        ->and(ReportTemplate::query()->where('layout_key', 'like', '%-gmp-%')->orWhere('layout_key', 'sop-gmp-standard')->count())->toBe(8)
+        ->and(ReportTemplate::query()->where('layout_key', 'like', '%-gmp-%')->orWhere('layout_key', 'sop-gmp-standard')->count())->toBe(16)
+        ->and(ReportTemplate::query()->where('layout_key', 'like', '%-manual')->count())->toBe(8)
         ->and($reportsManualsTemplate->tocConfiguration())
         ->enabled->toBeTrue()
         ->title->toBe('Table of Contents')

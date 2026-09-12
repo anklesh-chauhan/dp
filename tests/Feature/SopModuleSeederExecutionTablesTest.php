@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Data\ControlledDocumentData;
 use App\Domain\DMS\Actions\CreateDocumentFromTemplateAction;
+use App\Domain\Reporting\Support\PrintApprovalSignatureLayout;
 use App\Models\DocumentTemplate;
 use App\Models\Organization;
 use App\Models\User;
@@ -43,6 +44,13 @@ it('seeds reusable GMP execution table definitions idempotently', function (): v
         'TPL-CHECKLIST-GMP',
         'TPL-ANNEXURE-GMP',
     ])->count())->toBe(5)
+        ->and(DocumentTemplate::query()->whereIn('code', [
+            'TPL-STRUCTURED-GMP-MANUAL',
+            'TPL-CONTROLLED-FORM-GMP-MANUAL',
+            'TPL-BMR-BPR-GMP-MANUAL',
+            'TPL-CHECKLIST-GMP-MANUAL',
+            'TPL-ANNEXURE-GMP-MANUAL',
+        ])->count())->toBe(5)
         ->and($batchTemplate->versions)->toHaveCount(1)
         ->and($materialsSection->configuration['execution_tables'])->toHaveCount(2)
         ->and($materialsSection->configuration['execution_tables'][0]['fields'])->toContainEqual([
@@ -74,6 +82,13 @@ it('links seeded document templates to their GMP print and report templates', fu
         'TPL-BMR-BPR-GMP' => 'batch-record-gmp-print',
         'TPL-CHECKLIST-GMP' => 'checklist-gmp-print',
         'TPL-ANNEXURE-GMP' => 'annexure-gmp-print',
+        'TPL-SOP-GMP-MANUAL' => 'sop-gmp-standard-manual',
+        'TPL-LOG-GMP-MANUAL' => 'repeating-log-gmp-print-manual',
+        'TPL-STRUCTURED-GMP-MANUAL' => 'structured-table-gmp-print-manual',
+        'TPL-CONTROLLED-FORM-GMP-MANUAL' => 'controlled-form-gmp-print-manual',
+        'TPL-BMR-BPR-GMP-MANUAL' => 'batch-record-gmp-print-manual',
+        'TPL-CHECKLIST-GMP-MANUAL' => 'checklist-gmp-print-manual',
+        'TPL-ANNEXURE-GMP-MANUAL' => 'annexure-gmp-print-manual',
     ];
 
     foreach ($mappings as $templateCode => $layoutKey) {
@@ -82,8 +97,15 @@ it('links seeded document templates to their GMP print and report templates', fu
             ->with('reportTemplate')
             ->firstOrFail();
 
+        $approvals = collect($template->reportTemplate?->fields)->firstWhere('key', 'approvals');
+
         expect($template->report_template_id)->not->toBeNull()
-            ->and($template->reportTemplate?->layout_key)->toBe($layoutKey);
+            ->and($template->reportTemplate?->layout_key)->toBe($layoutKey)
+            ->and($approvals['signature_style'] ?? null)->toBe(
+                str_ends_with($templateCode, '-MANUAL')
+                    ? PrintApprovalSignatureLayout::STYLE_MANUAL
+                    : PrintApprovalSignatureLayout::STYLE_ELECTRONIC,
+            );
     }
 });
 

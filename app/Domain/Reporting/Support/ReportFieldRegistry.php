@@ -117,8 +117,9 @@ final class ReportFieldRegistry
     }
 
     /** @return list<array{key: string, label: string, group: string, enabled: bool, width: string, hide_when_empty: bool, show_label: bool, show_section_titles: bool, page_break_before: bool}> */
-    public function defaultGmpControlledDocumentFields(): array
-    {
+    public function defaultGmpControlledDocumentFields(
+        string $signatureStyle = PrintApprovalSignatureLayout::STYLE_ELECTRONIC,
+    ): array {
         $disabledKeys = [
             'organization',
             'document_identity',
@@ -133,8 +134,12 @@ final class ReportFieldRegistry
             'footer',
         ];
 
+        $resolvedSignatureStyle = in_array($signatureStyle, array_keys(PrintApprovalSignatureLayout::styleOptions()), true)
+            ? $signatureStyle
+            : PrintApprovalSignatureLayout::STYLE_ELECTRONIC;
+
         return collect($this->defaultFields(ReportScope::ControlledDocument))
-            ->map(function (array $field) use ($disabledKeys): array {
+            ->map(function (array $field) use ($disabledKeys, $resolvedSignatureStyle): array {
                 if (in_array($field['key'], $disabledKeys, true)) {
                     $field['enabled'] = false;
 
@@ -152,7 +157,7 @@ final class ReportFieldRegistry
                 if ($field['key'] === 'approvals') {
                     $field['enabled'] = true;
                     $field['show_label'] = true;
-                    $field['signature_style'] = PrintApprovalSignatureLayout::STYLE_ELECTRONIC;
+                    $field['signature_style'] = $resolvedSignatureStyle;
 
                     return $field;
                 }

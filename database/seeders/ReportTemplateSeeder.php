@@ -6,6 +6,7 @@ namespace Database\Seeders;
 
 use App\Domain\Reporting\Enums\ReportFormat;
 use App\Domain\Reporting\Enums\ReportScope;
+use App\Domain\Reporting\Support\PrintApprovalSignatureLayout;
 use App\Domain\Reporting\Support\PrintLayoutRegistry;
 use App\Domain\Reporting\Support\ReportFieldRegistry;
 use App\Models\ReportTemplate;
@@ -135,11 +136,31 @@ final class ReportTemplateSeeder extends Seeder
             ],
         ];
 
+        $manualGmpTemplates = [];
+
+        foreach ($templates as $template) {
+            if (! ($template['gmp_print'] ?? false)) {
+                continue;
+            }
+
+            $manualGmpTemplates[] = [
+                ...$template,
+                'layout_key' => $template['layout_key'].'-manual',
+                'name' => $template['name'].' (Manual Signatures)',
+                'description' => $template['description'].' Prints blank Sign & Date lines for handwritten signing.',
+                'signature_style' => PrintApprovalSignatureLayout::STYLE_MANUAL,
+            ];
+        }
+
+        $templates = [...$templates, ...$manualGmpTemplates];
+
         foreach ($templates as $template) {
             $scope = $template['scope'];
 
             $fields = ($template['gmp_print'] ?? false)
-                ? $registry->defaultGmpControlledDocumentFields()
+                ? $registry->defaultGmpControlledDocumentFields(
+                    $template['signature_style'] ?? PrintApprovalSignatureLayout::STYLE_ELECTRONIC,
+                )
                 : $registry->defaultFields($scope);
 
             ReportTemplate::query()->updateOrCreate(
