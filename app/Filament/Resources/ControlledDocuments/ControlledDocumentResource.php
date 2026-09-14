@@ -175,27 +175,8 @@ class ControlledDocumentResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('document_number')->searchable()->sortable(),
-                TextColumn::make('version')
-                    ->label('Document Version')
-                    ->sortable(),
-                TextColumn::make('templateVersion.version')
-                    ->label('Template Version')
-                    ->sortable(),
+
                 TextColumn::make('title')->searchable()->sortable(),
-                TextColumn::make('category.name')
-                    ->label('Category')
-                    ->searchable()
-                    ->sortable(),
-                TextColumn::make('documentType.name')
-                    ->label('Document Type')
-                    ->searchable()
-                    ->sortable(),
-                TextColumn::make('regulationTags.name')
-                    ->label('Regulation Tags')
-                    ->badge()
-                    ->toggleable(),
-                TextColumn::make('department.name')->searchable(),
-                TextColumn::make('template.code')->searchable(),
                 TextColumn::make('documentStatus.name')
                     ->label('Status')
                     ->badge()
@@ -213,6 +194,27 @@ class ControlledDocumentResource extends Resource
                         DocumentStatus::REJECTED => 'danger',
                         default => 'gray',
                     }),
+                TextColumn::make('category.name')
+                    ->label('Category')
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('documentType.name')
+                    ->label('Document Type')
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('regulationTags.name')
+                    ->label('Regulation Tags')
+                    ->badge()
+                    ->toggleable(),
+                TextColumn::make('department.name')->searchable(),
+                TextColumn::make('template.code')->searchable(),
+                TextColumn::make('version')
+                    ->label('Document Version')
+                    ->sortable(),
+                TextColumn::make('templateVersion.version')
+                    ->label('Template Version')
+                    ->sortable(),
+
                 TextColumn::make('lockedByUser.name')
                     ->label('Locked By')
                     ->placeholder('—')
@@ -231,9 +233,9 @@ class ControlledDocumentResource extends Resource
                 TrashedFilter::make(),
             ])
             ->recordActions([
-                IssueControlledCopyAction::make(),
-                IssuePaperCopiesAction::make(),
                 ActionGroup::make([
+                    IssueControlledCopyAction::make(),
+                    IssuePaperCopiesAction::make(),
                     ViewAction::make(),
                     Action::make('printPdf')
                         ->label('View PDF')

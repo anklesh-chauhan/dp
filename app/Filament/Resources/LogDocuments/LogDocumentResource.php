@@ -175,14 +175,15 @@ class LogDocumentResource extends Resource
             ->columns([
                 TextColumn::make('document_number')->searchable()->sortable(),
                 TextColumn::make('title')->searchable()->sortable(),
-                TextColumn::make('documentType.name')->label('Type'),
-                TextColumn::make('referenced_sop_number')->label('Referenced SOP')->searchable(),
-                TextColumn::make('department.name')->searchable(),
-                TextColumn::make('batch_number')->toggleable(),
                 TextColumn::make('documentStatus.name')
                     ->label('Status')
                     ->badge()
                     ->state(fn (ControlledDocument $record): string => $record->displayStatusLabel()),
+                TextColumn::make('documentType.name')->label('Type'),
+                TextColumn::make('referenced_sop_number')->label('Referenced SOP')->searchable(),
+                TextColumn::make('department.name')->searchable(),
+                TextColumn::make('batch_number')->toggleable(),
+
                 TextColumn::make('activeIssuances_count')->counts('activeIssuances')->label('Active Copies'),
             ])
             ->filters([
@@ -190,9 +191,10 @@ class LogDocumentResource extends Resource
                 SelectFilter::make('document_type_id')->relationship('documentType', 'name')->label('Type'),
             ])
             ->recordActions([
-                IssueControlledCopyAction::make(),
-                IssuePaperCopiesAction::make(),
+
                 ActionGroup::make([
+                    IssueControlledCopyAction::make(),
+                    IssuePaperCopiesAction::make(),
                     ViewAction::make(),
                     EditAction::make(),
                 ])->icon('heroicon-o-ellipsis-vertical'),

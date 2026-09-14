@@ -6,8 +6,10 @@ use App\Data\ControlledDocumentData;
 use App\Domain\DMS\Actions\CreateDocumentFromTemplateAction;
 use App\Domain\Reporting\Support\PrintApprovalSignatureLayout;
 use App\Models\DocumentTemplate;
+use App\Models\DocumentTemplateVersion;
 use App\Models\Organization;
 use App\Models\User;
+use App\Models\VariableDataType;
 use Database\Seeders\ReportTemplateSeeder;
 use Database\Seeders\SopModuleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -107,6 +109,42 @@ it('links seeded document templates to their GMP print and report templates', fu
                     : PrintApprovalSignatureLayout::STYLE_ELECTRONIC,
             );
     }
+});
+
+it('does not seed effective date or review date as template variables', function (): void {
+    $this->seed(SopModuleSeeder::class);
+
+    $sopVersion = DocumentTemplate::query()
+        ->where('code', 'TPL-SOP-GMP')
+        ->with('versions.variables')
+        ->sole()
+        ->versions
+        ->sole();
+
+    $sopVersion->variables()->create([
+        'name' => 'effective_date',
+        'label' => 'Effective Date',
+        'variable_data_type_id' => VariableDataType::idFor(VariableDataType::DATE),
+        'required' => false,
+    ]);
+    $sopVersion->variables()->create([
+        'name' => 'review_date',
+        'label' => 'Review Date',
+        'variable_data_type_id' => VariableDataType::idFor(VariableDataType::DATE),
+        'required' => false,
+    ]);
+
+    $this->seed(SopModuleSeeder::class);
+
+    $variableNames = DocumentTemplate::query()
+        ->whereIn('code', ['TPL-SOP-GMP', 'TPL-SOP-GMP-MANUAL'])
+        ->with('versions.variables')
+        ->get()
+        ->flatMap(fn (DocumentTemplate $template) => $template->versions->flatMap(
+            fn (DocumentTemplateVersion $version) => $version->variables->pluck('name'),
+        ));
+
+    expect($variableNames)->not->toContain('effective_date', 'review_date');
 });
 
 it('creates related execution tables and field headers from a seeded GMP template', function (): void {

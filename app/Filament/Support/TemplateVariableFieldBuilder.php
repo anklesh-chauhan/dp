@@ -20,6 +20,8 @@ class TemplateVariableFieldBuilder
      */
     private const AUTO_POPULATED_NAMES = [
         'document_number',
+        'effective_date',
+        'review_date',
     ];
 
     /**

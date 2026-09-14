@@ -10,6 +10,7 @@ use App\Models\Department;
 use App\Models\DocumentCategory;
 use App\Models\DocumentTemplate;
 use App\Models\DocumentTemplateSection;
+use App\Models\DocumentTemplateVariable;
 use App\Models\DocumentTemplateVersion;
 use App\Models\DocumentType;
 use App\Models\RegulationTag;
@@ -377,8 +378,6 @@ class SopModuleSeeder extends Seeder
                 'packaging' => 'Packaging Equipment',
                 'lab' => 'Laboratory Equipment',
             ], false],
-            'effective_date' => [VariableDataType::DATE, null, false],
-            'review_date' => [VariableDataType::DATE, null, false],
             'document_number' => [VariableDataType::DOCUMENT_NUMBER, null, true],
         ] as $name => [$typeCode, $options, $required]) {
             $version->variables()->firstOrCreate([
@@ -555,6 +554,7 @@ class SopModuleSeeder extends Seeder
 
         $this->seedManualSignatureDocumentTemplates();
         $this->assignPrintReportTemplates();
+        $this->removeDocumentLifecycleDateVariables();
     }
 
     /**
@@ -649,6 +649,32 @@ class SopModuleSeeder extends Seeder
                 }
             }
         }
+    }
+
+    private function removeDocumentLifecycleDateVariables(): void
+    {
+        $templateCodes = [];
+
+        foreach (array_keys($this->printReportTemplateMappings()) as $templateCode) {
+            $templateCodes[] = $templateCode;
+            $templateCodes[] = $templateCode.'-MANUAL';
+        }
+
+        $versionIds = DocumentTemplateVersion::query()
+            ->whereIn(
+                'document_template_id',
+                DocumentTemplate::query()->whereIn('code', $templateCodes)->select('id'),
+            )
+            ->pluck('id');
+
+        if ($versionIds->isEmpty()) {
+            return;
+        }
+
+        DocumentTemplateVariable::query()
+            ->whereIn('template_version_id', $versionIds)
+            ->whereIn('name', ['effective_date', 'review_date'])
+            ->delete();
     }
 
     private function assignPrintReportTemplates(): void
